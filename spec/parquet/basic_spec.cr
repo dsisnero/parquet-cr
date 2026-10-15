@@ -4,6 +4,9 @@ alias PLogicalType = Parquet::LogicalType
 alias PConvertedType = Parquet::ConvertedType
 alias PEdgeAlgo = Parquet::EdgeInterpolationAlgorithm
 alias PTimeUnit = Parquet::TimeUnit
+alias PPhysicalType = Parquet::Type
+alias PColumnOrder = Parquet::ColumnOrder
+alias PSortOrder = Parquet::SortOrder
 
 # Ported from `parquet/src/basic.rs` `mod tests`
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
@@ -274,6 +277,138 @@ describe Parquet do
 
     values.each do |value|
       ThriftRoundTrip.roundtrip(value).should eq(value)
+    end
+  end
+
+  # Upstream `test_display_sort_order`.
+  it "displays SortOrder" do
+    PSortOrder::SIGNED.to_s.should eq("SIGNED")
+    PSortOrder::UNSIGNED.to_s.should eq("UNSIGNED")
+    PSortOrder::UNDEFINED.to_s.should eq("UNDEFINED")
+    PSortOrder::TOTAL_ORDER.to_s.should eq("TOTAL_ORDER")
+    PSortOrder::INT96_TIMESTAMP.to_s.should eq("INT96_TIMESTAMP")
+  end
+
+  # Upstream `test_display_column_order`.
+  it "displays ColumnOrder" do
+    PColumnOrder.type_defined_order(PSortOrder::SIGNED).to_s.should eq("TYPE_DEFINED_ORDER(SIGNED)")
+    PColumnOrder.type_defined_order(PSortOrder::UNSIGNED).to_s.should eq("TYPE_DEFINED_ORDER(UNSIGNED)")
+    PColumnOrder.type_defined_order(PSortOrder::UNDEFINED).to_s.should eq("TYPE_DEFINED_ORDER(UNDEFINED)")
+    PColumnOrder::IEEE_754_TOTAL_ORDER.to_s.should eq("IEEE_754_TOTAL_ORDER")
+    PColumnOrder::INT96_TIMESTAMP_ORDER.to_s.should eq("INT96_TIMESTAMP_ORDER")
+    PColumnOrder::UNDEFINED.to_s.should eq("UNDEFINED")
+  end
+
+  # Upstream `test_column_order_roundtrip`.
+  # `SortOrder::SIGNED` is the default on read.
+  it "round-trips ColumnOrder through thrift" do
+    value = PColumnOrder.type_defined_order(PSortOrder::SIGNED)
+    ThriftRoundTrip.roundtrip(value).should eq(value)
+  end
+
+  # Upstream `test_column_order_get_logical_type_sort_order`.
+  it "computes sort order from logical type" do
+    unsigned = [
+      PLogicalType::String.new, PLogicalType::Json.new, PLogicalType::Bson.new,
+      PLogicalType::Enum.new, PLogicalType::Uuid.new,
+      PLogicalType.integer(8, false), PLogicalType.integer(16, false),
+      PLogicalType.integer(32, false), PLogicalType.integer(64, false),
+    ]
+    unsigned.each do |t|
+      PColumnOrder.column_order_for_type(t, PConvertedType::NONE, PPhysicalType::BYTE_ARRAY)
+        .sort_order.should eq(PSortOrder::UNSIGNED)
+    end
+
+    signed = [
+      PLogicalType.integer(8, true), PLogicalType.integer(16, true),
+      PLogicalType.integer(32, true), PLogicalType.integer(64, true),
+      PLogicalType.decimal(20, 4), PLogicalType::Date.new,
+      PLogicalType.time(false, PTimeUnit::MILLIS), PLogicalType.time(false, PTimeUnit::MICROS),
+      PLogicalType.time(true, PTimeUnit::NANOS),
+      PLogicalType.timestamp(false, PTimeUnit::MILLIS),
+      PLogicalType.timestamp(false, PTimeUnit::MICROS),
+      PLogicalType.timestamp(true, PTimeUnit::NANOS),
+    ]
+    signed.each do |t|
+      PColumnOrder.column_order_for_type(t, PConvertedType::NONE, PPhysicalType::BYTE_ARRAY)
+        .sort_order.should eq(PSortOrder::SIGNED)
+    end
+
+    PColumnOrder.column_order_for_type(PLogicalType::Float16.new, PConvertedType::NONE, PPhysicalType::BYTE_ARRAY)
+      .sort_order.should eq(PSortOrder::TOTAL_ORDER)
+
+    undefined = [
+      PLogicalType::List.new, PLogicalType::Map.new, PLogicalType.variant(nil),
+      PLogicalType.geometry(nil), PLogicalType.geography(nil, PEdgeAlgo::SPHERICAL),
+    ]
+    undefined.each do |t|
+      PColumnOrder.column_order_for_type(t, PConvertedType::NONE, PPhysicalType::BYTE_ARRAY)
+        .sort_order.should eq(PSortOrder::UNDEFINED)
+    end
+  end
+
+  # Upstream `test_column_order_get_converted_type_sort_order`.
+  it "computes sort order from converted type" do
+    check = ->(type_ : PConvertedType, expected : PSortOrder) do
+      PColumnOrder.column_order_for_type(nil, type_, PPhysicalType::BYTE_ARRAY).sort_order.should eq(expected)
+    end
+
+    [PConvertedType::UTF8, PConvertedType::JSON, PConvertedType::BSON, PConvertedType::ENUM,
+     PConvertedType::UINT_8, PConvertedType::UINT_16, PConvertedType::UINT_32, PConvertedType::UINT_64]
+      .each { |t| check.call(t, PSortOrder::UNSIGNED) }
+
+    [PConvertedType::INT_8, PConvertedType::INT_16, PConvertedType::INT_32, PConvertedType::INT_64,
+     PConvertedType::DECIMAL, PConvertedType::DATE, PConvertedType::TIME_MILLIS, PConvertedType::TIME_MICROS,
+     PConvertedType::TIMESTAMP_MILLIS, PConvertedType::TIMESTAMP_MICROS]
+      .each { |t| check.call(t, PSortOrder::SIGNED) }
+
+    [PConvertedType::LIST, PConvertedType::MAP, PConvertedType::MAP_KEY_VALUE, PConvertedType::INTERVAL]
+      .each { |t| check.call(t, PSortOrder::UNDEFINED) }
+
+    check.call(PConvertedType::NONE, PSortOrder::UNSIGNED)
+  end
+
+  # Upstream `test_column_order_get_default_sort_order`.
+  it "returns the default sort order for a physical type" do
+    PColumnOrder.get_default_sort_order(PPhysicalType::BOOLEAN, true).should eq(PSortOrder::UNSIGNED)
+    PColumnOrder.get_default_sort_order(PPhysicalType::INT32, true).should eq(PSortOrder::SIGNED)
+    PColumnOrder.get_default_sort_order(PPhysicalType::INT64, true).should eq(PSortOrder::SIGNED)
+    PColumnOrder.get_default_sort_order(PPhysicalType::INT96, true).should eq(PSortOrder::UNDEFINED)
+    PColumnOrder.get_default_sort_order(PPhysicalType::INT96, false).should eq(PSortOrder::INT96_TIMESTAMP)
+    PColumnOrder.get_default_sort_order(PPhysicalType::FLOAT, false).should eq(PSortOrder::TOTAL_ORDER)
+    PColumnOrder.get_default_sort_order(PPhysicalType::DOUBLE, false).should eq(PSortOrder::TOTAL_ORDER)
+    PColumnOrder.get_default_sort_order(PPhysicalType::FLOAT, true).should eq(PSortOrder::SIGNED)
+    PColumnOrder.get_default_sort_order(PPhysicalType::DOUBLE, true).should eq(PSortOrder::SIGNED)
+    PColumnOrder.get_default_sort_order(PPhysicalType::BYTE_ARRAY, true).should eq(PSortOrder::UNSIGNED)
+    PColumnOrder.get_default_sort_order(PPhysicalType::FIXED_LEN_BYTE_ARRAY, true).should eq(PSortOrder::UNSIGNED)
+  end
+
+  # Upstream `test_column_order_sort_order`.
+  it "returns the sort order for a column order" do
+    PColumnOrder.type_defined_order(PSortOrder::SIGNED).sort_order.should eq(PSortOrder::SIGNED)
+    PColumnOrder.type_defined_order(PSortOrder::UNSIGNED).sort_order.should eq(PSortOrder::UNSIGNED)
+    PColumnOrder.type_defined_order(PSortOrder::UNDEFINED).sort_order.should eq(PSortOrder::UNDEFINED)
+    PColumnOrder::IEEE_754_TOTAL_ORDER.sort_order.should eq(PSortOrder::TOTAL_ORDER)
+    PColumnOrder::INT96_TIMESTAMP_ORDER.sort_order.should eq(PSortOrder::INT96_TIMESTAMP)
+    PColumnOrder::UNDEFINED.sort_order.should eq(PSortOrder::SIGNED)
+  end
+
+  # Upstream `test_parse_encoding`.
+  it "parses Encoding from string" do
+    Parquet::Encoding.from_str("PLAIN").should eq(Parquet::Encoding::PLAIN)
+    Parquet::Encoding.from_str("PLAIN_DICTIONARY").should eq(Parquet::Encoding::PLAIN_DICTIONARY)
+    Parquet::Encoding.from_str("RLE").should eq(Parquet::Encoding::RLE)
+    Parquet::Encoding.from_str("BIT_PACKED").should eq(Parquet::Encoding::BIT_PACKED)
+    Parquet::Encoding.from_str("DELTA_BINARY_PACKED").should eq(Parquet::Encoding::DELTA_BINARY_PACKED)
+    Parquet::Encoding.from_str("DELTA_LENGTH_BYTE_ARRAY").should eq(Parquet::Encoding::DELTA_LENGTH_BYTE_ARRAY)
+    Parquet::Encoding.from_str("DELTA_BYTE_ARRAY").should eq(Parquet::Encoding::DELTA_BYTE_ARRAY)
+    Parquet::Encoding.from_str("RLE_DICTIONARY").should eq(Parquet::Encoding::RLE_DICTIONARY)
+    Parquet::Encoding.from_str("BYTE_STREAM_SPLIT").should eq(Parquet::Encoding::BYTE_STREAM_SPLIT)
+    Parquet::Encoding.from_str("alp").should eq(Parquet::Encoding::ALP)
+    Parquet::Encoding.from_str("byte_stream_split").should eq(Parquet::Encoding::BYTE_STREAM_SPLIT)
+
+    expect_raises(Parquet::ParquetError, "unknown encoding: plain_xxx") do
+      Parquet::Encoding.from_str("plain_xxx")
     end
   end
 end

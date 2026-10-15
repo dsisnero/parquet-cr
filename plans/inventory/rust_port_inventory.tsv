@@ -1637,15 +1637,15 @@ parquet/src/arrow/schema/virtual_type.rs::method::RowNumber.validate	method	miss
 parquet/src/basic.rs::const::ALLOWED_MASK	const	missing	-	auto-generated
 parquet/src/basic.rs::const::ELEMENT_TYPE	const	missing	-	auto-generated
 parquet/src/basic.rs::const::MAX_ENCODING	const	missing	-	auto-generated
-parquet/src/basic.rs::method::ColumnOrder.column_order_for_type	method	missing	-	auto-generated
-parquet/src/basic.rs::method::ColumnOrder.fmt	method	missing	-	auto-generated
-parquet/src/basic.rs::method::ColumnOrder.get_converted_sort_order	method	missing	-	auto-generated
-parquet/src/basic.rs::method::ColumnOrder.get_default_sort_order	method	missing	-	auto-generated
-parquet/src/basic.rs::method::ColumnOrder.get_sort_order_for_type	method	missing	-	auto-generated
-parquet/src/basic.rs::method::ColumnOrder.read_thrift	method	missing	-	auto-generated
-parquet/src/basic.rs::method::ColumnOrder.sort_order	method	missing	-	auto-generated
-parquet/src/basic.rs::method::ColumnOrder.sort_order_for_type	method	missing	-	auto-generated
-parquet/src/basic.rs::method::ColumnOrder.write_thrift	method	missing	-	auto-generated
+parquet/src/basic.rs::method::ColumnOrder.column_order_for_type	method	ported	src/parquet/basic.cr	ColumnOrder class method
+parquet/src/basic.rs::method::ColumnOrder.fmt	method	ported	src/parquet/basic.cr	Display via ColumnOrder#to_s
+parquet/src/basic.rs::method::ColumnOrder.get_converted_sort_order	method	ported	src/parquet/basic.cr	ColumnOrder class method
+parquet/src/basic.rs::method::ColumnOrder.get_default_sort_order	method	ported	src/parquet/basic.cr	ColumnOrder class method
+parquet/src/basic.rs::method::ColumnOrder.get_sort_order_for_type	method	ported	src/parquet/basic.cr	ColumnOrder class method
+parquet/src/basic.rs::method::ColumnOrder.read_thrift	method	ported	src/parquet/basic.cr	hand-written union read
+parquet/src/basic.rs::method::ColumnOrder.sort_order	method	ported	src/parquet/basic.cr	ColumnOrder#sort_order
+parquet/src/basic.rs::method::ColumnOrder.sort_order_for_type	method	intentional_divergence	src/parquet/basic.cr	deprecated upstream alias for get_sort_order_for_type; not provided
+parquet/src/basic.rs::method::ColumnOrder.write_thrift	method	ported	src/parquet/basic.cr	hand-written union write
 parquet/src/basic.rs::method::Compression.fmt	method	missing	-	auto-generated
 parquet/src/basic.rs::method::Compression.from	method	missing	-	auto-generated
 parquet/src/basic.rs::method::Compression.from_str	method	missing	-	auto-generated
@@ -1680,8 +1680,8 @@ parquet/src/basic.rs::method::LogicalType.time	method	ported	src/parquet/basic.c
 parquet/src/basic.rs::method::LogicalType.timestamp	method	ported	src/parquet/basic.cr	constructor LogicalType.timestamp
 parquet/src/basic.rs::method::LogicalType.variant	method	ported	src/parquet/basic.cr	constructor LogicalType.variant
 parquet/src/basic.rs::method::Repetition.from_str	method	ported	src/parquet/basic.cr	Enum.parse?-based on FieldRepetitionType
-parquet/src/basic.rs::method::SortOrder.fmt	method	missing	-	auto-generated
-parquet/src/basic.rs::method::SortOrder.is_signed	method	missing	-	auto-generated
+parquet/src/basic.rs::method::SortOrder.fmt	method	ported	src/parquet/basic.cr	Display via SortOrder#to_s (variant name)
+parquet/src/basic.rs::method::SortOrder.is_signed	method	ported	src/parquet/basic.cr	renamed SortOrder#signed?
 parquet/src/basic.rs::method::Type.from_str	method	ported	src/parquet/basic.cr	Enum.parse?-based; BINARY accepted as alias for BYTE_ARRAY
 parquet/src/bin/parquet-concat.rs::method::Args.run	method	missing	-	auto-generated
 parquet/src/bin/parquet-fromcsv.rs::method::Args.get_delimiter	method	missing	-	auto-generated

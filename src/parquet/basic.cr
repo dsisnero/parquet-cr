@@ -581,6 +581,217 @@ module Parquet
   end
   define_thrift_enum(BoundaryOrder)
 
+  # Sort order used to aggregate min/max statistics for a column.
+  enum SortOrder
+    SIGNED
+    UNSIGNED
+    UNDEFINED
+    TOTAL_ORDER
+    INT96_TIMESTAMP
+
+    def signed? : Bool
+      self == SIGNED
+    end
+  end
+
+  # Column order that specifies what method was used to aggregate min/max values
+  # for statistics.
+  #
+  # Divergence: upstream is an enum with a `TYPE_DEFINED_ORDER(SortOrder)`
+  # payload and unit variants. Modelled as a struct carrying a `Kind` plus the
+  # inner `SortOrder`; unit variants are exposed as constants.
+  struct ColumnOrder
+    enum Kind
+      TypeDefinedOrder
+      Ieee754TotalOrder
+      Int96TimestampOrder
+      Undefined
+      Unknown
+    end
+
+    getter kind : Kind
+    getter order : SortOrder
+
+    def initialize(@kind : Kind, @order : SortOrder = SortOrder::UNDEFINED)
+    end
+
+    def self.type_defined_order(order : SortOrder) : ColumnOrder
+      new(Kind::TypeDefinedOrder, order)
+    end
+
+    IEEE_754_TOTAL_ORDER  = new(Kind::Ieee754TotalOrder)
+    INT96_TIMESTAMP_ORDER = new(Kind::Int96TimestampOrder)
+    UNDEFINED             = new(Kind::Undefined)
+    UNKNOWN               = new(Kind::Unknown)
+
+    # Returns the `ColumnOrder` for a physical/logical type.
+    def self.column_order_for_type(
+      logical_type : LogicalType?,
+      converted_type : ConvertedType,
+      physical_type : Type,
+    ) : ColumnOrder
+      if logical_type.is_a?(LogicalType::Float16) ||
+         physical_type == Type::FLOAT || physical_type == Type::DOUBLE
+        IEEE_754_TOTAL_ORDER
+      elsif physical_type == Type::INT96
+        INT96_TIMESTAMP_ORDER
+      else
+        type_defined_order(
+          get_sort_order_for_type(logical_type, converted_type, physical_type, true)
+        )
+      end
+    end
+
+    # Returns the sort order for a physical/logical type.
+    def self.get_sort_order_for_type(
+      logical_type : LogicalType?,
+      converted_type : ConvertedType,
+      physical_type : Type,
+      is_type_defined : Bool,
+    ) : SortOrder
+      if variant = logical_type
+        case variant
+        when LogicalType::String, LogicalType::Enum, LogicalType::Json, LogicalType::Bson
+          SortOrder::UNSIGNED
+        when LogicalType::Integer
+          variant.value.is_signed ? SortOrder::SIGNED : SortOrder::UNSIGNED
+        when LogicalType::Map, LogicalType::List
+          SortOrder::UNDEFINED
+        when LogicalType::Decimal, LogicalType::Date, LogicalType::Time, LogicalType::Timestamp
+          SortOrder::SIGNED
+        when LogicalType::Unknown
+          SortOrder::UNDEFINED
+        when LogicalType::Uuid
+          SortOrder::UNSIGNED
+        when LogicalType::Float16
+          is_type_defined ? SortOrder::SIGNED : SortOrder::TOTAL_ORDER
+        else
+          SortOrder::UNDEFINED
+        end
+      else
+        get_converted_sort_order(converted_type, physical_type, is_type_defined)
+      end
+    end
+
+    def self.get_converted_sort_order(
+      converted_type : ConvertedType,
+      physical_type : Type,
+      is_type_defined : Bool,
+    ) : SortOrder
+      case converted_type
+      when ConvertedType::UTF8, ConvertedType::JSON, ConvertedType::BSON, ConvertedType::ENUM
+        SortOrder::UNSIGNED
+      when ConvertedType::INT_8, ConvertedType::INT_16, ConvertedType::INT_32, ConvertedType::INT_64
+        SortOrder::SIGNED
+      when ConvertedType::UINT_8, ConvertedType::UINT_16, ConvertedType::UINT_32, ConvertedType::UINT_64
+        SortOrder::UNSIGNED
+      when ConvertedType::DECIMAL,
+           ConvertedType::DATE,
+           ConvertedType::TIME_MILLIS,
+           ConvertedType::TIME_MICROS,
+           ConvertedType::TIMESTAMP_MILLIS,
+           ConvertedType::TIMESTAMP_MICROS
+        SortOrder::SIGNED
+      when ConvertedType::INTERVAL,
+           ConvertedType::LIST,
+           ConvertedType::MAP,
+           ConvertedType::MAP_KEY_VALUE
+        SortOrder::UNDEFINED
+      else
+        get_default_sort_order(physical_type, is_type_defined)
+      end
+    end
+
+    # Returns the default sort order based on physical type.
+    def self.get_default_sort_order(physical_type : Type, is_type_defined : Bool) : SortOrder
+      case physical_type
+      when Type::BOOLEAN
+        SortOrder::UNSIGNED
+      when Type::INT32, Type::INT64
+        SortOrder::SIGNED
+      when Type::INT96
+        is_type_defined ? SortOrder::UNDEFINED : SortOrder::INT96_TIMESTAMP
+      when Type::FLOAT, Type::DOUBLE
+        is_type_defined ? SortOrder::SIGNED : SortOrder::TOTAL_ORDER
+      else
+        SortOrder::UNSIGNED
+      end
+    end
+
+    # Returns the sort order associated with this column order.
+    def sort_order : SortOrder
+      case @kind
+      when Kind::TypeDefinedOrder    then @order
+      when Kind::Ieee754TotalOrder   then SortOrder::TOTAL_ORDER
+      when Kind::Int96TimestampOrder then SortOrder::INT96_TIMESTAMP
+      when Kind::Undefined           then SortOrder::SIGNED
+      else                                SortOrder::UNDEFINED
+      end
+    end
+
+    def self.thrift_element_type : ::Parquet::Thrift::ElementType
+      ::Parquet::Thrift::ElementType::Struct
+    end
+
+    def self.read_thrift(prot : ::Parquet::Thrift::ThriftCompactInputProtocol) : ColumnOrder
+      field_ident = prot.read_field_begin(0_i16)
+      if field_ident.field_type == ::Parquet::Thrift::FieldType::Stop
+        raise general_err!("Received empty union from remote ColumnOrder")
+      end
+
+      ret =
+        case field_ident.id
+        when 1
+          # NOTE: the sort order is corrected after parsing.
+          prot.skip_empty_struct
+          type_defined_order(SortOrder::SIGNED)
+        when 2
+          prot.skip_empty_struct
+          IEEE_754_TOTAL_ORDER
+        when 3
+          prot.skip_empty_struct
+          INT96_TIMESTAMP_ORDER
+        else
+          prot.skip(field_ident.field_type)
+          UNKNOWN
+        end
+
+      end_ident = prot.read_field_begin(field_ident.id)
+      unless end_ident.field_type == ::Parquet::Thrift::FieldType::Stop
+        raise general_err!("Received multiple fields for union from remote ColumnOrder")
+      end
+
+      ret
+    end
+
+    def write_thrift(prot : ::Parquet::Thrift::ThriftCompactOutputProtocol) : Nil
+      case @kind
+      when Kind::TypeDefinedOrder
+        prot.write_field_begin(::Parquet::Thrift::FieldType::Struct, 1_i16, 0_i16)
+        prot.write_struct_end
+      when Kind::Ieee754TotalOrder
+        prot.write_field_begin(::Parquet::Thrift::FieldType::Struct, 2_i16, 0_i16)
+        prot.write_struct_end
+      when Kind::Int96TimestampOrder
+        prot.write_field_begin(::Parquet::Thrift::FieldType::Struct, 3_i16, 0_i16)
+        prot.write_struct_end
+      else
+        raise general_err!("Attempt to write undefined ColumnOrder")
+      end
+      prot.write_struct_end
+    end
+
+    def to_s(io : IO) : Nil
+      case @kind
+      when Kind::TypeDefinedOrder    then io << "TYPE_DEFINED_ORDER(" << @order << ')'
+      when Kind::Ieee754TotalOrder   then io << "IEEE_754_TOTAL_ORDER"
+      when Kind::Int96TimestampOrder then io << "INT96_TIMESTAMP_ORDER"
+      when Kind::Undefined           then io << "UNDEFINED"
+      else                                io << "UNKNOWN"
+      end
+    end
+  end
+
   # `From<Option<LogicalType>> for ConvertedType` (see `basic.rs`).
   #
   # The reverse conversion is intentionally not provided upstream to avoid type

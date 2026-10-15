@@ -79,7 +79,9 @@ little-endian layout.
   maps to `UnknownField`.
 - [ ] `Compression` enum, `CompressionCodec`<->`Compression` conversions, and
   `Compression` `Display`/`from_str`.
-- [ ] `SortOrder`, `ColumnOrder`, `TypeDefinedOrder`.
+- [x] `SortOrder`, `ColumnOrder` (incl. `column_order_for_type`, sort-order
+  resolution, union read/write). `TypeDefinedOrder` is a thrift empty struct and
+  is folded into `ColumnOrder::Kind::TypeDefinedOrder`.
 - [ ] `EncodingMask`.
 - [ ] `Statistics` and typed statistics.
 
@@ -215,6 +217,12 @@ little-endian layout.
 - `FixedLenByteArray`: Rust `Deref`/`From` are explicit delegating methods and
   constructors in Crystal.
 - `ByteArray::is_empty` maps to Crystal `empty?`.
+- `ColumnOrder`: upstream's enum with a `TYPE_DEFINED_ORDER(SortOrder)` payload
+  is a Crystal struct carrying a `Kind` + inner `SortOrder`; unit variants are
+  constants (`ColumnOrder::IEEE_754_TOTAL_ORDER`, `...::UNDEFINED`, `...::UNKNOWN`)
+  and `TYPE_DEFINED_ORDER(s)` is `ColumnOrder.type_defined_order(s)`.
+  `SortOrder::is_signed` is `SortOrder#signed?`. The deprecated
+  `ColumnOrder::sort_order_for_type` alias is not provided.
 
 ## Notes
 

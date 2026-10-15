@@ -51,5 +51,10 @@ revision is recorded per entry.
 - `data_type` value types (`src/parquet/data_type.cr`): `Int96`, `ByteArray`,
   `FixedLenByteArray`, `Decimal`, and the `AsBytes` trait; upstream
   `data_type.rs` tests ported to `spec/parquet/data_type_spec.cr`.
+- `basic::SortOrder` and `basic::ColumnOrder` (`src/parquet/basic.cr`):
+  `column_order_for_type`, sort-order resolution by logical/converted/physical
+  type, `TypeDefinedOrder` handling, and union read/write. Upstream `basic.rs`
+  sort/column-order tests and `test_parse_encoding` ported to
+  `spec/parquet/basic_spec.cr`.
 
 [Unreleased]: https://github.com/dsisnero/parquet-cr/commits/main
