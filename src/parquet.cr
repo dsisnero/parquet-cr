@@ -7,6 +7,7 @@ require "./parquet/format"
 require "./parquet/schema/types"
 require "./parquet/schema/parser"
 require "./parquet/schema/thrift"
+require "./parquet/file/statistics"
 
 module Parquet
   VERSION = "0.1.0"

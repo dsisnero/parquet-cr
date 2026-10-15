@@ -160,7 +160,13 @@ little-endian layout.
 - [ ] `ParquetMetaData`, `FileMetaData`, `RowGroupMetaData`,
   `ColumnChunkMetaData`, builders (`file/metadata`).
 - [ ] Serialized reader/writer (footer + page headers).
-- [ ] Statistics and value stats (`file/statistics`).
+- [x] Statistics and value stats (`src/parquet/file/statistics.cr`):
+  `Statistics`, `ValueStatistics<T>`, and `from_thrift_page_stats`/
+  `page_stats_to_thrift` (thrift `PageStatistics`). Upstream `statistics.rs`
+  tests ported to `spec/parquet/file/statistics_spec.cr`. (`Statistics` is a
+  single class over a `ValueStatistics` union rather than an enum;
+  `is_min_max_deprecated`/`is_min_max_backwards_compatible` are
+  `min_max_deprecated?`/`min_max_backwards_compatible?`.)
 - [ ] Reader/writer (`file/reader`, `file/writer`).
 - [ ] Page index (column index, offset index).
 - [ ] Bloom filter (`bloom_filter/`).

@@ -85,8 +85,13 @@ revision is recorded per entry.
   `DataPageHeader`, `DataPageHeaderV2`, `DictionaryPageHeader`,
   `IndexPageHeader`, `PageStatistics`, and the `read_*_without_stats` readers.
   Upstream malformed-bool tests ported to `spec/parquet/format_spec.cr`.
-  Fixed `define_thrift_struct` to emit optional `Bool` fields whose value is
+  Fixed   `define_thrift_struct` to emit optional `Bool` fields whose value is
   `false` (previously dropped by a truthiness check).
+- File statistics API (`src/parquet/file/statistics.cr`): `Statistics` and
+  `ValueStatistics<T>` with `Display`, Rust-compatible `Debug`, byte views of
+  min/max, and `from_thrift_page_stats`/`page_stats_to_thrift` conversion.
+  Upstream `statistics.rs` tests ported to
+  `spec/parquet/file/statistics_spec.cr`; added `Int96.try_from_le_slice`.
 - Harden `Makefile` gates by stripping macOS AppleDouble `._*` sidecars (whose
   names can match crystal's `*_spec.cr` glob on exFAT volumes).
 

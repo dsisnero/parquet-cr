@@ -41,6 +41,18 @@ module Parquet
       new(StaticArray[values[0], values[1], values[2]])
     end
 
+    # Reads an INT96 from 12 little-endian bytes (PLAIN statistics encoding).
+    def self.try_from_le_slice(bytes : Bytes) : Int96
+      raise ArgumentError.new("Invalid INT96 length: #{bytes.size}") unless bytes.size == 12
+
+      elems = StaticArray[
+        IO::Memory.new(bytes[0, 4]).read_bytes(UInt32, IO::ByteFormat::LittleEndian),
+        IO::Memory.new(bytes[4, 4]).read_bytes(UInt32, IO::ByteFormat::LittleEndian),
+        IO::Memory.new(bytes[8, 4]).read_bytes(UInt32, IO::ByteFormat::LittleEndian),
+      ]
+      new(elems)
+    end
+
     # Returns underlying data.
     def data : StaticArray(UInt32, 3)
       @value

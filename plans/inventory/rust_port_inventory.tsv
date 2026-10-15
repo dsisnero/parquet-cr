@@ -3030,37 +3030,37 @@ parquet/src/file/serialized_reader.rs::method::SerializedRowGroupReader<'_, R>.m
 parquet/src/file/serialized_reader.rs::method::SerializedRowGroupReader<'_, R>.num_columns	method	missing	-	auto-generated
 parquet/src/file/serialized_reader.rs::method::SerializedRowGroupReader<'a, R>.new	method	missing	-	auto-generated
 parquet/src/file/serialized_reader.rs::method::TrackedRead<R>.read	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::Statistics.distinct_count_opt	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::Statistics.fmt	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::Statistics.from	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::Statistics.is_min_max_backwards_compatible	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::Statistics.is_min_max_deprecated	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::Statistics.max_bytes_opt	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::Statistics.max_is_exact	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::Statistics.min_bytes_opt	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::Statistics.min_is_exact	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::Statistics.nan_count_opt	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::Statistics.new	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::Statistics.null_count_opt	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::Statistics.physical_type	method	missing	-	auto-generated
+parquet/src/file/statistics.rs::method::Statistics.distinct_count_opt	method	ported	src/parquet/file/statistics.cr	Statistics
+parquet/src/file/statistics.rs::method::Statistics.fmt	method	ported	src/parquet/file/statistics.cr	Statistics
+parquet/src/file/statistics.rs::method::Statistics.from	method	intentional_divergence	src/parquet/file/statistics.cr	Statistics.new(ValueStatistics) used instead
+parquet/src/file/statistics.rs::method::Statistics.is_min_max_backwards_compatible	method	ported	src/parquet/file/statistics.cr	renamed Statistics#min_max_backwards_compatible?
+parquet/src/file/statistics.rs::method::Statistics.is_min_max_deprecated	method	ported	src/parquet/file/statistics.cr	renamed Statistics#min_max_deprecated?
+parquet/src/file/statistics.rs::method::Statistics.max_bytes_opt	method	ported	src/parquet/file/statistics.cr	Statistics
+parquet/src/file/statistics.rs::method::Statistics.max_is_exact	method	ported	src/parquet/file/statistics.cr	Statistics
+parquet/src/file/statistics.rs::method::Statistics.min_bytes_opt	method	ported	src/parquet/file/statistics.cr	Statistics
+parquet/src/file/statistics.rs::method::Statistics.min_is_exact	method	ported	src/parquet/file/statistics.cr	Statistics
+parquet/src/file/statistics.rs::method::Statistics.nan_count_opt	method	ported	src/parquet/file/statistics.cr	Statistics
+parquet/src/file/statistics.rs::method::Statistics.new	method	ported	src/parquet/file/statistics.cr	Statistics
+parquet/src/file/statistics.rs::method::Statistics.null_count_opt	method	ported	src/parquet/file/statistics.cr	Statistics
+parquet/src/file/statistics.rs::method::Statistics.physical_type	method	ported	src/parquet/file/statistics.cr	Statistics
 parquet/src/file/statistics.rs::method::ValueStatistics<T>._internal_has_min_max_set	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::ValueStatistics<T>.distinct_count	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::ValueStatistics<T>.fmt	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::ValueStatistics<T>.is_min_max_backwards_compatible	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::ValueStatistics<T>.is_min_max_deprecated	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::ValueStatistics<T>.max_bytes_opt	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::ValueStatistics<T>.max_is_exact	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::ValueStatistics<T>.max_opt	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::ValueStatistics<T>.min_bytes_opt	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::ValueStatistics<T>.min_is_exact	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::ValueStatistics<T>.min_opt	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::ValueStatistics<T>.nan_count_opt	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::ValueStatistics<T>.new	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::ValueStatistics<T>.null_count_opt	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::ValueStatistics<T>.with_backwards_compatible_min_max	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::ValueStatistics<T>.with_max_is_exact	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::ValueStatistics<T>.with_min_is_exact	method	missing	-	auto-generated
-parquet/src/file/statistics.rs::method::ValueStatistics<T>.with_nan_count	method	missing	-	auto-generated
+parquet/src/file/statistics.rs::method::ValueStatistics<T>.distinct_count	method	ported	src/parquet/file/statistics.cr	ValueStatistics
+parquet/src/file/statistics.rs::method::ValueStatistics<T>.fmt	method	ported	src/parquet/file/statistics.cr	ValueStatistics
+parquet/src/file/statistics.rs::method::ValueStatistics<T>.is_min_max_backwards_compatible	method	ported	src/parquet/file/statistics.cr	renamed ValueStatistics#min_max_backwards_compatible?
+parquet/src/file/statistics.rs::method::ValueStatistics<T>.is_min_max_deprecated	method	ported	src/parquet/file/statistics.cr	renamed ValueStatistics#min_max_deprecated?
+parquet/src/file/statistics.rs::method::ValueStatistics<T>.max_bytes_opt	method	ported	src/parquet/file/statistics.cr	ValueStatistics
+parquet/src/file/statistics.rs::method::ValueStatistics<T>.max_is_exact	method	ported	src/parquet/file/statistics.cr	ValueStatistics
+parquet/src/file/statistics.rs::method::ValueStatistics<T>.max_opt	method	ported	src/parquet/file/statistics.cr	ValueStatistics
+parquet/src/file/statistics.rs::method::ValueStatistics<T>.min_bytes_opt	method	ported	src/parquet/file/statistics.cr	ValueStatistics
+parquet/src/file/statistics.rs::method::ValueStatistics<T>.min_is_exact	method	ported	src/parquet/file/statistics.cr	ValueStatistics
+parquet/src/file/statistics.rs::method::ValueStatistics<T>.min_opt	method	ported	src/parquet/file/statistics.cr	ValueStatistics
+parquet/src/file/statistics.rs::method::ValueStatistics<T>.nan_count_opt	method	ported	src/parquet/file/statistics.cr	ValueStatistics
+parquet/src/file/statistics.rs::method::ValueStatistics<T>.new	method	ported	src/parquet/file/statistics.cr	ValueStatistics
+parquet/src/file/statistics.rs::method::ValueStatistics<T>.null_count_opt	method	ported	src/parquet/file/statistics.cr	ValueStatistics
+parquet/src/file/statistics.rs::method::ValueStatistics<T>.with_backwards_compatible_min_max	method	ported	src/parquet/file/statistics.cr	ValueStatistics
+parquet/src/file/statistics.rs::method::ValueStatistics<T>.with_max_is_exact	method	ported	src/parquet/file/statistics.cr	ValueStatistics
+parquet/src/file/statistics.rs::method::ValueStatistics<T>.with_min_is_exact	method	ported	src/parquet/file/statistics.cr	ValueStatistics
+parquet/src/file/statistics.rs::method::ValueStatistics<T>.with_nan_count	method	ported	src/parquet/file/statistics.cr	ValueStatistics
 parquet/src/file/writer.rs::const::AES_128_FOOTER_KEY	const	missing	-	auto-generated
 parquet/src/file/writer.rs::method::SerializedColumnWriter<'a>.close	method	missing	-	auto-generated
 parquet/src/file/writer.rs::method::SerializedColumnWriter<'a>.new	method	missing	-	auto-generated
