@@ -1,0 +1,21 @@
+# rumdl configuration file
+
+# Global configuration options
+[global]
+
+# List of file/directory patterns to exclude from linting
+exclude = [
+    # Common directories to exclude
+    ".git",
+    ".github",
+    "lib",
+    "temp",
+    "vendor",
+    "spec",
+    # Specific files or patterns
+    "CHANGELOG.md",
+    "LICENSE.md",
+]
+
+# Respect .gitignore files when scanning directories (default: true)
+respect-gitignore = true

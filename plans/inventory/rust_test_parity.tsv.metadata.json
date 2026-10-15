@@ -1,0 +1,16 @@
+{
+  "base": "/Volumes/extreme_ssd/repos/github.com/dsisnero/parquet-cr/vendor/arrow-rs",
+  "parser_requested": "tree-sitter",
+  "backend": "chiasmus-tree-sitter",
+  "binary": "/Users/dominic/.agents/skills/crystal_forge/skills/cross-language-crystal-parity/bin/darwin-aarch64/chiasmus-discover --language rust --dir /Volumes/extreme_ssd/repos/github.com/dsisnero/parquet-cr/vendor/arrow-rs --parser tree-sitter",
+  "include_paths": [
+    "parquet",
+    "parquet-geospatial",
+    "parquet-variant",
+    "parquet-variant-compute",
+    "parquet-variant-json",
+    "parquet_derive",
+    "parquet_derive_test"
+  ],
+  "exclude_patterns": []
+}
