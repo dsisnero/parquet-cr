@@ -42,7 +42,7 @@ end
 # (field ids, deltas, `bool` encoded in the field header, required-field
 # validation, unknown-field skipping) matches upstream `thrift_struct!`.
 macro define_thrift_struct(klass, &block)
-  {% fields = block.body.is_a?(Expressions) ? block.body.expressions : [block.body] %}
+  {% fields = block.body.is_a?(Expressions) ? block.body.expressions : (block.body.is_a?(Nop) ? [] of Nil : [block.body]) %}
   struct {{klass}}
     {% for ex in fields %}
       {% if ex.is_a?(Call) && (ex.name == "required" || ex.name == "optional") %}
@@ -120,8 +120,8 @@ macro define_thrift_struct(klass, &block)
         {% if ex.is_a?(Call) && ex.name == "required" %}
       last_field_id = ::Parquet::Thrift.write_thrift_field(prot, self.{{ex.args[1].id}}, {{ex.args[0].id}}_i16, last_field_id)
         {% elsif ex.is_a?(Call) && ex.name == "optional" %}
-      if __present = self.{{ex.args[1].id}}
-        last_field_id = ::Parquet::Thrift.write_thrift_field(prot, __present, {{ex.args[0].id}}_i16, last_field_id)
+      unless self.{{ex.args[1].id}}.nil?
+        last_field_id = ::Parquet::Thrift.write_thrift_field(prot, self.{{ex.args[1].id}}.as({{ex.args[2]}}), {{ex.args[0].id}}_i16, last_field_id)
       end
         {% end %}
       {% end %}

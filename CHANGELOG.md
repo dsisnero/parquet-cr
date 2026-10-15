@@ -81,6 +81,12 @@ revision is recorded per entry.
   helpers. Upstream `test_schema_type_thrift_conversion*` and
   `test_schema_from_thrift_*` ported to `spec/parquet/schema/thrift_spec.cr`.
   `define_thrift_struct` now generates all-required constructor parameters.
+- Page-header thrift structs (`src/parquet/format.cr`): `PageHeader`,
+  `DataPageHeader`, `DataPageHeaderV2`, `DictionaryPageHeader`,
+  `IndexPageHeader`, `PageStatistics`, and the `read_*_without_stats` readers.
+  Upstream malformed-bool tests ported to `spec/parquet/format_spec.cr`.
+  Fixed `define_thrift_struct` to emit optional `Bool` fields whose value is
+  `false` (previously dropped by a truthiness check).
 - Harden `Makefile` gates by stripping macOS AppleDouble `._*` sidecars (whose
   names can match crystal's `*_spec.cr` glob on exFAT volumes).
 

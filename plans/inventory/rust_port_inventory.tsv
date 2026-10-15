@@ -2747,10 +2747,10 @@ parquet/src/file/metadata/thrift/mod.rs::const::RG_COLUMNS	const	missing	-	auto-
 parquet/src/file/metadata/thrift/mod.rs::const::RG_NUM_ROWS	const	missing	-	auto-generated
 parquet/src/file/metadata/thrift/mod.rs::const::RG_TOT_BYTE_SIZE	const	missing	-	auto-generated
 parquet/src/file/metadata/thrift/mod.rs::method::ColumnChunkMetaData.write_thrift	method	missing	-	auto-generated
-parquet/src/file/metadata/thrift/mod.rs::method::DataPageHeader.read_thrift_without_stats	method	missing	-	auto-generated
-parquet/src/file/metadata/thrift/mod.rs::method::DataPageHeaderV2.read_thrift_without_stats	method	missing	-	auto-generated
+parquet/src/file/metadata/thrift/mod.rs::method::DataPageHeader.read_thrift_without_stats	method	ported	src/parquet/format.cr	Parquet::Format.read_data_page_header_without_stats
+parquet/src/file/metadata/thrift/mod.rs::method::DataPageHeaderV2.read_thrift_without_stats	method	ported	src/parquet/format.cr	Parquet::Format.read_data_page_header_v2_without_stats
 parquet/src/file/metadata/thrift/mod.rs::method::FileMeta<'_>.write_thrift	method	missing	-	auto-generated
-parquet/src/file/metadata/thrift/mod.rs::method::PageHeader.read_thrift_without_stats	method	missing	-	auto-generated
+parquet/src/file/metadata/thrift/mod.rs::method::PageHeader.read_thrift_without_stats	method	ported	src/parquet/format.cr	Parquet::Format.read_page_header_without_stats
 parquet/src/file/metadata/thrift/mod.rs::method::RowGroupMetaData.write_thrift	method	missing	-	auto-generated
 parquet/src/file/metadata/thrift/mod.rs::method::crate::geospatial::bounding_box::BoundingBox.write_thrift	method	missing	-	auto-generated
 parquet/src/file/metadata/thrift/mod.rs::method::crate::geospatial::statistics::GeospatialStatistics.write_thrift	method	missing	-	auto-generated

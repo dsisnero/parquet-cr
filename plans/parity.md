@@ -115,8 +115,15 @@ little-endian layout.
   and the `schema_to_buf`/`buf_to_schema_list`/`roundtrip_schema` helpers.
   Upstream `test_schema_type_thrift_conversion*` and `test_schema_from_thrift_*`
   ported to `spec/parquet/schema/thrift_spec.cr`.
+- [x] Page-header thrift structs (`src/parquet/format.cr`): `PageHeader`,
+  `DataPageHeader`, `DataPageHeaderV2`, `DictionaryPageHeader`,
+  `IndexPageHeader`, `PageStatistics`, and the `read_*_without_stats` readers.
+  Upstream `malformed_bool_field_returns_error_not_panic` and
+  `malformed_data_page_v2_bool_field_returns_error_not_panic` ported to
+  `spec/parquet/format_spec.cr`.
 - [ ] Remaining metadata thrift structs (`file/metadata/thrift/mod.rs`:
-  `FileMetaData`, `RowGroup`, `ColumnChunk`, `Statistics`, `PageHeader`, ...).
+  `FileMetaData`, `RowGroup`, `ColumnChunk`, `ColumnMetaData`, `Statistics`,
+  `SizeStatistics`, `BoundingBox`, `GeospatialStatistics`).
 - [ ] Schema printer (`schema/printer.rs`).
 - [ ] Primitive builders (`schema/primitive.rs`). 4 upstream test modules.
 
@@ -240,6 +247,9 @@ little-endian layout.
   `define_thrift_struct` makes every generated constructor parameter required
   (upstream struct literals specify all fields), since a required field may
   follow optional ones (as in `SchemaElement`).
+- Page-header thrift structs live under `Parquet::Format` (upstream
+  `file::metadata::thrift`); the `read_*_without_stats` readers are
+  `Parquet::Format` module methods.
 - `Decimal`: upstream's `Int32`/`Int64`/`Bytes` enum is a single Crystal struct
   carrying the unscaled bytes; variant identity is the byte width. Equality and
   accessors match upstream (`precision`, `scale`, `data`).
