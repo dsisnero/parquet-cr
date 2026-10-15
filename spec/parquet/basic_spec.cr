@@ -403,4 +403,47 @@ describe Parquet do
       Parquet::Encoding.from_str("plain_xxx")
     end
   end
+
+  # Upstream `test_encoding_roundtrip` (helper `encodings_roundtrip`).
+  it "round-trips EncodingMask from encodings" do
+    check = ->(encodings : Array(Parquet::Encoding)) do
+      encodings = encodings.sort_by(&.value)
+      mask = Parquet::EncodingMask.new_from_encodings(encodings)
+      mask.all_set(encodings).should be_true
+      mask.encodings.should eq(encodings)
+    end
+
+    check.call([Parquet::Encoding::RLE, Parquet::Encoding::PLAIN, Parquet::Encoding::DELTA_BINARY_PACKED])
+    check.call([Parquet::Encoding::RLE_DICTIONARY, Parquet::Encoding::PLAIN_DICTIONARY])
+    check.call([] of Parquet::Encoding)
+    check.call([
+      Parquet::Encoding::PLAIN, Parquet::Encoding::BIT_PACKED, Parquet::Encoding::RLE,
+      Parquet::Encoding::DELTA_BINARY_PACKED, Parquet::Encoding::DELTA_BYTE_ARRAY,
+      Parquet::Encoding::DELTA_LENGTH_BYTE_ARRAY, Parquet::Encoding::PLAIN_DICTIONARY,
+      Parquet::Encoding::RLE_DICTIONARY, Parquet::Encoding::BYTE_STREAM_SPLIT,
+      Parquet::Encoding::ALP,
+    ])
+  end
+
+  # Upstream `test_invalid_encoding_mask`.
+  it "rejects invalid EncodingMask values" do
+    expect_raises(Parquet::ParquetError, "Attempt to create invalid mask: 0xffffffff") do
+      Parquet::EncodingMask.try_new(-1)
+    end
+    # GROUP_VAR_INT (bit 1) is disallowed
+    expect_raises(Parquet::ParquetError, "Attempt to create invalid mask: 0x2") do
+      Parquet::EncodingMask.try_new(2)
+    end
+  end
+
+  # Upstream `test_encoding_mask_is_only`.
+  it "checks whether a mask has a single encoding" do
+    mask = Parquet::EncodingMask.new_from_encodings([Parquet::Encoding::PLAIN])
+    mask.only?(Parquet::Encoding::PLAIN).should be_true
+
+    mask = Parquet::EncodingMask.new_from_encodings(
+      [Parquet::Encoding::PLAIN, Parquet::Encoding::PLAIN_DICTIONARY],
+    )
+    mask.only?(Parquet::Encoding::PLAIN).should be_false
+  end
 end

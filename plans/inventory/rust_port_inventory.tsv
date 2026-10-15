@@ -1634,9 +1634,9 @@ parquet/src/arrow/schema/virtual_type.rs::method::RowNumber.serialize_metadata	m
 parquet/src/arrow/schema/virtual_type.rs::method::RowNumber.supports_data_type	method	missing	-	auto-generated
 parquet/src/arrow/schema/virtual_type.rs::method::RowNumber.try_new	method	missing	-	auto-generated
 parquet/src/arrow/schema/virtual_type.rs::method::RowNumber.validate	method	missing	-	auto-generated
-parquet/src/basic.rs::const::ALLOWED_MASK	const	missing	-	auto-generated
+parquet/src/basic.rs::const::ALLOWED_MASK	const	ported	src/parquet/basic.cr	EncodingMask::ALLOWED_MASK
 parquet/src/basic.rs::const::ELEMENT_TYPE	const	missing	-	auto-generated
-parquet/src/basic.rs::const::MAX_ENCODING	const	missing	-	auto-generated
+parquet/src/basic.rs::const::MAX_ENCODING	const	ported	src/parquet/basic.cr	EncodingMask::MAX_ENCODING
 parquet/src/basic.rs::method::ColumnOrder.column_order_for_type	method	ported	src/parquet/basic.cr	ColumnOrder class method
 parquet/src/basic.rs::method::ColumnOrder.fmt	method	ported	src/parquet/basic.cr	Display via ColumnOrder#to_s
 parquet/src/basic.rs::method::ColumnOrder.get_converted_sort_order	method	ported	src/parquet/basic.cr	ColumnOrder class method
@@ -1659,17 +1659,17 @@ parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.read_thrift	method	port
 parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.try_as_edges	method	missing	-	auto-generated
 parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.write_thrift	method	ported	src/parquet/basic.cr	writes i32 code
 parquet/src/basic.rs::method::Encoding.from_str	method	ported	src/parquet/basic.cr	Enum.parse? (exact) or upcased name; matches upstream upper/lower forms
-parquet/src/basic.rs::method::EncodingMask.all_set	method	missing	-	auto-generated
-parquet/src/basic.rs::method::EncodingMask.as_i32	method	missing	-	auto-generated
-parquet/src/basic.rs::method::EncodingMask.encodings	method	missing	-	auto-generated
+parquet/src/basic.rs::method::EncodingMask.all_set	method	ported	src/parquet/basic.cr	EncodingMask#all_set
+parquet/src/basic.rs::method::EncodingMask.as_i32	method	ported	src/parquet/basic.cr	EncodingMask#as_i32
+parquet/src/basic.rs::method::EncodingMask.encodings	method	ported	src/parquet/basic.cr	EncodingMask#encodings
 parquet/src/basic.rs::method::EncodingMask.heap_size	method	missing	-	auto-generated
-parquet/src/basic.rs::method::EncodingMask.insert	method	missing	-	auto-generated
-parquet/src/basic.rs::method::EncodingMask.is_only	method	missing	-	auto-generated
-parquet/src/basic.rs::method::EncodingMask.is_set	method	missing	-	auto-generated
-parquet/src/basic.rs::method::EncodingMask.mask_to_encodings_iter	method	missing	-	auto-generated
-parquet/src/basic.rs::method::EncodingMask.new_from_encodings	method	missing	-	auto-generated
-parquet/src/basic.rs::method::EncodingMask.read_thrift	method	missing	-	auto-generated
-parquet/src/basic.rs::method::EncodingMask.try_new	method	missing	-	auto-generated
+parquet/src/basic.rs::method::EncodingMask.insert	method	ported	src/parquet/basic.cr	EncodingMask#insert
+parquet/src/basic.rs::method::EncodingMask.is_only	method	ported	src/parquet/basic.cr	renamed EncodingMask#only?
+parquet/src/basic.rs::method::EncodingMask.is_set	method	ported	src/parquet/basic.cr	renamed EncodingMask#set?
+parquet/src/basic.rs::method::EncodingMask.mask_to_encodings_iter	method	intentional_divergence	src/parquet/basic.cr	inlined into EncodingMask#encodings
+parquet/src/basic.rs::method::EncodingMask.new_from_encodings	method	ported	src/parquet/basic.cr	EncodingMask.new_from_encodings
+parquet/src/basic.rs::method::EncodingMask.read_thrift	method	ported	src/parquet/basic.cr	EncodingMask.read_thrift
+parquet/src/basic.rs::method::EncodingMask.try_new	method	ported	src/parquet/basic.cr	EncodingMask.try_new
 parquet/src/basic.rs::method::GeographyType.algorithm	method	ported	src/parquet/basic.cr	renamed GeographyType#algorithm_or_default (field getter owns `algorithm`)
 parquet/src/basic.rs::method::LogicalType.decimal	method	ported	src/parquet/basic.cr	constructor LogicalType.decimal
 parquet/src/basic.rs::method::LogicalType.from_str	method	ported	src/parquet/basic.cr	LogicalType.from_str

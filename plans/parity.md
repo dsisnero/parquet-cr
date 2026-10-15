@@ -82,7 +82,12 @@ little-endian layout.
 - [x] `SortOrder`, `ColumnOrder` (incl. `column_order_for_type`, sort-order
   resolution, union read/write). `TypeDefinedOrder` is a thrift empty struct and
   is folded into `ColumnOrder::Kind::TypeDefinedOrder`.
-- [ ] `EncodingMask`.
+- [x] `EncodingMask` (`src/parquet/basic.cr`): `try_new` validation, `as_i32`,
+  `new_from_encodings`, `insert`, `set?`/`only?`/`all_set`, `encodings`, and
+  thrift `list<Encoding>` reading. Upstream `test_encoding_roundtrip`,
+  `test_invalid_encoding_mask`, and `test_encoding_mask_is_only` ported to
+  `spec/parquet/basic_spec.cr`. (`is_set`/`is_only` are `set?`/`only?`;
+  `mask_to_encodings_iter` is inlined; `HeapSize` not ported.)
 - [ ] `Statistics` and typed statistics.
 
 ### 1.5 Data type model

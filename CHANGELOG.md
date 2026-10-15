@@ -97,6 +97,11 @@ revision is recorded per entry.
   `update_from_levels`/`reset`. Upstream
   `test_level_histogram_update_from_levels_compat` ported to
   `spec/parquet/file/metadata_spec.cr`.
+- `EncodingMask` (`src/parquet/basic.cr`): bitmask of the `Encoding`s used by a
+  column chunk, with `try_new` validation, `new_from_encodings`, `insert`,
+  `set?`/`only?`/`all_set`, `encodings`, and thrift reading. Upstream
+  `test_encoding_roundtrip`, `test_invalid_encoding_mask`, and
+  `test_encoding_mask_is_only` ported to `spec/parquet/basic_spec.cr`.
 - Harden `Makefile` gates by stripping macOS AppleDouble `._*` sidecars (whose
   names can match crystal's `*_spec.cr` glob on exFAT volumes).
 

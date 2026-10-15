@@ -646,6 +646,91 @@ module Parquet
   end
   define_thrift_enum(Encoding)
 
+  # A bitmask representing the `Encoding`s employed by a column chunk.
+  struct EncodingMask
+    getter value : Int32
+
+    # Highest valued discriminant in the `Encoding` enum.
+    MAX_ENCODING = Encoding::ALP.value
+
+    # Unused bit positions (including the never-used GROUP_VAR_INT value of 1).
+    ALLOWED_MASK = (~((1_u32 << (MAX_ENCODING.to_u32 + 1_u32)) - 1_u32)) | (1_u32 << 1)
+
+    def initialize(@value : Int32)
+    end
+
+    # Creates a new `EncodingMask`, erroring if a disallowed bit is set.
+    def self.try_new(val : Int32) : EncodingMask
+      raw = val.unsafe_as(UInt32)
+      if (raw & ALLOWED_MASK) != 0
+        raise general_err!("Attempt to create invalid mask: 0x#{"%x" % raw}")
+      end
+
+      new(val)
+    end
+
+    # Returns an integer representation of this mask.
+    def as_i32 : Int32
+      @value
+    end
+
+    # Creates a mask from a collection of `Encoding`s.
+    def self.new_from_encodings(encodings : Enumerable(Encoding)) : EncodingMask
+      mask = 0_i32
+      encodings.each { |e| mask |= 1_i32 << e.value }
+      new(mask)
+    end
+
+    # Marks the given `Encoding` as present.
+    def insert(val : Encoding) : Nil
+      @value |= 1_i32 << val.value
+    end
+
+    # Tests whether the given `Encoding` is present.
+    def set?(val : Encoding) : Bool
+      (@value & (1_i32 << val.value)) != 0
+    end
+
+    # Tests whether this mask has only the bit for the given `Encoding` set.
+    def only?(val : Encoding) : Bool
+      @value == (1_i32 << val.value)
+    end
+
+    # Tests whether all `Encoding`s in a set are present.
+    def all_set(encodings : Enumerable(Encoding)) : Bool
+      encodings.all? { |e| set?(e) }
+    end
+
+    # Returns the `Encoding`s present in this mask, ascending by value.
+    def encodings : Array(Encoding)
+      result = [] of Encoding
+      (0..MAX_ENCODING).each do |i|
+        if (@value & (1_i32 << i)) != 0
+          encoding = Encoding.from_value?(i)
+          raise general_err!("Impossible encoding #{i}") if encoding.nil?
+          result << encoding
+        end
+      end
+      result
+    end
+
+    def self.thrift_element_type : ::Parquet::Thrift::ElementType
+      ::Parquet::Thrift::ElementType::I32
+    end
+
+    # Reads a thrift `list<Encoding>` into a bitmask.
+    def self.read_thrift(prot : ::Parquet::Thrift::ThriftCompactInputProtocol) : EncodingMask
+      mask = 0_i32
+      list_ident = prot.read_list_begin
+      ::Parquet::Thrift.validate_list_type(::Parquet::Thrift::ElementType::I32, list_ident)
+      list_ident.size.times do
+        val = Encoding.read_thrift(prot)
+        mask |= 1_i32 << val.value
+      end
+      new(mask)
+    end
+  end
+
   # Mirrors thrift enum `CompressionCodec`.
   #
   # Supported compression algorithms.
