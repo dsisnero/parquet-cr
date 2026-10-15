@@ -85,8 +85,13 @@ little-endian layout.
 
 ### 1.5 Data type model
 
-- [ ] `DataType` enum and accessors (`data_type.rs`).
-- [ ] `ByteArray`, `FixedLenByteArray`, `Int96` semantics.
+- [x] Value types: `Int96`, `ByteArray`, `FixedLenByteArray`, `Decimal`, and the
+  `AsBytes` trait (`src/parquet/data_type.cr`), with upstream `data_type.rs`
+  tests in `spec/parquet/data_type_spec.cr`.
+- [ ] `DataType` trait + `make_type!` (physical-type `TYPE`/`get_physical_type`/
+  `get_type_size`, encode/decode) — depends on the column reader/writer.
+- [ ] `AsBytes`/`SliceAsBytes` for primitives, `str`, `Vec<u8>`, `bool`, and
+  `SliceAsBytes` (used by column encode/decode).
 
 ### 1.6 Schema
 
@@ -204,6 +209,12 @@ little-endian layout.
   variant is retained by wrapping the i32 code in a value struct.
   `GeographyType::algorithm` is `GeographyType#algorithm_or_default` because a
   Crystal accessor cannot share the field's name.
+- `Decimal`: upstream's `Int32`/`Int64`/`Bytes` enum is a single Crystal struct
+  carrying the unscaled bytes; variant identity is the byte width. Equality and
+  accessors match upstream (`precision`, `scale`, `data`).
+- `FixedLenByteArray`: Rust `Deref`/`From` are explicit delegating methods and
+  constructors in Crystal.
+- `ByteArray::is_empty` maps to Crystal `empty?`.
 
 ## Notes
 

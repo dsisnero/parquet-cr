@@ -48,5 +48,8 @@ revision is recorded per entry.
   `GeographyType`, and `EdgeInterpolationAlgorithm`; `ConvertedType.from` and
   `LogicalType.from_str`. Upstream `basic.rs` tests for these ported to
   `spec/parquet/basic_spec.cr`.
+- `data_type` value types (`src/parquet/data_type.cr`): `Int96`, `ByteArray`,
+  `FixedLenByteArray`, `Decimal`, and the `AsBytes` trait; upstream
+  `data_type.rs` tests ported to `spec/parquet/data_type_spec.cr`.
 
 [Unreleased]: https://github.com/dsisnero/parquet-cr/commits/main

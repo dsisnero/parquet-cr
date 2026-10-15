@@ -1972,61 +1972,61 @@ parquet/src/compression.rs::method::ZSTDCodec.new	method	missing	-	auto-generate
 parquet/src/compression.rs::method::ZstdLevel.compression_level	method	missing	-	auto-generated
 parquet/src/compression.rs::method::ZstdLevel.default	method	missing	-	auto-generated
 parquet/src/compression.rs::method::ZstdLevel.try_new	method	missing	-	auto-generated
-parquet/src/data_type.rs::const::JULIAN_DAY_OF_EPOCH	const	missing	-	auto-generated
-parquet/src/data_type.rs::const::MICROSECONDS	const	missing	-	auto-generated
-parquet/src/data_type.rs::const::MICROSECONDS_IN_DAY	const	missing	-	auto-generated
-parquet/src/data_type.rs::const::MILLISECONDS	const	missing	-	auto-generated
-parquet/src/data_type.rs::const::MILLISECONDS_IN_DAY	const	missing	-	auto-generated
-parquet/src/data_type.rs::const::NANOSECONDS	const	missing	-	auto-generated
-parquet/src/data_type.rs::const::NANOSECONDS_IN_DAY	const	missing	-	auto-generated
+parquet/src/data_type.rs::const::JULIAN_DAY_OF_EPOCH	const	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::const::MICROSECONDS	const	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::const::MICROSECONDS_IN_DAY	const	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::const::MILLISECONDS	const	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::const::MILLISECONDS_IN_DAY	const	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::const::NANOSECONDS	const	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::const::NANOSECONDS_IN_DAY	const	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
 parquet/src/data_type.rs::const::PHYSICAL_TYPE	const	missing	-	auto-generated
-parquet/src/data_type.rs::const::SECONDS_IN_DAY	const	missing	-	auto-generated
+parquet/src/data_type.rs::const::SECONDS_IN_DAY	const	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
 parquet/src/data_type.rs::method::&str.as_bytes	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::ByteArray.as_bytes	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::ByteArray.as_ref	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::ByteArray.as_utf8	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::ByteArray.data	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::ByteArray.eq	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::ByteArray.fmt	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::ByteArray.from	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::ByteArray.is_empty	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::ByteArray.len	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::ByteArray.new	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::ByteArray.partial_cmp	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::ByteArray.set_data	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::ByteArray.slice	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Decimal.as_bytes	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Decimal.data	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Decimal.default	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Decimal.eq	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Decimal.from_bytes	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Decimal.from_i32	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Decimal.from_i64	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Decimal.precision	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Decimal.scale	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::FixedLenByteArray.as_bytes	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::FixedLenByteArray.as_ref	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::FixedLenByteArray.deref	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::FixedLenByteArray.deref_mut	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::FixedLenByteArray.eq	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::FixedLenByteArray.fmt	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::FixedLenByteArray.from	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::FixedLenByteArray.partial_cmp	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Int96.as_bytes	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Int96.cmp	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Int96.data	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Int96.data_as_days_and_nanos	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Int96.fmt	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Int96.from	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Int96.get_days	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Int96.get_nanos	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Int96.new	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Int96.partial_cmp	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Int96.set_data	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Int96.to_micros	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Int96.to_millis	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Int96.to_nanos	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::Int96.to_seconds	method	missing	-	auto-generated
+parquet/src/data_type.rs::method::ByteArray.as_bytes	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::ByteArray.as_ref	method	intentional_divergence	src/parquet/data_type.cr	Crystal: ByteArray#data / duck-typed byte access
+parquet/src/data_type.rs::method::ByteArray.as_utf8	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::ByteArray.data	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::ByteArray.eq	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::ByteArray.fmt	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::ByteArray.from	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::ByteArray.is_empty	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::ByteArray.len	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::ByteArray.new	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::ByteArray.partial_cmp	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::ByteArray.set_data	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::ByteArray.slice	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Decimal.as_bytes	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Decimal.data	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Decimal.default	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Decimal.eq	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Decimal.from_bytes	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Decimal.from_i32	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Decimal.from_i64	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Decimal.precision	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Decimal.scale	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::FixedLenByteArray.as_bytes	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::FixedLenByteArray.as_ref	method	intentional_divergence	src/parquet/data_type.cr	Crystal: delegation to ByteArray
+parquet/src/data_type.rs::method::FixedLenByteArray.deref	method	intentional_divergence	src/parquet/data_type.cr	Crystal: explicit delegation (no Deref)
+parquet/src/data_type.rs::method::FixedLenByteArray.deref_mut	method	intentional_divergence	src/parquet/data_type.cr	Crystal: explicit delegation (no DerefMut)
+parquet/src/data_type.rs::method::FixedLenByteArray.eq	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::FixedLenByteArray.fmt	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::FixedLenByteArray.from	method	intentional_divergence	src/parquet/data_type.cr	Crystal: constructors new(ByteArray/String/Array)
+parquet/src/data_type.rs::method::FixedLenByteArray.partial_cmp	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Int96.as_bytes	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Int96.cmp	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Int96.data	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Int96.data_as_days_and_nanos	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Int96.fmt	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Int96.from	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Int96.get_days	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Int96.get_nanos	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Int96.new	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Int96.partial_cmp	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Int96.set_data	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Int96.to_micros	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Int96.to_millis	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Int96.to_nanos	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
+parquet/src/data_type.rs::method::Int96.to_seconds	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
 parquet/src/data_type.rs::method::Vec<u8>.as_bytes	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::[u8].as_bytes	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::bool.as_any	method	missing	-	auto-generated
