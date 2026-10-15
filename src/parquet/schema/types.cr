@@ -138,6 +138,14 @@ module Parquet
       def get_scale : Int32
         @scale
       end
+
+      def ==(other : PrimitiveType) : Bool
+        basic_info == other.basic_info &&
+          physical_type == other.physical_type &&
+          type_length == other.type_length &&
+          scale == other.scale &&
+          precision == other.precision
+      end
     end
 
     # A group of fields (similar to a struct).
@@ -159,6 +167,10 @@ module Parquet
       # ameba:disable Naming/AccessorMethodName
       def get_fields : Array(Type)
         @fields
+      end
+
+      def ==(other : GroupType) : Bool
+        basic_info == other.basic_info && fields == other.fields
       end
     end
 
@@ -557,6 +569,231 @@ module Parquet
             raise general_err!(
               "FILE type field '#{field_name}' in group '#{name}' must have logical type #{Basic.debug_option(expected_logical)}"
             )
+          end
+        end
+      end
+    end
+
+    # Represents the location of a column in a Parquet schema.
+    struct ColumnPath
+      getter parts : Array(String)
+
+      def initialize(@parts : Array(String))
+      end
+
+      def self.new(single_path : String) : ColumnPath
+        new([single_path])
+      end
+
+      def self.from(parts : Array(String)) : ColumnPath
+        new(parts)
+      end
+
+      def self.from(single_path : String) : ColumnPath
+        new(single_path)
+      end
+
+      # String representation, e.g. `"a.b.c"`.
+      def string : String
+        @parts.join('.')
+      end
+
+      # Appends more components to the end of the path.
+      def append(tail : Array(String)) : Nil
+        @parts.concat(tail)
+      end
+
+      def to_s(io : IO) : Nil
+        io << string.inspect
+      end
+    end
+
+    # Physical type for leaf-level primitive columns, plus the maximum
+    # definition/repetition levels required to reassemble nested data.
+    class ColumnDescriptor
+      getter path : ColumnPath
+      getter max_def_level : Int16
+      getter max_rep_level : Int16
+      getter repeated_ancestor_def_level : Int16
+
+      def initialize(
+        @primitive_type : Type,
+        @max_def_level : Int16,
+        @max_rep_level : Int16,
+        @path : ColumnPath,
+        @repeated_ancestor_def_level : Int16 = 0_i16,
+      )
+      end
+
+      def self.new_with_repeated_ancestor(
+        primitive_type : Type,
+        max_def_level : Int16,
+        max_rep_level : Int16,
+        path : ColumnPath,
+        repeated_ancestor_def_level : Int16,
+      ) : ColumnDescriptor
+        new(primitive_type, max_def_level, max_rep_level, path, repeated_ancestor_def_level)
+      end
+
+      # Returns self type for this leaf column.
+      def self_type : Type
+        @primitive_type
+      end
+
+      def self_type_ptr : Type
+        @primitive_type
+      end
+
+      # ameba:disable Naming/AccessorMethodName
+      def get_basic_info : BasicTypeInfo
+        @primitive_type.basic_info
+      end
+
+      def name : String
+        @primitive_type.name
+      end
+
+      def converted_type : ConvertedType
+        @primitive_type.basic_info.converted_type
+      end
+
+      def logical_type_ref : LogicalType?
+        @primitive_type.basic_info.logical_type_ref
+      end
+
+      def physical_type : PhysicalType
+        @primitive_type.get_physical_type
+      end
+
+      def type_length : Int32
+        @primitive_type.as(PrimitiveType).type_length
+      end
+
+      def type_precision : Int32
+        @primitive_type.get_precision
+      end
+
+      def type_scale : Int32
+        @primitive_type.get_scale
+      end
+
+      def sort_order : SortOrder
+        @primitive_type.basic_info.sort_order
+      end
+
+      def ==(other : ColumnDescriptor) : Bool
+        self_type == other.self_type &&
+          max_def_level == other.max_def_level &&
+          max_rep_level == other.max_rep_level &&
+          repeated_ancestor_def_level == other.repeated_ancestor_def_level &&
+          path == other.path
+      end
+    end
+
+    # Schema of a Parquet file: the top-level `Type` plus a `ColumnDescriptor`
+    # for each primitive (leaf) column, in DFS order.
+    class SchemaDescriptor
+      getter schema : Type
+      getter leaves : Array(ColumnDescriptor)
+      getter leaf_to_base : Array(Int32)
+
+      def initialize(@schema : Type)
+        unless @schema.group?
+          raise general_err!("SchemaDescriptor should take a GroupType")
+        end
+
+        @leaves = [] of ColumnDescriptor
+        @leaf_to_base = [] of Int32
+        @schema.get_fields.each_with_index do |field, root_idx|
+          path = [] of String
+          build_tree(field, root_idx.to_i32, 0_i16, 0_i16, 0_i16, path)
+        end
+      end
+
+      # Returns the `ColumnDescriptor` for a field position.
+      def column(i : Int32) : ColumnDescriptor
+        unless 0 <= i < @leaves.size
+          raise general_err!("Index out of bound: #{i} not in [0, #{@leaves.size})")
+        end
+
+        @leaves[i]
+      end
+
+      def columns : Array(ColumnDescriptor)
+        @leaves
+      end
+
+      def num_columns : Int32
+        @leaves.size
+      end
+
+      def get_column_root(i : Int32) : Type
+        @schema.get_fields[get_column_root_idx(i)]
+      end
+
+      def get_column_root_ptr(i : Int32) : Type
+        get_column_root(i)
+      end
+
+      def get_column_root_idx(leaf : Int32) : Int32
+        unless 0 <= leaf < @leaves.size
+          raise general_err!("Index out of bound: #{leaf} not in [0, #{@leaves.size})")
+        end
+
+        @leaf_to_base[leaf]
+      end
+
+      def root_schema : Type
+        @schema
+      end
+
+      def root_schema_ptr : Type
+        @schema
+      end
+
+      def name : String
+        @schema.name
+      end
+
+      private def build_tree(
+        tp : Type,
+        root_idx : Int32,
+        max_rep_level : Int16,
+        max_def_level : Int16,
+        repeated_ancestor_def_level : Int16,
+        path_so_far : Array(String),
+      ) : Nil
+        bi = tp.basic_info
+        unless bi.has_repetition?
+          raise general_err!("Type must have repetition set")
+        end
+
+        path_so_far << tp.name
+        case bi.repetition
+        when Repetition::OPTIONAL
+          max_def_level += 1
+        when Repetition::REPEATED
+          max_def_level += 1
+          max_rep_level += 1
+          repeated_ancestor_def_level = max_def_level
+        else
+          # REQUIRED: no level increase
+        end
+
+        if tp.primitive?
+          desc = ColumnDescriptor.new_with_repeated_ancestor(
+            tp,
+            max_def_level,
+            max_rep_level,
+            ColumnPath.new(path_so_far.dup),
+            repeated_ancestor_def_level,
+          )
+          @leaves << desc
+          @leaf_to_base << root_idx
+        else
+          tp.get_fields.each do |field|
+            build_tree(field, root_idx, max_rep_level, max_def_level, repeated_ancestor_def_level, path_so_far)
+            path_so_far.pop
           end
         end
       end

@@ -63,6 +63,11 @@ revision is recorded per entry.
   logical/converted/physical validation, decimal precision, `FILE` group
   validation), and `check_contains`; upstream `schema/types.rs` core tests
   ported to `spec/parquet/schema/types_spec.cr`.
+- `schema::types` descriptors (`src/parquet/schema/types.cr`): `ColumnPath`,
+  `ColumnDescriptor`, `SchemaDescriptor`, and the DFS definition/repetition-level
+  tree builder; upstream `test_column_descriptor`, `test_schema_descriptor`, and
+  `ColumnPath` doc-example characterization ported to
+  `spec/parquet/schema/types_spec.cr`.
 - Harden `Makefile` gates by stripping macOS AppleDouble `._*` sidecars (whose
   names can match crystal's `*_spec.cr` glob on exFAT volumes).
 

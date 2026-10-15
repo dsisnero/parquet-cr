@@ -102,9 +102,13 @@ little-endian layout.
   `FILE` group validation), and `check_contains` (`src/parquet/schema/types.cr`).
   Upstream `schema/types.rs` core tests ported to
   `spec/parquet/schema/types_spec.cr`.
-- [ ] `ColumnPath`, `ColumnDescriptor`, `SchemaDescriptor`, and the definition/
-  repetition-level tree builder (`schema/types.rs`).
-- [ ] Thrift <-> schema conversion (`from_thrift`/`to_thrift`, `SchemaElement`).
+- [x] `ColumnPath`, `ColumnDescriptor`, `SchemaDescriptor`, and the definition/
+  repetition-level tree builder (`src/parquet/schema/types.cr`). Upstream
+  `test_column_descriptor`, `test_schema_descriptor`, and `ColumnPath`
+  doc-example characterization ported. Parser-driven build-tree tests
+  (`test_schema_build_tree_*`) land with `schema::parser`.
+- [ ] Thrift <-> schema conversion (`from_thrift`/`to_thrift`, `SchemaElement`,
+  `parquet_schema_from_array`).
 - [ ] Thrift → schema parser (`schema/parser.rs`).
 - [ ] Schema printer (`schema/printer.rs`).
 - [ ] Primitive builders (`schema/primitive.rs`). 4 upstream test modules.

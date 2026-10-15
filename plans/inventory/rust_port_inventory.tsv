@@ -3303,8 +3303,8 @@ parquet/src/schema/printer.rs::const::INDENT_WIDTH	const	missing	-	auto-generate
 parquet/src/schema/printer.rs::method::Printer<'_>.print	method	missing	-	auto-generated
 parquet/src/schema/printer.rs::method::Printer<'a>.new	method	missing	-	auto-generated
 parquet/src/schema/printer.rs::method::Printer<'a>.print_indent	method	missing	-	auto-generated
-parquet/src/schema/types.rs::const::INIT_SCHEMA_DEPTH	const	missing	-	auto-generated
-parquet/src/schema/types.rs::const::VALID_FIELDS	const	missing	-	auto-generated
+parquet/src/schema/types.rs::const::INIT_SCHEMA_DEPTH	const	intentional_divergence	src/parquet/schema/types.cr	inlined (dynamic arrays) in SchemaDescriptor#initialize
+parquet/src/schema/types.rs::const::VALID_FIELDS	const	intentional_divergence	src/parquet/schema/types.cr	inlined in GroupTypeBuilder#validate_file_type_fields
 parquet/src/schema/types.rs::method::BasicTypeInfo.converted_type	method	ported	src/parquet/schema/types.cr	BasicTypeInfo ported
 parquet/src/schema/types.rs::method::BasicTypeInfo.has_id	method	ported	src/parquet/schema/types.cr	renamed BasicTypeInfo#has_id?
 parquet/src/schema/types.rs::method::BasicTypeInfo.has_repetition	method	ported	src/parquet/schema/types.cr	renamed BasicTypeInfo#has_repetition?
@@ -3314,32 +3314,32 @@ parquet/src/schema/types.rs::method::BasicTypeInfo.logical_type_ref	method	porte
 parquet/src/schema/types.rs::method::BasicTypeInfo.name	method	ported	src/parquet/schema/types.cr	BasicTypeInfo ported
 parquet/src/schema/types.rs::method::BasicTypeInfo.repetition	method	ported	src/parquet/schema/types.cr	BasicTypeInfo ported
 parquet/src/schema/types.rs::method::BasicTypeInfo.sort_order	method	ported	src/parquet/schema/types.cr	BasicTypeInfo ported
-parquet/src/schema/types.rs::method::ColumnDescriptor.converted_type	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnDescriptor.get_basic_info	method	missing	-	auto-generated
+parquet/src/schema/types.rs::method::ColumnDescriptor.converted_type	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
+parquet/src/schema/types.rs::method::ColumnDescriptor.get_basic_info	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
 parquet/src/schema/types.rs::method::ColumnDescriptor.heap_size	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnDescriptor.logical_type_ref	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnDescriptor.max_def_level	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnDescriptor.max_rep_level	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnDescriptor.name	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnDescriptor.new	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnDescriptor.new_with_repeated_ancestor	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnDescriptor.path	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnDescriptor.physical_type	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnDescriptor.repeated_ancestor_def_level	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnDescriptor.self_type	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnDescriptor.self_type_ptr	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnDescriptor.sort_order	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnDescriptor.type_length	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnDescriptor.type_precision	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnDescriptor.type_scale	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnPath.append	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnPath.as_ref	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnPath.fmt	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnPath.from	method	missing	-	auto-generated
+parquet/src/schema/types.rs::method::ColumnDescriptor.logical_type_ref	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
+parquet/src/schema/types.rs::method::ColumnDescriptor.max_def_level	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
+parquet/src/schema/types.rs::method::ColumnDescriptor.max_rep_level	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
+parquet/src/schema/types.rs::method::ColumnDescriptor.name	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
+parquet/src/schema/types.rs::method::ColumnDescriptor.new	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
+parquet/src/schema/types.rs::method::ColumnDescriptor.new_with_repeated_ancestor	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
+parquet/src/schema/types.rs::method::ColumnDescriptor.path	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
+parquet/src/schema/types.rs::method::ColumnDescriptor.physical_type	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
+parquet/src/schema/types.rs::method::ColumnDescriptor.repeated_ancestor_def_level	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
+parquet/src/schema/types.rs::method::ColumnDescriptor.self_type	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
+parquet/src/schema/types.rs::method::ColumnDescriptor.self_type_ptr	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
+parquet/src/schema/types.rs::method::ColumnDescriptor.sort_order	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
+parquet/src/schema/types.rs::method::ColumnDescriptor.type_length	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
+parquet/src/schema/types.rs::method::ColumnDescriptor.type_precision	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
+parquet/src/schema/types.rs::method::ColumnDescriptor.type_scale	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
+parquet/src/schema/types.rs::method::ColumnPath.append	method	ported	src/parquet/schema/types.cr	ColumnPath ported
+parquet/src/schema/types.rs::method::ColumnPath.as_ref	method	ported	src/parquet/schema/types.cr	ColumnPath#parts ported
+parquet/src/schema/types.rs::method::ColumnPath.fmt	method	ported	src/parquet/schema/types.cr	ColumnPath ported
+parquet/src/schema/types.rs::method::ColumnPath.from	method	ported	src/parquet/schema/types.cr	ColumnPath ported
 parquet/src/schema/types.rs::method::ColumnPath.heap_size	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnPath.new	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnPath.parts	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::ColumnPath.string	method	missing	-	auto-generated
+parquet/src/schema/types.rs::method::ColumnPath.new	method	ported	src/parquet/schema/types.cr	ColumnPath ported
+parquet/src/schema/types.rs::method::ColumnPath.parts	method	ported	src/parquet/schema/types.cr	ColumnPath ported
+parquet/src/schema/types.rs::method::ColumnPath.string	method	ported	src/parquet/schema/types.cr	ColumnPath ported
 parquet/src/schema/types.rs::method::GroupTypeBuilder<'a>.build	method	ported	src/parquet/schema/types.cr	GroupTypeBuilder ported
 parquet/src/schema/types.rs::method::GroupTypeBuilder<'a>.new	method	ported	src/parquet/schema/types.cr	GroupTypeBuilder ported
 parquet/src/schema/types.rs::method::GroupTypeBuilder<'a>.with_converted_type	method	ported	src/parquet/schema/types.cr	GroupTypeBuilder ported
@@ -3357,19 +3357,19 @@ parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.with_logical_type	
 parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.with_precision	method	ported	src/parquet/schema/types.cr	PrimitiveTypeBuilder ported
 parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.with_repetition	method	ported	src/parquet/schema/types.cr	PrimitiveTypeBuilder ported
 parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.with_scale	method	ported	src/parquet/schema/types.cr	PrimitiveTypeBuilder ported
-parquet/src/schema/types.rs::method::SchemaDescriptor.column	method	missing	-	auto-generated
+parquet/src/schema/types.rs::method::SchemaDescriptor.column	method	ported	src/parquet/schema/types.cr	SchemaDescriptor ported
 parquet/src/schema/types.rs::method::SchemaDescriptor.column_root_of	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::SchemaDescriptor.columns	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::SchemaDescriptor.fmt	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::SchemaDescriptor.get_column_root	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::SchemaDescriptor.get_column_root_idx	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::SchemaDescriptor.get_column_root_ptr	method	missing	-	auto-generated
+parquet/src/schema/types.rs::method::SchemaDescriptor.columns	method	ported	src/parquet/schema/types.cr	SchemaDescriptor ported
+parquet/src/schema/types.rs::method::SchemaDescriptor.fmt	method	ported	src/parquet/schema/types.cr	SchemaDescriptor ported
+parquet/src/schema/types.rs::method::SchemaDescriptor.get_column_root	method	ported	src/parquet/schema/types.cr	SchemaDescriptor ported
+parquet/src/schema/types.rs::method::SchemaDescriptor.get_column_root_idx	method	ported	src/parquet/schema/types.cr	SchemaDescriptor ported
+parquet/src/schema/types.rs::method::SchemaDescriptor.get_column_root_ptr	method	ported	src/parquet/schema/types.cr	SchemaDescriptor ported
 parquet/src/schema/types.rs::method::SchemaDescriptor.heap_size	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::SchemaDescriptor.name	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::SchemaDescriptor.new	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::SchemaDescriptor.num_columns	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::SchemaDescriptor.root_schema	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::SchemaDescriptor.root_schema_ptr	method	missing	-	auto-generated
+parquet/src/schema/types.rs::method::SchemaDescriptor.name	method	ported	src/parquet/schema/types.cr	SchemaDescriptor ported
+parquet/src/schema/types.rs::method::SchemaDescriptor.new	method	ported	src/parquet/schema/types.cr	SchemaDescriptor ported
+parquet/src/schema/types.rs::method::SchemaDescriptor.num_columns	method	ported	src/parquet/schema/types.cr	SchemaDescriptor ported
+parquet/src/schema/types.rs::method::SchemaDescriptor.root_schema	method	ported	src/parquet/schema/types.cr	SchemaDescriptor ported
+parquet/src/schema/types.rs::method::SchemaDescriptor.root_schema_ptr	method	ported	src/parquet/schema/types.cr	SchemaDescriptor ported
 parquet/src/schema/types.rs::method::Type.check_contains	method	ported	src/parquet/schema/types.cr	Type ported
 parquet/src/schema/types.rs::method::Type.get_basic_info	method	ported	src/parquet/schema/types.cr	Type ported
 parquet/src/schema/types.rs::method::Type.get_fields	method	ported	src/parquet/schema/types.cr	Type ported

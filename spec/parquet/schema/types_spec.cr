@@ -8,6 +8,9 @@ require "../../spec_helper"
 # features (see `plans/parity.md`).
 alias ST = Parquet::Schema::Type
 alias SPrimitiveType = Parquet::Schema::PrimitiveType
+alias SColumnPath = Parquet::Schema::ColumnPath
+alias SColumnDescriptor = Parquet::Schema::ColumnDescriptor
+alias SSchemaDescriptor = Parquet::Schema::SchemaDescriptor
 alias PPhys = Parquet::Type
 alias PLT = Parquet::LogicalType
 alias PCT = Parquet::ConvertedType
@@ -420,6 +423,83 @@ describe Parquet::Schema::Type do
         .with_logical_type(PLT::File.new)
         .build
     end
+  end
+
+  # Characterization of `ColumnPath` (upstream doc examples).
+  it "builds and renders column paths" do
+    path = SColumnPath.new(["a", "b", "c"])
+    path.string.should eq("a.b.c")
+    path.append(["d", "e"])
+    path.string.should eq("a.b.c.d.e")
+
+    SColumnPath.new("name").string.should eq("name")
+    SColumnPath.new(["a", "b", "c"]).parts.should eq(["a", "b", "c"])
+  end
+
+  # Upstream `test_column_descriptor` / `test_column_descriptor_helper`.
+  it "builds a column descriptor" do
+    tp = ST.primitive_type_builder("name", PPhys::BYTE_ARRAY)
+      .with_converted_type(PCT::UTF8).build.as(ST)
+
+    descr = SColumnDescriptor.new(tp, 4_i16, 1_i16, SColumnPath.new("name"))
+
+    descr.path.should eq(SColumnPath.new("name"))
+    descr.converted_type.should eq(PCT::UTF8)
+    descr.physical_type.should eq(PPhys::BYTE_ARRAY)
+    descr.max_def_level.should eq(4)
+    descr.max_rep_level.should eq(1)
+    descr.name.should eq("name")
+    descr.type_length.should eq(-1)
+    descr.type_precision.should eq(-1)
+    descr.type_scale.should eq(-1)
+  end
+
+  # Upstream `test_schema_descriptor` / `test_schema_descriptor_helper`.
+  it "builds a schema descriptor with correct levels, paths, and roots" do
+    fields = [] of ST
+    fields << ST.primitive_type_builder("a", PPhys::INT32)
+      .with_repetition(PRep::REQUIRED).with_converted_type(PCT::INT_32).build.as(ST)
+    fields << ST.primitive_type_builder("b", PPhys::INT64)
+      .with_converted_type(PCT::INT_64).build.as(ST)
+    fields << ST.primitive_type_builder("c", PPhys::BYTE_ARRAY)
+      .with_repetition(PRep::REPEATED).with_converted_type(PCT::UTF8).build.as(ST)
+
+    item1 = ST.primitive_type_builder("item1", PPhys::INT64)
+      .with_repetition(PRep::REQUIRED).with_converted_type(PCT::INT_64).build.as(ST)
+    item2 = ST.primitive_type_builder("item2", PPhys::BOOLEAN).build.as(ST)
+    item3 = ST.primitive_type_builder("item3", PPhys::INT32)
+      .with_repetition(PRep::REPEATED).with_converted_type(PCT::INT_32).build.as(ST)
+    list = ST.group_type_builder("records")
+      .with_repetition(PRep::REPEATED).with_converted_type(PCT::LIST)
+      .with_fields([item1, item2, item3]).build.as(ST)
+    bag = ST.group_type_builder("bag")
+      .with_repetition(PRep::OPTIONAL).with_fields([list]).build.as(ST)
+    fields << bag
+
+    schema = ST.group_type_builder("schema")
+      .with_repetition(PRep::REPEATED).with_fields(fields).build.as(ST)
+    descr = SSchemaDescriptor.new(schema)
+
+    descr.num_columns.should eq(6)
+
+    ex_max_def_levels = [0, 1, 1, 2, 3, 3]
+    ex_max_rep_levels = [0, 0, 1, 1, 1, 2]
+    6.times do |i|
+      descr.column(i).max_def_level.should eq(ex_max_def_levels[i])
+      descr.column(i).max_rep_level.should eq(ex_max_rep_levels[i])
+    end
+
+    descr.column(0).path.string.should eq("a")
+    descr.column(1).path.string.should eq("b")
+    descr.column(2).path.string.should eq("c")
+    descr.column(3).path.string.should eq("bag.records.item1")
+    descr.column(4).path.string.should eq("bag.records.item2")
+    descr.column(5).path.string.should eq("bag.records.item3")
+
+    descr.get_column_root(0).name.should eq("a")
+    descr.get_column_root(3).name.should eq("bag")
+    descr.get_column_root(4).name.should eq("bag")
+    descr.get_column_root(5).name.should eq("bag")
   end
 end
 
