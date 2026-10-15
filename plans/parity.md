@@ -104,12 +104,13 @@ little-endian layout.
   `spec/parquet/schema/types_spec.cr`.
 - [x] `ColumnPath`, `ColumnDescriptor`, `SchemaDescriptor`, and the definition/
   repetition-level tree builder (`src/parquet/schema/types.cr`). Upstream
-  `test_column_descriptor`, `test_schema_descriptor`, and `ColumnPath`
-  doc-example characterization ported. Parser-driven build-tree tests
-  (`test_schema_build_tree_*`) land with `schema::parser`.
+  `test_column_descriptor`, `test_schema_descriptor`, `test_schema_build_tree_*`,
+  and `ColumnPath` doc-example characterization ported.
+- [x] Textual schema parser (`src/parquet/schema/parser.cr`):
+  `Parquet::Schema.parse_message_type`, tokenizer, and all upstream `parser.rs`
+  tests ported to `spec/parquet/schema/parser_spec.cr`.
 - [ ] Thrift <-> schema conversion (`from_thrift`/`to_thrift`, `SchemaElement`,
   `parquet_schema_from_array`).
-- [ ] Thrift → schema parser (`schema/parser.rs`).
 - [ ] Schema printer (`schema/printer.rs`).
 - [ ] Primitive builders (`schema/primitive.rs`). 4 upstream test modules.
 

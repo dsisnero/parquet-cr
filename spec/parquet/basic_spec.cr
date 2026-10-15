@@ -1,13 +1,5 @@
 require "../spec_helper"
 
-alias PLogicalType = Parquet::LogicalType
-alias PConvertedType = Parquet::ConvertedType
-alias PEdgeAlgo = Parquet::EdgeInterpolationAlgorithm
-alias PTimeUnit = Parquet::TimeUnit
-alias PPhysicalType = Parquet::Type
-alias PColumnOrder = Parquet::ColumnOrder
-alias PSortOrder = Parquet::SortOrder
-
 # Ported from `parquet/src/basic.rs` `mod tests`
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
 #

@@ -3289,16 +3289,16 @@ parquet/src/record/triplet.rs::method::TypedTripletIter<T>.max_def_level	method	
 parquet/src/record/triplet.rs::method::TypedTripletIter<T>.max_rep_level	method	missing	-	auto-generated
 parquet/src/record/triplet.rs::method::TypedTripletIter<T>.new	method	missing	-	auto-generated
 parquet/src/record/triplet.rs::method::TypedTripletIter<T>.read_next	method	missing	-	auto-generated
-parquet/src/schema/parser.rs::method::Parser<'_>.add_group_type	method	missing	-	auto-generated
-parquet/src/schema/parser.rs::method::Parser<'_>.add_primitive_type	method	missing	-	auto-generated
-parquet/src/schema/parser.rs::method::Parser<'_>.add_type	method	missing	-	auto-generated
-parquet/src/schema/parser.rs::method::Parser<'_>.parse_child_types	method	missing	-	auto-generated
-parquet/src/schema/parser.rs::method::Parser<'_>.parse_message_type	method	missing	-	auto-generated
-parquet/src/schema/parser.rs::method::Tokenizer<'a>.backtrack	method	missing	-	auto-generated
-parquet/src/schema/parser.rs::method::Tokenizer<'a>.from_str	method	missing	-	auto-generated
-parquet/src/schema/parser.rs::method::Tokenizer<'a>.is_schema_delim	method	missing	-	auto-generated
-parquet/src/schema/parser.rs::method::Tokenizer<'a>.next	method	missing	-	auto-generated
-parquet/src/schema/parser.rs::method::Tokenizer<'a>.split_token	method	missing	-	auto-generated
+parquet/src/schema/parser.rs::method::Parser<'_>.add_group_type	method	ported	src/parquet/schema/parser.cr	Parser#add_group_type
+parquet/src/schema/parser.rs::method::Parser<'_>.add_primitive_type	method	ported	src/parquet/schema/parser.cr	Parser#add_primitive_type
+parquet/src/schema/parser.rs::method::Parser<'_>.add_type	method	ported	src/parquet/schema/parser.cr	Parser#add_type
+parquet/src/schema/parser.rs::method::Parser<'_>.parse_child_types	method	ported	src/parquet/schema/parser.cr	Parser#parse_child_types
+parquet/src/schema/parser.rs::method::Parser<'_>.parse_message_type	method	ported	src/parquet/schema/parser.cr	Parser#parse_message_type
+parquet/src/schema/parser.rs::method::Tokenizer<'a>.backtrack	method	ported	src/parquet/schema/parser.cr	Tokenizer#backtrack
+parquet/src/schema/parser.rs::method::Tokenizer<'a>.from_str	method	ported	src/parquet/schema/parser.cr	Tokenizer.from_str
+parquet/src/schema/parser.rs::method::Tokenizer<'a>.is_schema_delim	method	ported	src/parquet/schema/parser.cr	renamed Tokenizer.schema_delim?
+parquet/src/schema/parser.rs::method::Tokenizer<'a>.next	method	ported	src/parquet/schema/parser.cr	Tokenizer#next
+parquet/src/schema/parser.rs::method::Tokenizer<'a>.split_token	method	ported	src/parquet/schema/parser.cr	Tokenizer.split_token
 parquet/src/schema/printer.rs::const::INDENT_WIDTH	const	missing	-	auto-generated
 parquet/src/schema/printer.rs::method::Printer<'_>.print	method	missing	-	auto-generated
 parquet/src/schema/printer.rs::method::Printer<'a>.new	method	missing	-	auto-generated

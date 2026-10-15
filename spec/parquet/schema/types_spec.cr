@@ -6,16 +6,6 @@ require "../../spec_helper"
 # Descriptor tests (`ColumnDescriptor`, `SchemaDescriptor`, build-tree), thrift
 # conversion, parser/printer, and `roundtrip_schema` tests are ported with their
 # features (see `plans/parity.md`).
-alias ST = Parquet::Schema::Type
-alias SPrimitiveType = Parquet::Schema::PrimitiveType
-alias SColumnPath = Parquet::Schema::ColumnPath
-alias SColumnDescriptor = Parquet::Schema::ColumnDescriptor
-alias SSchemaDescriptor = Parquet::Schema::SchemaDescriptor
-alias PPhys = Parquet::Type
-alias PLT = Parquet::LogicalType
-alias PCT = Parquet::ConvertedType
-alias PRep = Parquet::Repetition
-alias PTU = Parquet::TimeUnit
 
 private def new_group(name : String, repetition : PRep, types : Array(ST)) : ST
   ST.group_type_builder(name).with_repetition(repetition).with_fields(types).build.as(ST)
@@ -254,7 +244,9 @@ describe Parquet::Schema::Type do
   # Upstream `test_get_physical_type_panic`.
   it "raises when requesting the physical type of a group" do
     list = ST.group_type_builder("records").with_repetition(PRep::REPEATED).build
-    expect_raises(Parquet::ParquetError) { list.get_physical_type }
+    expect_raises(Parquet::ParquetError, "Cannot call get_physical_type() on a non-primitive type") do
+      list.get_physical_type
+    end
   end
 
   # Upstream `test_get_physical_type_primitive`.
@@ -500,6 +492,128 @@ describe Parquet::Schema::Type do
     descr.get_column_root(3).name.should eq("bag")
     descr.get_column_root(4).name.should eq("bag")
     descr.get_column_root(5).name.should eq("bag")
+  end
+
+  # Upstream `test_schema_build_tree_def_rep_levels`.
+  it "builds def/rep levels from a parsed message type" do
+    schema = Parquet::Schema.parse_message_type(<<-SCHEMA)
+      message spark_schema {
+        REQUIRED INT32 a;
+        OPTIONAL group b {
+          OPTIONAL INT32 _1;
+          OPTIONAL INT32 _2;
+        }
+        OPTIONAL group c (LIST) {
+          REPEATED group list {
+            OPTIONAL INT32 element;
+          }
+        }
+      }
+      SCHEMA
+    descr = SSchemaDescriptor.new(schema)
+    descr.column(0).max_def_level.should eq(0)
+    descr.column(0).max_rep_level.should eq(0)
+    descr.column(1).max_def_level.should eq(2)
+    descr.column(1).max_rep_level.should eq(0)
+    descr.column(2).max_def_level.should eq(2)
+    descr.column(2).max_rep_level.should eq(0)
+    descr.column(3).max_def_level.should eq(3)
+    descr.column(3).max_rep_level.should eq(1)
+  end
+
+  # Upstream `test_schema_build_tree_repeated_ancestor_def_level`.
+  it "tracks the repeated-ancestor definition level" do
+    # Flat columns: no REPEATED ancestor.
+    descr = SSchemaDescriptor.new(Parquet::Schema.parse_message_type(<<-SCHEMA))
+      message m {
+        REQUIRED INT32 a;
+        OPTIONAL INT32 b;
+        OPTIONAL group s {
+          OPTIONAL INT32 x;
+        }
+      }
+      SCHEMA
+    descr.column(0).repeated_ancestor_def_level.should eq(0)
+    descr.column(1).repeated_ancestor_def_level.should eq(0)
+    descr.column(2).repeated_ancestor_def_level.should eq(0)
+
+    # Standard list.
+    descr = SSchemaDescriptor.new(Parquet::Schema.parse_message_type(<<-SCHEMA))
+      message m {
+        OPTIONAL group c (LIST) {
+          REPEATED group list {
+            OPTIONAL INT32 element;
+          }
+        }
+      }
+      SCHEMA
+    descr.column(0).max_def_level.should eq(3)
+    descr.column(0).max_rep_level.should eq(1)
+    descr.column(0).repeated_ancestor_def_level.should eq(2)
+
+    # Required list.
+    descr = SSchemaDescriptor.new(Parquet::Schema.parse_message_type(<<-SCHEMA))
+      message m {
+        REQUIRED group c (LIST) {
+          REPEATED group list {
+            REQUIRED INT32 element;
+          }
+        }
+      }
+      SCHEMA
+    descr.column(0).max_def_level.should eq(1)
+    descr.column(0).max_rep_level.should eq(1)
+    descr.column(0).repeated_ancestor_def_level.should eq(1)
+
+    # Nested lists: innermost REPEATED wins.
+    descr = SSchemaDescriptor.new(Parquet::Schema.parse_message_type(<<-SCHEMA))
+      message m {
+        OPTIONAL group outer (LIST) {
+          REPEATED group list {
+            OPTIONAL group inner (LIST) {
+              REPEATED group list2 {
+                OPTIONAL INT32 element;
+              }
+            }
+          }
+        }
+      }
+      SCHEMA
+    descr.column(0).max_def_level.should eq(5)
+    descr.column(0).max_rep_level.should eq(2)
+    descr.column(0).repeated_ancestor_def_level.should eq(4)
+
+    # Struct inside list: sibling leaves share the same repeated_ancestor_def_level.
+    descr = SSchemaDescriptor.new(Parquet::Schema.parse_message_type(<<-SCHEMA))
+      message m {
+        OPTIONAL group bag (LIST) {
+          REPEATED group list {
+            REQUIRED group item {
+              OPTIONAL INT32 x;
+              REQUIRED INT32 y;
+            }
+          }
+        }
+      }
+      SCHEMA
+    descr.column(0).repeated_ancestor_def_level.should eq(2)
+    descr.column(1).repeated_ancestor_def_level.should eq(2)
+
+    # Map type: key (required) and value (optional) under the same REPEATED group.
+    descr = SSchemaDescriptor.new(Parquet::Schema.parse_message_type(<<-SCHEMA))
+      message m {
+        OPTIONAL group my_map (MAP) {
+          REPEATED group key_value {
+            REQUIRED BYTE_ARRAY key (UTF8);
+            OPTIONAL INT32 value;
+          }
+        }
+      }
+      SCHEMA
+    descr.column(0).max_def_level.should eq(2)
+    descr.column(0).repeated_ancestor_def_level.should eq(2)
+    descr.column(1).max_def_level.should eq(3)
+    descr.column(1).repeated_ancestor_def_level.should eq(2)
   end
 end
 

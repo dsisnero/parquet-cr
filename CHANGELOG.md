@@ -68,6 +68,13 @@ revision is recorded per entry.
   tree builder; upstream `test_column_descriptor`, `test_schema_descriptor`, and
   `ColumnPath` doc-example characterization ported to
   `spec/parquet/schema/types_spec.cr`.
+- `schema::parser` (`src/parquet/schema/parser.cr`): `Parquet::Schema.parse_message_type`
+  with the upstream tokenizer and full message-type grammar (groups, primitives,
+  logical/converted types, DECIMAL precision/scale, TIME/TIMESTAMP units,
+  INTEGER bit width, FIXED_LEN_BYTE_ARRAY length, field ids). All upstream
+  `parser.rs` tests ported to `spec/parquet/schema/parser_spec.cr`; the
+  parser-driven `test_schema_build_tree_*` tests ported to `types_spec.cr`.
+- Consolidated shared spec aliases into `spec/support/parquet_aliases.cr`.
 - Harden `Makefile` gates by stripping macOS AppleDouble `._*` sidecars (whose
   names can match crystal's `*_spec.cr` glob on exFAT volumes).
 
