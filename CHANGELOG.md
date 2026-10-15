@@ -92,6 +92,11 @@ revision is recorded per entry.
   min/max, and `from_thrift_page_stats`/`page_stats_to_thrift` conversion.
   Upstream `statistics.rs` tests ported to
   `spec/parquet/file/statistics_spec.cr`; added `Int96.try_from_le_slice`.
+- `LevelHistogram` (`src/parquet/file/metadata.cr`): the repetition/definition
+  level histogram with `try_new`/`from`/`get`/`add`/`increment_by`/
+  `update_from_levels`/`reset`. Upstream
+  `test_level_histogram_update_from_levels_compat` ported to
+  `spec/parquet/file/metadata_spec.cr`.
 - Harden `Makefile` gates by stripping macOS AppleDouble `._*` sidecars (whose
   names can match crystal's `*_spec.cr` glob on exFAT volumes).
 

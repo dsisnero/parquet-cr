@@ -160,6 +160,13 @@ little-endian layout.
 - [ ] `ParquetMetaData`, `FileMetaData`, `RowGroupMetaData`,
   `ColumnChunkMetaData`, builders (`file/metadata`).
 - [ ] Serialized reader/writer (footer + page headers).
+- [x] `LevelHistogram` (`src/parquet/file/metadata.cr`), with upstream
+  `test_level_histogram_update_from_levels_compat` ported to
+  `spec/parquet/file/metadata_spec.cr`. (`is_empty` is `empty?`; `HeapSize` not
+  ported.)
+- [ ] `ParquetMetaData`, `FileMetaData`, `RowGroupMetaData`,
+  `ColumnChunkMetaData`, their builders, and thrift conversion
+  (`file/metadata/mod.rs`, `file/metadata/thrift/mod.rs`).
 - [x] Statistics and value stats (`src/parquet/file/statistics.cr`):
   `Statistics`, `ValueStatistics<T>`, and `from_thrift_page_stats`/
   `page_stats_to_thrift` (thrift `PageStatistics`). Upstream `statistics.rs`
