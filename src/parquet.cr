@@ -5,6 +5,7 @@ require "./parquet/basic"
 require "./parquet/data_type"
 require "./parquet/schema/types"
 require "./parquet/schema/parser"
+require "./parquet/schema/thrift"
 
 module Parquet
   VERSION = "0.1.0"

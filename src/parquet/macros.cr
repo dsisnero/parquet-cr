@@ -59,7 +59,7 @@ macro define_thrift_struct(klass, &block)
         {% if ex.is_a?(Call) && ex.name == "required" %}
           @{{ex.args[1].id}} : {{ex.args[2]}},
         {% elsif ex.is_a?(Call) && ex.name == "optional" %}
-          @{{ex.args[1].id}} : {{ex.args[2]}}? = nil,
+          @{{ex.args[1].id}} : {{ex.args[2]}}?,
         {% end %}
       {% end %}
     )

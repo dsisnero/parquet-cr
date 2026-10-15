@@ -109,8 +109,14 @@ little-endian layout.
 - [x] Textual schema parser (`src/parquet/schema/parser.cr`):
   `Parquet::Schema.parse_message_type`, tokenizer, and all upstream `parser.rs`
   tests ported to `spec/parquet/schema/parser_spec.cr`.
-- [ ] Thrift <-> schema conversion (`from_thrift`/`to_thrift`, `SchemaElement`,
-  `parquet_schema_from_array`).
+- [x] Thrift <-> schema conversion (`src/parquet/schema/thrift.cr`):
+  `SchemaElement`, `write_schema`/`write_schema_helper`, `num_nodes`,
+  `parquet_schema_from_array`/`schema_from_array_helper`, `check_logical_type`,
+  and the `schema_to_buf`/`buf_to_schema_list`/`roundtrip_schema` helpers.
+  Upstream `test_schema_type_thrift_conversion*` and `test_schema_from_thrift_*`
+  ported to `spec/parquet/schema/thrift_spec.cr`.
+- [ ] Remaining metadata thrift structs (`file/metadata/thrift/mod.rs`:
+  `FileMetaData`, `RowGroup`, `ColumnChunk`, `Statistics`, `PageHeader`, ...).
 - [ ] Schema printer (`schema/printer.rs`).
 - [ ] Primitive builders (`schema/primitive.rs`). 4 upstream test modules.
 
@@ -229,6 +235,11 @@ little-endian layout.
   is just `Type`. To keep upstream error strings intact, `LogicalType` and the
   logical-type structs expose `rust_debug` reproducing Rust `#[derive(Debug)]`.
   `schema/types` lives under `Parquet::Schema` (upstream `schema::types`).
+- `SchemaElement` lives under `Parquet::Schema` (upstream `file::metadata::thrift`)
+  to avoid a require cycle; it carries an owned `String` name instead of `<'a> str`.
+  `define_thrift_struct` makes every generated constructor parameter required
+  (upstream struct literals specify all fields), since a required field may
+  follow optional ones (as in `SchemaElement`).
 - `Decimal`: upstream's `Int32`/`Int64`/`Bytes` enum is a single Crystal struct
   carrying the unscaled bytes; variant identity is the byte width. Equality and
   accessors match upstream (`precision`, `scale`, `data`).

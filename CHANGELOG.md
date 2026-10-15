@@ -75,6 +75,12 @@ revision is recorded per entry.
   `parser.rs` tests ported to `spec/parquet/schema/parser_spec.cr`; the
   parser-driven `test_schema_build_tree_*` tests ported to `types_spec.cr`.
 - Consolidated shared spec aliases into `spec/support/parquet_aliases.cr`.
+- Thrift <-> schema conversion (`src/parquet/schema/thrift.cr`): the
+  `SchemaElement` thrift struct, `write_schema`, `parquet_schema_from_array`,
+  `num_nodes`, and `schema_to_buf`/`buf_to_schema_list`/`roundtrip_schema`
+  helpers. Upstream `test_schema_type_thrift_conversion*` and
+  `test_schema_from_thrift_*` ported to `spec/parquet/schema/thrift_spec.cr`.
+  `define_thrift_struct` now generates all-required constructor parameters.
 - Harden `Makefile` gates by stripping macOS AppleDouble `._*` sidecars (whose
   names can match crystal's `*_spec.cr` glob on exFAT volumes).
 
