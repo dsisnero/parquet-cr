@@ -2430,11 +2430,11 @@ parquet/src/encryption/encrypt.rs::method::FileEncryptor.get_footer_encryptor	me
 parquet/src/encryption/encrypt.rs::method::FileEncryptor.is_column_encrypted	method	missing	-	auto-generated
 parquet/src/encryption/encrypt.rs::method::FileEncryptor.new	method	missing	-	auto-generated
 parquet/src/encryption/encrypt.rs::method::FileEncryptor.properties	method	missing	-	auto-generated
-parquet/src/errors.rs::method::ArrowError.from	method	missing	-	auto-generated
-parquet/src/errors.rs::method::ParquetError.fmt	method	missing	-	auto-generated
-parquet/src/errors.rs::method::ParquetError.from	method	missing	-	auto-generated
-parquet/src/errors.rs::method::ParquetError.source	method	missing	-	auto-generated
-parquet/src/errors.rs::method::io::Error.from	method	missing	-	auto-generated
+parquet/src/errors.rs::method::ArrowError.from	method	skipped	-	arrow-gated; deferred with Arrow interop (see ../arrow-cr)
+parquet/src/errors.rs::method::ParquetError.fmt	method	ported	src/parquet/errors.cr	ParquetError subclass hierarchy; upstream Display strings preserved; Result mapped to exceptions
+parquet/src/errors.rs::method::ParquetError.from	method	ported	src/parquet/errors.cr	ParquetError subclass hierarchy; upstream Display strings preserved; Result mapped to exceptions
+parquet/src/errors.rs::method::ParquetError.source	method	ported	src/parquet/errors.cr	ParquetError subclass hierarchy; upstream Display strings preserved; Result mapped to exceptions
+parquet/src/errors.rs::method::io::Error.from	method	ported	src/parquet/errors.cr	ParquetError subclass hierarchy; upstream Display strings preserved; Result mapped to exceptions
 parquet/src/file/column_crypto_metadata.rs::method::ColumnCryptoMetaData.heap_size	method	missing	-	auto-generated
 parquet/src/file/column_crypto_metadata.rs::method::EncryptionWithColumnKey.heap_size	method	missing	-	auto-generated
 parquet/src/file/metadata/footer_tail.rs::method::FooterTail.is_encrypted_footer	method	missing	-	auto-generated
@@ -3147,75 +3147,75 @@ parquet/src/geospatial/statistics.rs::method::GeospatialStatistics.bounding_box	
 parquet/src/geospatial/statistics.rs::method::GeospatialStatistics.geospatial_types	method	missing	-	auto-generated
 parquet/src/geospatial/statistics.rs::method::GeospatialStatistics.heap_size	method	missing	-	auto-generated
 parquet/src/geospatial/statistics.rs::method::GeospatialStatistics.new	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::const::DEFAULT_SKIP_DEPTH	const	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::const::ELEMENT_TYPE	const	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::&'a [u8].read_thrift	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::&'a str.read_thrift	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::&[u8].write_thrift	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::&[u8].write_thrift_field	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::&str.write_thrift	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::&str.write_thrift_field	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ElementType.try_from	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::FieldIdentifier.bool_val	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::FieldType.from	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::FieldType.try_from	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::OrderedF64.cmp	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::OrderedF64.from	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::OrderedF64.partial_cmp	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::OrderedF64.read_thrift	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::OrderedF64.write_thrift	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ParquetError.from	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::String.read_thrift	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::String.write_thrift	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.new	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.set_write_path_in_schema	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.set_write_row_group_ordinal	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_bool	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_byte	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_bytes	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_double	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_empty_struct	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_field_begin	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_i16	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_i32	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_i64	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_i8	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_list_begin	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_path_in_schema	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_row_group_ordinal	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_struct_end	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_vlq	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_zig_zag	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftProtocolError.from	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftReadInputProtocol<R>.new	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftReadInputProtocol<R>.read_byte	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftReadInputProtocol<R>.read_bytes	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftReadInputProtocol<R>.read_bytes_owned	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftReadInputProtocol<R>.read_double	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftReadInputProtocol<R>.skip_bytes	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftSliceInputProtocol<'a>.as_slice	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftSliceInputProtocol<'a>.new	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftSliceInputProtocol<'a>.read_byte	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftSliceInputProtocol<'a>.read_bytes	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftSliceInputProtocol<'a>.read_bytes_owned	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftSliceInputProtocol<'a>.read_double	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftSliceInputProtocol<'a>.remaining_bytes	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::ThriftSliceInputProtocol<'a>.skip_bytes	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::Vec<T>.write_thrift	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::Vec<T>.write_thrift_field	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::bool.read_thrift	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::bool.write_thrift	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::bool.write_thrift_field	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::f64.from	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::f64.write_thrift	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::i16.read_thrift	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::i16.write_thrift	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::i32.read_thrift	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::i32.write_thrift	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::i64.read_thrift	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::i64.write_thrift	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::i8.read_thrift	method	missing	-	auto-generated
-parquet/src/parquet_thrift.rs::method::i8.write_thrift	method	missing	-	auto-generated
+parquet/src/parquet_thrift.rs::const::DEFAULT_SKIP_DEPTH	const	ported	src/parquet/thrift.cr	inlined as 64 in ThriftCompactInputProtocol#skip
+parquet/src/parquet_thrift.rs::const::ELEMENT_TYPE	const	intentional_divergence	src/parquet/thrift.cr	Rust associated const ELEMENT_TYPE; replaced by Thrift.element_type_of
+parquet/src/parquet_thrift.rs::method::&'a [u8].read_thrift	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::&'a str.read_thrift	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::&[u8].write_thrift	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::&[u8].write_thrift_field	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::&str.write_thrift	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::&str.write_thrift_field	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ElementType.try_from	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::FieldIdentifier.bool_val	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::FieldType.from	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::FieldType.try_from	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::OrderedF64.cmp	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::OrderedF64.from	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::OrderedF64.partial_cmp	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::OrderedF64.read_thrift	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::OrderedF64.write_thrift	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ParquetError.from	method	intentional_divergence	src/parquet/thrift.cr	ThriftProtocolError->ParquetError mapping; protocol raises ParquetError directly
+parquet/src/parquet_thrift.rs::method::String.read_thrift	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::String.write_thrift	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.new	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.set_write_path_in_schema	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.set_write_row_group_ordinal	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_bool	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_byte	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_bytes	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_double	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_empty_struct	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_field_begin	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_i16	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_i32	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_i64	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_i8	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_list_begin	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_path_in_schema	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_row_group_ordinal	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_struct_end	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_vlq	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftCompactOutputProtocol<W>.write_zig_zag	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftProtocolError.from	method	intentional_divergence	src/parquet/thrift.cr	ThriftProtocolError->ParquetError mapping; protocol raises ParquetError directly
+parquet/src/parquet_thrift.rs::method::ThriftReadInputProtocol<R>.new	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftReadInputProtocol<R>.read_byte	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftReadInputProtocol<R>.read_bytes	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftReadInputProtocol<R>.read_bytes_owned	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftReadInputProtocol<R>.read_double	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftReadInputProtocol<R>.skip_bytes	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftSliceInputProtocol<'a>.as_slice	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftSliceInputProtocol<'a>.new	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftSliceInputProtocol<'a>.read_byte	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftSliceInputProtocol<'a>.read_bytes	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftSliceInputProtocol<'a>.read_bytes_owned	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftSliceInputProtocol<'a>.read_double	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftSliceInputProtocol<'a>.remaining_bytes	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::ThriftSliceInputProtocol<'a>.skip_bytes	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::Vec<T>.write_thrift	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::Vec<T>.write_thrift_field	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::bool.read_thrift	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::bool.write_thrift	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::bool.write_thrift_field	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::f64.from	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::f64.write_thrift	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::i16.read_thrift	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::i16.write_thrift	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::i32.read_thrift	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::i32.write_thrift	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::i64.read_thrift	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::i64.write_thrift	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::i8.read_thrift	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
+parquet/src/parquet_thrift.rs::method::i8.write_thrift	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads
 parquet/src/record/api.rs::method::Field.convert_bool	method	missing	-	auto-generated
 parquet/src/record/api.rs::method::Field.convert_byte_array	method	missing	-	auto-generated
 parquet/src/record/api.rs::method::Field.convert_double	method	missing	-	auto-generated

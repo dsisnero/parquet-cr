@@ -23,4 +23,15 @@ revision is recorded per entry.
 - Rust parity ledger under `plans/inventory/` (3,515 API items, 2,059 tests) and
   the `plans/parity.md` porting roadmap.
 
+### Ported
+
+- `errors` — `ParquetError` variant set (`GeneralError`, `NYIError`, `EOFError`,
+  `ArrowError`, `IndexOutOfBoundError`, `ExternalError`, `NeedMoreDataError`,
+  `NeedMoreDataRangeError`), error macros, and upstream `Display` strings.
+- Thrift compact protocol (`src/parquet/thrift.cr`) — `FieldType`,
+  `ElementType`, `OrderedF64` (IEEE 754 total order),
+  `ThriftSliceInputProtocol`, `ThriftReadInputProtocol`,
+  `ThriftCompactOutputProtocol`, `read_thrift_vec`, and `validate_list_type`,
+  with upstream protocol tests in `spec/parquet/thrift_spec.cr`.
+
 [Unreleased]: https://github.com/dsisnero/parquet-cr/commits/main

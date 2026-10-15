@@ -23,29 +23,32 @@ little-endian layout.
 
 ## Phase 0 — Project initialization
 
-- [~] Upstream submodule pinned at `60.0.0`; fixtures via `parquet-testing`.
-- [~] Baseline tooling: `Makefile`, `.ameba.yml`, `.rumdl.toml`, `.gitignore`,
+- [x] Upstream submodule pinned at `60.0.0`; fixtures via `parquet-testing`.
+- [x] Baseline tooling: `Makefile`, `.ameba.yml`, `.rumdl.toml`, `.gitignore`,
   `shard.yml`.
-- [~] Baseline docs: `README.md`, `CLAUDE.md`/`AGENTS.md`, `docs/*`.
-- [~] Parity ledger generated (tree-sitter) — 3,515 API items, 2,059 tests.
-- [ ] Baseline verifier passes; `format`/`ameba`/`spec` green.
+- [x] Baseline docs: `README.md`, `CLAUDE.md`/`AGENTS.md`, `docs/*`.
+- [x] Parity ledger generated (tree-sitter) — 3,515 API items, 2,059 tests.
+- [x] Baseline verifier passes; `format`/`ameba`/`spec` green.
 
 ## Phase 1 — Core value and wire layer
 
 ### 1.1 Errors
 
-- [ ] `ParquetError` variant set and `Result` alias (`src/parquet/errors.cr`).
-- [ ] Upstream `errors.rs` test module ported to `spec/parquet/errors_spec.cr`.
+- [x] `ParquetError` variant set (`src/parquet/errors.cr`). The `Result` alias is
+      an intentional divergence — Crystal uses exceptions.
+- [x] Upstream `errors.rs` test module ported to `spec/parquet/errors_spec.cr`.
 
 ### 1.2 Thrift compact protocol
 
-- [ ] `ElementType`, `FieldType` mappings.
-- [ ] `ReadThrift`, `WriteThrift`, `WriteThriftField` traits (Crystal modules).
-- [ ] `ThriftCompactInputProtocol` + `ThriftSliceInputProtocol` +
+- [x] `ElementType`, `FieldType` mappings.
+- [x] `ReadThrift`/`WriteThrift`/`WriteThriftField` — mapped to protocol
+      overloads and duck-typed `read_thrift`/`write_thrift` (intentional
+      divergence; no associated consts in Crystal).
+- [x] `ThriftCompactInputProtocol` + `ThriftSliceInputProtocol` +
   `ThriftReadInputProtocol`.
-- [ ] `ThriftCompactOutputProtocol`, `read_thrift_vec`, `validate_list_type`.
-- [ ] Upstream `parquet_thrift.rs` tests ported to
-  `spec/parquet/thrift_spec.cr`.
+- [x] `ThriftCompactOutputProtocol`, `read_thrift_vec`, `validate_list_type`.
+- [x] Upstream `parquet_thrift.rs` protocol tests ported to
+  `spec/parquet/thrift_spec.cr` (enum/union round-trips land with 1.4 `basic`).
 
 ### 1.3 Thrift IDL structs
 
@@ -156,7 +159,17 @@ little-endian layout.
 
 ## Intentional divergences
 
-- (none recorded yet)
+- Errors: Rust `Result<T, E>` is mapped to Crystal exceptions. Fallible
+  functions raise `ParquetError` subclasses instead of returning a result type;
+  `ParquetError::External(Box<dyn Error>)` maps to `ExternalError` holding an
+  `Exception`. Display strings are preserved exactly.
+- Thrift traits: `ReadThrift`, `WriteThrift`, and `WriteThriftField` are Rust
+  traits with an associated `ELEMENT_TYPE` constant. Crystal has no associated
+  constants, so value dispatch lives on `ThriftCompactOutputProtocol` /
+  `Thrift.*` overloads, and IDL types expose duck-typed
+  `self.read_thrift(prot)` / `#write_thrift(prot)` methods.
+- `ThriftProtocolError`: not modeled as a separate type; protocol routines raise
+  the corresponding `ParquetError` directly with identical messages.
 
 ## Notes
 
