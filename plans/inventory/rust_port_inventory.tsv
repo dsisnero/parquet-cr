@@ -3305,15 +3305,15 @@ parquet/src/schema/printer.rs::method::Printer<'a>.new	method	missing	-	auto-gen
 parquet/src/schema/printer.rs::method::Printer<'a>.print_indent	method	missing	-	auto-generated
 parquet/src/schema/types.rs::const::INIT_SCHEMA_DEPTH	const	missing	-	auto-generated
 parquet/src/schema/types.rs::const::VALID_FIELDS	const	missing	-	auto-generated
-parquet/src/schema/types.rs::method::BasicTypeInfo.converted_type	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::BasicTypeInfo.has_id	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::BasicTypeInfo.has_repetition	method	missing	-	auto-generated
+parquet/src/schema/types.rs::method::BasicTypeInfo.converted_type	method	ported	src/parquet/schema/types.cr	BasicTypeInfo ported
+parquet/src/schema/types.rs::method::BasicTypeInfo.has_id	method	ported	src/parquet/schema/types.cr	renamed BasicTypeInfo#has_id?
+parquet/src/schema/types.rs::method::BasicTypeInfo.has_repetition	method	ported	src/parquet/schema/types.cr	renamed BasicTypeInfo#has_repetition?
 parquet/src/schema/types.rs::method::BasicTypeInfo.heap_size	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::BasicTypeInfo.id	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::BasicTypeInfo.logical_type_ref	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::BasicTypeInfo.name	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::BasicTypeInfo.repetition	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::BasicTypeInfo.sort_order	method	missing	-	auto-generated
+parquet/src/schema/types.rs::method::BasicTypeInfo.id	method	ported	src/parquet/schema/types.cr	BasicTypeInfo ported
+parquet/src/schema/types.rs::method::BasicTypeInfo.logical_type_ref	method	ported	src/parquet/schema/types.cr	BasicTypeInfo ported
+parquet/src/schema/types.rs::method::BasicTypeInfo.name	method	ported	src/parquet/schema/types.cr	BasicTypeInfo ported
+parquet/src/schema/types.rs::method::BasicTypeInfo.repetition	method	ported	src/parquet/schema/types.cr	BasicTypeInfo ported
+parquet/src/schema/types.rs::method::BasicTypeInfo.sort_order	method	ported	src/parquet/schema/types.cr	BasicTypeInfo ported
 parquet/src/schema/types.rs::method::ColumnDescriptor.converted_type	method	missing	-	auto-generated
 parquet/src/schema/types.rs::method::ColumnDescriptor.get_basic_info	method	missing	-	auto-generated
 parquet/src/schema/types.rs::method::ColumnDescriptor.heap_size	method	missing	-	auto-generated
@@ -3340,23 +3340,23 @@ parquet/src/schema/types.rs::method::ColumnPath.heap_size	method	missing	-	auto-
 parquet/src/schema/types.rs::method::ColumnPath.new	method	missing	-	auto-generated
 parquet/src/schema/types.rs::method::ColumnPath.parts	method	missing	-	auto-generated
 parquet/src/schema/types.rs::method::ColumnPath.string	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::GroupTypeBuilder<'a>.build	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::GroupTypeBuilder<'a>.new	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::GroupTypeBuilder<'a>.with_converted_type	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::GroupTypeBuilder<'a>.with_fields	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::GroupTypeBuilder<'a>.with_id	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::GroupTypeBuilder<'a>.with_logical_type	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::GroupTypeBuilder<'a>.with_repetition	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.build	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.check_decimal_precision_scale	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.new	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.with_converted_type	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.with_id	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.with_length	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.with_logical_type	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.with_precision	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.with_repetition	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.with_scale	method	missing	-	auto-generated
+parquet/src/schema/types.rs::method::GroupTypeBuilder<'a>.build	method	ported	src/parquet/schema/types.cr	GroupTypeBuilder ported
+parquet/src/schema/types.rs::method::GroupTypeBuilder<'a>.new	method	ported	src/parquet/schema/types.cr	GroupTypeBuilder ported
+parquet/src/schema/types.rs::method::GroupTypeBuilder<'a>.with_converted_type	method	ported	src/parquet/schema/types.cr	GroupTypeBuilder ported
+parquet/src/schema/types.rs::method::GroupTypeBuilder<'a>.with_fields	method	ported	src/parquet/schema/types.cr	GroupTypeBuilder ported
+parquet/src/schema/types.rs::method::GroupTypeBuilder<'a>.with_id	method	ported	src/parquet/schema/types.cr	GroupTypeBuilder ported
+parquet/src/schema/types.rs::method::GroupTypeBuilder<'a>.with_logical_type	method	ported	src/parquet/schema/types.cr	GroupTypeBuilder ported
+parquet/src/schema/types.rs::method::GroupTypeBuilder<'a>.with_repetition	method	ported	src/parquet/schema/types.cr	GroupTypeBuilder ported
+parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.build	method	ported	src/parquet/schema/types.cr	PrimitiveTypeBuilder ported
+parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.check_decimal_precision_scale	method	ported	src/parquet/schema/types.cr	PrimitiveTypeBuilder ported
+parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.new	method	ported	src/parquet/schema/types.cr	PrimitiveTypeBuilder ported
+parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.with_converted_type	method	ported	src/parquet/schema/types.cr	PrimitiveTypeBuilder ported
+parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.with_id	method	ported	src/parquet/schema/types.cr	PrimitiveTypeBuilder ported
+parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.with_length	method	ported	src/parquet/schema/types.cr	PrimitiveTypeBuilder ported
+parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.with_logical_type	method	ported	src/parquet/schema/types.cr	PrimitiveTypeBuilder ported
+parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.with_precision	method	ported	src/parquet/schema/types.cr	PrimitiveTypeBuilder ported
+parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.with_repetition	method	ported	src/parquet/schema/types.cr	PrimitiveTypeBuilder ported
+parquet/src/schema/types.rs::method::PrimitiveTypeBuilder<'a>.with_scale	method	ported	src/parquet/schema/types.cr	PrimitiveTypeBuilder ported
 parquet/src/schema/types.rs::method::SchemaDescriptor.column	method	missing	-	auto-generated
 parquet/src/schema/types.rs::method::SchemaDescriptor.column_root_of	method	missing	-	auto-generated
 parquet/src/schema/types.rs::method::SchemaDescriptor.columns	method	missing	-	auto-generated
@@ -3370,19 +3370,19 @@ parquet/src/schema/types.rs::method::SchemaDescriptor.new	method	missing	-	auto-
 parquet/src/schema/types.rs::method::SchemaDescriptor.num_columns	method	missing	-	auto-generated
 parquet/src/schema/types.rs::method::SchemaDescriptor.root_schema	method	missing	-	auto-generated
 parquet/src/schema/types.rs::method::SchemaDescriptor.root_schema_ptr	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::Type.check_contains	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::Type.get_basic_info	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::Type.get_fields	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::Type.get_physical_type	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::Type.get_precision	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::Type.get_scale	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::Type.group_type_builder	method	missing	-	auto-generated
+parquet/src/schema/types.rs::method::Type.check_contains	method	ported	src/parquet/schema/types.cr	Type ported
+parquet/src/schema/types.rs::method::Type.get_basic_info	method	ported	src/parquet/schema/types.cr	Type ported
+parquet/src/schema/types.rs::method::Type.get_fields	method	ported	src/parquet/schema/types.cr	Type ported
+parquet/src/schema/types.rs::method::Type.get_physical_type	method	ported	src/parquet/schema/types.cr	Type ported
+parquet/src/schema/types.rs::method::Type.get_precision	method	ported	src/parquet/schema/types.cr	Type ported
+parquet/src/schema/types.rs::method::Type.get_scale	method	ported	src/parquet/schema/types.cr	Type ported
+parquet/src/schema/types.rs::method::Type.group_type_builder	method	ported	src/parquet/schema/types.cr	Type ported
 parquet/src/schema/types.rs::method::Type.has_single_repeated_child	method	missing	-	auto-generated
 parquet/src/schema/types.rs::method::Type.heap_size	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::Type.is_group	method	missing	-	auto-generated
+parquet/src/schema/types.rs::method::Type.is_group	method	ported	src/parquet/schema/types.cr	renamed Type#group?
 parquet/src/schema/types.rs::method::Type.is_list	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::Type.is_optional	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::Type.is_primitive	method	missing	-	auto-generated
+parquet/src/schema/types.rs::method::Type.is_optional	method	ported	src/parquet/schema/types.cr	renamed Type#optional? (Type)
+parquet/src/schema/types.rs::method::Type.is_primitive	method	ported	src/parquet/schema/types.cr	renamed Type#primitive?
 parquet/src/schema/types.rs::method::Type.is_schema	method	missing	-	auto-generated
 parquet/src/schema/types.rs::method::Type.name	method	missing	-	auto-generated
 parquet/src/schema/types.rs::method::Type.primitive_type_builder	method	missing	-	auto-generated

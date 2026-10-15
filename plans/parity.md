@@ -97,7 +97,14 @@ little-endian layout.
 
 ### 1.6 Schema
 
-- [ ] `Type`/`TypePtr`/`ColumnDescriptor`/`SchemaDescriptor` (`schema/types.rs`).
+- [x] `Type` (primitive/group), `BasicTypeInfo`, the primitive/group builders
+  (including all logical/converted/physical validation, decimal precision, and
+  `FILE` group validation), and `check_contains` (`src/parquet/schema/types.cr`).
+  Upstream `schema/types.rs` core tests ported to
+  `spec/parquet/schema/types_spec.cr`.
+- [ ] `ColumnPath`, `ColumnDescriptor`, `SchemaDescriptor`, and the definition/
+  repetition-level tree builder (`schema/types.rs`).
+- [ ] Thrift <-> schema conversion (`from_thrift`/`to_thrift`, `SchemaElement`).
 - [ ] Thrift → schema parser (`schema/parser.rs`).
 - [ ] Schema printer (`schema/printer.rs`).
 - [ ] Primitive builders (`schema/primitive.rs`). 4 upstream test modules.
@@ -211,6 +218,12 @@ little-endian layout.
   variant is retained by wrapping the i32 code in a value struct.
   `GeographyType::algorithm` is `GeographyType#algorithm_or_default` because a
   Crystal accessor cannot share the field's name.
+- `schema::Type`: upstream's enum (`Type::PrimitiveType`/`Type::GroupType`) is a
+  sealed class hierarchy. Predicates use `?` (`primitive?`, `group?`,
+  `schema?`, `optional?`, `has_repetition?`, `has_id?`); `TypePtr`/`Arc<Type>`
+  is just `Type`. To keep upstream error strings intact, `LogicalType` and the
+  logical-type structs expose `rust_debug` reproducing Rust `#[derive(Debug)]`.
+  `schema/types` lives under `Parquet::Schema` (upstream `schema::types`).
 - `Decimal`: upstream's `Int32`/`Int64`/`Bytes` enum is a single Crystal struct
   carrying the unscaled bytes; variant identity is the byte width. Equality and
   accessors match upstream (`precision`, `scale`, `data`).

@@ -182,6 +182,80 @@ module Parquet
     end
   end
 
+  # Rust-`Debug`-compatible formatting. Upstream `#[derive(Debug)]` output is
+  # reproduced so that error messages embedding `{:?}` match upstream exactly.
+  struct DecimalType
+    def rust_debug : String
+      "DecimalType { scale: #{scale}, precision: #{precision} }"
+    end
+  end
+
+  struct TimestampType
+    def rust_debug : String
+      "TimestampType { is_adjusted_to_u_t_c: #{is_adjusted_to_u_t_c}, unit: #{unit} }"
+    end
+  end
+
+  struct IntType
+    def rust_debug : String
+      "IntType { bit_width: #{bit_width}, is_signed: #{is_signed} }"
+    end
+  end
+
+  struct VariantType
+    def rust_debug : String
+      "VariantType { specification_version: #{Basic.debug_option(specification_version)} }"
+    end
+  end
+
+  struct GeometryType
+    def rust_debug : String
+      "GeometryType { crs: #{Basic.debug_option(crs)} }"
+    end
+  end
+
+  struct GeographyType
+    def rust_debug : String
+      "GeographyType { crs: #{Basic.debug_option(crs)}, algorithm: #{Basic.debug_option(algorithm)} }"
+    end
+  end
+
+  struct EdgeInterpolationAlgorithm
+    def rust_debug : String
+      case @value
+      when 0 then "SPHERICAL"
+      when 1 then "VINCENTY"
+      when 2 then "THOMAS"
+      when 3 then "ANDOYER"
+      when 4 then "KARNEY"
+      else        "_Unknown(#{@value})"
+      end
+    end
+  end
+
+  # Helpers mirroring Rust `Option<T>` / `String` `Debug` formatting.
+  module Basic
+    def self.debug_option(value : Nil) : String
+      "None"
+    end
+
+    def self.debug_option(value : T) : String forall T
+      "Some(#{debug_value(value)})"
+    end
+
+    def self.debug_value(value : String) : String
+      value.inspect
+    end
+
+    def self.debug_value(value : T) : String forall T
+      if value.responds_to?(:rust_debug)
+        value.rust_debug
+      else
+        value.to_s
+      end
+    end
+  end
+
   # Mirrors thrift union `LogicalType` with an unknown-variant fallback.
   #
   # Logical types used by version 2.4.0+ of the Parquet format. Modelled as a
@@ -337,6 +411,34 @@ module Parquet
 
       def hash(hasher)
         field_id.hash(hasher)
+      end
+    end
+
+    # Rust-`Debug`-compatible formatting (see `#[derive(Debug)]` upstream).
+    # ameba:disable Metrics/CyclomaticComplexity
+    def rust_debug : ::String
+      v = self
+      case v
+      when String       then "String"
+      when Map          then "Map"
+      when List         then "List"
+      when Enum         then "Enum"
+      when Decimal      then "Decimal(#{v.value.rust_debug})"
+      when Date         then "Date"
+      when Time         then "Time(#{v.value.rust_debug})"
+      when Timestamp    then "Timestamp(#{v.value.rust_debug})"
+      when Integer      then "Integer(#{v.value.rust_debug})"
+      when Unknown      then "Unknown"
+      when Json         then "Json"
+      when Bson         then "Bson"
+      when Uuid         then "Uuid"
+      when Float16      then "Float16"
+      when Variant      then "Variant(#{v.value.rust_debug})"
+      when Geometry     then "Geometry(#{v.value.rust_debug})"
+      when Geography    then "Geography(#{v.value.rust_debug})"
+      when File         then "File"
+      when UnknownField then "_Unknown { field_id: #{v.field_id} }"
+      else                   "Unknown"
       end
     end
 
