@@ -1,5 +1,10 @@
 require "../spec_helper"
 
+alias PLogicalType = Parquet::LogicalType
+alias PConvertedType = Parquet::ConvertedType
+alias PEdgeAlgo = Parquet::EdgeInterpolationAlgorithm
+alias PTimeUnit = Parquet::TimeUnit
+
 # Ported from `parquet/src/basic.rs` `mod tests`
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
 #
@@ -173,5 +178,102 @@ describe Parquet do
     Parquet::BoundaryOrder::ASCENDING.to_s.should eq("ASCENDING")
     Parquet::BoundaryOrder::DESCENDING.to_s.should eq("DESCENDING")
     Parquet::BoundaryOrder::UNORDERED.to_s.should eq("UNORDERED")
+  end
+
+  # Upstream `test_display_edge_algo`.
+  it "displays EdgeInterpolationAlgorithm" do
+    Parquet::EdgeInterpolationAlgorithm::SPHERICAL.to_s.should eq("SPHERICAL")
+    Parquet::EdgeInterpolationAlgorithm::VINCENTY.to_s.should eq("VINCENTY")
+    Parquet::EdgeInterpolationAlgorithm::THOMAS.to_s.should eq("THOMAS")
+    Parquet::EdgeInterpolationAlgorithm::ANDOYER.to_s.should eq("ANDOYER")
+    Parquet::EdgeInterpolationAlgorithm::KARNEY.to_s.should eq("KARNEY")
+  end
+
+  # Upstream `test_from_str_edge_algo`.
+  it "parses EdgeInterpolationAlgorithm from string (case-insensitive)" do
+    Parquet::EdgeInterpolationAlgorithm.from_str("spHErical")
+      .should eq(Parquet::EdgeInterpolationAlgorithm::SPHERICAL)
+    Parquet::EdgeInterpolationAlgorithm.from_str("vinceNTY")
+      .should eq(Parquet::EdgeInterpolationAlgorithm::VINCENTY)
+    Parquet::EdgeInterpolationAlgorithm.from_str("tHOmas")
+      .should eq(Parquet::EdgeInterpolationAlgorithm::THOMAS)
+    Parquet::EdgeInterpolationAlgorithm.from_str("anDOYEr")
+      .should eq(Parquet::EdgeInterpolationAlgorithm::ANDOYER)
+    Parquet::EdgeInterpolationAlgorithm.from_str("kaRNey")
+      .should eq(Parquet::EdgeInterpolationAlgorithm::KARNEY)
+    expect_raises(Parquet::ParquetError) do
+      Parquet::EdgeInterpolationAlgorithm.from_str("does not exist")
+    end
+  end
+
+  # Upstream `test_logical_to_converted_type`.
+  it "converts LogicalType to ConvertedType" do
+    PConvertedType.from(nil).should eq(PConvertedType::NONE)
+    PConvertedType.from(PLogicalType.decimal(5, 20)).should eq(PConvertedType::DECIMAL)
+    PConvertedType.from(PLogicalType::Bson.new).should eq(PConvertedType::BSON)
+    PConvertedType.from(PLogicalType::Json.new).should eq(PConvertedType::JSON)
+    PConvertedType.from(PLogicalType::String.new).should eq(PConvertedType::UTF8)
+    PConvertedType.from(PLogicalType::Date.new).should eq(PConvertedType::DATE)
+    PConvertedType.from(PLogicalType.time(true, PTimeUnit::MILLIS)).should eq(PConvertedType::TIME_MILLIS)
+    PConvertedType.from(PLogicalType.time(true, PTimeUnit::MICROS)).should eq(PConvertedType::TIME_MICROS)
+    PConvertedType.from(PLogicalType.time(false, PTimeUnit::NANOS)).should eq(PConvertedType::NONE)
+    PConvertedType.from(PLogicalType.timestamp(true, PTimeUnit::MILLIS)).should eq(PConvertedType::TIMESTAMP_MILLIS)
+    PConvertedType.from(PLogicalType.timestamp(false, PTimeUnit::MICROS)).should eq(PConvertedType::TIMESTAMP_MICROS)
+    PConvertedType.from(PLogicalType.timestamp(false, PTimeUnit::NANOS)).should eq(PConvertedType::NONE)
+    PConvertedType.from(PLogicalType.integer(8, false)).should eq(PConvertedType::UINT_8)
+    PConvertedType.from(PLogicalType.integer(8, true)).should eq(PConvertedType::INT_8)
+    PConvertedType.from(PLogicalType.integer(16, false)).should eq(PConvertedType::UINT_16)
+    PConvertedType.from(PLogicalType.integer(16, true)).should eq(PConvertedType::INT_16)
+    PConvertedType.from(PLogicalType.integer(32, false)).should eq(PConvertedType::UINT_32)
+    PConvertedType.from(PLogicalType.integer(32, true)).should eq(PConvertedType::INT_32)
+    PConvertedType.from(PLogicalType.integer(64, false)).should eq(PConvertedType::UINT_64)
+    PConvertedType.from(PLogicalType.integer(64, true)).should eq(PConvertedType::INT_64)
+    PConvertedType.from(PLogicalType::List.new).should eq(PConvertedType::LIST)
+    PConvertedType.from(PLogicalType::Map.new).should eq(PConvertedType::MAP)
+    PConvertedType.from(PLogicalType::Uuid.new).should eq(PConvertedType::NONE)
+    PConvertedType.from(PLogicalType::Enum.new).should eq(PConvertedType::ENUM)
+    PConvertedType.from(PLogicalType::Float16.new).should eq(PConvertedType::NONE)
+    PConvertedType.from(PLogicalType.variant(nil)).should eq(PConvertedType::NONE)
+    PConvertedType.from(PLogicalType.geometry(nil)).should eq(PConvertedType::NONE)
+    PConvertedType.from(PLogicalType.geography(nil, PEdgeAlgo::SPHERICAL)).should eq(PConvertedType::NONE)
+    PConvertedType.from(PLogicalType::Unknown.new).should eq(PConvertedType::NONE)
+  end
+
+  # Upstream `test_logical_type_roundtrip`.
+  it "round-trips LogicalType through thrift" do
+    values = [
+      PLogicalType::String.new,
+      PLogicalType::Map.new,
+      PLogicalType::List.new,
+      PLogicalType::Enum.new,
+      PLogicalType.decimal(0, 20),
+      PLogicalType::Date.new,
+      PLogicalType.time(true, PTimeUnit::MICROS),
+      PLogicalType.time(false, PTimeUnit::MILLIS),
+      PLogicalType.time(false, PTimeUnit::NANOS),
+      PLogicalType.timestamp(false, PTimeUnit::MICROS),
+      PLogicalType.timestamp(true, PTimeUnit::MILLIS),
+      PLogicalType.timestamp(true, PTimeUnit::NANOS),
+      PLogicalType.integer(8, true),
+      PLogicalType.integer(16, false),
+      PLogicalType.integer(32, true),
+      PLogicalType.integer(64, false),
+      PLogicalType::Json.new,
+      PLogicalType::Bson.new,
+      PLogicalType::Uuid.new,
+      PLogicalType::Float16.new,
+      PLogicalType.variant(1),
+      PLogicalType.variant(nil),
+      PLogicalType.geometry("foo"),
+      PLogicalType.geometry(nil),
+      PLogicalType.geography("foo", PEdgeAlgo::ANDOYER),
+      PLogicalType.geography(nil, PEdgeAlgo::KARNEY),
+      PLogicalType.geography("foo", PEdgeAlgo::SPHERICAL),
+      PLogicalType.geography(nil, PEdgeAlgo::SPHERICAL),
+    ]
+
+    values.each do |value|
+      ThriftRoundTrip.roundtrip(value).should eq(value)
+    end
   end
 end

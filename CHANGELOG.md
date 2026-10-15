@@ -41,5 +41,12 @@ revision is recorded per entry.
   `PageType`, `BoundaryOrder`, and the all-empty union `TimeUnit`, with
   `from_str` conversions and upstream `basic.rs`/`parquet_thrift.rs` tests
   (`spec/parquet/basic_spec.cr`).
+- `define_thrift_struct` (`src/parquet/macros.cr`): generates a Crystal struct
+  plus compact-protocol read/write from a declarative field block.
+- `basic::LogicalType` (`src/parquet/basic.cr`): the union plus `DecimalType`,
+  `TimestampType`/`TimeType`, `IntType`, `VariantType`, `GeometryType`,
+  `GeographyType`, and `EdgeInterpolationAlgorithm`; `ConvertedType.from` and
+  `LogicalType.from_str`. Upstream `basic.rs` tests for these ported to
+  `spec/parquet/basic_spec.cr`.
 
 [Unreleased]: https://github.com/dsisnero/parquet-cr/commits/main

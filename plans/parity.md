@@ -55,10 +55,13 @@ little-endian layout.
 - [x] Enum + all-empty-union support: `define_thrift_enum` and
   `define_thrift_union_all_empty` (`src/parquet/macros.cr`). Intentional
   divergence: upstream parses raw Thrift IDL; Crystal annotates native enums.
-- [ ] Struct support equivalent to `thrift_struct!` (required/optional fields,
-  lists, binary/string/double, nested structs).
-- [ ] Mixed-union support equivalent to `thrift_union!` /
-  `thrift_union_with_unknown!`.
+- [x] Struct support equivalent to `thrift_struct!`: `define_thrift_struct`
+  (required/optional scalar fields, nested structs/enums, `bool` field encoding,
+  required-field validation, unknown-field skipping).
+- [~] Mixed-union support equivalent to `thrift_union!` /
+  `thrift_union_with_unknown!`. `LogicalType` read/write is hand-written; a
+  generic union macro is still pending (needed for `ColumnOrder`, crypto
+  metadata, encryption).
 - [ ] Parquet metadata IDL structs (`file/metadata/thrift/mod.rs`).
 - [ ] Encryption IDL structs (`file/metadata/thrift/encryption.rs`, gated).
 
@@ -69,9 +72,11 @@ little-endian layout.
   and the all-empty union `TimeUnit` (`src/parquet/basic.cr`). `Display`
   (variant name) and `from_str` ported; enum round-trips covered in
   `spec/parquet/basic_spec.cr` and `spec/parquet/thrift_spec.cr`.
-- [ ] `LogicalType` union (+ `DecimalType`, `TimestampType`/`TimeType`,
+- [x] `LogicalType` union (+ `DecimalType`, `TimestampType`/`TimeType`,
   `IntType`, `VariantType`, `GeometryType`, `GeographyType`,
-  `EdgeInterpolationAlgorithm`).
+  `EdgeInterpolationAlgorithm`), with `ConvertedType.from(LogicalType?)` and
+  `LogicalType.from_str`. Modelled as a sealed class hierarchy; `_Unknown`
+  maps to `UnknownField`.
 - [ ] `Compression` enum, `CompressionCodec`<->`Compression` conversions, and
   `Compression` `Display`/`from_str`.
 - [ ] `SortOrder`, `ColumnOrder`, `TypeDefinedOrder`.
@@ -193,6 +198,12 @@ little-endian layout.
   `VARIANTS`/`MAX_DISCRIMINANT` constants are not provided yet.
 - `from_str` conversions use `Enum.parse?`/`upcase`; for `Encoding` this accepts
   mixed-case spellings in addition to upstream's all-upper/all-lower forms.
+- `LogicalType`: Rust's payload-carrying enum is modelled as a sealed
+  `LogicalType` class hierarchy; the `_Unknown { field_id }` variant is
+  `LogicalType::UnknownField`. `EdgeInterpolationAlgorithm`'s `_Unknown(i32)`
+  variant is retained by wrapping the i32 code in a value struct.
+  `GeographyType::algorithm` is `GeographyType#algorithm_or_default` because a
+  Crystal accessor cannot share the field's name.
 
 ## Notes
 

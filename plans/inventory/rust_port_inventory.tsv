@@ -1650,14 +1650,14 @@ parquet/src/basic.rs::method::Compression.fmt	method	missing	-	auto-generated
 parquet/src/basic.rs::method::Compression.from	method	missing	-	auto-generated
 parquet/src/basic.rs::method::Compression.from_str	method	missing	-	auto-generated
 parquet/src/basic.rs::method::CompressionCodec.from	method	missing	-	auto-generated
-parquet/src/basic.rs::method::ConvertedType.from	method	missing	-	auto-generated
+parquet/src/basic.rs::method::ConvertedType.from	method	ported	src/parquet/basic.cr	From<Option<LogicalType>>; reverse conversion intentionally omitted (type loss)
 parquet/src/basic.rs::method::ConvertedType.from_str	method	ported	src/parquet/basic.cr	Enum.parse?-based; member names are the accepted strings
-parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.fmt	method	missing	-	auto-generated
+parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.fmt	method	ported	src/parquet/basic.cr	Display via EdgeInterpolationAlgorithm#to_s (value-wrapping struct)
 parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.from	method	missing	-	auto-generated
-parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.from_str	method	missing	-	auto-generated
-parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.read_thrift	method	missing	-	auto-generated
+parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.from_str	method	ported	src/parquet/basic.cr	case-insensitive; wraps i32 code
+parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.read_thrift	method	ported	src/parquet/basic.cr	value-wrapping struct; unknown codes retained
 parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.try_as_edges	method	missing	-	auto-generated
-parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.write_thrift	method	missing	-	auto-generated
+parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.write_thrift	method	ported	src/parquet/basic.cr	writes i32 code
 parquet/src/basic.rs::method::Encoding.from_str	method	ported	src/parquet/basic.cr	Enum.parse? (exact) or upcased name; matches upstream upper/lower forms
 parquet/src/basic.rs::method::EncodingMask.all_set	method	missing	-	auto-generated
 parquet/src/basic.rs::method::EncodingMask.as_i32	method	missing	-	auto-generated
@@ -1670,15 +1670,15 @@ parquet/src/basic.rs::method::EncodingMask.mask_to_encodings_iter	method	missing
 parquet/src/basic.rs::method::EncodingMask.new_from_encodings	method	missing	-	auto-generated
 parquet/src/basic.rs::method::EncodingMask.read_thrift	method	missing	-	auto-generated
 parquet/src/basic.rs::method::EncodingMask.try_new	method	missing	-	auto-generated
-parquet/src/basic.rs::method::GeographyType.algorithm	method	missing	-	auto-generated
-parquet/src/basic.rs::method::LogicalType.decimal	method	missing	-	auto-generated
-parquet/src/basic.rs::method::LogicalType.from_str	method	missing	-	auto-generated
-parquet/src/basic.rs::method::LogicalType.geography	method	missing	-	auto-generated
-parquet/src/basic.rs::method::LogicalType.geometry	method	missing	-	auto-generated
-parquet/src/basic.rs::method::LogicalType.integer	method	missing	-	auto-generated
-parquet/src/basic.rs::method::LogicalType.time	method	missing	-	auto-generated
-parquet/src/basic.rs::method::LogicalType.timestamp	method	missing	-	auto-generated
-parquet/src/basic.rs::method::LogicalType.variant	method	missing	-	auto-generated
+parquet/src/basic.rs::method::GeographyType.algorithm	method	ported	src/parquet/basic.cr	renamed GeographyType#algorithm_or_default (field getter owns `algorithm`)
+parquet/src/basic.rs::method::LogicalType.decimal	method	ported	src/parquet/basic.cr	constructor LogicalType.decimal
+parquet/src/basic.rs::method::LogicalType.from_str	method	ported	src/parquet/basic.cr	LogicalType.from_str
+parquet/src/basic.rs::method::LogicalType.geography	method	ported	src/parquet/basic.cr	constructor LogicalType.geography
+parquet/src/basic.rs::method::LogicalType.geometry	method	ported	src/parquet/basic.cr	constructor LogicalType.geometry
+parquet/src/basic.rs::method::LogicalType.integer	method	ported	src/parquet/basic.cr	constructor LogicalType.integer
+parquet/src/basic.rs::method::LogicalType.time	method	ported	src/parquet/basic.cr	constructor LogicalType.time
+parquet/src/basic.rs::method::LogicalType.timestamp	method	ported	src/parquet/basic.cr	constructor LogicalType.timestamp
+parquet/src/basic.rs::method::LogicalType.variant	method	ported	src/parquet/basic.cr	constructor LogicalType.variant
 parquet/src/basic.rs::method::Repetition.from_str	method	ported	src/parquet/basic.cr	Enum.parse?-based on FieldRepetitionType
 parquet/src/basic.rs::method::SortOrder.fmt	method	missing	-	auto-generated
 parquet/src/basic.rs::method::SortOrder.is_signed	method	missing	-	auto-generated

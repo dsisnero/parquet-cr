@@ -733,9 +733,10 @@ module Parquet
       field_id
     end
 
-    # Fallback for IDL structs and enums.
+    # Fallback for IDL structs and enums. The field type is derived from the
+    # value's `thrift_element_type` (Struct for structs/unions, I32 for enums).
     def self.write_thrift_field(proto : ThriftCompactOutputProtocol, val : T, field_id : Int16, last_field_id : Int16) : Int16 forall T
-      proto.write_field_begin(FieldType::Struct, field_id, last_field_id)
+      proto.write_field_begin(field_type_for(element_type_of(T)), field_id, last_field_id)
       val.write_thrift(proto)
       field_id
     end
