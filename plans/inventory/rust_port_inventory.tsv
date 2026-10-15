@@ -1651,14 +1651,14 @@ parquet/src/basic.rs::method::Compression.from	method	missing	-	auto-generated
 parquet/src/basic.rs::method::Compression.from_str	method	missing	-	auto-generated
 parquet/src/basic.rs::method::CompressionCodec.from	method	missing	-	auto-generated
 parquet/src/basic.rs::method::ConvertedType.from	method	missing	-	auto-generated
-parquet/src/basic.rs::method::ConvertedType.from_str	method	missing	-	auto-generated
+parquet/src/basic.rs::method::ConvertedType.from_str	method	ported	src/parquet/basic.cr	Enum.parse?-based; member names are the accepted strings
 parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.fmt	method	missing	-	auto-generated
 parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.from	method	missing	-	auto-generated
 parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.from_str	method	missing	-	auto-generated
 parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.read_thrift	method	missing	-	auto-generated
 parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.try_as_edges	method	missing	-	auto-generated
 parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.write_thrift	method	missing	-	auto-generated
-parquet/src/basic.rs::method::Encoding.from_str	method	missing	-	auto-generated
+parquet/src/basic.rs::method::Encoding.from_str	method	ported	src/parquet/basic.cr	Enum.parse? (exact) or upcased name; matches upstream upper/lower forms
 parquet/src/basic.rs::method::EncodingMask.all_set	method	missing	-	auto-generated
 parquet/src/basic.rs::method::EncodingMask.as_i32	method	missing	-	auto-generated
 parquet/src/basic.rs::method::EncodingMask.encodings	method	missing	-	auto-generated
@@ -1679,10 +1679,10 @@ parquet/src/basic.rs::method::LogicalType.integer	method	missing	-	auto-generate
 parquet/src/basic.rs::method::LogicalType.time	method	missing	-	auto-generated
 parquet/src/basic.rs::method::LogicalType.timestamp	method	missing	-	auto-generated
 parquet/src/basic.rs::method::LogicalType.variant	method	missing	-	auto-generated
-parquet/src/basic.rs::method::Repetition.from_str	method	missing	-	auto-generated
+parquet/src/basic.rs::method::Repetition.from_str	method	ported	src/parquet/basic.cr	Enum.parse?-based on FieldRepetitionType
 parquet/src/basic.rs::method::SortOrder.fmt	method	missing	-	auto-generated
 parquet/src/basic.rs::method::SortOrder.is_signed	method	missing	-	auto-generated
-parquet/src/basic.rs::method::Type.from_str	method	missing	-	auto-generated
+parquet/src/basic.rs::method::Type.from_str	method	ported	src/parquet/basic.cr	Enum.parse?-based; BINARY accepted as alias for BYTE_ARRAY
 parquet/src/bin/parquet-concat.rs::method::Args.run	method	missing	-	auto-generated
 parquet/src/bin/parquet-fromcsv.rs::method::Args.get_delimiter	method	missing	-	auto-generated
 parquet/src/bin/parquet-fromcsv.rs::method::Args.get_escape	method	missing	-	auto-generated

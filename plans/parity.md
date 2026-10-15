@@ -50,18 +50,33 @@ little-endian layout.
 - [x] Upstream `parquet_thrift.rs` protocol tests ported to
   `spec/parquet/thrift_spec.cr` (enum/union round-trips land with 1.4 `basic`).
 
-### 1.3 Thrift IDL structs
+### 1.3 Thrift IDL macros (`parquet_macros.rs`)
 
-- [ ] `thrift_struct!`/`thrift_union!`/`thrift_enum!` macro system mirroring
-  `parquet_macros.rs`.
+- [x] Enum + all-empty-union support: `define_thrift_enum` and
+  `define_thrift_union_all_empty` (`src/parquet/macros.cr`). Intentional
+  divergence: upstream parses raw Thrift IDL; Crystal annotates native enums.
+- [ ] Struct support equivalent to `thrift_struct!` (required/optional fields,
+  lists, binary/string/double, nested structs).
+- [ ] Mixed-union support equivalent to `thrift_union!` /
+  `thrift_union_with_unknown!`.
 - [ ] Parquet metadata IDL structs (`file/metadata/thrift/mod.rs`).
 - [ ] Encryption IDL structs (`file/metadata/thrift/encryption.rs`, gated).
 
 ### 1.4 Basic types
 
-- [ ] `Type`, `ConvertedType`, `Repetition`, `LogicalType`, `Encoding`,
-  `CompressionCodec`, `PageType`, `ColumnOrder`, `TypeDefinedOrder`.
-- [ ] `Statistics` and typed statistics (`basic.rs`, 1 test module).
+- [x] Thrift enums: `Type`, `ConvertedType`, `FieldRepetitionType`
+  (`Repetition`), `Encoding`, `CompressionCodec`, `PageType`, `BoundaryOrder`,
+  and the all-empty union `TimeUnit` (`src/parquet/basic.cr`). `Display`
+  (variant name) and `from_str` ported; enum round-trips covered in
+  `spec/parquet/basic_spec.cr` and `spec/parquet/thrift_spec.cr`.
+- [ ] `LogicalType` union (+ `DecimalType`, `TimestampType`/`TimeType`,
+  `IntType`, `VariantType`, `GeometryType`, `GeographyType`,
+  `EdgeInterpolationAlgorithm`).
+- [ ] `Compression` enum, `CompressionCodec`<->`Compression` conversions, and
+  `Compression` `Display`/`from_str`.
+- [ ] `SortOrder`, `ColumnOrder`, `TypeDefinedOrder`.
+- [ ] `EncodingMask`.
+- [ ] `Statistics` and typed statistics.
 
 ### 1.5 Data type model
 
@@ -170,6 +185,14 @@ little-endian layout.
   `self.read_thrift(prot)` / `#write_thrift(prot)` methods.
 - `ThriftProtocolError`: not modeled as a separate type; protocol routines raise
   the corresponding `ParquetError` directly with identical messages.
+- Thrift IDL macros: upstream `parquet_macros.rs` parses raw Thrift IDL text at
+  macro-expansion time. Crystal macros cannot consume IDL tokens, so
+  `define_thrift_enum` / `define_thrift_union_all_empty` annotate a natively
+  declared Crystal `enum`, synthesizing `read_thrift`, `write_thrift`, and
+  `thrift_element_type` with identical wire behavior. Upstream's generated
+  `VARIANTS`/`MAX_DISCRIMINANT` constants are not provided yet.
+- `from_str` conversions use `Enum.parse?`/`upcase`; for `Encoding` this accepts
+  mixed-case spellings in addition to upstream's all-upper/all-lower forms.
 
 ## Notes
 

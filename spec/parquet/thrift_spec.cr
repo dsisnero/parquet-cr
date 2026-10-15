@@ -6,6 +6,33 @@ require "../spec_helper"
 # Upstream `test_enum_roundtrip` and `test_union_all_empty_roundtrip` depend on
 # `basic::{Type, TimeUnit}` and are ported alongside the `basic` feature.
 describe Parquet::Thrift do
+  # Upstream `test_enum_roundtrip`.
+  it "round-trips every Type variant" do
+    [
+      Parquet::Type::BOOLEAN,
+      Parquet::Type::INT32,
+      Parquet::Type::INT64,
+      Parquet::Type::INT96,
+      Parquet::Type::FLOAT,
+      Parquet::Type::DOUBLE,
+      Parquet::Type::BYTE_ARRAY,
+      Parquet::Type::FIXED_LEN_BYTE_ARRAY,
+    ].each do |value|
+      ThriftRoundTrip.roundtrip(value).should eq(value)
+    end
+  end
+
+  # Upstream `test_union_all_empty_roundtrip`.
+  it "round-trips every TimeUnit variant" do
+    [
+      Parquet::TimeUnit::MILLIS,
+      Parquet::TimeUnit::MICROS,
+      Parquet::TimeUnit::NANOS,
+    ].each do |value|
+      ThriftRoundTrip.roundtrip(value).should eq(value)
+    end
+  end
+
   # Upstream `test_decode_empty_list`.
   it "decodes an empty list" do
     data = Bytes.new(1)

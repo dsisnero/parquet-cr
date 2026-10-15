@@ -33,5 +33,13 @@ revision is recorded per entry.
   `ThriftSliceInputProtocol`, `ThriftReadInputProtocol`,
   `ThriftCompactOutputProtocol`, `read_thrift_vec`, and `validate_list_type`,
   with upstream protocol tests in `spec/parquet/thrift_spec.cr`.
+- Thrift IDL macro equivalents (`src/parquet/macros.cr`): `define_thrift_enum`
+  and `define_thrift_union_all_empty` synthesize compact-protocol support for
+  natively declared Crystal enums.
+- `basic` thrift enums (`src/parquet/basic.cr`): `Type`, `ConvertedType`,
+  `FieldRepetitionType`/`Repetition`, `Encoding`, `CompressionCodec`,
+  `PageType`, `BoundaryOrder`, and the all-empty union `TimeUnit`, with
+  `from_str` conversions and upstream `basic.rs`/`parquet_thrift.rs` tests
+  (`spec/parquet/basic_spec.cr`).
 
 [Unreleased]: https://github.com/dsisnero/parquet-cr/commits/main
