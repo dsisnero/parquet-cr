@@ -58,6 +58,10 @@ little-endian layout.
   - `parquet_derive` (`src/parquet/derive.cr`): the `include
     Parquet::Derive::Record` macro (generating `T::Writer`/`T::Reader`) plus the
     `Codec(T)` type mapping, with `spec/parquet/derive_spec.cr`.
+  - `encryption` (`src/parquet/encryption/ciphers.cr`): the AES-GCM block
+    encryptor/decryptor (`GcmBlockEncryptor`/`GcmBlockDecryptor`/`CounterNonce`)
+    with a minimal AAD-capable AES-GCM (`AesGcm`) over OpenSSL EVP, plus
+    `spec/parquet/encryption/ciphers_spec.cr`.
   - Phase 1.7: `util/bit_pack.cr` (`BitPack.unpack8/16/32/64`) and `decode_page`
     CRC verification (`file/serialized_reader.cr`).
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
@@ -77,10 +81,12 @@ little-endian layout.
      `src/parquet/derive.cr` (`Parquet::Derive::Record` macro + `Codec(T)`) and
      `spec/parquet/derive_spec.cr` (schema generation, read/write round-trip,
      optional-but-valid, pruned/shuffled).
-  4. Phase 3.4 encryption (**next**) — **blocked**: `ring` AEAD; Crystal's
-     `OpenSSL::Cipher` exposes no GCM `aad=` setter, so full AES-GCM (which
-     Parquet encryption needs) is unavailable without a crypto shard. Either
-     find a shard or record an intentional divergence.
+  4. Phase 3.4 encryption — **3.4a cipher layer done** (`src/parquet/encryption/ciphers.cr`;
+     the `ring` block is resolved by an AAD-capable AES-GCM over OpenSSL EVP).
+     **Next (3.4b):** the encryption Thrift IDL (`file/metadata/thrift/encryption.rs`),
+     the properties/AAD layer (`FileEncryptionProperties`/
+     `FileDecryptionProperties`), and the file-reader/writer integration
+     (`encrypt.rs`/`decrypt.rs`/`modules.rs`).
   5. Deferred (recorded divergences): async/object-store suffix fetchers, arrow
      interop (`parquet/src/arrow/`), `parquet-variant-compute`/`-json`, and the
      arrow `parquet-rewrite`/`parquet-fromcsv` CLI tools.
@@ -140,10 +146,15 @@ little-endian layout.
     (`T?` => OPTIONAL; `Time` => TIMESTAMP_MILLIS; `Parquet::Derive::Date` =>
     DATE). The syn-AST walkers (`Type.from*`, `last_part`, `leaf_type_recursive`)
     and the Rust `Result`-alias hygiene test have no analogue.
-- Last commit: `947782a port: parquet-geospatial GeometryBounder with minimal WKB
-  reader`; gates green (`make lint`, `make test` -> 744 examples, 0 failures).
-- Progress by counts (ledger): 1638 `ported`, 213 `intentional_divergence`,
-  1 `skipped`, 1663 `missing` (of 3515 rows).
+  - Encryption ciphers: Crystal's `OpenSSL::Cipher` exposes GCM tags but no AAD
+    setter, so `encryption/ciphers.cr` adds a minimal `AesGcm` over raw OpenSSL
+    EVP (`evp_aes_128_gcm`/`evp_aes_256_gcm`, re-bound in `LibCrypto`) to supply
+    AAD. Rust `ring` is replaced; the `RingGcmBlock*` names drop the prefix and
+    `HeapSize#heap_size` has no analogue.
+- Last commit: `f860470 port: parquet_derive record writer/reader macros`; gates
+  green (`make lint`, `make test` -> 751 examples, 0 failures).
+- Progress by counts (ledger): 1650 `ported`, 214 `intentional_divergence`,
+  1 `skipped`, 1650 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -195,8 +206,10 @@ Chunk status by area:
   `parquet-geospatial`'s `Hint`/`Edges`/`Metadata` + `WkbType` metadata,
   `Interval`/`WraparoundInterval`, and `GeometryBounder` (+ minimal `WkbReader`/
   `WkbGeometry` model and `Testing` helpers) done; `parquet_derive`
-  (`src/parquet/derive.cr`) done; the `WkbType` `ExtensionType` impl,
-  encryption, arrow, and async remain pending.
+  (`src/parquet/derive.cr`) and the encryption cipher layer
+  (`src/parquet/encryption/ciphers.cr`) done; the `WkbType` `ExtensionType`
+  impl, the remaining encryption (IDL/properties/file integration), arrow, and
+  async remain pending.
 
 ## Phase 0 — Project initialization
 
@@ -559,8 +572,13 @@ Chunk status by area:
 
 ### 3.4 Encryption
 
-- [ ] Modular encryption (`file/metadata/thrift/encryption` consumers,
-  `encryption/`). Map `ring` AEAD to Crystal crypto (or document divergence).
+- [~] Modular encryption: the cipher layer
+  (`src/parquet/encryption/ciphers.cr`, `spec/parquet/encryption/ciphers_spec.cr`)
+  is done — AES-GCM `GcmBlockEncryptor`/`GcmBlockDecryptor`/`CounterNonce` on a
+  minimal AAD-capable `AesGcm` over OpenSSL EVP (the `ring` AAD block is
+  resolved). Pending: the encryption Thrift IDL
+  (`file/metadata/thrift/encryption.rs`), the properties/AAD layer, and the
+  file-reader/writer integration (`encrypt.rs`/`decrypt.rs`/`modules.rs`).
 
 ### 3.5 Arrow interop (deferred)
 
@@ -620,6 +638,15 @@ Chunk status by area:
   walkers (`Type.from*`/`last_part`/`leaf_type_recursive`) are replaced by
   Crystal macro type introspection (`@type.instance_vars`, `TypeNode#union?`),
   and the Rust `Result`-alias macro-hygiene test is not applicable.
+- Encryption ciphers: upstream uses `ring` (`AES_128/256_GCM`, `SystemRandom`).
+  Crystal's `OpenSSL::Cipher` exposes GCM tags but no AAD setter, so
+  `encryption/ciphers.cr` implements a minimal `AesGcm` directly on OpenSSL EVP
+  (re-binding `evp_aes_128_gcm`/`evp_aes_256_gcm` in `LibCrypto`, using
+  `EVP_CipherUpdate` with a null output for AAD), and `Random::Secure` for the
+  counter-nonce seed. Errors raise `Parquet::GeneralError`; `Send`/`Sync` and
+  `HeapSize` bounds are dropped; `RingGcmBlock{Encryptor,Decryptor}` are
+  `GcmBlock{Encryptor,Decryptor}` and `CounterNonce#get_bytes` is
+  `CounterNonce#bytes`.
 - Thrift traits: `ReadThrift`, `WriteThrift`, and `WriteThriftField` are Rust
   traits with an associated `ELEMENT_TYPE` constant. Crystal has no associated
   constants, so value dispatch lives on `ThriftCompactOutputProtocol` /
