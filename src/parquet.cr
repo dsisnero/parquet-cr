@@ -14,6 +14,7 @@ require "./parquet/file/metadata/row_group"
 require "./parquet/file/metadata/parquet_metadata"
 require "./parquet/file/page_index/offset_index"
 require "./parquet/file/page_index/column_index"
+require "./parquet/file/page_index/index_reader"
 
 module Parquet
   VERSION = "0.1.0"

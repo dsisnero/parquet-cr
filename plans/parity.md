@@ -38,16 +38,16 @@ little-endian layout.
   the file metadata + statistics + footer round-trip, and the offset/column
   index *core* are done.
 - Next up (take the first unchecked item):
-  1. `ByteArrayColumnIndex`, `ColumnIndexMetaData`, `decode_column_index`
-     (`file/page_index/column_index.rs`, `index_reader.rs`).
-  2. Page-index builders `PageIndexBuilder`/`ColumnIndexBuilder`/
+  1. Page-index builders `PageIndexBuilder`/`ColumnIndexBuilder`/
      `OffsetIndexBuilder` (`file/metadata/page_index.rs` +
      `file/page_index/mod.rs`); tests `test_page_index_builder_partial_population`,
      `test_page_index_builder_empty_to_none`, `test_rebuild_page_index`.
-  3. Encodings (RLE/bit-packing, levels, plain/dictionary/delta/ALP), then
+     `ParquetMetaDataBuilder`/`ParquetMetaDataOptions` and the full reader/writer
+     IO machinery follow in this chunk.
+  2. Encodings (RLE/bit-packing, levels, plain/dictionary/delta/ALP), then
      column reader/writer, then file reader/writer, then record API.
-- Progress by counts (ledger): 399 `ported`, 14 `intentional_divergence`,
-  1 `skipped`, 3101 `missing` (of 3515 rows).
+- Progress by counts (ledger): 419 `ported`, 15 `intentional_divergence`,
+  1 `skipped`, 3080 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -63,8 +63,8 @@ Chunk status by area:
   headers done; printer + primitive builder pending.
 - Phase 1.7 util: pending (`bit_util` partially needed by column code).
 - Phase 1.8 compression: pending.
-- Phase 2.3 file metadata/statistics/page-index core: done; page-index
-  completion, file reader/writer, bloom filter pending.
+- Phase 2.3 file metadata/statistics/page-index core and column-index decode
+  done; page-index builders, file reader/writer, bloom filter pending.
 - Phases 2.1 encodings, 2.2 column, 2.4 record, 2.5 CLI: pending.
 - Phase 3 (variant/geospatial/derive/encryption/arrow/async): pending.
 
@@ -136,7 +136,9 @@ Chunk status by area:
   `AsBytes` trait (`src/parquet/data_type.cr`).
 - [ ] `DataType` trait + `make_type!` (physical-type `TYPE`/`get_physical_type`/
   `get_type_size`, encode/decode) — depends on the column reader/writer.
-- [ ] `AsBytes`/`SliceAsBytes` for primitives, `str`, `Vec<u8>`, `bool`.
+- [ ] `AsBytes`/`SliceAsBytes` for primitives, `str`, `Vec<u8>`, `bool`. Until
+      this lands, the column-index write path encodes primitives with
+      `FromBytes.to_le_slice` (identical little-endian bytes).
 
 ### 1.6 Schema
 
@@ -196,7 +198,9 @@ Chunk status by area:
   `PageLocation`, `OffsetIndexMetaData`.
 - [x] Column index core (`src/parquet/file/page_index/column_index.cr`):
   `ColumnIndex`, `PrimitiveColumnIndex<T>`, `ThriftColumnIndex`, `FromBytes`.
-- [ ] `ByteArrayColumnIndex`, `ColumnIndexMetaData`, `decode_column_index`.
+- [x] `ByteArrayColumnIndex`, `ColumnIndexMetaData`, and `decode_column_index`
+  (`src/parquet/file/page_index/{column_index,index_reader}.cr`), including the
+  `WriteThrift` impls for both index types.
 - [ ] Page-index builders (`PageIndexBuilder`/`ColumnIndexBuilder`/
   `OffsetIndexBuilder`) — tests `test_page_index_builder_partial_population`,
   `..._empty_to_none`, `test_rebuild_page_index`.
@@ -308,6 +312,20 @@ Chunk status by area:
 - `PrimitiveColumnIndex<T>` delegates `ColumnIndex` methods rather than using
   Rust `Deref`; `OffsetIndexMetaData::try_from_fast` fast-path decoder is omitted
   (the macro `read_thrift` decodes the same wire form).
+- `ByteArrayColumnIndex`: same delegation divergence as
+  `PrimitiveColumnIndex<T>`; offsets are `Int32` instead of `usize`.
+- `ColumnIndexMetaData`: upstream's enum with eight variants
+  (`BOOLEAN`/`INT32`/.../`FIXED_LEN_BYTE_ARRAY`) is a struct carrying the
+  physical `Type` plus the inner index; recover the variant via `kind` and
+  `inner.as(...)`. `is_sorted` → `sorted?`, `is_null_page` → `null_page?`, and
+  `get_boundary_order` → `boundary_order` (non-optional); `num_pages` returns
+  `Int32`. `decode_column_index` lives as `PageIndex.decode_column_index`
+  (`index_reader.cr`); `decode_offset_index`/`acc_range` are deferred to the
+  file-reader chunk.
+- Column-index `WriteThrift`: Rust `WriteThrift::ELEMENT_TYPE` associated consts
+  are not modelled; `write_thrift` is an instance method and the min/max
+  `list<binary>` fields are encoded by hand exactly as upstream. Primitive
+  min/max bytes are produced via `FromBytes.to_le_slice` (see Phase 1.5).
 
 ## Notes
 

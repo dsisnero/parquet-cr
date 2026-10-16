@@ -3,9 +3,19 @@
 module ThriftRoundTrip
   # Serialize `value` with the compact protocol and read it back.
   def self.roundtrip(value : T) : T forall T
+    read(encode(value), T)
+  end
+
+  # Serialize `value` with the compact protocol.
+  def self.encode(value : T) : Bytes forall T
     io = IO::Memory.new
     writer = Parquet::Thrift::ThriftCompactOutputProtocol.new(io)
     Parquet::Thrift.write_thrift_value(writer, value)
-    Parquet::Thrift.read_value(Parquet::Thrift::ThriftSliceInputProtocol.new(io.to_slice), T)
+    io.to_slice.dup
+  end
+
+  # Read a value of type `T` from compact-protocol `bytes`.
+  def self.read(bytes : Bytes, type : T.class) : T forall T
+    Parquet::Thrift.read_value(Parquet::Thrift::ThriftSliceInputProtocol.new(bytes), T)
   end
 end

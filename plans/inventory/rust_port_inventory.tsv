@@ -2784,32 +2784,32 @@ parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.write_o
 parquet/src/file/mod.rs::const::FOOTER_SIZE	const	missing	-	auto-generated
 parquet/src/file/mod.rs::const::PARQUET_MAGIC	const	missing	-	auto-generated
 parquet/src/file/mod.rs::const::PARQUET_MAGIC_ENCR_FOOTER	const	missing	-	auto-generated
-parquet/src/file/page_index/column_index.rs::const::ELEMENT_TYPE	const	missing	-	auto-generated
-parquet/src/file/page_index/column_index.rs::method::ByteArrayColumnIndex.deref	method	missing	-	auto-generated
-parquet/src/file/page_index/column_index.rs::method::ByteArrayColumnIndex.max_value	method	missing	-	auto-generated
-parquet/src/file/page_index/column_index.rs::method::ByteArrayColumnIndex.max_values_iter	method	missing	-	auto-generated
-parquet/src/file/page_index/column_index.rs::method::ByteArrayColumnIndex.min_value	method	missing	-	auto-generated
-parquet/src/file/page_index/column_index.rs::method::ByteArrayColumnIndex.min_values_iter	method	missing	-	auto-generated
-parquet/src/file/page_index/column_index.rs::method::ByteArrayColumnIndex.try_from_thrift	method	missing	-	auto-generated
-parquet/src/file/page_index/column_index.rs::method::ByteArrayColumnIndex.try_new	method	missing	-	auto-generated
-parquet/src/file/page_index/column_index.rs::method::ByteArrayColumnIndex.write_thrift	method	missing	-	auto-generated
+parquet/src/file/page_index/column_index.rs::const::ELEMENT_TYPE	const	intentional_divergence	src/parquet/file/page_index/column_index.cr	Rust associated const ELEMENT_TYPE; Crystal has no associated consts
+parquet/src/file/page_index/column_index.rs::method::ByteArrayColumnIndex.deref	method	ported	src/parquet/file/page_index/column_index.cr	ColumnIndex methods delegated (no Deref)
+parquet/src/file/page_index/column_index.rs::method::ByteArrayColumnIndex.max_value	method	ported	src/parquet/file/page_index/column_index.cr	ByteArrayColumnIndex
+parquet/src/file/page_index/column_index.rs::method::ByteArrayColumnIndex.max_values_iter	method	ported	src/parquet/file/page_index/column_index.cr	ByteArrayColumnIndex
+parquet/src/file/page_index/column_index.rs::method::ByteArrayColumnIndex.min_value	method	ported	src/parquet/file/page_index/column_index.cr	ByteArrayColumnIndex
+parquet/src/file/page_index/column_index.rs::method::ByteArrayColumnIndex.min_values_iter	method	ported	src/parquet/file/page_index/column_index.cr	ByteArrayColumnIndex
+parquet/src/file/page_index/column_index.rs::method::ByteArrayColumnIndex.try_from_thrift	method	ported	src/parquet/file/page_index/column_index.cr	ByteArrayColumnIndex
+parquet/src/file/page_index/column_index.rs::method::ByteArrayColumnIndex.try_new	method	ported	src/parquet/file/page_index/column_index.cr	ByteArrayColumnIndex
+parquet/src/file/page_index/column_index.rs::method::ByteArrayColumnIndex.write_thrift	method	ported	src/parquet/file/page_index/column_index.cr	ByteArrayColumnIndex
 parquet/src/file/page_index/column_index.rs::method::ColumnIndex.definition_level_histogram	method	ported	src/parquet/file/page_index/column_index.cr	ColumnIndex
 parquet/src/file/page_index/column_index.rs::method::ColumnIndex.is_null_page	method	ported	src/parquet/file/page_index/column_index.cr	renamed ColumnIndex#null_page?
 parquet/src/file/page_index/column_index.rs::method::ColumnIndex.nan_count	method	ported	src/parquet/file/page_index/column_index.cr	ColumnIndex
 parquet/src/file/page_index/column_index.rs::method::ColumnIndex.null_count	method	ported	src/parquet/file/page_index/column_index.cr	ColumnIndex
 parquet/src/file/page_index/column_index.rs::method::ColumnIndex.num_pages	method	ported	src/parquet/file/page_index/column_index.cr	ColumnIndex
 parquet/src/file/page_index/column_index.rs::method::ColumnIndex.repetition_level_histogram	method	ported	src/parquet/file/page_index/column_index.cr	ColumnIndex
-parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.definition_level_histogram	method	missing	-	auto-generated
-parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.get_boundary_order	method	missing	-	auto-generated
-parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.is_null_page	method	missing	-	auto-generated
-parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.is_sorted	method	missing	-	auto-generated
-parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.nan_count	method	missing	-	auto-generated
-parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.nan_counts	method	missing	-	auto-generated
-parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.null_count	method	missing	-	auto-generated
-parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.null_counts	method	missing	-	auto-generated
-parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.num_pages	method	missing	-	auto-generated
-parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.repetition_level_histogram	method	missing	-	auto-generated
-parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.write_thrift	method	missing	-	auto-generated
+parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.definition_level_histogram	method	ported	src/parquet/file/page_index/column_index.cr	ColumnIndexMetaData
+parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.get_boundary_order	method	ported	src/parquet/file/page_index/column_index.cr	renamed ColumnIndexMetaData#boundary_order (non-optional)
+parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.is_null_page	method	ported	src/parquet/file/page_index/column_index.cr	renamed ColumnIndexMetaData#null_page?
+parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.is_sorted	method	ported	src/parquet/file/page_index/column_index.cr	renamed ColumnIndexMetaData#sorted?
+parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.nan_count	method	ported	src/parquet/file/page_index/column_index.cr	ColumnIndexMetaData
+parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.nan_counts	method	ported	src/parquet/file/page_index/column_index.cr	ColumnIndexMetaData
+parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.null_count	method	ported	src/parquet/file/page_index/column_index.cr	ColumnIndexMetaData
+parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.null_counts	method	ported	src/parquet/file/page_index/column_index.cr	ColumnIndexMetaData
+parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.num_pages	method	ported	src/parquet/file/page_index/column_index.cr	ColumnIndexMetaData, returns Int32
+parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.repetition_level_histogram	method	ported	src/parquet/file/page_index/column_index.cr	ColumnIndexMetaData
+parquet/src/file/page_index/column_index.rs::method::ColumnIndexMetaData.write_thrift	method	ported	src/parquet/file/page_index/column_index.cr	ColumnIndexMetaData
 parquet/src/file/page_index/column_index.rs::method::PrimitiveColumnIndex<T>.deref	method	ported	src/parquet/file/page_index/column_index.cr	ColumnIndex methods delegated (no Deref)
 parquet/src/file/page_index/column_index.rs::method::PrimitiveColumnIndex<T>.max_value	method	ported	src/parquet/file/page_index/column_index.cr	PrimitiveColumnIndex
 parquet/src/file/page_index/column_index.rs::method::PrimitiveColumnIndex<T>.max_values	method	ported	src/parquet/file/page_index/column_index.cr	PrimitiveColumnIndex
@@ -2819,7 +2819,7 @@ parquet/src/file/page_index/column_index.rs::method::PrimitiveColumnIndex<T>.min
 parquet/src/file/page_index/column_index.rs::method::PrimitiveColumnIndex<T>.min_values_iter	method	ported	src/parquet/file/page_index/column_index.cr	PrimitiveColumnIndex
 parquet/src/file/page_index/column_index.rs::method::PrimitiveColumnIndex<T>.try_from_thrift	method	ported	src/parquet/file/page_index/column_index.cr	PrimitiveColumnIndex
 parquet/src/file/page_index/column_index.rs::method::PrimitiveColumnIndex<T>.try_new	method	ported	src/parquet/file/page_index/column_index.cr	PrimitiveColumnIndex
-parquet/src/file/page_index/column_index.rs::method::PrimitiveColumnIndex<T>.write_thrift	method	missing	-	auto-generated
+parquet/src/file/page_index/column_index.rs::method::PrimitiveColumnIndex<T>.write_thrift	method	ported	src/parquet/file/page_index/column_index.cr	PrimitiveColumnIndex
 parquet/src/file/page_index/offset_index.rs::method::OffsetIndexMetaData.page_locations	method	ported	src/parquet/file/page_index/offset_index.cr	OffsetIndexMetaData#page_locations
 parquet/src/file/page_index/offset_index.rs::method::OffsetIndexMetaData.try_from_fast	method	intentional_divergence	src/parquet/file/page_index/offset_index.cr	fast-path decoder omitted; macro read_thrift decodes the same wire form
 parquet/src/file/page_index/offset_index.rs::method::OffsetIndexMetaData.unencoded_byte_array_data_bytes	method	ported	src/parquet/file/page_index/offset_index.cr	OffsetIndexMetaData#unencoded_byte_array_data_bytes
