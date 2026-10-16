@@ -43,16 +43,16 @@ little-endian layout.
   `ThriftMetadataWriter` (footer + page-index serialization) are done, and the
   `util` bit layer (`BitReader`/`BitWriter`), the RLE/bit-packing hybrid
   (`RleEncoder`/`RleDecoder`), level encoding (`LevelEncoder`), and the PLAIN,
-  DELTA_BINARY_PACKED, DELTA_LENGTH_BYTE_ARRAY, and DELTA_BYTE_ARRAY codecs are
-  started.
+  DELTA_BINARY_PACKED, DELTA_LENGTH_BYTE_ARRAY, DELTA_BYTE_ARRAY, and dictionary
+  codecs are done.
 - Next up (take the first unchecked item):
-  1. Encodings: dictionary, byte-stream-split, and ALP; then the
+  1. Encodings: byte-stream-split, RLE value, and ALP; then the
      `DataType`/`Encoder`/`Decoder` registries; then the column reader/writer,
      then serialized/file reader+writer, then record API and bloom filter.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 680 `ported`, 95 `intentional_divergence`,
-  1 `skipped`, 2739 `missing` (of 3515 rows).
+- Progress by counts (ledger): 712 `ported`, 99 `intentional_divergence`,
+  1 `skipped`, 2703 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -73,7 +73,11 @@ Chunk status by area:
   `ParquetMetaDataPushDecoder`, the synchronous `ChunkReader`-driven
   `ParquetMetaDataReader`, and the `ParquetMetaDataWriter`/`ThriftMetadataWriter`
   done; serialized/file reader+writer, bloom filter pending.
-- Phases 2.1 encodings, 2.2 column, 2.4 record, 2.5 CLI: pending.
+- Phase 2.1 encodings: RLE/bit-packing hybrid, levels, PLAIN,
+  DELTA_BINARY_PACKED, DELTA_LENGTH_BYTE_ARRAY, DELTA_BYTE_ARRAY, and dictionary
+  done; byte-stream-split, RLE value, ALP, and the encoder/decoder registries
+  pending.
+- Phases 2.2 column, 2.4 record, 2.5 CLI: pending.
 - Phase 3 (variant/geospatial/derive/encryption/arrow/async): pending.
 
 ## Phase 0 — Project initialization
@@ -163,6 +167,8 @@ Chunk status by area:
 
 - [x] `PushBuffers` (`src/parquet/util/push_buffers.cr`).
 - [x] `BitReader`/`BitWriter` + helpers (`src/parquet/util/bit_util.cr`).
+- [x] `Interner`/`Storage` (`src/parquet/util/interner.cr`) used by the
+      dictionary encoder.
 - [ ] Bit packing (`util/bit_pack.rs`), cursor, page readers (`util/` remaining).
 - [ ] CRC32 checksum helpers.
 
@@ -189,7 +195,9 @@ Chunk status by area:
   (`src/parquet/encodings/delta_byte_array.cr`):
   `DeltaLengthByteArrayEncoder`/`Decoder` and
   `DeltaByteArrayEncoder(T)`/`DeltaByteArrayDecoder(T)`.
-- [ ] Dictionary, byte-stream-split, RLE value, ALP codecs
+- [x] Dictionary codec (`src/parquet/encodings/dict.cr`): `DictEncoder(T)` and
+  `DictDecoder(T)`, plus `KeyStorage(T)`; `util/interner.cr`.
+- [ ] Byte-stream-split, RLE value, ALP codecs
   (`encodings/encoding`, `encodings/decoding`).
 - [ ] ALP codec (`encodings/alp.rs`).
 - [ ] 7 upstream test modules ported.
@@ -439,6 +447,26 @@ Chunk status by area:
   64`); `put_aligned`/`put_aligned_offset` encode via `IO::ByteFormat::
   LittleEndian` rather than the `AsBytes` trait; `BitWriter#flush_buffer_mut`
   and `BitReader#get_aligned_bytes` are not ported.
+- `util::interner`: Rust's `Storage` trait (with `Key`/`Value` associated types)
+  is an abstract generic class `Storage(Key, Value)`; the `hashbrown::HashTable`
+  dedup table is a `Hash(Bytes, Key)` keyed on `value.as_bytes`, preserving the
+  upstream byte-wise comparison (identical NaN bit patterns dedup);
+  `Interner#estimated_memory_size` and `Storage#estimated_memory_size` use
+  element counts rather than Rust's retained `capacity()` (`Array` exposes no
+  capacity), and the dedup table contributes a fixed preallocation estimate.
+  `Interner::into_inner` (arrow-only) is not ported.
+- `encodings::dict`: `DictEncoder(T)`/`DictDecoder(T)` with `T.class` and
+  `KeyStorage(T)`; `DictDecoder#set_dict` accepts any object responding to
+  `values_left`/`get` (in practice a `PlainDecoder(T)`) rather than a
+  `Box<dyn Decoder<T>>`; `DictEncoder#put_one` is inlined into `put`;
+  `is_sorted` → `sorted?`. `DictDecoder#get`/`#skip` leave `num_values`
+  unchanged, matching upstream. `estimated_memory_size` is count-based as above.
+- `data_type`: primitives now implement `AsBytes` (`as_bytes` for `Bool`,
+  `Int32`, `Int64`, `Float32`, `Float64`, little-endian, matching upstream's
+  native-byte `gen_as_bytes!`); `DataType`/`SliceAsBytes` for primitives,
+  `str`, and `Vec<u8>` remain pending. `dict_encoding_size` /
+  `variable_length_bytes` are realized per-type inside
+  `DictEncoder::KeyStorage<T>` rather than on a `ParquetValueType` trait.
 - `ParquetMetaDataWriter`/`ThriftMetadataWriter`: the `MetadataObjectWriter`
   encryption-dispatch layer is not modeled; the non-encryption write logic is
   inlined (`write_thrift_object`, `Metadata.write_file_metadata`), and the

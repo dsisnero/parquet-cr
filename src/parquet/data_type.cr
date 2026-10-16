@@ -321,3 +321,54 @@ module Parquet
     end
   end
 end
+
+# `AsBytes` for the native scalar value types (upstream `gen_as_bytes!` /
+# `impl AsBytes for bool`). Little-endian is the native representation on the
+# supported platforms, matching upstream.
+struct Bool
+  include Parquet::AsBytes
+
+  def as_bytes : Bytes
+    Bytes[self ? 1_u8 : 0_u8]
+  end
+end
+
+struct Int32
+  include Parquet::AsBytes
+
+  def as_bytes : Bytes
+    buf = Bytes.new(4)
+    IO::Memory.new(buf).write_bytes(self, IO::ByteFormat::LittleEndian)
+    buf
+  end
+end
+
+struct Int64
+  include Parquet::AsBytes
+
+  def as_bytes : Bytes
+    buf = Bytes.new(8)
+    IO::Memory.new(buf).write_bytes(self, IO::ByteFormat::LittleEndian)
+    buf
+  end
+end
+
+struct Float32
+  include Parquet::AsBytes
+
+  def as_bytes : Bytes
+    buf = Bytes.new(4)
+    IO::Memory.new(buf).write_bytes(self, IO::ByteFormat::LittleEndian)
+    buf
+  end
+end
+
+struct Float64
+  include Parquet::AsBytes
+
+  def as_bytes : Bytes
+    buf = Bytes.new(8)
+    IO::Memory.new(buf).write_bytes(self, IO::ByteFormat::LittleEndian)
+    buf
+  end
+end

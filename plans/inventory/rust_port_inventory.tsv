@@ -2030,7 +2030,7 @@ parquet/src/data_type.rs::method::Int96.to_seconds	method	ported	src/parquet/dat
 parquet/src/data_type.rs::method::Vec<u8>.as_bytes	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::[u8].as_bytes	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::bool.as_any	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::bool.as_bytes	method	missing	-	auto-generated
+parquet/src/data_type.rs::method::bool.as_bytes	method	ported	src/parquet/data_type.cr	primitive AsBytes (Bool#as_bytes)
 parquet/src/data_type.rs::method::bool.as_i64	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::bool.as_mut_any	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::bool.decode	method	missing	-	auto-generated
@@ -2041,17 +2041,17 @@ parquet/src/data_type.rs::method::str.as_bytes	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::ByteArray.as_any	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::ByteArray.as_mut_any	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::ByteArray.decode	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::super::ByteArray.dict_encoding_size	method	missing	-	auto-generated
+parquet/src/data_type.rs::method::super::ByteArray.dict_encoding_size	method	ported	src/parquet/encodings/dict.cr	KeyStorage#dict_encoding_size
 parquet/src/data_type.rs::method::super::ByteArray.encode	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::ByteArray.heap_size	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::ByteArray.set_data	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::ByteArray.set_from_bytes	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::ByteArray.skip	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::super::ByteArray.variable_length_bytes	method	missing	-	auto-generated
+parquet/src/data_type.rs::method::super::ByteArray.variable_length_bytes	method	ported	src/parquet/encodings/dict.cr	KeyStorage#estimated_memory_size
 parquet/src/data_type.rs::method::super::FixedLenByteArray.as_any	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::FixedLenByteArray.as_mut_any	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::FixedLenByteArray.decode	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::super::FixedLenByteArray.dict_encoding_size	method	missing	-	auto-generated
+parquet/src/data_type.rs::method::super::FixedLenByteArray.dict_encoding_size	method	ported	src/parquet/encodings/dict.cr	KeyStorage#dict_encoding_size
 parquet/src/data_type.rs::method::super::FixedLenByteArray.encode	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::FixedLenByteArray.heap_size	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::FixedLenByteArray.set_data	method	missing	-	auto-generated
@@ -2153,14 +2153,14 @@ parquet/src/encodings/decoding.rs::method::DeltaLengthByteArrayDecoder<T>.new	me
 parquet/src/encodings/decoding.rs::method::DeltaLengthByteArrayDecoder<T>.set_data	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaLengthByteArrayDecoder
 parquet/src/encodings/decoding.rs::method::DeltaLengthByteArrayDecoder<T>.skip	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaLengthByteArrayDecoder
 parquet/src/encodings/decoding.rs::method::DeltaLengthByteArrayDecoder<T>.values_left	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaLengthByteArrayDecoder
-parquet/src/encodings/decoding.rs::method::DictDecoder<T>.default	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DictDecoder<T>.encoding	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DictDecoder<T>.get	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DictDecoder<T>.new	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DictDecoder<T>.set_data	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DictDecoder<T>.set_dict	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DictDecoder<T>.skip	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DictDecoder<T>.values_left	method	missing	-	auto-generated
+parquet/src/encodings/decoding.rs::method::DictDecoder<T>.default	method	intentional_divergence	src/parquet/encodings/dict.cr	Rust Default; Crystal default initialize
+parquet/src/encodings/decoding.rs::method::DictDecoder<T>.encoding	method	ported	src/parquet/encodings/dict.cr	DictDecoder#encoding
+parquet/src/encodings/decoding.rs::method::DictDecoder<T>.get	method	ported	src/parquet/encodings/dict.cr	DictDecoder#get (does not decrement num_values, as upstream)
+parquet/src/encodings/decoding.rs::method::DictDecoder<T>.new	method	ported	src/parquet/encodings/dict.cr	DictDecoder.new
+parquet/src/encodings/decoding.rs::method::DictDecoder<T>.set_data	method	ported	src/parquet/encodings/dict.cr	DictDecoder#set_data
+parquet/src/encodings/decoding.rs::method::DictDecoder<T>.set_dict	method	ported	src/parquet/encodings/dict.cr	DictDecoder#set_dict
+parquet/src/encodings/decoding.rs::method::DictDecoder<T>.skip	method	ported	src/parquet/encodings/dict.cr	DictDecoder#skip
+parquet/src/encodings/decoding.rs::method::DictDecoder<T>.values_left	method	ported	src/parquet/encodings/dict.cr	DictDecoder#values_left
 parquet/src/encodings/decoding.rs::method::FixedLenByteArray.get_decoder	method	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::method::FixedLenByteArrayType.to_byte_array	method	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::method::Int96Type.to_byte_array	method	missing	-	auto-generated
@@ -2240,24 +2240,24 @@ parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::VariableWid
 parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::VariableWidthByteStreamSplitEncoder<T>.flush_buffer	method	missing	-	auto-generated
 parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::VariableWidthByteStreamSplitEncoder<T>.new	method	missing	-	auto-generated
 parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::VariableWidthByteStreamSplitEncoder<T>.put	method	missing	-	auto-generated
-parquet/src/encodings/encoding/dict_encoder.rs::const::TYPE_LEN	const	missing	-	auto-generated
-parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.bit_width	method	missing	-	auto-generated
-parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.dict_encoded_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.encoding	method	missing	-	auto-generated
-parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.estimated_data_encoded_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.estimated_memory_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.flush_buffer	method	missing	-	auto-generated
-parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.is_sorted	method	missing	-	auto-generated
-parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.new	method	missing	-	auto-generated
-parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.num_entries	method	missing	-	auto-generated
-parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.put	method	missing	-	auto-generated
-parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.put_one	method	missing	-	auto-generated
-parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.uniques	method	missing	-	auto-generated
-parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.write_dict	method	missing	-	auto-generated
-parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.write_indices	method	missing	-	auto-generated
-parquet/src/encodings/encoding/dict_encoder.rs::method::KeyStorage<T>.estimated_memory_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/dict_encoder.rs::method::KeyStorage<T>.get	method	missing	-	auto-generated
-parquet/src/encodings/encoding/dict_encoder.rs::method::KeyStorage<T>.push	method	missing	-	auto-generated
+parquet/src/encodings/encoding/dict_encoder.rs::const::TYPE_LEN	const	intentional_divergence	spec/parquet/encodings/dict_spec.cr	test-local constant inlined as literal
+parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.bit_width	method	ported	src/parquet/encodings/dict.cr	DictEncoder#bit_width (private)
+parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.dict_encoded_size	method	ported	src/parquet/encodings/dict.cr	DictEncoder#dict_encoded_size
+parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.encoding	method	ported	src/parquet/encodings/dict.cr	DictEncoder#encoding
+parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.estimated_data_encoded_size	method	ported	src/parquet/encodings/dict.cr	DictEncoder#estimated_data_encoded_size
+parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.estimated_memory_size	method	ported	src/parquet/encodings/dict.cr	DictEncoder#estimated_memory_size (count-based)
+parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.flush_buffer	method	ported	src/parquet/encodings/dict.cr	DictEncoder#flush_buffer
+parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.is_sorted	method	ported	src/parquet/encodings/dict.cr	DictEncoder#sorted?
+parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.new	method	ported	src/parquet/encodings/dict.cr	DictEncoder.new
+parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.num_entries	method	ported	src/parquet/encodings/dict.cr	DictEncoder#num_entries
+parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.put	method	ported	src/parquet/encodings/dict.cr	DictEncoder#put
+parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.put_one	method	intentional_divergence	src/parquet/encodings/dict.cr	inlined into DictEncoder#put
+parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.uniques	method	ported	src/parquet/encodings/dict.cr	DictEncoder#uniques
+parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.write_dict	method	ported	src/parquet/encodings/dict.cr	DictEncoder#write_dict
+parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.write_indices	method	ported	src/parquet/encodings/dict.cr	DictEncoder#write_indices
+parquet/src/encodings/encoding/dict_encoder.rs::method::KeyStorage<T>.estimated_memory_size	method	ported	src/parquet/encodings/dict.cr	KeyStorage#estimated_memory_size
+parquet/src/encodings/encoding/dict_encoder.rs::method::KeyStorage<T>.get	method	ported	src/parquet/encodings/dict.cr	KeyStorage#get
+parquet/src/encodings/encoding/dict_encoder.rs::method::KeyStorage<T>.push	method	ported	src/parquet/encodings/dict.cr	KeyStorage#push
 parquet/src/encodings/encoding/mod.rs::const::DEFAULT_BIT_WRITER_SIZE	const	missing	-	auto-generated
 parquet/src/encodings/encoding/mod.rs::const::DEFAULT_NUM_MINI_BLOCKS	const	missing	-	auto-generated
 parquet/src/encodings/encoding/mod.rs::const::DEFAULT_RLE_BUFFER_LEN	const	missing	-	auto-generated
@@ -3443,12 +3443,12 @@ parquet/src/util/bit_util.rs::method::f64.from_le_bytes	method	intentional_diver
 parquet/src/util/bit_util.rs::method::f64.try_from_le_slice	method	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
 parquet/src/util/bit_util.rs::method::u64.from_u64	method	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
 parquet/src/util/bit_util.rs::method::u64.unpack_batch	method	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
-parquet/src/util/interner.rs::const::DEFAULT_DEDUP_CAPACITY	const	missing	-	auto-generated
-parquet/src/util/interner.rs::method::Interner<S>.estimated_memory_size	method	missing	-	auto-generated
-parquet/src/util/interner.rs::method::Interner<S>.intern	method	missing	-	auto-generated
-parquet/src/util/interner.rs::method::Interner<S>.into_inner	method	missing	-	auto-generated
-parquet/src/util/interner.rs::method::Interner<S>.new	method	missing	-	auto-generated
-parquet/src/util/interner.rs::method::Interner<S>.storage	method	missing	-	auto-generated
+parquet/src/util/interner.rs::const::DEFAULT_DEDUP_CAPACITY	const	ported	src/parquet/util/interner.cr	Util::DEFAULT_DEDUP_CAPACITY
+parquet/src/util/interner.rs::method::Interner<S>.estimated_memory_size	method	ported	src/parquet/util/interner.cr	Interner#estimated_memory_size (count-based estimate)
+parquet/src/util/interner.rs::method::Interner<S>.intern	method	ported	src/parquet/util/interner.cr	Interner#intern (bytes-keyed dedup)
+parquet/src/util/interner.rs::method::Interner<S>.into_inner	method	intentional_divergence	src/parquet/util/interner.cr	arrow-only into_inner not ported
+parquet/src/util/interner.rs::method::Interner<S>.new	method	ported	src/parquet/util/interner.cr	Interner.new
+parquet/src/util/interner.rs::method::Interner<S>.storage	method	ported	src/parquet/util/interner.cr	Interner#storage
 parquet/src/util/prefix.rs::const::BLOCK	const	missing	-	auto-generated
 parquet/src/util/push_buffers.rs::method::PushBuffers.buffered_bytes	method	intentional_divergence	src/parquet/util/push_buffers.cr	arrow-feature only; not needed by metadata push decoder
 parquet/src/util/push_buffers.rs::method::PushBuffers.clear_all_ranges	method	ported	src/parquet/util/push_buffers.cr	PushBuffers

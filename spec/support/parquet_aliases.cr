@@ -37,3 +37,9 @@ alias DeltaLengthByteArrayEncoder = Parquet::Encodings::DeltaLengthByteArrayEnco
 alias DeltaLengthByteArrayDecoder = Parquet::Encodings::DeltaLengthByteArrayDecoder
 alias DeltaByteArrayEncoder = Parquet::Encodings::DeltaByteArrayEncoder
 alias DeltaByteArrayDecoder = Parquet::Encodings::DeltaByteArrayDecoder
+alias DictEncoder = Parquet::Encodings::DictEncoder
+alias DictDecoder = Parquet::Encodings::DictDecoder
+
+alias PInt96 = Parquet::Int96
+alias PByteArray = Parquet::ByteArray
+alias PFixedLenByteArray = Parquet::FixedLenByteArray
