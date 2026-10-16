@@ -199,7 +199,14 @@ little-endian layout.
   `is_min_max_deprecated`/`is_min_max_backwards_compatible` are
   `min_max_deprecated?`/`min_max_backwards_compatible?`.)
 - [ ] Reader/writer (`file/reader`, `file/writer`).
-- [ ] Page index (column index, offset index).
+- [x] Offset index (`src/parquet/file/page_index/offset_index.cr`):
+  `PageLocation` and `OffsetIndexMetaData` thrift structs; upstream
+  `test_offset_idx_roundtrip` ported to
+  `spec/parquet/file/offset_index_spec.cr`. (`try_from_fast` fast-path decoder
+  omitted; the macro `read_thrift` decodes the same wire form.)
+- [ ] Column index (`ColumnIndex`/`PrimitiveColumnIndex`/`ColumnIndexMetaData`)
+  and the page-index builders (`PageIndexBuilder`/`ColumnIndexBuilder`/
+  `OffsetIndexBuilder`).
 - [ ] Bloom filter (`bloom_filter/`).
 - [ ] 12 upstream test modules ported.
 

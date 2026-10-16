@@ -120,6 +120,9 @@ revision is recorded per entry.
   `parquet_metadata_from_bytes`, row-group ordinal backfill, and a
   `ParquetMetaDataWriter`/`ParquetMetaDataReader.decode_metadata` round-trip).
   Upstream ordinal tests ported to `spec/parquet/file/parquet_metadata_spec.cr`.
+- Offset index (`src/parquet/file/page_index/offset_index.cr`): `PageLocation`
+  and `OffsetIndexMetaData` thrift structs. Upstream `test_offset_idx_roundtrip`
+  ported to `spec/parquet/file/offset_index_spec.cr`; added `PPI` spec alias.
 - Harden `Makefile` gates by stripping macOS AppleDouble `._*` sidecars (whose
   names can match crystal's `*_spec.cr` glob on exFAT volumes).
 

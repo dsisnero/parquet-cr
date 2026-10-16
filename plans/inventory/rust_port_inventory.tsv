@@ -2820,9 +2820,9 @@ parquet/src/file/page_index/column_index.rs::method::PrimitiveColumnIndex<T>.min
 parquet/src/file/page_index/column_index.rs::method::PrimitiveColumnIndex<T>.try_from_thrift	method	missing	-	auto-generated
 parquet/src/file/page_index/column_index.rs::method::PrimitiveColumnIndex<T>.try_new	method	missing	-	auto-generated
 parquet/src/file/page_index/column_index.rs::method::PrimitiveColumnIndex<T>.write_thrift	method	missing	-	auto-generated
-parquet/src/file/page_index/offset_index.rs::method::OffsetIndexMetaData.page_locations	method	missing	-	auto-generated
-parquet/src/file/page_index/offset_index.rs::method::OffsetIndexMetaData.try_from_fast	method	missing	-	auto-generated
-parquet/src/file/page_index/offset_index.rs::method::OffsetIndexMetaData.unencoded_byte_array_data_bytes	method	missing	-	auto-generated
+parquet/src/file/page_index/offset_index.rs::method::OffsetIndexMetaData.page_locations	method	ported	src/parquet/file/page_index/offset_index.cr	OffsetIndexMetaData#page_locations
+parquet/src/file/page_index/offset_index.rs::method::OffsetIndexMetaData.try_from_fast	method	intentional_divergence	src/parquet/file/page_index/offset_index.cr	fast-path decoder omitted; macro read_thrift decodes the same wire form
+parquet/src/file/page_index/offset_index.rs::method::OffsetIndexMetaData.unencoded_byte_array_data_bytes	method	ported	src/parquet/file/page_index/offset_index.cr	OffsetIndexMetaData#unencoded_byte_array_data_bytes
 parquet/src/file/properties.rs::const::DEFAULT_BLOOM_FILTER_FOR_DICTIONARY_ENCODED_CHUNKS	const	missing	-	auto-generated
 parquet/src/file/properties.rs::const::DEFAULT_BLOOM_FILTER_FPP	const	missing	-	auto-generated
 parquet/src/file/properties.rs::const::DEFAULT_BLOOM_FILTER_NDV	const	missing	-	auto-generated
