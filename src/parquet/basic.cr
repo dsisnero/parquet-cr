@@ -86,6 +86,24 @@ module Parquet
   end
   define_thrift_union_all_empty(TimeUnit)
 
+  # Mirrors thrift union `BloomFilterAlgorithm`. All variants are empty structs.
+  enum BloomFilterAlgorithm : Int32
+    BLOCK = 1
+  end
+  define_thrift_union_all_empty(BloomFilterAlgorithm)
+
+  # Mirrors thrift union `BloomFilterHash`. All variants are empty structs.
+  enum BloomFilterHash : Int32
+    XXHASH = 1
+  end
+  define_thrift_union_all_empty(BloomFilterHash)
+
+  # Mirrors thrift union `BloomFilterCompression`. All variants are empty structs.
+  enum BloomFilterCompression : Int32
+    UNCOMPRESSED = 1
+  end
+  define_thrift_union_all_empty(BloomFilterCompression)
+
   # Mirrors thrift enum `EdgeInterpolationAlgorithm`.
   #
   # Hand-coded (not via `define_thrift_enum`) to carry an `_Unknown` value for

@@ -46,16 +46,17 @@ little-endian layout.
   (PLAIN, DELTA_BINARY_PACKED, DELTA_LENGTH_BYTE_ARRAY, DELTA_BYTE_ARRAY,
   dictionary, byte-stream-split, RLE value, ALP), the `Encoder`/`Decoder`
   interfaces + `get_encoder`/`get_decoder` registries, the writer/reader
-  properties, the column level/value decoders, and the column page
-  types/interfaces are done.
+  properties, the column level/value decoders, the column page
+  types/interfaces, and the bloom filter (`Sbbf`) are done.
 - Next up (take the first unchecked item):
-  1. Column writer/reader encoders (`column/writer/encoder.rs`), the writer-mod
-     helpers + bloom filter it needs, then `ColumnReaderImpl`/
+  1. Column writer/reader encoders (`column/writer/encoder.rs`) + the
+     writer-mod helpers (`fallback_encoding`, `has_dictionary_support`,
+     `compare_greater`, `is_nan`, `update_min/max`), then `ColumnReaderImpl`/
      `ColumnWriterImpl`, then serialized/file reader+writer, then record API.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 1058 `ported`, 112 `intentional_divergence`,
-  1 `skipped`, 2344 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1087 `ported`, 118 `intentional_divergence`,
+  1 `skipped`, 2309 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -275,7 +276,9 @@ Chunk status by area:
   `file_magic` (`src/parquet/file/tracked_write.cr`).
 - [ ] Serialized reader/writer (footer + page headers).
 - [ ] Reader/writer (`file/reader`, `file/writer`).
-- [ ] Bloom filter (`bloom_filter/`).
+- [x] Bloom filter (`src/parquet/bloom_filter.cr`): `Sbbf` + `Block`, the
+  `BloomFilterHeader` thrift struct, and the header/serialization helpers;
+  `Parquet::XxHash64` (`src/parquet/util/xxhash.cr`).
 - [ ] 12 upstream test modules ported.
 
 ### 2.4 Record API
@@ -521,6 +524,15 @@ Chunk status by area:
   disables; the `PageReader` `Iterator` impl and the `PageIterator` trait are
   not ported; the encryption-only `with_new_compressed_buffer` is not ported.
   `PageMetadata`'s `TryFrom<&PageHeader>` is `PageMetadata.from_thrift`.
+- `bloom_filter`: `twox_hash::XxHash64` is replaced by the in-repo
+  `Parquet::XxHash64` (exact values, seed 0); `AsBytes` trait-object dispatch is
+  a `String` overload plus a generic `as_bytes`; `Block` is a struct over
+  `StaticArray(UInt32, 8)` (value semantics for folding) with `|` in place of
+  `BitOr`/`BitOrAssign`; the endianness helpers (`to_le_bytes`/`to_ne_bytes`/
+  `swap_bytes`) and `Index`/`IndexMut` become the `words` getter + LE writes;
+  `estimated_memory_size` uses the block count; internal helpers
+  (`Block.mask`, `Sbbf#hash_to_block_index`/`insert_hash`/`fold_n`/`blocks`)
+  are exposed for the upstream white-box tests.
 - `encodings::byte_stream_split`: `ByteStreamSplitEncoder(T)`/`Decoder(T)` and
   `VariableWidthByteStreamSplitEncoder(T)`/`Decoder(T)` with `T.class`; the
   constant `split_streams_const`/`join_streams_const` and `_variable` kernels

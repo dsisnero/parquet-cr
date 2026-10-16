@@ -1701,41 +1701,41 @@ parquet/src/bin/parquet-rewrite.rs::method::Encoding.from	method	missing	-	auto-
 parquet/src/bin/parquet-rewrite.rs::method::WriterVersion.from	method	missing	-	auto-generated
 parquet/src/bin/parquet-rewrite.rs::method::WriterVersionArgs.to_possible_value	method	missing	-	auto-generated
 parquet/src/bin/parquet-rewrite.rs::method::WriterVersionArgs.value_variants	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::const::BITSET_MAX_LENGTH	const	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::const::BITSET_MIN_LENGTH	const	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::const::SALT	const	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::const::SBBF_HEADER_SIZE_ESTIMATE	const	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::const::SEED	const	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::const::ZERO	const	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Block.bitor	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Block.bitor_assign	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Block.check	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Block.count_ones	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Block.index	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Block.index_mut	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Block.insert	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Block.mask	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Block.swap_bytes	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Block.to_le_bytes	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Block.to_ne_bytes	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Sbbf.check	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Sbbf.check_hash	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Sbbf.estimated_memory_size	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Sbbf.fold_n	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Sbbf.fold_to_target_fpp	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Sbbf.from_bytes	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Sbbf.hash_to_block_index	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Sbbf.header	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Sbbf.insert	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Sbbf.insert_hash	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Sbbf.new	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Sbbf.new_with_ndv_fpp	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Sbbf.new_with_num_of_bytes	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Sbbf.num_blocks	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Sbbf.num_folds_for_target_fpp	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Sbbf.read_from_column_chunk	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Sbbf.write	method	missing	-	auto-generated
-parquet/src/bloom_filter/mod.rs::method::Sbbf.write_bitset	method	missing	-	auto-generated
+parquet/src/bloom_filter/mod.rs::const::BITSET_MAX_LENGTH	const	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::const::BITSET_MIN_LENGTH	const	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::const::SALT	const	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::const::SBBF_HEADER_SIZE_ESTIMATE	const	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::const::SEED	const	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::const::ZERO	const	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Block.bitor	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Block.bitor_assign	method	intentional_divergence	src/parquet/bloom_filter.cr	fold uses `|`
+parquet/src/bloom_filter/mod.rs::method::Block.check	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Block.count_ones	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Block.index	method	intentional_divergence	src/parquet/bloom_filter.cr	Block#words getter + []
+parquet/src/bloom_filter/mod.rs::method::Block.index_mut	method	intentional_divergence	src/parquet/bloom_filter.cr	Block#words getter + []=
+parquet/src/bloom_filter/mod.rs::method::Block.insert	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Block.mask	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Block.swap_bytes	method	intentional_divergence	src/parquet/bloom_filter.cr	big-endian path not modelled
+parquet/src/bloom_filter/mod.rs::method::Block.to_le_bytes	method	intentional_divergence	src/parquet/bloom_filter.cr	serialized via IO write_bytes LE
+parquet/src/bloom_filter/mod.rs::method::Block.to_ne_bytes	method	intentional_divergence	src/parquet/bloom_filter.cr	native-endian transmute not modelled
+parquet/src/bloom_filter/mod.rs::method::Sbbf.check	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Sbbf.check_hash	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Sbbf.estimated_memory_size	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Sbbf.fold_n	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Sbbf.fold_to_target_fpp	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Sbbf.from_bytes	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Sbbf.hash_to_block_index	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Sbbf.header	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Sbbf.insert	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Sbbf.insert_hash	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Sbbf.new	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Sbbf.new_with_ndv_fpp	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Sbbf.new_with_num_of_bytes	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Sbbf.num_blocks	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Sbbf.num_folds_for_target_fpp	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Sbbf.read_from_column_chunk	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Sbbf.write	method	ported	src/parquet/bloom_filter.cr	bloom filter
+parquet/src/bloom_filter/mod.rs::method::Sbbf.write_bitset	method	ported	src/parquet/bloom_filter.cr	bloom filter
 parquet/src/column/chunker/cdc.rs::const::CDC_EDIT_SIZE	const	missing	-	auto-generated
 parquet/src/column/chunker/cdc.rs::const::CDC_MAX_CHUNK_SIZE	const	missing	-	auto-generated
 parquet/src/column/chunker/cdc.rs::const::CDC_MIN_CHUNK_SIZE	const	missing	-	auto-generated
