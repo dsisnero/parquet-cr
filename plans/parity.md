@@ -61,7 +61,11 @@ little-endian layout.
   - `encryption` (`src/parquet/encryption/ciphers.cr`): the AES-GCM block
     encryptor/decryptor (`GcmBlockEncryptor`/`GcmBlockDecryptor`/`CounterNonce`)
     with a minimal AAD-capable AES-GCM (`AesGcm`) over OpenSSL EVP, plus
-    `spec/parquet/encryption/ciphers_spec.cr`.
+    `spec/parquet/encryption/ciphers_spec.cr`; and the encryption Thrift IDL
+    (`src/parquet/file/column_crypto_metadata.cr`:
+    `EncryptionWithColumnKey`/`ColumnCryptoMetaData`;
+    `src/parquet/file/metadata/thrift/encryption.cr`: `AesGcmV1`/`AesGcmCtrV1`/
+    `EncryptionAlgorithm`/`FileCryptoMetaData`) with round-trip specs.
   - Phase 1.7: `util/bit_pack.cr` (`BitPack.unpack8/16/32/64`) and `decode_page`
     CRC verification (`file/serialized_reader.cr`).
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
@@ -81,11 +85,12 @@ little-endian layout.
      `src/parquet/derive.cr` (`Parquet::Derive::Record` macro + `Codec(T)`) and
      `spec/parquet/derive_spec.cr` (schema generation, read/write round-trip,
      optional-but-valid, pruned/shuffled).
-  4. Phase 3.4 encryption — **3.4a cipher layer done** (`src/parquet/encryption/ciphers.cr`;
-     the `ring` block is resolved by an AAD-capable AES-GCM over OpenSSL EVP).
-     **Next (3.4b):** the encryption Thrift IDL (`file/metadata/thrift/encryption.rs`),
-     the properties/AAD layer (`FileEncryptionProperties`/
-     `FileDecryptionProperties`), and the file-reader/writer integration
+  4. Phase 3.4 encryption — **3.4a cipher layer done**, **3.4b encryption Thrift
+     IDL done** (`src/parquet/file/column_crypto_metadata.cr`,
+     `src/parquet/file/metadata/thrift/encryption.cr`). **Next (3.4c):** the
+     properties/AAD layer (`FileEncryptionProperties`/`FileDecryptionProperties`),
+     wiring `crypto_metadata`/`encrypted_column_metadata` into
+     `ColumnChunkMetaData`, and the file-reader/writer integration
      (`encrypt.rs`/`decrypt.rs`/`modules.rs`).
   5. Deferred (recorded divergences): async/object-store suffix fetchers, arrow
      interop (`parquet/src/arrow/`), `parquet-variant-compute`/`-json`, and the
@@ -151,18 +156,26 @@ little-endian layout.
     EVP (`evp_aes_128_gcm`/`evp_aes_256_gcm`, re-bound in `LibCrypto`) to supply
     AAD. Rust `ring` is replaced; the `RingGcmBlock*` names drop the prefix and
     `HeapSize#heap_size` has no analogue.
-- Last commit: `f860470 port: parquet_derive record writer/reader macros`; gates
-  green (`make lint`, `make test` -> 751 examples, 0 failures).
-- Progress by counts (ledger): 1650 `ported`, 214 `intentional_divergence`,
-  1 `skipped`, 1650 `missing` (of 3515 rows).
+  - Encryption IDL: the payload-carrying encryption unions
+    (`ColumnCryptoMetaData`, `EncryptionAlgorithm`) are hand-written
+    `struct` + `Kind` + payload values (like `ColumnOrder`/`Compression`); the
+    `HeapSize` impls are not ported. The encrypted-footer reading helpers
+    (`row_group_from_encrypted_thrift`/`parquet_metadata_with_encryption`/
+    `get_file_decryptor`) are deferred with the properties/AAD layer.
+- Last commit: `08fd998 port: parquet encryption AES-GCM cipher layer`; gates
+  green (`make lint`, `make test` -> 756 examples, 0 failures).
+- Progress by counts (ledger): 1650 `ported`, 219 `intentional_divergence`,
+  1 `skipped`, 1645 `missing` (of 3515 rows).
 
 Chunk status by area:
 
 - Phase 0 initialization: complete.
 - Phase 1.1 errors: complete.
 - Phase 1.2 thrift protocol: complete.
-- Phase 1.3 thrift macros: enum/union/struct/empty done; generic mixed-union
-  macro and encryption IDL pending.
+- Phase 1.3 thrift macros: enum/union/struct/empty done; mixed-union unions
+  (`LogicalType`/`ColumnOrder`/`encryption`) are hand-written and the encryption
+  IDL is now ported (`ColumnCryptoMetaData`/`EncryptionAlgorithm`); a generic
+  mixed-union macro is still pending.
 - Phase 1.4 basic: complete (enums, `LogicalType`, `SortOrder`/`ColumnOrder`,
   `EncodingMask`, `Compression` + levels).
 - Phase 1.5 data type: value types + `AsBytes` done; `DataType` trait +
@@ -206,8 +219,10 @@ Chunk status by area:
   `parquet-geospatial`'s `Hint`/`Edges`/`Metadata` + `WkbType` metadata,
   `Interval`/`WraparoundInterval`, and `GeometryBounder` (+ minimal `WkbReader`/
   `WkbGeometry` model and `Testing` helpers) done; `parquet_derive`
-  (`src/parquet/derive.cr`) and the encryption cipher layer
-  (`src/parquet/encryption/ciphers.cr`) done; the `WkbType` `ExtensionType`
+  (`src/parquet/derive.cr`), the encryption cipher layer
+  (`src/parquet/encryption/ciphers.cr`), and the encryption Thrift IDL
+  (`src/parquet/file/column_crypto_metadata.cr`,
+  `src/parquet/file/metadata/thrift/encryption.cr`) done; the `WkbType` `ExtensionType`
   impl, the remaining encryption (IDL/properties/file integration), arrow, and
   async remain pending.
 
@@ -572,13 +587,17 @@ Chunk status by area:
 
 ### 3.4 Encryption
 
-- [~] Modular encryption: the cipher layer
+- [~] Modular encryption: done — the cipher layer
   (`src/parquet/encryption/ciphers.cr`, `spec/parquet/encryption/ciphers_spec.cr`)
-  is done — AES-GCM `GcmBlockEncryptor`/`GcmBlockDecryptor`/`CounterNonce` on a
-  minimal AAD-capable `AesGcm` over OpenSSL EVP (the `ring` AAD block is
-  resolved). Pending: the encryption Thrift IDL
-  (`file/metadata/thrift/encryption.rs`), the properties/AAD layer, and the
-  file-reader/writer integration (`encrypt.rs`/`decrypt.rs`/`modules.rs`).
+  (AES-GCM `GcmBlockEncryptor`/`GcmBlockDecryptor`/`CounterNonce` on a minimal
+  AAD-capable `AesGcm` over OpenSSL EVP; the `ring` AAD block is resolved) and
+  the encryption Thrift IDL (`src/parquet/file/column_crypto_metadata.cr`:
+  `EncryptionWithColumnKey`/`ColumnCryptoMetaData`;
+  `src/parquet/file/metadata/thrift/encryption.cr`: `AesGcmV1`/`AesGcmCtrV1`/
+  `EncryptionAlgorithm`/`FileCryptoMetaData`, with round-trip specs). Pending:
+  the properties/AAD layer, wiring `crypto_metadata`/`encrypted_column_metadata`
+  into `ColumnChunkMetaData`, and the file-reader/writer integration
+  (`encrypt.rs`/`decrypt.rs`/`modules.rs`).
 
 ### 3.5 Arrow interop (deferred)
 

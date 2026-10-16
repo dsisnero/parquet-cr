@@ -2435,8 +2435,8 @@ parquet/src/errors.rs::method::ParquetError.fmt	method	ported	src/parquet/errors
 parquet/src/errors.rs::method::ParquetError.from	method	ported	src/parquet/errors.cr	ParquetError subclass hierarchy; upstream Display strings preserved; Result mapped to exceptions
 parquet/src/errors.rs::method::ParquetError.source	method	ported	src/parquet/errors.cr	ParquetError subclass hierarchy; upstream Display strings preserved; Result mapped to exceptions
 parquet/src/errors.rs::method::io::Error.from	method	ported	src/parquet/errors.cr	ParquetError subclass hierarchy; upstream Display strings preserved; Result mapped to exceptions
-parquet/src/file/column_crypto_metadata.rs::method::ColumnCryptoMetaData.heap_size	method	missing	-	auto-generated
-parquet/src/file/column_crypto_metadata.rs::method::EncryptionWithColumnKey.heap_size	method	missing	-	auto-generated
+parquet/src/file/column_crypto_metadata.rs::method::ColumnCryptoMetaData.heap_size	method	intentional_divergence	src/parquet/file/column_crypto_metadata.cr	no HeapSize trait; ColumnCryptoMetaData ported
+parquet/src/file/column_crypto_metadata.rs::method::EncryptionWithColumnKey.heap_size	method	intentional_divergence	src/parquet/file/column_crypto_metadata.cr	no HeapSize trait; EncryptionWithColumnKey ported
 parquet/src/file/metadata/footer_tail.rs::method::FooterTail.is_encrypted_footer	method	ported	src/parquet/file/metadata/footer_tail.cr	renamed FooterTail#encrypted_footer?
 parquet/src/file/metadata/footer_tail.rs::method::FooterTail.metadata_length	method	ported	src/parquet/file/metadata/footer_tail.cr	FooterTail
 parquet/src/file/metadata/footer_tail.rs::method::FooterTail.try_from	method	ported	src/parquet/file/metadata/footer_tail.cr	FooterTail
@@ -2730,9 +2730,9 @@ parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_metadata
 parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_offset_index_policy	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
 parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_page_index_policy	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
 parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_prefetch_hint	method	intentional_divergence	src/parquet/file/metadata/reader.cr	async MetadataFetch/MetadataSuffixFetch path not ported
-parquet/src/file/metadata/thrift/encryption.rs::method::AesGcmCtrV1.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/thrift/encryption.rs::method::AesGcmV1.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/thrift/encryption.rs::method::EncryptionAlgorithm.heap_size	method	missing	-	auto-generated
+parquet/src/file/metadata/thrift/encryption.rs::method::AesGcmCtrV1.heap_size	method	intentional_divergence	src/parquet/file/metadata/thrift/encryption.cr	no HeapSize trait; AesGcmCtrV1 ported
+parquet/src/file/metadata/thrift/encryption.rs::method::AesGcmV1.heap_size	method	intentional_divergence	src/parquet/file/metadata/thrift/encryption.cr	no HeapSize trait; AesGcmV1 ported
+parquet/src/file/metadata/thrift/encryption.rs::method::EncryptionAlgorithm.heap_size	method	intentional_divergence	src/parquet/file/metadata/thrift/encryption.cr	no HeapSize trait; EncryptionAlgorithm ported
 parquet/src/file/metadata/thrift/mod.rs::const::COL_META_ALL_REQUIRED	const	missing	-	auto-generated
 parquet/src/file/metadata/thrift/mod.rs::const::COL_META_CODEC	const	missing	-	auto-generated
 parquet/src/file/metadata/thrift/mod.rs::const::COL_META_DATA_PAGE_OFFSET	const	missing	-	auto-generated
