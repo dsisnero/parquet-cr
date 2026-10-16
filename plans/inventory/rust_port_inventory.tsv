@@ -3299,10 +3299,10 @@ parquet/src/schema/parser.rs::method::Tokenizer<'a>.from_str	method	ported	src/p
 parquet/src/schema/parser.rs::method::Tokenizer<'a>.is_schema_delim	method	ported	src/parquet/schema/parser.cr	renamed Tokenizer.schema_delim?
 parquet/src/schema/parser.rs::method::Tokenizer<'a>.next	method	ported	src/parquet/schema/parser.cr	Tokenizer#next
 parquet/src/schema/parser.rs::method::Tokenizer<'a>.split_token	method	ported	src/parquet/schema/parser.cr	Tokenizer.split_token
-parquet/src/schema/printer.rs::const::INDENT_WIDTH	const	missing	-	auto-generated
-parquet/src/schema/printer.rs::method::Printer<'_>.print	method	missing	-	auto-generated
-parquet/src/schema/printer.rs::method::Printer<'a>.new	method	missing	-	auto-generated
-parquet/src/schema/printer.rs::method::Printer<'a>.print_indent	method	missing	-	auto-generated
+parquet/src/schema/printer.rs::const::INDENT_WIDTH	const	ported	src/parquet/schema/printer.cr	Schema::INDENT_WIDTH
+parquet/src/schema/printer.rs::method::Printer<'_>.print	method	ported	src/parquet/schema/printer.cr	Printer#print
+parquet/src/schema/printer.rs::method::Printer<'a>.new	method	ported	src/parquet/schema/printer.cr	Printer#initialize
+parquet/src/schema/printer.rs::method::Printer<'a>.print_indent	method	ported	src/parquet/schema/printer.cr	Printer#print_indent
 parquet/src/schema/types.rs::const::INIT_SCHEMA_DEPTH	const	intentional_divergence	src/parquet/schema/types.cr	inlined (dynamic arrays) in SchemaDescriptor#initialize
 parquet/src/schema/types.rs::const::VALID_FIELDS	const	intentional_divergence	src/parquet/schema/types.cr	inlined in GroupTypeBuilder#validate_file_type_fields
 parquet/src/schema/types.rs::method::BasicTypeInfo.converted_type	method	ported	src/parquet/schema/types.cr	BasicTypeInfo ported

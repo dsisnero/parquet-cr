@@ -53,22 +53,21 @@ little-endian layout.
   `SerializedFileWriter`/`SerializedFileReader` (with `FileReader`/
   `RowGroupReader`, `ReadOptions`/`ReadOptionsBuilder`), the record API
   (`Field`/`Row`/`List`/`Map`, `TripletIter`, `TreeBuilder`/`Reader`/`RowIter`,
-  wired into `get_row_iter`), `FilePageIterator` + the `PageIterator` trait, and
-  the CLI (`bin/`): the foundation, `parquet-index`, `parquet-read`,
-  `parquet-rowcount`, `parquet-show-bloom-filter`, and `parquet-layout` are
-  done. Phase 2 is complete except `parquet-schema`/`parquet-concat` and the
-  arrow-dependent CLI tools (`2.5`).
+  wired into `get_row_iter`), `FilePageIterator` + the `PageIterator` trait, the
+  schema printer, and the CLI (`bin/`): the foundation, `parquet-index`,
+  `parquet-read`, `parquet-rowcount`, `parquet-show-bloom-filter`,
+  `parquet-layout`, and `parquet-schema` are done. Phase 2 is complete except
+  `parquet-concat` and the arrow-dependent CLI tools (`2.5`).
 - Next up (take the first unchecked item):
-  1. Finish the CLI (`2.5`): `parquet-schema` (needs the schema printer),
-     `parquet-concat` (needs `append_column`); `parquet-rewrite`/`parquet-fromcsv`
-     need `arrow`.
+  1. Finish the CLI (`2.5`): `parquet-concat` (needs `append_column`);
+     `parquet-rewrite`/`parquet-fromcsv` need `arrow`.
   2. Then Phase 3: `parquet_derive`-style record reader/writer traits (the
      `record_reader.rs`/`record_writer.rs` traits, used by `parquet_derive`;
      Phase 3.3), the variant/geospatial crates, and encryption.
   3. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 1307 `ported`, 184 `intentional_divergence`,
-  1 `skipped`, 2023 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1311 `ported`, 184 `intentional_divergence`,
+  1 `skipped`, 2019 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -104,8 +103,8 @@ Chunk status by area:
   (`TripletIter`), and `reader` (`TreeBuilder`/`Reader`/`RowIter`) done;
   `get_row_iter` wired; `FilePageIterator` + the `PageIterator` trait done.
 - Phase 2.5 CLI: `cli` shared helper (`parse_column_path`), `parquet-index`,
-  `parquet-read`, `parquet-rowcount`, `parquet-show-bloom-filter`, and
-  `parquet-layout` done; `parquet-schema` (schema printer) and `parquet-concat`
+  `parquet-read`, `parquet-rowcount`, `parquet-show-bloom-filter`,
+  `parquet-layout`, and `parquet-schema` done; `parquet-concat`
   (`append_column`) pending; `parquet-rewrite`/`parquet-fromcsv` need arrow.
 - Phase 3 (variant/geospatial/derive/encryption/arrow/async): pending.
 
@@ -190,7 +189,9 @@ Chunk status by area:
 - [x] Textual schema parser (`src/parquet/schema/parser.cr`).
 - [x] Thrift <-> schema conversion (`src/parquet/schema/thrift.cr`).
 - [x] Page-header thrift structs (`src/parquet/format.cr`).
-- [ ] Schema printer (`schema/printer.rs`).
+- [x] Schema printer (`src/parquet/schema/printer.cr`): `print_parquet_metadata`,
+  `print_file_metadata`, `print_schema`, `Printer`, `print_timeunit`,
+  `print_logical_and_converted`; `printer_spec.cr` (10 upstream tests) ported.
 - [ ] Primitive builders (`schema/primitive.rs`). 4 upstream test modules.
 
 ### 1.7 Util
@@ -385,9 +386,9 @@ Chunk status by area:
   `bin/parquet-rowcount.cr`), `parquet-show-bloom-filter`
   (`parquet_show_bloom_filter.cr`, `bin/parquet-show-bloom-filter.cr`), and
   `parquet-layout` (`parquet_layout.cr`, `bin/parquet-layout.cr`; `JSON.build`
-  pretty output). Specs in `spec/parquet/bin/`.
-- [ ] `parquet-schema` (needs the schema printer), `parquet-concat` (needs
-  `append_column`).
+  pretty output), and `parquet-schema` (`parquet_schema.cr`,
+  `bin/parquet-schema.cr`; uses the schema printer). Specs in `spec/parquet/bin/`.
+- [ ] `parquet-concat` (needs `append_column`).
 - [ ] `parquet-rewrite`/`parquet-fromcsv` — require `arrow`.
 
 ## Phase 3 — Advanced / optional
@@ -723,8 +724,15 @@ Chunk status by area:
   `parquet-layout` likewise write to an `IO`; `parquet-layout` emits JSON via
   `JSON.build` (pretty, 2-space) and its serde `DebugSerialize` wrapper is
   `to_s`; `parquet-show-bloom-filter` raises on an invalid column path (upstream
-  prints and exits). `parquet-concat`/`parquet-rewrite`/`parquet-fromcsv` (and
-  `parquet-schema`) are deferred.
+  prints and exits); `parquet-schema` (`-v`/`--verbose`) writes to an `IO`.
+  `parquet-concat`/`parquet-rewrite`/`parquet-fromcsv` are deferred.
+- `schema::printer`: the `print_*` free functions are `Parquet::Schema` module
+  methods; `print_row_group_metadata`/`print_column_chunk_metadata` are public;
+  `fmt::Write`/`io::Write` are `IO` (the `Printer` writes to a `String::Builder`
+  or `IO`); logical-type payloads are read through the wrapper's `value`
+  (`LogicalType::Integer#value.bit_width`); `has_id` → `has_id?`; the `_Unknown`
+  variant is `LogicalType::UnknownField`; `Variant`'s `specification_version` is
+  printed with `Some(..)`/`None`.
 - `chunk_reader`: `BytesChunkReader#get_read`/`get_bytes` and
   `FileChunkReader#get_bytes` raise the upstream `EOF` messages
   ("Expected to read ... while file has length ..."); `FileChunkReader` reads
