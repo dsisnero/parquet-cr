@@ -123,6 +123,12 @@ revision is recorded per entry.
 - Offset index (`src/parquet/file/page_index/offset_index.cr`): `PageLocation`
   and `OffsetIndexMetaData` thrift structs. Upstream `test_offset_idx_roundtrip`
   ported to `spec/parquet/file/offset_index_spec.cr`; added `PPI` spec alias.
+- Column index core (`src/parquet/file/page_index/column_index.cr`): `ColumnIndex`,
+  `PrimitiveColumnIndex<T>`, `ThriftColumnIndex`, and
+  `FromBytes.try_from_le_slice`. Upstream `test_page_index_min_max_null`,
+  `..._none`, `test_invalid_column_index`, and
+  `test_column_index_rejects_mismatched_min_max_lengths` ported to
+  `spec/parquet/file/column_index_spec.cr`.
 - Harden `Makefile` gates by stripping macOS AppleDouble `._*` sidecars (whose
   names can match crystal's `*_spec.cr` glob on exFAT volumes).
 

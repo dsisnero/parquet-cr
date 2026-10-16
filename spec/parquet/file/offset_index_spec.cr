@@ -2,7 +2,6 @@ require "../../spec_helper"
 
 # Ported from `parquet/src/file/page_index/offset_index.rs` `mod tests`
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
-alias PPI = Parquet::File::PageIndex
 
 describe Parquet::File::PageIndex::OffsetIndexMetaData do
   # Upstream `test_offset_idx_roundtrip`.

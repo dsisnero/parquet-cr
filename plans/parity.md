@@ -204,8 +204,16 @@ little-endian layout.
   `test_offset_idx_roundtrip` ported to
   `spec/parquet/file/offset_index_spec.cr`. (`try_from_fast` fast-path decoder
   omitted; the macro `read_thrift` decodes the same wire form.)
-- [ ] Column index (`ColumnIndex`/`PrimitiveColumnIndex`/`ColumnIndexMetaData`)
-  and the page-index builders (`PageIndexBuilder`/`ColumnIndexBuilder`/
+- [x] Column index core (`src/parquet/file/page_index/column_index.cr`):
+  `ColumnIndex`, `PrimitiveColumnIndex<T>`, `ThriftColumnIndex`, and the
+  `FromBytes.try_from_le_slice` decoding. Upstream `test_page_index_min_max_null`,
+  `..._none`, `test_invalid_column_index`, and
+  `test_column_index_rejects_mismatched_min_max_lengths` ported to
+  `spec/parquet/file/column_index_spec.cr`. (`ColumnIndex#is_null_page` is
+  `null_page?`; `PrimitiveColumnIndex` delegates instead of `Deref`;
+  `write_thrift` not yet ported.)
+- [ ] `ByteArrayColumnIndex`, `ColumnIndexMetaData`, `decode_column_index`, and
+  the page-index builders (`PageIndexBuilder`/`ColumnIndexBuilder`/
   `OffsetIndexBuilder`).
 - [ ] Bloom filter (`bloom_filter/`).
 - [ ] 12 upstream test modules ported.

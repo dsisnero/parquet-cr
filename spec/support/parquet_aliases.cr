@@ -20,3 +20,4 @@ alias SSchemaDescriptor = Parquet::Schema::SchemaDescriptor
 alias STokenizer = Parquet::Schema::Tokenizer
 
 alias PMeta = Parquet::File::Metadata
+alias PPI = Parquet::File::PageIndex
