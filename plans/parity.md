@@ -42,8 +42,10 @@ little-endian layout.
     `VariantPrimitiveType`, and the primitive `decode_*` helpers (`decoder.cr`);
     `ShortString` (`short_string.cr`); `VariantMetadata`
     (`variant/metadata.cr`); `VariantDecimal4`/`8`/`16` (`variant/decimal.cr`);
-    and the metadata builders `MetadataBuilder`/`WritableMetadataBuilder`/
-    `ReadOnlyMetadataBuilder` (`builder/metadata.cr`).
+    the metadata builders `MetadataBuilder`/`WritableMetadataBuilder`/
+    `ReadOnlyMetadataBuilder` (`builder/metadata.cr`); and the **value layer read
+    side** `Variant` (`variant.cr`), `VariantObject` (`variant/object.cr`), and
+    `VariantList` (`variant/list.cr`).
   - `parquet-geospatial` (`src/parquet_geospatial/`): `Hint`/`Edges`/`Metadata`
     + the metadata side of `WkbType` (`types.cr`); `Interval`/`WraparoundInterval`
     (`interval.cr`).
@@ -53,17 +55,14 @@ little-endian layout.
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
   1. **Phase 3.1 `parquet-variant` value layer — large; sequence it:**
-     a. read side: `Variant` (`vendor/arrow-rs/parquet-variant/src/variant.rs`),
-        `VariantObject` (`variant/object.rs`), `VariantList` (`variant/list.rs`)
-        (mutually recursive: put them in one file or forward-declare). This needs
-        the metadata builder (done) and the value decoder (done).
-     b. writer side: `ValueBuilder`/`VariantBuilder` (`builder.rs`),
+     a. ~~read side: `Variant`, `VariantObject`, `VariantList`.~~ **done** —
+        `src/parquet_variant/variant.cr`, `variant/object.cr`, `variant/list.cr`
+        + `spec/parquet_variant/variant_{,_object,_list}_spec.cr`.
+     b. writer side (**next**): `ValueBuilder`/`VariantBuilder` (`builder.rs`),
         `ObjectBuilder` (`builder/object.rs`), `ListBuilder` (`builder/list.rs`).
-     Most upstream object/list/builder tests construct values via
-     `VariantBuilder`, so (b) is needed before those tests can run; `Variant` is
-     needed by both. Port `Variant`'s construction (`try_new`/
-     `try_new_with_metadata[_and_shallow_validation]`), the `From<..>` impls,
-     the `as_*` accessors, `Debug`, and `get_path`.
+        Most upstream object/list/builder tests construct values via
+        `VariantBuilder`, so (b) is needed before those tests (and the exact
+        `Debug`/`HexString`/`InvalidVariant` formatting tests) can run.
   2. Phase 3.2 `parquet-geospatial` `bounding.rs` (`GeoBounder`) — **blocked**:
      depends on the `geo-traits`/`wkb` crates. Either port a minimal WKB reader
      or record an intentional divergence.
@@ -82,20 +81,31 @@ little-endian layout.
     intentional divergences implemented as name searches.
   - Crystal has no date-only/time-of-day types: variant/geospatial dates and
     times map to `Time` / `Time::Span`; `Uuid` → `UUID`.
+  - `Variant` (the payload enum) is a sealed class hierarchy; built-in type
+    names (`Int32`, `String`, `Time`, `Float`, ...) are shadowed by the nested
+    subtypes inside the class body, so built-ins are written with a leading `::`.
+    Optional payloads (`Option<()>`) map to `Bool` (`Variant#as_null`), and
+    `String`/`Bytes` copy rather than borrow. Rust `From`/`TryFrom` impls are
+    `Variant.from_*` factory methods (`from_date`, `from_datetime_utc`,
+    `from_naive_datetime`, `from_time`, `from(value)`), since Crystal cannot
+    overload on distinct date/time types. `Descriptor#is_fully_validated`
+    (upstream name) is kept with a `fully_validated?` alias; the
+    `Naming/PredicateName` rule is excluded for the variant value files.
   - Crystal has no cargo feature flags: feature-gated code (e.g. the `crc` page
     checksum, `json`) is always on.
   - SNAPPY/LZO/Brotli/LZ4/Zstd codecs need Crystal shards; fixture-based tests
     that would use `.snappy.parquet` are exercised with uncompressed fixtures.
   - Enum-with-payload Rust types are modelled either as a sealed class hierarchy
-    (`Field`, `Page`, `Type`, `LogicalType`) or a struct with a `Kind` + payload
-    (`Compression`, `DecodeResult`, `ColumnOrder`); pick per module and record the
-    choice in `plans/parity.md`.
+    (`Variant`, `Field`, `Page`, `Type`, `LogicalType`) or a struct with a
+    `Kind` + payload (`Compression`, `DecodeResult`, `ColumnOrder`); pick per
+    module and record the choice in `plans/parity.md`.
   - `T.class` dispatch replaces Rust traits with associated consts/generics
     (`Encodings.get_encoder`, `FromBytes`, `AsBytes`).
-- Last commit: `32aa94c port: page CRC checksum verification in decode_page`;
-  gates green (`make lint`, `make test` -> 635 examples, 0 failures).
-- Progress by counts (ledger): 1423 `ported`, 187 `intentional_divergence`,
-  1 `skipped`, 1904 `missing` (of 3515 rows).
+- Last commit: `91095e0 docs: make parity.md Where-we-are self-contained for a
+  fresh session`; gates green (`make lint`, `make test` -> 655 examples, 0
+  failures).
+- Progress by counts (ledger): 1513 `ported`, 191 `intentional_divergence`,
+  1 `skipped`, 1810 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -140,11 +150,12 @@ Chunk status by area:
 - Phase 3 (variant/geospatial/derive/encryption/arrow/async): `parquet-variant`'s
   `VariantPath`/`VariantPathElement` + parser, the `utils` helpers,
   `OffsetSizeBytes`/`map_bytes_to_offsets`, the value decoder + `ShortString`,
-  `VariantMetadata`, `VariantDecimal4`/`8`/`16`, and the metadata builders done;
+  `VariantMetadata`, `VariantDecimal4`/`8`/`16`, the metadata builders, and the
+  value layer read side (`Variant`/`VariantObject`/`VariantList`) done;
   `parquet-geospatial`'s `Hint`/`Edges`/`Metadata` + `WkbType` metadata and
-  `Interval`/`WraparoundInterval` done; the `Variant` encoding/value builder/
-  decoder, geospatial bounding, derive, encryption, arrow, and async remain
-  pending.
+  `Interval`/`WraparoundInterval` done; the `Variant` value builder
+  (`ValueBuilder`/`VariantBuilder`/`ObjectBuilder`/`ListBuilder`), geospatial
+  bounding, derive, encryption, arrow, and async remain pending.
 
 ## Phase 0 — Project initialization
 
@@ -456,12 +467,19 @@ Chunk status by area:
   (`src/parquet_variant/short_string.cr`, `decoder_spec.cr`), `VariantMetadata`
   (`src/parquet_variant/variant/metadata.cr`, `metadata_spec.cr`), and
   `VariantDecimal4`/`8`/`16` + `VariantDecimalType`
-  (`src/parquet_variant/variant/decimal.cr`, `decimal_spec.cr`), and the metadata
+  (`src/parquet_variant/variant/decimal.cr`, `decimal_spec.cr`), the metadata
   builders `MetadataBuilder`/`WritableMetadataBuilder`/`ReadOnlyMetadataBuilder`
-  (`src/parquet_variant/builder/metadata.cr`, `builder_metadata_spec.cr`) done;
-  `Variant`, `VariantBuilder`/`ValueBuilder`, `VariantObject`/`VariantList`, and
-  the object/list builders pending. `VariantMetadata#borrowed_field_id`'s
-  zero-copy fast path is an intentional divergence (Crystal copies substrings).
+  (`src/parquet_variant/builder/metadata.cr`, `builder_metadata_spec.cr`), and
+  the value layer read side `Variant` (`src/parquet_variant/variant.cr`),
+  `VariantObject` (`src/parquet_variant/variant/object.cr`), and `VariantList`
+  (`src/parquet_variant/variant/list.cr`) with specs
+  (`spec/parquet_variant/variant_spec.cr`, `variant_object_spec.cr`,
+  `variant_list_spec.cr`) done; `ValueBuilder`/`VariantBuilder`,
+  `ObjectBuilder`/`ListBuilder`, and the builder-dependent object/list tests
+  (and exact `Debug`/`HexString`/`InvalidVariant` formatting) pending.
+  `VariantMetadata#borrowed_field_id`'s zero-copy fast path and the raw-pointer
+  zero-copy `Variant` byte/model APIs are intentional divergences (Crystal copies
+  substrings).
 - [ ] `parquet-variant-compute`.
 - [ ] `parquet-variant-json`.
 

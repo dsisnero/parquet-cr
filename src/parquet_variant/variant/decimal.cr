@@ -113,4 +113,46 @@ module ParquetVariant
   define_variant_decimal(VariantDecimal4, Int32, 9_u8)
   define_variant_decimal(VariantDecimal8, Int64, 18_u8)
   define_variant_decimal(VariantDecimal16, Int128, 38_u8)
+
+  # Infallible widening and fallible narrowing conversions between the variant
+  # decimal types (upstream `From`/`TryFrom` impls). `to_decimal4`/`to_decimal8`
+  # return `nil` when the value cannot fit the narrower type.
+  struct VariantDecimal4
+    def to_decimal8 : VariantDecimal8
+      VariantDecimal8.new(integer.to_i64, scale)
+    end
+
+    def to_decimal16 : VariantDecimal16
+      VariantDecimal16.new(integer.to_i128, scale)
+    end
+  end
+
+  struct VariantDecimal8
+    def to_decimal4 : VariantDecimal4?
+      return nil if integer < ::Int32::MIN || integer > ::Int32::MAX
+      VariantDecimal4.try_new(integer.to_i32, scale)
+    rescue InvalidArgumentError
+      nil
+    end
+
+    def to_decimal16 : VariantDecimal16
+      VariantDecimal16.new(integer.to_i128, scale)
+    end
+  end
+
+  struct VariantDecimal16
+    def to_decimal4 : VariantDecimal4?
+      return nil if integer < ::Int32::MIN || integer > ::Int32::MAX
+      VariantDecimal4.try_new(integer.to_i32, scale)
+    rescue InvalidArgumentError
+      nil
+    end
+
+    def to_decimal8 : VariantDecimal8?
+      return nil if integer < ::Int64::MIN || integer > ::Int64::MAX
+      VariantDecimal8.try_new(integer.to_i64, scale)
+    rescue InvalidArgumentError
+      nil
+    end
+  end
 end

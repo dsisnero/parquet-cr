@@ -26,6 +26,14 @@ Naming/QueryBoolMethods:
     - src/parquet/record/api.cr
     - src/parquet_variant/variant/metadata.cr
 
+# The variant value types keep the upstream `is_fully_validated` accessor name
+# (with a Crystal-idiomatic `fully_validated?` alias alongside it).
+Naming/PredicateName:
+  Excluded:
+    - src/parquet_variant/variant.cr
+    - src/parquet_variant/variant/object.cr
+    - src/parquet_variant/variant/list.cr
+
 # The column writer is a large, direct port; its upstream `not_nil!`-equivalent
 # unwraps and cyclic control flow are kept as-is. The serialized file/row-group
 # writers are likewise direct ports.
@@ -41,3 +49,4 @@ Lint/ShadowingOuterLocalVar:
 Metrics/CyclomaticComplexity:
   Excluded:
     - src/parquet/column/writer/writer.cr
+    - src/parquet_variant/variant.cr

@@ -445,83 +445,83 @@ parquet-variant/src/path.rs::method::VariantPathElement<'_>.from	method	ported	s
 parquet-variant/src/path.rs::method::VariantPathElement<'a>.field	method	ported	src/parquet_variant/path.cr	ParquetVariant::VariantPath
 parquet-variant/src/path.rs::method::VariantPathElement<'a>.from	method	ported	src/parquet_variant/path.cr	ParquetVariant::VariantPath
 parquet-variant/src/path.rs::method::VariantPathElement<'a>.index	method	ported	src/parquet_variant/path.cr	ParquetVariant::VariantPath
-parquet-variant/src/variant.rs::const::MAX_NESTING_DEPTH	const	missing	-	auto-generated
+parquet-variant/src/variant.rs::const::MAX_NESTING_DEPTH	const	ported	src/parquet_variant/variant.cr	MAX_NESTING_DEPTH
 parquet-variant/src/variant.rs::const::MAX_SHORT_STRING_BYTES	const	ported	src/parquet_variant/short_string.cr	MAX_SHORT_STRING_BYTES
-parquet-variant/src/variant.rs::method::&'a str.from	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::HexString<'_>.fmt	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::InvalidVariant.fmt	method	missing	-	auto-generated
+parquet-variant/src/variant.rs::method::&'a str.from	method	ported	src/parquet_variant/variant.cr	Variant.from(String)
+parquet-variant/src/variant.rs::method::HexString<'_>.fmt	method	intentional_divergence	src/parquet_variant/variant.cr	binary hex Debug helper deferred to 3.1b
+parquet-variant/src/variant.rs::method::InvalidVariant.fmt	method	intentional_divergence	src/parquet_variant/variant.cr	invalid-value Debug sentinel deferred to 3.1b
 parquet-variant/src/variant.rs::method::ShortString<'_>.as_ref	method	ported	src/parquet_variant/short_string.cr	ShortString#as_str
 parquet-variant/src/variant.rs::method::ShortString<'_>.deref	method	intentional_divergence	src/parquet_variant/short_string.cr	Deref maps to #value/#as_str
 parquet-variant/src/variant.rs::method::ShortString<'a>.as_str	method	ported	src/parquet_variant/short_string.cr	ShortString#as_str
 parquet-variant/src/variant.rs::method::ShortString<'a>.try_from	method	ported	src/parquet_variant/short_string.cr	ShortString.try_new
 parquet-variant/src/variant.rs::method::ShortString<'a>.try_new	method	ported	src/parquet_variant/short_string.cr	ShortString.try_new
-parquet-variant/src/variant.rs::method::Variant<'_, '_>.fmt	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'_, '_>.from	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'_, '_>.try_from	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'_, 'v>.from	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_boolean	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_decimal16	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_decimal4	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_decimal8	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_f32	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_f64	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_int16	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_int32	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_int64	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_int8	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_list	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_naive_date	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_null	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_object	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_string	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_time_utc	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_timestamp_micros	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_timestamp_nanos	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_timestamp_ntz_micros	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_timestamp_ntz_nanos	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_u16	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_u32	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_u64	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_u8	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_u8_slice	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_uuid	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.convert_to_unsigned_num	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.get_list_element	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.get_object_field	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.get_path	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.is_fully_validated	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.metadata	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.new	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.new_with_metadata	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.try_new	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.try_new_with_metadata	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.try_new_with_metadata_and_shallow_validation	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.try_new_with_metadata_at_depth	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.with_full_validation	method	missing	-	auto-generated
-parquet-variant/src/variant.rs::method::Variant<'m, 'v>.with_full_validation_at_depth	method	missing	-	auto-generated
+parquet-variant/src/variant.rs::method::Variant<'_, '_>.fmt	method	intentional_divergence	src/parquet_variant/variant.cr	to_s replaces Rust Debug; exact Debug output with value builder (3.1b)
+parquet-variant/src/variant.rs::method::Variant<'_, '_>.from	method	ported	src/parquet_variant/variant.cr	Variant.from_* factories (From impls)
+parquet-variant/src/variant.rs::method::Variant<'_, '_>.try_from	method	ported	src/parquet_variant/variant.cr	TryFrom<(int, u8)> via VariantDecimalN.try_new
+parquet-variant/src/variant.rs::method::Variant<'_, 'v>.from	method	ported	src/parquet_variant/variant.cr	Variant.from_* factories (From impls)
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_boolean	method	ported	src/parquet_variant/variant.cr	Variant#...as_boolean
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_decimal16	method	ported	src/parquet_variant/variant.cr	Variant#...as_decimal16
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_decimal4	method	ported	src/parquet_variant/variant.cr	Variant#...as_decimal4
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_decimal8	method	ported	src/parquet_variant/variant.cr	Variant#...as_decimal8
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_f32	method	ported	src/parquet_variant/variant.cr	Variant#...as_f32
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_f64	method	ported	src/parquet_variant/variant.cr	Variant#...as_f64
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_int16	method	ported	src/parquet_variant/variant.cr	Variant#...as_int16
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_int32	method	ported	src/parquet_variant/variant.cr	Variant#...as_int32
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_int64	method	ported	src/parquet_variant/variant.cr	Variant#...as_int64
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_int8	method	ported	src/parquet_variant/variant.cr	Variant#...as_int8
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_list	method	ported	src/parquet_variant/variant.cr	Variant#...as_list
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_naive_date	method	ported	src/parquet_variant/variant.cr	Variant#...as_naive_date
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_null	method	ported	src/parquet_variant/variant.cr	Variant#...as_null
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_object	method	ported	src/parquet_variant/variant.cr	Variant#...as_object
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_string	method	ported	src/parquet_variant/variant.cr	Variant#...as_string
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_time_utc	method	ported	src/parquet_variant/variant.cr	Variant#...as_time_utc
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_timestamp_micros	method	ported	src/parquet_variant/variant.cr	Variant#...as_timestamp_micros
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_timestamp_nanos	method	ported	src/parquet_variant/variant.cr	Variant#...as_timestamp_nanos
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_timestamp_ntz_micros	method	ported	src/parquet_variant/variant.cr	Variant#...as_timestamp_ntz_micros
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_timestamp_ntz_nanos	method	ported	src/parquet_variant/variant.cr	Variant#...as_timestamp_ntz_nanos
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_u16	method	ported	src/parquet_variant/variant.cr	Variant#...as_u16
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_u32	method	ported	src/parquet_variant/variant.cr	Variant#...as_u32
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_u64	method	ported	src/parquet_variant/variant.cr	Variant#...as_u64
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_u8	method	ported	src/parquet_variant/variant.cr	Variant#...as_u8
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_u8_slice	method	ported	src/parquet_variant/variant.cr	Variant#...as_u8_slice
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.as_uuid	method	ported	src/parquet_variant/variant.cr	Variant#...as_uuid
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.convert_to_unsigned_num	method	intentional_divergence	src/parquet_variant/variant.cr	inline per-width unsigned casts instead of generic TryFrom bound
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.get_list_element	method	ported	src/parquet_variant/variant.cr	Variant#...get_list_element
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.get_object_field	method	ported	src/parquet_variant/variant.cr	Variant#...get_object_field
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.get_path	method	ported	src/parquet_variant/variant.cr	Variant#...get_path
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.is_fully_validated	method	ported	src/parquet_variant/variant.cr	Variant#...is_fully_validated
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.metadata	method	ported	src/parquet_variant/variant.cr	Variant#...metadata
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.new	method	ported	src/parquet_variant/variant.cr	Variant#...new
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.new_with_metadata	method	ported	src/parquet_variant/variant.cr	Variant#...new_with_metadata
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.try_new	method	ported	src/parquet_variant/variant.cr	Variant#...try_new
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.try_new_with_metadata	method	ported	src/parquet_variant/variant.cr	Variant#...try_new_with_metadata
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.try_new_with_metadata_and_shallow_validation	method	ported	src/parquet_variant/variant.cr	Variant#...try_new_with_metadata_and_shallow_validation
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.try_new_with_metadata_at_depth	method	ported	src/parquet_variant/variant.cr	Variant#...try_new_with_metadata_at_depth
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.with_full_validation	method	ported	src/parquet_variant/variant.cr	Variant#...with_full_validation
+parquet-variant/src/variant.rs::method::Variant<'m, 'v>.with_full_validation_at_depth	method	ported	src/parquet_variant/variant.cr	Variant#...with_full_validation_at_depth
 parquet-variant/src/variant/decimal.rs::const::MAX_PRECISION	const	ported	src/parquet_variant/variant/decimal.cr	VariantDecimalN::MAX_PRECISION
 parquet-variant/src/variant/decimal.rs::const::MAX_UNSCALED_VALUE	const	ported	src/parquet_variant/variant/decimal.cr	VariantDecimalN::MAX_UNSCALED_VALUE
-parquet-variant/src/variant/list.rs::const::NUM_HEADER_BYTES	const	missing	-	auto-generated
-parquet-variant/src/variant/list.rs::method::VariantList<'_, '_>.eq	method	missing	-	auto-generated
-parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.get	method	missing	-	auto-generated
-parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.get_offset	method	missing	-	auto-generated
-parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.is_empty	method	missing	-	auto-generated
-parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.is_fully_validated	method	missing	-	auto-generated
-parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.iter	method	missing	-	auto-generated
-parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.iter_try	method	missing	-	auto-generated
-parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.iter_try_with_shallow_validation	method	missing	-	auto-generated
-parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.len	method	missing	-	auto-generated
-parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.new	method	missing	-	auto-generated
-parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.try_get	method	missing	-	auto-generated
-parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.try_get_with_shallow_validation	method	missing	-	auto-generated
-parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.try_new	method	missing	-	auto-generated
-parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.try_new_with_shallow_validation	method	missing	-	auto-generated
-parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.with_full_validation	method	missing	-	auto-generated
-parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.with_full_validation_at_depth	method	missing	-	auto-generated
-parquet-variant/src/variant/list.rs::method::VariantListHeader.first_offset_byte	method	missing	-	auto-generated
-parquet-variant/src/variant/list.rs::method::VariantListHeader.num_elements_size	method	missing	-	auto-generated
-parquet-variant/src/variant/list.rs::method::VariantListHeader.offset_size	method	missing	-	auto-generated
-parquet-variant/src/variant/list.rs::method::VariantListHeader.try_new	method	missing	-	auto-generated
+parquet-variant/src/variant/list.rs::const::NUM_HEADER_BYTES	const	ported	src/parquet_variant/variant/list.cr	reuses shared ParquetVariant::NUM_HEADER_BYTES
+parquet-variant/src/variant/list.rs::method::VariantList<'_, '_>.eq	method	ported	src/parquet_variant/variant/list.cr	VariantList#eq
+parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.get	method	ported	src/parquet_variant/variant/list.cr	VariantList#get
+parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.get_offset	method	ported	src/parquet_variant/variant/list.cr	VariantList#get_offset
+parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.is_empty	method	ported	src/parquet_variant/variant/list.cr	VariantList#is_empty
+parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.is_fully_validated	method	ported	src/parquet_variant/variant/list.cr	VariantList#is_fully_validated
+parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.iter	method	ported	src/parquet_variant/variant/list.cr	VariantList#iter
+parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.iter_try	method	ported	src/parquet_variant/variant/list.cr	VariantList#iter_try
+parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.iter_try_with_shallow_validation	method	ported	src/parquet_variant/variant/list.cr	VariantList#iter_try_with_shallow_validation
+parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.len	method	ported	src/parquet_variant/variant/list.cr	VariantList#len
+parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.new	method	ported	src/parquet_variant/variant/list.cr	VariantList#new
+parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.try_get	method	ported	src/parquet_variant/variant/list.cr	VariantList#try_get
+parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.try_get_with_shallow_validation	method	ported	src/parquet_variant/variant/list.cr	VariantList#try_get_with_shallow_validation
+parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.try_new	method	ported	src/parquet_variant/variant/list.cr	VariantList#try_new
+parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.try_new_with_shallow_validation	method	ported	src/parquet_variant/variant/list.cr	VariantList#try_new_with_shallow_validation
+parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.with_full_validation	method	ported	src/parquet_variant/variant/list.cr	VariantList#with_full_validation
+parquet-variant/src/variant/list.rs::method::VariantList<'m, 'v>.with_full_validation_at_depth	method	ported	src/parquet_variant/variant/list.cr	VariantList#with_full_validation_at_depth
+parquet-variant/src/variant/list.rs::method::VariantListHeader.first_offset_byte	method	ported	src/parquet_variant/variant/list.cr	VariantList#first_offset_byte
+parquet-variant/src/variant/list.rs::method::VariantListHeader.num_elements_size	method	ported	src/parquet_variant/variant/list.cr	VariantList#num_elements_size
+parquet-variant/src/variant/list.rs::method::VariantListHeader.offset_size	method	ported	src/parquet_variant/variant/list.cr	VariantList#offset_size
+parquet-variant/src/variant/list.rs::method::VariantListHeader.try_new	method	ported	src/parquet_variant/variant/list.cr	VariantList#try_new
 parquet-variant/src/variant/metadata.rs::const::CORRECT_VERSION_VALUE	const	ported	src/parquet_variant/variant/metadata.cr	CORRECT_VERSION_VALUE
 parquet-variant/src/variant/metadata.rs::const::EMPTY_VARIANT_METADATA	const	ported	src/parquet_variant/variant/metadata.cr	EMPTY_VARIANT_METADATA
 parquet-variant/src/variant/metadata.rs::const::EMPTY_VARIANT_METADATA_BYTES	const	ported	src/parquet_variant/variant/metadata.cr	EMPTY_VARIANT_METADATA_BYTES
@@ -547,31 +547,31 @@ parquet-variant/src/variant/metadata.rs::method::VariantMetadata<'m>.with_full_v
 parquet-variant/src/variant/metadata.rs::method::VariantMetadataHeader.first_offset_byte	method	ported	src/parquet_variant/variant/metadata.cr	VariantMetadataHeader#first_offset_byte
 parquet-variant/src/variant/metadata.rs::method::VariantMetadataHeader.offset_size	method	ported	src/parquet_variant/variant/metadata.cr	VariantMetadataHeader#offset_size
 parquet-variant/src/variant/metadata.rs::method::VariantMetadataHeader.try_new	method	ported	src/parquet_variant/variant/metadata.cr	VariantMetadataHeader.try_new
-parquet-variant/src/variant/object.rs::const::NUM_HEADER_BYTES	const	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObject<'_, '_>.eq	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.field	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.field_name	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.get	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.get_offset	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.is_empty	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.is_fully_validated	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.iter	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.iter_try	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.iter_try_with_shallow_validation	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.len	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.new	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.try_field	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.try_field_name	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.try_field_with_shallow_validation	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.try_new	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.try_new_with_shallow_validation	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.with_full_validation	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.with_full_validation_at_depth	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObjectHeader.field_id_size	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObjectHeader.field_ids_start_byte	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObjectHeader.field_offset_size	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObjectHeader.num_elements_size	method	missing	-	auto-generated
-parquet-variant/src/variant/object.rs::method::VariantObjectHeader.try_new	method	missing	-	auto-generated
+parquet-variant/src/variant/object.rs::const::NUM_HEADER_BYTES	const	ported	src/parquet_variant/variant/object.cr	reuses shared ParquetVariant::NUM_HEADER_BYTES
+parquet-variant/src/variant/object.rs::method::VariantObject<'_, '_>.eq	method	ported	src/parquet_variant/variant/object.cr	VariantObject#eq
+parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.field	method	ported	src/parquet_variant/variant/object.cr	VariantObject#field
+parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.field_name	method	ported	src/parquet_variant/variant/object.cr	VariantObject#field_name
+parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.get	method	ported	src/parquet_variant/variant/object.cr	VariantObject#get
+parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.get_offset	method	ported	src/parquet_variant/variant/object.cr	VariantObject#get_offset
+parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.is_empty	method	ported	src/parquet_variant/variant/object.cr	VariantObject#is_empty
+parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.is_fully_validated	method	ported	src/parquet_variant/variant/object.cr	VariantObject#is_fully_validated
+parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.iter	method	ported	src/parquet_variant/variant/object.cr	VariantObject#iter
+parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.iter_try	method	ported	src/parquet_variant/variant/object.cr	VariantObject#iter_try
+parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.iter_try_with_shallow_validation	method	ported	src/parquet_variant/variant/object.cr	VariantObject#iter_try_with_shallow_validation
+parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.len	method	ported	src/parquet_variant/variant/object.cr	VariantObject#len
+parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.new	method	ported	src/parquet_variant/variant/object.cr	VariantObject#new
+parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.try_field	method	ported	src/parquet_variant/variant/object.cr	VariantObject#try_field
+parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.try_field_name	method	ported	src/parquet_variant/variant/object.cr	VariantObject#try_field_name
+parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.try_field_with_shallow_validation	method	ported	src/parquet_variant/variant/object.cr	VariantObject#try_field_with_shallow_validation
+parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.try_new	method	ported	src/parquet_variant/variant/object.cr	VariantObject#try_new
+parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.try_new_with_shallow_validation	method	ported	src/parquet_variant/variant/object.cr	VariantObject#try_new_with_shallow_validation
+parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.with_full_validation	method	ported	src/parquet_variant/variant/object.cr	VariantObject#with_full_validation
+parquet-variant/src/variant/object.rs::method::VariantObject<'m, 'v>.with_full_validation_at_depth	method	ported	src/parquet_variant/variant/object.cr	VariantObject#with_full_validation_at_depth
+parquet-variant/src/variant/object.rs::method::VariantObjectHeader.field_id_size	method	ported	src/parquet_variant/variant/object.cr	VariantObject#field_id_size
+parquet-variant/src/variant/object.rs::method::VariantObjectHeader.field_ids_start_byte	method	ported	src/parquet_variant/variant/object.cr	VariantObject#field_ids_start_byte
+parquet-variant/src/variant/object.rs::method::VariantObjectHeader.field_offset_size	method	ported	src/parquet_variant/variant/object.cr	VariantObject#field_offset_size
+parquet-variant/src/variant/object.rs::method::VariantObjectHeader.num_elements_size	method	ported	src/parquet_variant/variant/object.cr	VariantObject#num_elements_size
+parquet-variant/src/variant/object.rs::method::VariantObjectHeader.try_new	method	ported	src/parquet_variant/variant/object.cr	VariantObject#try_new
 parquet/benches/alp.rs::const::NUM_VALUES	const	missing	-	auto-generated
 parquet/benches/alp.rs::const::RANDOM_ACCESS_ROWS	const	missing	-	auto-generated
 parquet/benches/arrow_reader.rs::const::BATCH_SIZE	const	missing	-	auto-generated
