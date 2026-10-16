@@ -42,17 +42,17 @@ little-endian layout.
   `ParquetMetaDataReader`, and the   `ParquetMetaDataWriter`/
   `ThriftMetadataWriter` (footer + page-index serialization) are done, and the
   `util` bit layer (`BitReader`/`BitWriter`), the RLE/bit-packing hybrid
-  (`RleEncoder`/`RleDecoder`), level encoding (`LevelEncoder`), and all encodings
+  (`RleEncoder`/`RleDecoder`), level encoding (`LevelEncoder`), all encodings
   (PLAIN, DELTA_BINARY_PACKED, DELTA_LENGTH_BYTE_ARRAY, DELTA_BYTE_ARRAY,
-  dictionary, byte-stream-split, RLE value, ALP) are done.
+  dictionary, byte-stream-split, RLE value, ALP), and the `Encoder`/`Decoder`
+  interfaces + `get_encoder`/`get_decoder` registries are done.
 - Next up (take the first unchecked item):
-  1. Encodings: the `DataType`/`Encoder`/`Decoder` registries; then the column
-     reader/writer, then serialized/file reader+writer, then record API and
-     bloom filter.
+  1. Column reader/writer (`column/`), then serialized/file reader+writer, then
+     record API and bloom filter.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 834 `ported`, 108 `intentional_divergence`,
-  1 `skipped`, 2572 `missing` (of 3515 rows).
+- Progress by counts (ledger): 843 `ported`, 108 `intentional_divergence`,
+  1 `skipped`, 2563 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -73,10 +73,8 @@ Chunk status by area:
   `ParquetMetaDataPushDecoder`, the synchronous `ChunkReader`-driven
   `ParquetMetaDataReader`, and the `ParquetMetaDataWriter`/`ThriftMetadataWriter`
   done; serialized/file reader+writer, bloom filter pending.
-- Phase 2.1 encodings: RLE/bit-packing hybrid, levels, PLAIN,
-  DELTA_BINARY_PACKED, DELTA_LENGTH_BYTE_ARRAY, DELTA_BYTE_ARRAY, dictionary,
-  byte-stream-split, RLE value, and ALP done; the `DataType`/`Encoder`/`Decoder`
-  registries pending.
+- Phase 2.1 encodings: all encodings, the `Encoder`/`Decoder` interfaces, and
+  the `get_encoder`/`get_decoder` registries done.
 - Phases 2.2 column, 2.4 record, 2.5 CLI: pending.
 - Phase 3 (variant/geospatial/derive/encryption/arrow/async): pending.
 
@@ -205,8 +203,11 @@ Chunk status by area:
 - [x] ALP (`src/parquet/encodings/alp.cr`): `AlpEncoder(F)`/`AlpDecoder(F)` for
   FLOAT/DOUBLE, plus `AlpHeader`/`AlpInfo`/`ForInfo(F)`/`AlpEncodedVectorView(F)`
   and the `Alp` sampling/encoding helpers.
+- [x] `Encoder`/`Decoder` interfaces and the `get_encoder`/`get_decoder`
+  registries (`src/parquet/encodings/traits.cr`, `registry.cr`), plus the
+  `physical_type(T)` helper.
 - [x] 7+ upstream test modules ported (RLE, levels, plain, delta binary/length/
-  byte-array, dictionary, byte-stream-split, RLE value, ALP).
+  byte-array, dictionary, byte-stream-split, RLE value, ALP, registries).
 
 ### 2.2 Column
 
@@ -494,6 +495,16 @@ Chunk status by area:
   (slice arithmetic at `load_current_vector`); `Scratch`/`StreamingPage` use
   element counts for `estimated_memory_size` (no `Array` capacity); the
   `is_better`/`rank` helpers become `better?`/`rank`.
+- `encodings::traits`/`registry`: the `Encoder`/`Decoder` traits become abstract
+  generic classes (with `put_spaced`/`get_spaced` as concrete base methods); the
+  `GetEncoder`/`GetDecoder` traits and `get_encoder`/`get_decoder` free functions
+  become `T.class`-dispatched `Encodings.get_encoder`/`get_decoder` module
+  methods returning `Encoder(T)`/`Decoder(T)`; `PhysicalType` is
+  `Encodings.physical_type(T)`. Because Crystal instantiates generic classes per
+  concrete type, combinations upstream would construct-but-fail-later (e.g.
+  `DeltaBitPackEncoder<T>` for a non-integer `T`) raise `ParquetError` directly.
+  `DeltaLengthByteArrayEncoder`/`Decoder` were made generic over `T` to match the
+  upstream registry's cross-type encoder construction.
 - `ParquetMetaDataWriter`/`ThriftMetadataWriter`: the `MetadataObjectWriter`
   encryption-dispatch layer is not modeled; the non-encryption write logic is
   inlined (`write_thrift_object`, `Metadata.write_file_metadata`), and the

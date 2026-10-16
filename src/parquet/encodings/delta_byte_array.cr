@@ -11,8 +11,8 @@ require "./delta_bit_pack"
 # `T.class`; `prefix_lengths` is exposed for the negative-prefix-length check.
 module Parquet
   module Encodings
-    # DELTA_LENGTH_BYTE_ARRAY encoder.
-    class DeltaLengthByteArrayEncoder
+    # DELTA_LENGTH_BYTE_ARRAY encoder for BYTE_ARRAY.
+    class DeltaLengthByteArrayEncoder(T) < Encoder(T)
       def initialize
         @len_encoder = DeltaBitPackEncoder(Int32).new
         @data = [] of ByteArray
@@ -32,27 +32,35 @@ module Parquet
       end
 
       # Encodes `values`.
-      def put(values : Array(ByteArray)) : Nil
-        @len_encoder.put(values.map(&.len))
-        values.each do |value|
-          @encoded_size += value.len
-          @data << value
-        end
+      def put(values : Array(T)) : Nil
+        {% if T == ByteArray %}
+          @len_encoder.put(values.map(&.len))
+          values.each do |value|
+            @encoded_size += value.len
+            @data << value
+          end
+        {% else %}
+          raise general_err!("DeltaLengthByteArrayEncoder only supports ByteArrayType")
+        {% end %}
       end
 
       # Flushes and returns the encoded bytes.
       def flush_buffer : Bytes
-        buffer = [] of UInt8
-        buffer.concat(@len_encoder.flush_buffer)
-        @data.each { |value| buffer.concat(value.data) }
-        @data.clear
-        @encoded_size = 0
-        Slice.new(buffer.to_unsafe, buffer.size).dup
+        {% if T == ByteArray %}
+          buffer = [] of UInt8
+          buffer.concat(@len_encoder.flush_buffer)
+          @data.each { |value| buffer.concat(value.data) }
+          @data.clear
+          @encoded_size = 0
+          Slice.new(buffer.to_unsafe, buffer.size).dup
+        {% else %}
+          raise general_err!("DeltaLengthByteArrayEncoder only supports ByteArrayType")
+        {% end %}
       end
     end
 
-    # DELTA_LENGTH_BYTE_ARRAY decoder.
-    class DeltaLengthByteArrayDecoder
+    # DELTA_LENGTH_BYTE_ARRAY decoder for BYTE_ARRAY.
+    class DeltaLengthByteArrayDecoder(T) < Decoder(T)
       def initialize
         @lengths = [] of Int32
         @current_idx = 0
@@ -62,17 +70,21 @@ module Parquet
       end
 
       def set_data(data : Bytes, num_values : Int32) : Nil
-        len_decoder = DeltaBitPackDecoder(Int32).new
-        len_decoder.set_data(data, num_values)
-        num_lengths = len_decoder.values_left
-        @lengths = Array(Int32).new(num_lengths, 0)
-        len_decoder.get(@lengths)
+        {% if T == ByteArray %}
+          len_decoder = DeltaBitPackDecoder(Int32).new
+          len_decoder.set_data(data, num_values)
+          num_lengths = len_decoder.values_left
+          @lengths = Array(Int32).new(num_lengths, 0)
+          len_decoder.get(@lengths)
 
-        offset = len_decoder.get_offset
-        @data = data[offset, data.size - offset]
-        @offset = 0
-        @current_idx = 0
-        @num_values = num_lengths
+          offset = len_decoder.get_offset
+          @data = data[offset, data.size - offset]
+          @offset = 0
+          @current_idx = 0
+          @num_values = num_lengths
+        {% else %}
+          raise general_err!("DeltaLengthByteArrayDecoder only support ByteArrayType")
+        {% end %}
       end
 
       def values_left : Int32
@@ -84,16 +96,20 @@ module Parquet
       end
 
       # Decodes up to `buffer.size` values, returning the count decoded.
-      def get(buffer : Array(ByteArray)) : Int32
-        num_values = Math.min(buffer.size, @num_values)
-        num_values.times do |i|
-          len = @lengths[@current_idx]
-          buffer[i] = ByteArray.new(@data[@offset, len])
-          @offset += len
-          @current_idx += 1
-        end
-        @num_values -= num_values
-        num_values
+      def get(buffer : Array(T)) : Int32
+        {% if T == ByteArray %}
+          num_values = Math.min(buffer.size, @num_values)
+          num_values.times do |i|
+            len = @lengths[@current_idx]
+            buffer[i] = ByteArray.new(@data[@offset, len])
+            @offset += len
+            @current_idx += 1
+          end
+          @num_values -= num_values
+          num_values
+        {% else %}
+          raise general_err!("DeltaLengthByteArrayDecoder only support ByteArrayType")
+        {% end %}
       end
 
       # Skips up to `num_values` values, returning the count skipped.
@@ -109,10 +125,10 @@ module Parquet
     end
 
     # DELTA_BYTE_ARRAY encoder for BYTE_ARRAY / FIXED_LEN_BYTE_ARRAY.
-    class DeltaByteArrayEncoder(T)
+    class DeltaByteArrayEncoder(T) < Encoder(T)
       def initialize
         @prefix_len_encoder = DeltaBitPackEncoder(Int32).new
-        @suffix_writer = DeltaLengthByteArrayEncoder.new
+        @suffix_writer = DeltaLengthByteArrayEncoder(ByteArray).new
         @previous = Bytes.new(0)
       end
 
@@ -155,7 +171,11 @@ module Parquet
       end
 
       private def value_bytes(value : T) : Bytes
-        value.data
+        {% if T == ByteArray || T == FixedLenByteArray %}
+          value.data
+        {% else %}
+          raise general_err!("DeltaByteArrayEncoder only supports ByteArrayType and FixedLenByteArrayType")
+        {% end %}
       end
 
       private def common_prefix_length(a : Bytes, b : Bytes) : Int32
@@ -169,13 +189,13 @@ module Parquet
     end
 
     # DELTA_BYTE_ARRAY decoder for BYTE_ARRAY / FIXED_LEN_BYTE_ARRAY.
-    class DeltaByteArrayDecoder(T)
+    class DeltaByteArrayDecoder(T) < Decoder(T)
       getter prefix_lengths : Array(Int32)
 
       def initialize
         @prefix_lengths = [] of Int32
         @current_idx = 0
-        @suffix_decoder = nil.as(DeltaLengthByteArrayDecoder?)
+        @suffix_decoder = nil.as(DeltaLengthByteArrayDecoder(ByteArray)?)
         @previous_value = Bytes.new(0)
         @num_values = 0
       end
@@ -188,7 +208,7 @@ module Parquet
         prefix_decoder.get(@prefix_lengths)
 
         offset = prefix_decoder.get_offset
-        suffix_decoder = DeltaLengthByteArrayDecoder.new
+        suffix_decoder = DeltaLengthByteArrayDecoder(ByteArray).new
         suffix_decoder.set_data(data[offset, data.size - offset], num_values)
         @suffix_decoder = suffix_decoder
         @num_values = num_prefixes
@@ -210,7 +230,7 @@ module Parquet
         suffix_buffer = Array(ByteArray).new(1, ByteArray.new)
 
         num_values.times do |i|
-          suffix_decoder = @suffix_decoder.as(DeltaLengthByteArrayDecoder)
+          suffix_decoder = @suffix_decoder.as(DeltaLengthByteArrayDecoder(ByteArray))
           suffix_decoder.get(suffix_buffer)
           suffix = suffix_buffer[0].data
 

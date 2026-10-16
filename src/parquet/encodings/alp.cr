@@ -1006,7 +1006,7 @@ module Parquet
     end
 
     # Encoder for ALP-encoded floating-point pages (f32/f64).
-    class AlpEncoder(F)
+    class AlpEncoder(F) < Encoder(F)
       def initialize
         @values = [] of F
         @preset = nil.as(Array(Alp::ExponentAndFactor)?)
@@ -1059,7 +1059,7 @@ module Parquet
     end
 
     # Decoder for ALP-encoded floating-point pages (f32/f64).
-    class AlpDecoder(F)
+    class AlpDecoder(F) < Decoder(F)
       def initialize
         @header = AlpHeader.new(0_u8, 0_u8, 1, 0_i64)
         @body = Bytes.new(0)

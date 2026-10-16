@@ -15,7 +15,7 @@ module Parquet
   module Encodings
     # BYTE_STREAM_SPLIT encoder for 4/8-byte physical types (FLOAT, DOUBLE,
     # INT32, INT64). Values are buffered contiguously, then transposed on flush.
-    class ByteStreamSplitEncoder(T)
+    class ByteStreamSplitEncoder(T) < Encoder(T)
       def initialize
         @buffer = [] of UInt8
       end
@@ -60,7 +60,7 @@ module Parquet
     end
 
     # BYTE_STREAM_SPLIT encoder for variable-width FIXED_LEN_BYTE_ARRAY columns.
-    class VariableWidthByteStreamSplitEncoder(T)
+    class VariableWidthByteStreamSplitEncoder(T) < Encoder(T)
       def initialize(@type_width : Int32)
         @buffer = [] of UInt8
       end
@@ -100,7 +100,7 @@ module Parquet
     end
 
     # BYTE_STREAM_SPLIT decoder for 4/8-byte physical types.
-    class ByteStreamSplitDecoder(T)
+    class ByteStreamSplitDecoder(T) < Decoder(T)
       def initialize
         @encoded_bytes = Bytes.new(0)
         @total_num_values = 0
@@ -148,7 +148,7 @@ module Parquet
     end
 
     # BYTE_STREAM_SPLIT decoder for variable-width FIXED_LEN_BYTE_ARRAY columns.
-    class VariableWidthByteStreamSplitDecoder(T)
+    class VariableWidthByteStreamSplitDecoder(T) < Decoder(T)
       def initialize(@type_width : Int32)
         @encoded_bytes = Bytes.new(0)
         @total_num_values = 0

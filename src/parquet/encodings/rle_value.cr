@@ -12,7 +12,7 @@ require "./rle"
 module Parquet
   module Encodings
     # RLE/Bit-Packing hybrid encoding for values. Supports BOOLEAN only.
-    class RleValueEncoder(T)
+    class RleValueEncoder(T) < Encoder(T)
       def initialize
         @encoder = nil.as(RleEncoder?)
       end
@@ -61,7 +61,7 @@ module Parquet
     end
 
     # RLE/Bit-Packing hybrid decoding for values. Supports BOOLEAN only.
-    class RleValueDecoder(T)
+    class RleValueDecoder(T) < Decoder(T)
       def initialize
         @values_left = 0
         @decoder = RleDecoder.new(1)

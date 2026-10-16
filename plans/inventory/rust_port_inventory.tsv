@@ -2126,7 +2126,7 @@ parquet/src/encodings/decoding.rs::const::BLOCK_SIZE	const	missing	-	auto-genera
 parquet/src/encodings/decoding.rs::const::I32_SIZE	const	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::const::MAX_SKIP_BUFFER_VALUES	const	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::method::BoolType.to_byte_array	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::ByteArray.get_decoder	method	missing	-	auto-generated
+parquet/src/encodings/decoding.rs::method::ByteArray.get_decoder	method	ported	src/parquet/encodings/registry.cr	get_decoder (T.class dispatch)
 parquet/src/encodings/decoding.rs::method::ByteArrayType.to_byte_array	method	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.check_bit_width	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackDecoder (private)
 parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.default	method	intentional_divergence	src/parquet/encodings/delta_bit_pack.cr	Rust Default; Crystal default initialize
@@ -2161,7 +2161,7 @@ parquet/src/encodings/decoding.rs::method::DictDecoder<T>.set_data	method	ported
 parquet/src/encodings/decoding.rs::method::DictDecoder<T>.set_dict	method	ported	src/parquet/encodings/dict.cr	DictDecoder#set_dict
 parquet/src/encodings/decoding.rs::method::DictDecoder<T>.skip	method	ported	src/parquet/encodings/dict.cr	DictDecoder#skip
 parquet/src/encodings/decoding.rs::method::DictDecoder<T>.values_left	method	ported	src/parquet/encodings/dict.cr	DictDecoder#values_left
-parquet/src/encodings/decoding.rs::method::FixedLenByteArray.get_decoder	method	missing	-	auto-generated
+parquet/src/encodings/decoding.rs::method::FixedLenByteArray.get_decoder	method	ported	src/parquet/encodings/registry.cr	get_decoder (T.class dispatch)
 parquet/src/encodings/decoding.rs::method::FixedLenByteArrayType.to_byte_array	method	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::method::Int96Type.to_byte_array	method	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::method::PlainDecoder<T>.encoding	method	ported	src/parquet/encodings/plain.cr	PlainDecoder(T)
@@ -2177,11 +2177,11 @@ parquet/src/encodings/decoding.rs::method::RleValueDecoder<T>.new	method	ported	
 parquet/src/encodings/decoding.rs::method::RleValueDecoder<T>.set_data	method	ported	src/parquet/encodings/rle_value.cr	RleValueDecoder#set_data
 parquet/src/encodings/decoding.rs::method::RleValueDecoder<T>.skip	method	ported	src/parquet/encodings/rle_value.cr	RleValueDecoder#skip
 parquet/src/encodings/decoding.rs::method::RleValueDecoder<T>.values_left	method	ported	src/parquet/encodings/rle_value.cr	RleValueDecoder#values_left
-parquet/src/encodings/decoding.rs::method::bool.get_decoder	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::f32.get_decoder	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::f64.get_decoder	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::i32.get_decoder	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::i64.get_decoder	method	missing	-	auto-generated
+parquet/src/encodings/decoding.rs::method::bool.get_decoder	method	ported	src/parquet/encodings/registry.cr	get_decoder (T.class dispatch)
+parquet/src/encodings/decoding.rs::method::f32.get_decoder	method	ported	src/parquet/encodings/registry.cr	get_decoder (T.class dispatch)
+parquet/src/encodings/decoding.rs::method::f64.get_decoder	method	ported	src/parquet/encodings/registry.cr	get_decoder (T.class dispatch)
+parquet/src/encodings/decoding.rs::method::i32.get_decoder	method	ported	src/parquet/encodings/registry.cr	get_decoder (T.class dispatch)
+parquet/src/encodings/decoding.rs::method::i64.get_decoder	method	ported	src/parquet/encodings/registry.cr	get_decoder (T.class dispatch)
 parquet/src/encodings/decoding/alp_decoder.rs::const::DECODE_TILE_CAP	const	ported	src/parquet/encodings/alp.cr	Alp::DECODE_TILE_CAP
 parquet/src/encodings/decoding/alp_decoder.rs::method::AlpDecoder<T>.encoding	method	ported	src/parquet/encodings/alp.cr	AlpDecoder##encoding
 parquet/src/encodings/decoding/alp_decoder.rs::method::AlpDecoder<T>.get	method	ported	src/parquet/encodings/alp.cr	AlpDecoder##get
@@ -2307,8 +2307,8 @@ parquet/src/encodings/encoding/mod.rs::method::RleValueEncoder<T>.new	method	por
 parquet/src/encodings/encoding/mod.rs::method::RleValueEncoder<T>.put	method	ported	src/parquet/encodings/rle_value.cr	RleValueEncoder#put
 parquet/src/encodings/encoding/mod.rs::method::T.test_dict_internal	method	missing	-	auto-generated
 parquet/src/encodings/encoding/mod.rs::method::T.test_internal	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::f32.get_encoder	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::f64.get_encoder	method	missing	-	auto-generated
+parquet/src/encodings/encoding/mod.rs::method::f32.get_encoder	method	ported	src/parquet/encodings/registry.cr	get_encoder (T.class dispatch)
+parquet/src/encodings/encoding/mod.rs::method::f64.get_encoder	method	ported	src/parquet/encodings/registry.cr	get_encoder (T.class dispatch)
 parquet/src/encodings/levels.rs::method::LevelEncoder.consume	method	ported	src/parquet/encodings/levels.cr	LevelEncoder
 parquet/src/encodings/levels.rs::method::LevelEncoder.flush_to	method	ported	src/parquet/encodings/levels.cr	LevelEncoder (block instead of FnOnce)
 parquet/src/encodings/levels.rs::method::LevelEncoder.put_n_with_observer	method	ported	src/parquet/encodings/levels.cr	LevelEncoder (block observer)

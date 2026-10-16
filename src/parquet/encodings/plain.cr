@@ -11,7 +11,7 @@ require "./levels"
 module Parquet
   module Encodings
     # PLAIN encoding that supports all physical types.
-    class PlainEncoder(T)
+    class PlainEncoder(T) < Encoder(T)
       def initialize
         @buffer = [] of UInt8
         @bit_writer = Util::BitWriter.new(256)
@@ -79,7 +79,7 @@ module Parquet
     end
 
     # PLAIN decoding that supports all physical types.
-    class PlainDecoder(T)
+    class PlainDecoder(T) < Decoder(T)
       def initialize(@type_length : Int32 = -1)
         @num_values = 0
         @start = 0

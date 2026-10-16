@@ -12,7 +12,7 @@ require "./plain"
 module Parquet
   module Encodings
     # DELTA_BINARY_PACKED encoder for INT32/INT64.
-    class DeltaBitPackEncoder(T)
+    class DeltaBitPackEncoder(T) < Encoder(T)
       DEFAULT_NUM_MINI_BLOCKS     =  4
       MAX_PAGE_HEADER_WRITER_SIZE = 32
       DEFAULT_BIT_WRITER_SIZE     = 1024 * 1024
@@ -160,7 +160,7 @@ module Parquet
     end
 
     # DELTA_BINARY_PACKED decoder for INT32/INT64.
-    class DeltaBitPackDecoder(T)
+    class DeltaBitPackDecoder(T) < Decoder(T)
       @bit_reader : Util::BitReader
       @initialized : Bool
       @block_size : Int32
@@ -192,7 +192,7 @@ module Parquet
       end
 
       # Sets the input data and reads the page header.
-      def set_data(data : Bytes, _num_values : Int32) : Nil
+      def set_data(data : Bytes, num_values : Int32) : Nil
         @bit_reader = Util::BitReader.new(data)
         @initialized = true
 

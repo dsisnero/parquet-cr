@@ -11,12 +11,12 @@ end
 
 private def delta_length_roundtrip(chunks : Array(Array(Parquet::ByteArray))) : Nil
   # Multiple put() calls:
-  encoder = DeltaLengthByteArrayEncoder.new
+  encoder = DeltaLengthByteArrayEncoder(Parquet::ByteArray).new
   chunks.each { |chunk| encoder.put(chunk) }
   bytes = encoder.flush_buffer
 
   expected = chunks.flatten
-  decoder = DeltaLengthByteArrayDecoder.new
+  decoder = DeltaLengthByteArrayDecoder(Parquet::ByteArray).new
   decoder.set_data(bytes, expected.size)
   result = Array(Parquet::ByteArray).new(expected.size, Parquet::ByteArray.new)
   decoder.get(result).should eq(expected.size)

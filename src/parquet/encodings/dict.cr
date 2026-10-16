@@ -16,7 +16,7 @@ module Parquet
     # Dictionary encoder. Builds a dictionary of values encountered in a given
     # column; the dictionary page is written first (PLAIN), followed by data
     # pages of RLE/bit-packed entry ids preceded by their bit width.
-    class DictEncoder(T)
+    class DictEncoder(T) < Encoder(T)
       @interner : Util::Interner(KeyStorage(T))
 
       def initialize(desc : Schema::ColumnDescriptor)
@@ -92,7 +92,7 @@ module Parquet
 
     # Dictionary decoder. The dictionary is supplied separately (it lives in a
     # dictionary page per column chunk); data pages carry RLE/bit-packed ids.
-    class DictDecoder(T)
+    class DictDecoder(T) < Decoder(T)
       def initialize
         @dictionary = [] of T
         @has_dictionary = false
