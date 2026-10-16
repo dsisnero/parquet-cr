@@ -1683,7 +1683,7 @@ parquet/src/basic.rs::method::Repetition.from_str	method	ported	src/parquet/basi
 parquet/src/basic.rs::method::SortOrder.fmt	method	ported	src/parquet/basic.cr	Display via SortOrder#to_s (variant name)
 parquet/src/basic.rs::method::SortOrder.is_signed	method	ported	src/parquet/basic.cr	renamed SortOrder#signed?
 parquet/src/basic.rs::method::Type.from_str	method	ported	src/parquet/basic.cr	Enum.parse?-based; BINARY accepted as alias for BYTE_ARRAY
-parquet/src/bin/parquet-concat.rs::method::Args.run	method	missing	-	needs SerializedRowGroupWriter#append_column (arrow splice path)
+parquet/src/bin/parquet-concat.rs::method::Args.run	method	ported	src/parquet/bin/parquet_concat.cr	ParquetConcat.run/concat (append_column splice)
 parquet/src/bin/parquet-fromcsv.rs::method::Args.get_delimiter	method	missing	-	auto-generated
 parquet/src/bin/parquet-fromcsv.rs::method::Args.get_escape	method	missing	-	auto-generated
 parquet/src/bin/parquet-fromcsv.rs::method::Args.get_quote	method	missing	-	auto-generated
@@ -3094,13 +3094,13 @@ parquet/src/file/writer.rs::method::SerializedPageWriter<'_, W>.with_page_encryp
 parquet/src/file/writer.rs::method::SerializedPageWriter<'_, W>.write_page	method	ported	src/parquet/file/serialized_writer.cr	SerializedPageWriter#write_page
 parquet/src/file/writer.rs::method::SerializedPageWriter<'a, W>.new	method	ported	src/parquet/file/serialized_writer.cr	SerializedPageWriter.new
 parquet/src/file/writer.rs::method::SerializedPageWriter<'a, W>.serialize_page_header	method	ported	src/parquet/file/serialized_writer.cr	SerializedPageWriter#serialize_page_header
-parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.append_column	method	intentional_divergence	-	arrow splice path not ported
+parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.append_column	method	ported	src/parquet/file/writer.cr	SerializedRowGroupWriter#append_column
 parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.append_column_from_pages	method	intentional_divergence	-	arrow-only splice path
-parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.append_column_from_read	method	intentional_divergence	-	arrow splice path not ported
+parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.append_column_from_read	method	ported	src/parquet/file/writer.cr	SerializedRowGroupWriter#append_column_from_read
 parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.assert_previous_writer_closed	method	ported	src/parquet/file/writer.cr	SerializedRowGroupWriter
-parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.begin_appended_column	method	intentional_divergence	-	arrow splice path not ported
+parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.begin_appended_column	method	ported	src/parquet/file/writer.cr	SerializedRowGroupWriter#begin_appended_column
 parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.close	method	ported	src/parquet/file/writer.cr	SerializedRowGroupWriter
-parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.finish_appended_column	method	intentional_divergence	-	arrow splice path not ported
+parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.finish_appended_column	method	ported	src/parquet/file/writer.cr	SerializedRowGroupWriter#finish_appended_column
 parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.get_on_close	method	ported	src/parquet/file/writer.cr	inlined in next_column
 parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.get_page_encryptor_context	method	intentional_divergence	-	encryption not ported
 parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.new	method	ported	src/parquet/file/writer.cr	SerializedRowGroupWriter

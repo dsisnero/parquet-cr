@@ -54,20 +54,19 @@ little-endian layout.
   `RowGroupReader`, `ReadOptions`/`ReadOptionsBuilder`), the record API
   (`Field`/`Row`/`List`/`Map`, `TripletIter`, `TreeBuilder`/`Reader`/`RowIter`,
   wired into `get_row_iter`), `FilePageIterator` + the `PageIterator` trait, the
-  schema printer, and the CLI (`bin/`): the foundation, `parquet-index`,
-  `parquet-read`, `parquet-rowcount`, `parquet-show-bloom-filter`,
-  `parquet-layout`, and `parquet-schema` are done. Phase 2 is complete except
-  `parquet-concat` and the arrow-dependent CLI tools (`2.5`).
+  schema printer, the `append_column` splice path, and the CLI (`bin/`): the
+  foundation, `parquet-index`, `parquet-read`, `parquet-rowcount`,
+  `parquet-show-bloom-filter`, `parquet-layout`, `parquet-schema`, and
+  `parquet-concat` are done. **Phase 2 is complete** except the arrow-dependent
+  CLI tools (`parquet-rewrite`/`parquet-fromcsv`).
 - Next up (take the first unchecked item):
-  1. Finish the CLI (`2.5`): `parquet-concat` (needs `append_column`);
-     `parquet-rewrite`/`parquet-fromcsv` need `arrow`.
-  2. Then Phase 3: `parquet_derive`-style record reader/writer traits (the
+  1. Phase 3: `parquet_derive`-style record reader/writer traits (the
      `record_reader.rs`/`record_writer.rs` traits, used by `parquet_derive`;
      Phase 3.3), the variant/geospatial crates, and encryption.
-  3. Deferred: async/object-store suffix fetchers and encryption are intentional
-     divergences (recorded).
-- Progress by counts (ledger): 1311 `ported`, 184 `intentional_divergence`,
-  1 `skipped`, 2019 `missing` (of 3515 rows).
+  2. Deferred: async/object-store suffix fetchers, encryption, and the arrow
+     `parquet-rewrite`/`parquet-fromcsv` are intentional divergences (recorded).
+- Progress by counts (ledger): 1316 `ported`, 180 `intentional_divergence`,
+  1 `skipped`, 2018 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -104,8 +103,8 @@ Chunk status by area:
   `get_row_iter` wired; `FilePageIterator` + the `PageIterator` trait done.
 - Phase 2.5 CLI: `cli` shared helper (`parse_column_path`), `parquet-index`,
   `parquet-read`, `parquet-rowcount`, `parquet-show-bloom-filter`,
-  `parquet-layout`, and `parquet-schema` done; `parquet-concat`
-  (`append_column`) pending; `parquet-rewrite`/`parquet-fromcsv` need arrow.
+  `parquet-layout`, `parquet-schema`, and `parquet-concat` done;
+  `parquet-rewrite`/`parquet-fromcsv` need arrow.
 - Phase 3 (variant/geospatial/derive/encryption/arrow/async): pending.
 
 ## Phase 0 — Project initialization
@@ -340,9 +339,10 @@ Chunk status by area:
   `FileReader`/`RowGroupReader`/`SerializedFileReader`/`SerializedRowGroupReader`
   + `ReadOptions`/`ReadOptionsBuilder`/`get_midpoint_offset`
   (`src/parquet/file/reader.cr`); `get_row_iter` is wired in `record/reader.cr`
-  (Phase 2.4); `FilePageIterator` (`PageIterator` trait) and the arrow
-  `append_column*` splice paths are deferred. Writer spec + reader spec ported
-  (`writer_spec.cr`, `reader_spec.cr`).
+  (Phase 2.4); `FilePageIterator` + the `PageIterator` trait are done
+  (Phase 2.3); the `append_column`/`append_column_from_read` splice paths are
+  done (only the arrow-only `append_column_from_pages` remains deferred). Writer
+  spec + reader spec ported (`writer_spec.cr`, `reader_spec.cr`).
 - [x] Bloom filter (`src/parquet/bloom_filter.cr`): `Sbbf` + `Block`, the
   `BloomFilterHeader` thrift struct, and the header/serialization helpers;
   `Parquet::XxHash64` (`src/parquet/util/xxhash.cr`).
@@ -388,7 +388,9 @@ Chunk status by area:
   `parquet-layout` (`parquet_layout.cr`, `bin/parquet-layout.cr`; `JSON.build`
   pretty output), and `parquet-schema` (`parquet_schema.cr`,
   `bin/parquet-schema.cr`; uses the schema printer). Specs in `spec/parquet/bin/`.
-- [ ] `parquet-concat` (needs `append_column`).
+- [x] `parquet-concat` (`parquet_concat.cr`, `bin/parquet-concat.cr`; uses the
+  `append_column` splice path, preserving the inputs' page indexes/bloom
+  filters). Spec in `spec/parquet/bin/parquet_concat_spec.cr`.
 - [ ] `parquet-rewrite`/`parquet-fromcsv` — require `arrow`.
 
 ## Phase 3 — Advanced / optional
@@ -675,10 +677,12 @@ Chunk status by area:
   closures capture the owning writer (the row-group path threads the
   `SerializedPageWriter`/`ColumnWriter` and the file path threads the row-group
   metadata/index arrays); `next_column_with_factory` and `get_on_close` are
-  inlined into `next_column`. Encryption (`file_encryptor`,
-  `set_column_crypto_metadata`, the page encryptor), the `Debug` impl, the
-  arrow-only `append_column*` splicing paths, and the
-  `parquet_buf`/`HeapSize` helpers are not ported; `start_file` is public.
+  inlined (`build_on_close`). `append_column`/`append_column_from_read`/
+  `begin_appended_column`/`finish_appended_column` are ported (`ChunkReader`'s
+  `Read` is an `IO`; `IO.copy` splices; the geospatial statistics branch is
+  omitted). Encryption (`file_encryptor`, `set_column_crypto_metadata`, the page
+  encryptor), the `Debug` impl, the arrow-only `append_column_from_pages`, and
+  the `parquet_buf`/`HeapSize` helpers are not ported; `start_file` is public.
   `SerializedRowGroupWriter#close` returns the same `RowGroupMetaData` instance
   recorded in the file (upstream returns a pre-bloom-filter clone), so
   `flushed_row_groups` and `close` alias.
@@ -724,8 +728,9 @@ Chunk status by area:
   `parquet-layout` likewise write to an `IO`; `parquet-layout` emits JSON via
   `JSON.build` (pretty, 2-space) and its serde `DebugSerialize` wrapper is
   `to_s`; `parquet-show-bloom-filter` raises on an invalid column path (upstream
-  prints and exits); `parquet-schema` (`-v`/`--verbose`) writes to an `IO`.
-  `parquet-concat`/`parquet-rewrite`/`parquet-fromcsv` are deferred.
+  prints and exits); `parquet-schema` (`-v`/`--verbose`) and `parquet-concat`
+  (`concat`/`run`, taking an output `IO` and `ChunkReader`s) write to an `IO`.
+  `parquet-rewrite`/`parquet-fromcsv` need `arrow` and are deferred.
 - `schema::printer`: the `print_*` free functions are `Parquet::Schema` module
   methods; `print_row_group_metadata`/`print_column_chunk_metadata` are public;
   `fmt::Write`/`io::Write` are `IO` (the `Printer` writes to a `String::Builder`

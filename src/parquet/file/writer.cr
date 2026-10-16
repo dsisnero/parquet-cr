@@ -4,6 +4,7 @@ require "../column/page"
 require "../column/writer/writer"
 require "../bloom_filter"
 require "./tracked_write"
+require "./chunk_reader"
 require "./serialized_writer"
 require "./metadata"
 require "./metadata/row_group"
@@ -285,17 +286,9 @@ module Parquet
         descr
       end
 
-      # Returns the next column writer, if available, otherwise `nil`.
-      def next_column : SerializedColumnWriter?
-        assert_previous_writer_closed
-
-        descr = next_column_desc
-        return nil if descr.nil?
-
-        page_writer = SerializedPageWriter.new(@buf)
-        column_writer = Column::Writer.get_column_writer(descr, @props, page_writer)
-
-        on_close = ->(r : Column::Writer::ColumnCloseResult) do
+      # Returns the callback invoked when a column writer is closed.
+      private def build_on_close : OnCloseColumnChunk
+        ->(r : Column::Writer::ColumnCloseResult) do
           @total_bytes_written += r.bytes_written
           @total_uncompressed_bytes += r.metadata.uncompressed_size
           @column_chunks << r.metadata
@@ -312,8 +305,107 @@ module Parquet
           end
           nil
         end
+      end
 
-        SerializedColumnWriter.new(column_writer, on_close)
+      # Returns the next column writer, if available, otherwise `nil`.
+      def next_column : SerializedColumnWriter?
+        assert_previous_writer_closed
+
+        descr = next_column_desc
+        return nil if descr.nil?
+
+        page_writer = SerializedPageWriter.new(@buf)
+        column_writer = Column::Writer.get_column_writer(descr, @props, page_writer)
+        SerializedColumnWriter.new(column_writer, build_on_close)
+      end
+
+      # Appends an already-encoded column chunk from `reader` directly to the
+      # underlying writer.
+      def append_column(reader : ChunkReader, close : Column::Writer::ColumnCloseResult) : Nil
+        metadata = close.metadata
+        src_offset = metadata.dictionary_page_offset || metadata.data_page_offset
+        read = reader.get_read(src_offset.to_u64)
+        append_column_from_read(read, close)
+      end
+
+      # Splices an already-encoded column chunk into the row group, reading its
+      # bytes sequentially from `read`.
+      def append_column_from_read(read : IO, close : Column::Writer::ColumnCloseResult) : Nil
+        src_offset, src_length, write_offset = begin_appended_column(close)
+
+        sized = IO::Sized.new(read, src_length)
+        write_length = IO.copy(sized, @buf)
+        if write_length != src_length.to_u64
+          raise general_err!("Failed to splice column data, expected #{src_length} got #{write_length}")
+        end
+
+        finish_appended_column(close, src_offset, write_offset)
+      end
+
+      # Validates the writer state and that `close` matches the next expected
+      # column, returning `(src_offset, src_length, write_offset)`.
+      private def begin_appended_column(
+        close : Column::Writer::ColumnCloseResult,
+      ) : Tuple(Int64, Int64, Int64)
+        assert_previous_writer_closed
+        descr = next_column_desc || raise general_err!("exhausted columns in SerializedRowGroupWriter")
+
+        metadata = close.metadata
+        if metadata.column_descr != descr
+          raise general_err!("column descriptor mismatch, expected #{descr} got #{metadata.column_descr}")
+        end
+
+        src_offset = metadata.dictionary_page_offset || metadata.data_page_offset
+        src_length = metadata.compressed_size
+        write_offset = @buf.bytes_written
+        {src_offset, src_length, write_offset}
+      end
+
+      # Rewrites the buffer-relative page offsets recorded in `close` to their
+      # final positions in the output file and closes the column.
+      private def finish_appended_column(
+        close : Column::Writer::ColumnCloseResult,
+        src_offset : Int64,
+        write_offset : Int64,
+      ) : Nil
+        metadata = close.metadata
+        src_dictionary_offset = metadata.dictionary_page_offset
+        src_data_offset = metadata.data_page_offset
+
+        map_offset = ->(x : Int64) { x - src_offset + write_offset }
+        builder = Metadata::ColumnChunkMetaData.builder(metadata.column_descr)
+          .set_compression_codec(metadata.compression)
+          .set_encodings_mask(metadata.encodings_mask)
+          .set_total_compressed_size(metadata.compressed_size)
+          .set_total_uncompressed_size(metadata.uncompressed_size)
+          .set_num_values(metadata.num_values)
+          .set_data_page_offset(map_offset.call(src_data_offset))
+          .set_dictionary_page_offset(src_dictionary_offset.try { |off| map_offset.call(off) })
+          .set_unencoded_byte_array_data_bytes(metadata.unencoded_byte_array_data_bytes)
+
+        if rep_hist = metadata.repetition_level_histogram
+          builder = builder.set_repetition_level_histogram(rep_hist.dup)
+        end
+        if def_hist = metadata.definition_level_histogram
+          builder = builder.set_definition_level_histogram(def_hist.dup)
+        end
+        if statistics = metadata.statistics
+          builder = builder.set_statistics(statistics)
+        end
+        if page_encoding_stats = metadata.page_encoding_stats
+          builder = builder.set_page_encoding_stats(page_encoding_stats.dup)
+        end
+        close.metadata = builder.build
+
+        if offsets = close.offset_index
+          locations = offsets.page_locations
+          locations.each_with_index do |location, i|
+            location.offset = map_offset.call(location.offset)
+            locations[i] = location
+          end
+        end
+
+        build_on_close.call(close)
       end
 
       # Closes this row group writer and returns the row group metadata.
