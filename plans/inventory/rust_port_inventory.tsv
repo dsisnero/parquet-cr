@@ -1862,13 +1862,13 @@ parquet/src/column/writer/mod.rs::const::EXPECTED_MIN	const	missing	-	auto-gener
 parquet/src/column/writer/mod.rs::const::PSEUDO_DECIMAL_BYTES	const	missing	-	auto-generated
 parquet/src/column/writer/mod.rs::const::PSEUDO_DECIMAL_VALUE	const	missing	-	auto-generated
 parquet/src/column/writer/mod.rs::const::TEST_TRUNCATE_LENGTH	const	intentional_divergence	spec/parquet/column/writer_truncate_spec.cr	test-only constant
-parquet/src/column/writer/mod.rs::method::ColumnCloseResult.update_dictionary_location	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::ColumnMetrics<T>.new	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::ColumnMetrics<T>.update_from_page_metrics	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::ColumnMetrics<T>.update_histogram	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::ColumnMetrics<T>.update_variable_length_bytes	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::ColumnMetrics<T>.with_definition_level_histogram	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::ColumnMetrics<T>.with_repetition_level_histogram	method	missing	-	auto-generated
+parquet/src/column/writer/mod.rs::method::ColumnCloseResult.update_dictionary_location	method	ported	src/parquet/column/writer.cr	writer data holders
+parquet/src/column/writer/mod.rs::method::ColumnMetrics<T>.new	method	ported	src/parquet/column/writer.cr	writer data holders
+parquet/src/column/writer/mod.rs::method::ColumnMetrics<T>.update_from_page_metrics	method	ported	src/parquet/column/writer.cr	writer data holders
+parquet/src/column/writer/mod.rs::method::ColumnMetrics<T>.update_histogram	method	ported	src/parquet/column/writer.cr	writer data holders
+parquet/src/column/writer/mod.rs::method::ColumnMetrics<T>.update_variable_length_bytes	method	ported	src/parquet/column/writer.cr	writer data holders
+parquet/src/column/writer/mod.rs::method::ColumnMetrics<T>.with_definition_level_histogram	method	ported	src/parquet/column/writer.cr	writer data holders
+parquet/src/column/writer/mod.rs::method::ColumnMetrics<T>.with_repetition_level_histogram	method	ported	src/parquet/column/writer.cr	writer data holders
 parquet/src/column/writer/mod.rs::method::ColumnRoundTripUniform<'a, T>.new	method	missing	-	auto-generated
 parquet/src/column/writer/mod.rs::method::ColumnRoundTripUniform<'a, T>.run	method	missing	-	auto-generated
 parquet/src/column/writer/mod.rs::method::ColumnRoundTripUniform<'a, T>.with_def_levels	method	missing	-	auto-generated
@@ -1919,16 +1919,16 @@ parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_data_
 parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_dictionary_page	method	missing	-	auto-generated
 parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_granular_chunk	method	missing	-	auto-generated
 parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_mini_batch	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::LevelDataRef<'_>.first	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::LevelDataRef<'_>.len	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::LevelDataRef<'_>.slice	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::LevelDataRef<'_>.value_at	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::LevelDataRef<'_>.value_count	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::LevelDataRef<'a>.from	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::PageMetrics.new	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::PageMetrics.new_page	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::PageMetrics.with_definition_level_histogram	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::PageMetrics.with_repetition_level_histogram	method	missing	-	auto-generated
+parquet/src/column/writer/mod.rs::method::LevelDataRef<'_>.first	method	ported	src/parquet/column/writer.cr	writer data holders
+parquet/src/column/writer/mod.rs::method::LevelDataRef<'_>.len	method	ported	src/parquet/column/writer.cr	writer data holders
+parquet/src/column/writer/mod.rs::method::LevelDataRef<'_>.slice	method	ported	src/parquet/column/writer.cr	writer data holders
+parquet/src/column/writer/mod.rs::method::LevelDataRef<'_>.value_at	method	ported	src/parquet/column/writer.cr	writer data holders
+parquet/src/column/writer/mod.rs::method::LevelDataRef<'_>.value_count	method	ported	src/parquet/column/writer.cr	writer data holders
+parquet/src/column/writer/mod.rs::method::LevelDataRef<'a>.from	method	ported	src/parquet/column/writer.cr	writer data holders
+parquet/src/column/writer/mod.rs::method::PageMetrics.new	method	ported	src/parquet/column/writer.cr	writer data holders
+parquet/src/column/writer/mod.rs::method::PageMetrics.new_page	method	ported	src/parquet/column/writer.cr	writer data holders
+parquet/src/column/writer/mod.rs::method::PageMetrics.with_definition_level_histogram	method	ported	src/parquet/column/writer.cr	writer data holders
+parquet/src/column/writer/mod.rs::method::PageMetrics.with_repetition_level_histogram	method	ported	src/parquet/column/writer.cr	writer data holders
 parquet/src/column/writer/mod.rs::method::TestPageWriter.close	method	missing	-	auto-generated
 parquet/src/column/writer/mod.rs::method::TestPageWriter.write_page	method	missing	-	auto-generated
 parquet/src/compression.rs::const::BROTLI_DEFAULT_BUFFER_SIZE	const	missing	-	auto-generated

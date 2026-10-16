@@ -54,8 +54,8 @@ little-endian layout.
      reader+writer, then record API.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 1112 `ported`, 136 `intentional_divergence`,
-  1 `skipped`, 2266 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1129 `ported`, 136 `intentional_divergence`,
+  1 `skipped`, 2249 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -221,6 +221,8 @@ Chunk status by area:
   (`src/parquet/column/writer/truncate.cr`): `truncate_utf8`/
   `truncate_and_increment_utf8`/`increment_utf8`/`increment`,
   `can_truncate_value`/`is_utf8`/`truncate_min_value`/`truncate_max_value`.
+- [x] Column writer data holders (`src/parquet/column/writer.cr`):
+  `ColumnCloseResult`, `PageMetrics`, `ColumnMetrics(T)`, `LevelDataRef`.
 - [x] `ColumnReaderImpl` (`src/parquet/column/reader.cr`): `get_column_reader`/
   `get_typed_column_reader`, `ColumnReaderImpl(T)` (read_records/skip_records/
   has_next/read_new_page/parse_v1_level).
@@ -564,9 +566,14 @@ Chunk status by area:
 - `column::writer::truncate`: the statistics-truncation helpers (`truncate_utf8`,
   `truncate_and_increment_utf8`, `increment_utf8`, `increment`) and
   `can_truncate_value`/`is_utf8`/`truncate_min_value`/`truncate_max_value` are
-  `Parquet::Column::Writer` module methods (upstream: free functions +
+  `Parquet::Column::Writer` module methods   (upstream: free functions +
   `GenericColumnWriter` methods); `GenericColumnWriter::truncate_statistics`
   (which mutates `Statistics`) is deferred with the writer.
+- `column::writer` data holders: Rust's `LevelDataRef<'a>` enum (borrowed
+  `&[i16]`) is a Crystal struct carrying a `Kind` with an owned `Array(Int16)`;
+  `usize` sizes are `Int32`; `ColumnCloseResult::update_dictionary_location(mut
+  self)` mutates and returns `self`; `PageMetrics`/`ColumnMetrics<T>` are
+  mutable classes.
 - `encodings::byte_stream_split`: `ByteStreamSplitEncoder(T)`/`Decoder(T)` and
   `VariableWidthByteStreamSplitEncoder(T)`/`Decoder(T)` with `T.class`; the
   constant `split_streams_const`/`join_streams_const` and `_variable` kernels
