@@ -12,6 +12,11 @@ revision is recorded per entry.
 
 ### Added
 
+- Resumable parity workflow: a **Where we are** block at the top of
+  `plans/parity.md` (current focus, ordered "Next up", per-area chunk status),
+  `docs/resuming.md`, and a session-continuity / definition-of-done section in
+  `CLAUDE.md` (`AGENTS.md`).
+
 - Initial project scaffolding for the Crystal port of `parquet`
   (apache/arrow-rs `60.0.0`, `ef1fa157977633f0ba21aa921f9ef3d5c669235b`).
 - Vendored upstream as a git submodule at `vendor/arrow-rs`, pinned to

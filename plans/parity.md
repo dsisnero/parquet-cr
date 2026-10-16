@@ -1,25 +1,72 @@
 # parquet-cr Parity Roadmap
 
+> **Start here.** New session? Read the [Where we are](#where-we-are) block
+> below for the current focus and next chunk, then follow
+> [docs/resuming.md](../docs/resuming.md). Do not re-derive state from git.
+
 Curated, branch-sized feature roadmap. Generated manifests live in
-`plans/inventory/`; the day-to-day ledger is
+`plans/inventory/`; the per-symbol ledger is
 `plans/inventory/rust_port_inventory.tsv`.
 
 - Upstream: <https://github.com/apache/arrow-rs>
 - Pinned revision: `60.0.0`
   (`ef1fa157977633f0ba21aa921f9ef3d5c669235b`)
 - Vendored at: `vendor/arrow-rs` (submodule)
-- Initial scope: `parquet` (core), then `parquet-variant*`, `parquet-geospatial`,
+- Scope: `parquet` (core), then `parquet-variant*`, `parquet-geospatial`,
   `parquet_derive*`
 - Deferred: `parquet/src/arrow/` (Arrow interop) — depends on a Crystal Arrow
-  implementation, being built separately in the sibling repo `../arrow-cr`
-  (same `60.0.0` pin).
+  implementation built separately in the sibling repo `../arrow-cr` (same
+  `60.0.0` pin); `async_reader`/`async_writer`/`object_store`.
 
 Status legend: `[ ]` not started, `[~]` in progress, `[x]` complete,
 `[!]` intentional divergence.
 
+Each item is a shippable feature (roughly one branch/commit). The exhaustive
+method-level state lives in the ledger, not here.
+
 Do not weaken upstream tests or fixtures. Port behavior, not style. Preserve
 numeric widths, half-open ranges (`start..end` → `start...end`), and the on-disk
 little-endian layout.
+
+## Where we are
+
+- Plan layout: single file. If it grows too large, split into
+  `plans/parity/<area>.md`, link each here, and mark each split file
+  complete/in-progress plus the file being worked on next.
+- Current focus: **Phase 2 — page-index completion.** The core value/wire layer
+  (errors, thrift protocol, `basic`, `data_type` value types, `schema`),
+  the file metadata + statistics + footer round-trip, and the offset/column
+  index *core* are done.
+- Next up (take the first unchecked item):
+  1. `ByteArrayColumnIndex`, `ColumnIndexMetaData`, `decode_column_index`
+     (`file/page_index/column_index.rs`, `index_reader.rs`).
+  2. Page-index builders `PageIndexBuilder`/`ColumnIndexBuilder`/
+     `OffsetIndexBuilder` (`file/metadata/page_index.rs` +
+     `file/page_index/mod.rs`); tests `test_page_index_builder_partial_population`,
+     `test_page_index_builder_empty_to_none`, `test_rebuild_page_index`.
+  3. Encodings (RLE/bit-packing, levels, plain/dictionary/delta/ALP), then
+     column reader/writer, then file reader/writer, then record API.
+- Progress by counts (ledger): 399 `ported`, 14 `intentional_divergence`,
+  1 `skipped`, 3101 `missing` (of 3515 rows).
+
+Chunk status by area:
+
+- Phase 0 initialization: complete.
+- Phase 1.1 errors: complete.
+- Phase 1.2 thrift protocol: complete.
+- Phase 1.3 thrift macros: enum/union/struct/empty done; generic mixed-union
+  macro and encryption IDL pending.
+- Phase 1.4 basic: enums, `LogicalType`, `SortOrder`/`ColumnOrder`,
+  `EncodingMask` done; `Compression` enum pending.
+- Phase 1.5 data type: value types done; `DataType` trait + `make_type!` pending.
+- Phase 1.6 schema: `types`, descriptors, parser, thrift conversion, page
+  headers done; printer + primitive builder pending.
+- Phase 1.7 util: pending (`bit_util` partially needed by column code).
+- Phase 1.8 compression: pending.
+- Phase 2.3 file metadata/statistics/page-index core: done; page-index
+  completion, file reader/writer, bloom filter pending.
+- Phases 2.1 encodings, 2.2 column, 2.4 record, 2.5 CLI: pending.
+- Phase 3 (variant/geospatial/derive/encryption/arrow/async): pending.
 
 ## Phase 0 — Project initialization
 
@@ -48,7 +95,7 @@ little-endian layout.
   `ThriftReadInputProtocol`.
 - [x] `ThriftCompactOutputProtocol`, `read_thrift_vec`, `validate_list_type`.
 - [x] Upstream `parquet_thrift.rs` protocol tests ported to
-  `spec/parquet/thrift_spec.cr` (enum/union round-trips land with 1.4 `basic`).
+  `spec/parquet/thrift_spec.cr`.
 
 ### 1.3 Thrift IDL macros (`parquet_macros.rs`)
 
@@ -56,79 +103,49 @@ little-endian layout.
   `define_thrift_union_all_empty` (`src/parquet/macros.cr`). Intentional
   divergence: upstream parses raw Thrift IDL; Crystal annotates native enums.
 - [x] Struct support equivalent to `thrift_struct!`: `define_thrift_struct`
-  (required/optional scalar fields, nested structs/enums, `bool` field encoding,
-  required-field validation, unknown-field skipping).
+  (required/optional fields incl. empty structs, nested structs/enums, `bool`
+  field encoding, all-required constructors, required-field validation,
+  unknown-field skipping).
 - [~] Mixed-union support equivalent to `thrift_union!` /
-  `thrift_union_with_unknown!`. `LogicalType` read/write is hand-written; a
-  generic union macro is still pending (needed for `ColumnOrder`, crypto
-  metadata, encryption).
-- [ ] Parquet metadata IDL structs (`file/metadata/thrift/mod.rs`).
-- [ ] Encryption IDL structs (`file/metadata/thrift/encryption.rs`, gated).
+  `thrift_union_with_unknown!`. `LogicalType`/`ColumnOrder` read/write is
+  hand-written; a generic union macro is still pending (needed for crypto
+  metadata and encryption).
+- [~] Parquet metadata IDL structs (`file/metadata/thrift/mod.rs`): done for
+  `SchemaElement`, page headers, `KeyValue`, `PageEncodingStats`,
+  `SortingColumn`, `SizeStatistics`, `ThriftColumnIndex`, `PageLocation`,
+  `OffsetIndexMetaData`. Pending: encryption (`file/metadata/thrift/encryption.rs`).
 
 ### 1.4 Basic types
 
 - [x] Thrift enums: `Type`, `ConvertedType`, `FieldRepetitionType`
   (`Repetition`), `Encoding`, `CompressionCodec`, `PageType`, `BoundaryOrder`,
-  and the all-empty union `TimeUnit` (`src/parquet/basic.cr`). `Display`
-  (variant name) and `from_str` ported; enum round-trips covered in
-  `spec/parquet/basic_spec.cr` and `spec/parquet/thrift_spec.cr`.
+  and the all-empty union `TimeUnit` (`src/parquet/basic.cr`).
 - [x] `LogicalType` union (+ `DecimalType`, `TimestampType`/`TimeType`,
   `IntType`, `VariantType`, `GeometryType`, `GeographyType`,
   `EdgeInterpolationAlgorithm`), with `ConvertedType.from(LogicalType?)` and
-  `LogicalType.from_str`. Modelled as a sealed class hierarchy; `_Unknown`
-  maps to `UnknownField`.
+  `LogicalType.from_str`.
+- [x] `SortOrder`, `ColumnOrder` (incl. `column_order_for_type`).
+- [x] `EncodingMask` (`try_new`, `new_from_encodings`, `set?`/`only?`/`all_set`,
+  `encodings`, thrift reading).
 - [ ] `Compression` enum, `CompressionCodec`<->`Compression` conversions, and
   `Compression` `Display`/`from_str`.
-- [x] `SortOrder`, `ColumnOrder` (incl. `column_order_for_type`, sort-order
-  resolution, union read/write). `TypeDefinedOrder` is a thrift empty struct and
-  is folded into `ColumnOrder::Kind::TypeDefinedOrder`.
-- [x] `EncodingMask` (`src/parquet/basic.cr`): `try_new` validation, `as_i32`,
-  `new_from_encodings`, `insert`, `set?`/`only?`/`all_set`, `encodings`, and
-  thrift `list<Encoding>` reading. Upstream `test_encoding_roundtrip`,
-  `test_invalid_encoding_mask`, and `test_encoding_mask_is_only` ported to
-  `spec/parquet/basic_spec.cr`. (`is_set`/`is_only` are `set?`/`only?`;
-  `mask_to_encodings_iter` is inlined; `HeapSize` not ported.)
-- [ ] `Statistics` and typed statistics.
 
 ### 1.5 Data type model
 
 - [x] Value types: `Int96`, `ByteArray`, `FixedLenByteArray`, `Decimal`, and the
-  `AsBytes` trait (`src/parquet/data_type.cr`), with upstream `data_type.rs`
-  tests in `spec/parquet/data_type_spec.cr`.
+  `AsBytes` trait (`src/parquet/data_type.cr`).
 - [ ] `DataType` trait + `make_type!` (physical-type `TYPE`/`get_physical_type`/
   `get_type_size`, encode/decode) — depends on the column reader/writer.
-- [ ] `AsBytes`/`SliceAsBytes` for primitives, `str`, `Vec<u8>`, `bool`, and
-  `SliceAsBytes` (used by column encode/decode).
+- [ ] `AsBytes`/`SliceAsBytes` for primitives, `str`, `Vec<u8>`, `bool`.
 
 ### 1.6 Schema
 
-- [x] `Type` (primitive/group), `BasicTypeInfo`, the primitive/group builders
-  (including all logical/converted/physical validation, decimal precision, and
-  `FILE` group validation), and `check_contains` (`src/parquet/schema/types.cr`).
-  Upstream `schema/types.rs` core tests ported to
-  `spec/parquet/schema/types_spec.cr`.
-- [x] `ColumnPath`, `ColumnDescriptor`, `SchemaDescriptor`, and the definition/
-  repetition-level tree builder (`src/parquet/schema/types.cr`). Upstream
-  `test_column_descriptor`, `test_schema_descriptor`, `test_schema_build_tree_*`,
-  and `ColumnPath` doc-example characterization ported.
-- [x] Textual schema parser (`src/parquet/schema/parser.cr`):
-  `Parquet::Schema.parse_message_type`, tokenizer, and all upstream `parser.rs`
-  tests ported to `spec/parquet/schema/parser_spec.cr`.
-- [x] Thrift <-> schema conversion (`src/parquet/schema/thrift.cr`):
-  `SchemaElement`, `write_schema`/`write_schema_helper`, `num_nodes`,
-  `parquet_schema_from_array`/`schema_from_array_helper`, `check_logical_type`,
-  and the `schema_to_buf`/`buf_to_schema_list`/`roundtrip_schema` helpers.
-  Upstream `test_schema_type_thrift_conversion*` and `test_schema_from_thrift_*`
-  ported to `spec/parquet/schema/thrift_spec.cr`.
-- [x] Page-header thrift structs (`src/parquet/format.cr`): `PageHeader`,
-  `DataPageHeader`, `DataPageHeaderV2`, `DictionaryPageHeader`,
-  `IndexPageHeader`, `PageStatistics`, and the `read_*_without_stats` readers.
-  Upstream `malformed_bool_field_returns_error_not_panic` and
-  `malformed_data_page_v2_bool_field_returns_error_not_panic` ported to
-  `spec/parquet/format_spec.cr`.
-- [ ] Remaining metadata thrift structs (`file/metadata/thrift/mod.rs`:
-  `FileMetaData`, `RowGroup`, `ColumnChunk`, `ColumnMetaData`, `Statistics`,
-  `SizeStatistics`, `BoundingBox`, `GeospatialStatistics`).
+- [x] `Type` (primitive/group), `BasicTypeInfo`, primitive/group builders
+  (full validation), `check_contains` (`src/parquet/schema/types.cr`).
+- [x] `ColumnPath`, `ColumnDescriptor`, `SchemaDescriptor`, def/rep-level tree.
+- [x] Textual schema parser (`src/parquet/schema/parser.cr`).
+- [x] Thrift <-> schema conversion (`src/parquet/schema/thrift.cr`).
+- [x] Page-header thrift structs (`src/parquet/format.cr`).
 - [ ] Schema printer (`schema/printer.rs`).
 - [ ] Primitive builders (`schema/primitive.rs`). 4 upstream test modules.
 
@@ -162,59 +179,31 @@ little-endian layout.
 
 ### 2.3 File
 
-- [ ] `ParquetMetaData`, `FileMetaData`, `RowGroupMetaData`,
-  `ColumnChunkMetaData`, builders (`file/metadata`).
-- [ ] Serialized reader/writer (footer + page headers).
-- [x] `LevelHistogram` (`src/parquet/file/metadata.cr`), with upstream
-  `test_level_histogram_update_from_levels_compat` ported to
-  `spec/parquet/file/metadata_spec.cr`. (`is_empty` is `empty?`; `HeapSize` not
-  ported.)
-- [x] `ColumnChunkMetaData` + `ColumnChunkMetaDataBuilder` and thrift
-  read/write (`src/parquet/file/metadata/column_chunk.cr`), plus the thrift
-  structs `KeyValue`, `PageEncodingStats`, `SortingColumn`, `SizeStatistics`.
-  Upstream `test_column_chunk_metadata_thrift_conversion` ported to
-  `spec/parquet/file/column_chunk_spec.cr`. (Metadata fields are `property`;
-  `encodings` iterator is `encodings_list`; `Compression`-typed getters/setters
-  and encryption/geo fields not yet ported.)
-- [x] `RowGroupMetaData` + `RowGroupMetaDataBuilder` and thrift read/write
-  (`src/parquet/file/metadata/row_group.cr`). Upstream
-  `test_row_group_metadata_thrift_conversion`,
-  `..._conversion_empty`, and `..._corrupted` ported to
-  `spec/parquet/file/row_group_spec.cr`.
+- [x] `LevelHistogram` (`src/parquet/file/metadata.cr`).
+- [x] `ColumnChunkMetaData` + builder + thrift read/write
+  (`src/parquet/file/metadata/column_chunk.cr`), plus thrift structs `KeyValue`,
+  `PageEncodingStats`, `SortingColumn`, `SizeStatistics`.
+- [x] `RowGroupMetaData` + builder + thrift read/write
+  (`src/parquet/file/metadata/row_group.cr`).
 - [x] `FileMetaData`, `ParquetMetaData`, and footer read/write
-  (`src/parquet/file/metadata/parquet_metadata.cr`): `write_file_metadata`
-  (`FileMetaData` thrift struct), `parquet_metadata_from_bytes`, ordinal
-  backfill, and a `ParquetMetaDataWriter`/`ParquetMetaDataReader.decode_metadata`
-  footer round-trip. Upstream `ordinals_all_present_are_honored`,
-  `ordinals_none_present_are_sequentially_filled`, and
-  `ordinals_mixed_decode_succeeds_untouched` ported to
-  `spec/parquet/file/parquet_metadata_spec.cr`.
-- [ ] `ParquetMetaDataBuilder`, `ParquetMetaDataOptions`, page indexes, and the
-  full `ParquetMetaDataReader`/`Writer` IO machinery (async, suffix fetches).
+  (`src/parquet/file/metadata/parquet_metadata.cr`): `write_file_metadata`,
+  `parquet_metadata_from_bytes`, ordinal backfill, and a
+  `ParquetMetaDataWriter`/`ParquetMetaDataReader.decode_metadata` round-trip.
 - [x] Statistics and value stats (`src/parquet/file/statistics.cr`):
-  `Statistics`, `ValueStatistics<T>`, and `from_thrift_page_stats`/
-  `page_stats_to_thrift` (thrift `PageStatistics`). Upstream `statistics.rs`
-  tests ported to `spec/parquet/file/statistics_spec.cr`. (`Statistics` is a
-  single class over a `ValueStatistics` union rather than an enum;
-  `is_min_max_deprecated`/`is_min_max_backwards_compatible` are
-  `min_max_deprecated?`/`min_max_backwards_compatible?`.)
-- [ ] Reader/writer (`file/reader`, `file/writer`).
+  `Statistics`, `ValueStatistics<T>`, `from_thrift_page_stats`/
+  `page_stats_to_thrift`.
 - [x] Offset index (`src/parquet/file/page_index/offset_index.cr`):
-  `PageLocation` and `OffsetIndexMetaData` thrift structs; upstream
-  `test_offset_idx_roundtrip` ported to
-  `spec/parquet/file/offset_index_spec.cr`. (`try_from_fast` fast-path decoder
-  omitted; the macro `read_thrift` decodes the same wire form.)
+  `PageLocation`, `OffsetIndexMetaData`.
 - [x] Column index core (`src/parquet/file/page_index/column_index.cr`):
-  `ColumnIndex`, `PrimitiveColumnIndex<T>`, `ThriftColumnIndex`, and the
-  `FromBytes.try_from_le_slice` decoding. Upstream `test_page_index_min_max_null`,
-  `..._none`, `test_invalid_column_index`, and
-  `test_column_index_rejects_mismatched_min_max_lengths` ported to
-  `spec/parquet/file/column_index_spec.cr`. (`ColumnIndex#is_null_page` is
-  `null_page?`; `PrimitiveColumnIndex` delegates instead of `Deref`;
-  `write_thrift` not yet ported.)
-- [ ] `ByteArrayColumnIndex`, `ColumnIndexMetaData`, `decode_column_index`, and
-  the page-index builders (`PageIndexBuilder`/`ColumnIndexBuilder`/
-  `OffsetIndexBuilder`).
+  `ColumnIndex`, `PrimitiveColumnIndex<T>`, `ThriftColumnIndex`, `FromBytes`.
+- [ ] `ByteArrayColumnIndex`, `ColumnIndexMetaData`, `decode_column_index`.
+- [ ] Page-index builders (`PageIndexBuilder`/`ColumnIndexBuilder`/
+  `OffsetIndexBuilder`) — tests `test_page_index_builder_partial_population`,
+  `..._empty_to_none`, `test_rebuild_page_index`.
+- [ ] `ParquetMetaDataBuilder`, `ParquetMetaDataOptions`, and the full
+  `ParquetMetaDataReader`/`Writer` IO machinery (async, suffix fetches).
+- [ ] Serialized reader/writer (footer + page headers).
+- [ ] Reader/writer (`file/reader`, `file/writer`).
 - [ ] Bloom filter (`bloom_filter/`).
 - [ ] 12 upstream test modules ported.
 
@@ -277,17 +266,17 @@ little-endian layout.
 - Thrift IDL macros: upstream `parquet_macros.rs` parses raw Thrift IDL text at
   macro-expansion time. Crystal macros cannot consume IDL tokens, so
   `define_thrift_enum` / `define_thrift_union_all_empty` annotate a natively
-  declared Crystal `enum`, synthesizing `read_thrift`, `write_thrift`, and
-  `thrift_element_type` with identical wire behavior. Upstream's generated
-  `VARIANTS`/`MAX_DISCRIMINANT` constants are not provided yet.
+  declared Crystal `enum` and `define_thrift_struct` annotates a `struct` block,
+  synthesizing `read_thrift`, `write_thrift`, and `thrift_element_type` with
+  identical wire behavior. Upstream's generated `VARIANTS`/`MAX_DISCRIMINANT`
+  constants are not provided yet.
 - `from_str` conversions use `Enum.parse?`/`upcase`; for `Encoding` this accepts
   mixed-case spellings in addition to upstream's all-upper/all-lower forms.
 - `LogicalType`: Rust's payload-carrying enum is modelled as a sealed
   `LogicalType` class hierarchy; the `_Unknown { field_id }` variant is
   `LogicalType::UnknownField`. `EdgeInterpolationAlgorithm`'s `_Unknown(i32)`
   variant is retained by wrapping the i32 code in a value struct.
-  `GeographyType::algorithm` is `GeographyType#algorithm_or_default` because a
-  Crystal accessor cannot share the field's name.
+  `GeographyType::algorithm` is `GeographyType#algorithm_or_default`.
 - `schema::Type`: upstream's enum (`Type::PrimitiveType`/`Type::GroupType`) is a
   sealed class hierarchy. Predicates use `?` (`primitive?`, `group?`,
   `schema?`, `optional?`, `has_repetition?`, `has_id?`); `TypePtr`/`Arc<Type>`
@@ -296,24 +285,29 @@ little-endian layout.
   `schema/types` lives under `Parquet::Schema` (upstream `schema::types`).
 - `SchemaElement` lives under `Parquet::Schema` (upstream `file::metadata::thrift`)
   to avoid a require cycle; it carries an owned `String` name instead of `<'a> str`.
-  `define_thrift_struct` makes every generated constructor parameter required
-  (upstream struct literals specify all fields), since a required field may
-  follow optional ones (as in `SchemaElement`).
 - Page-header thrift structs live under `Parquet::Format` (upstream
   `file::metadata::thrift`); the `read_*_without_stats` readers are
   `Parquet::Format` module methods.
+- Metadata types (`ColumnChunkMetaData`/`RowGroupMetaData`) expose mutable
+  `property` fields (upstream keeps them private and mutates from the crate);
+  `Rust Result`-returning builders return the value or raise.
 - `Decimal`: upstream's `Int32`/`Int64`/`Bytes` enum is a single Crystal struct
   carrying the unscaled bytes; variant identity is the byte width. Equality and
   accessors match upstream (`precision`, `scale`, `data`).
 - `FixedLenByteArray`: Rust `Deref`/`From` are explicit delegating methods and
   constructors in Crystal.
 - `ByteArray::is_empty` maps to Crystal `empty?`.
+- `ValueStatistics::is_*`/`ColumnIndex::is_null_page` map to `?` predicates
+  (`min_max_deprecated?`, `null_page?`, ...); `Statistics` is a single class over
+  a `ValueStatistics` union rather than an enum.
 - `ColumnOrder`: upstream's enum with a `TYPE_DEFINED_ORDER(SortOrder)` payload
   is a Crystal struct carrying a `Kind` + inner `SortOrder`; unit variants are
-  constants (`ColumnOrder::IEEE_754_TOTAL_ORDER`, `...::UNDEFINED`, `...::UNKNOWN`)
-  and `TYPE_DEFINED_ORDER(s)` is `ColumnOrder.type_defined_order(s)`.
+  constants and `TYPE_DEFINED_ORDER(s)` is `ColumnOrder.type_defined_order(s)`.
   `SortOrder::is_signed` is `SortOrder#signed?`. The deprecated
   `ColumnOrder::sort_order_for_type` alias is not provided.
+- `PrimitiveColumnIndex<T>` delegates `ColumnIndex` methods rather than using
+  Rust `Deref`; `OffsetIndexMetaData::try_from_fast` fast-path decoder is omitted
+  (the macro `read_thrift` decodes the same wire form).
 
 ## Notes
 
@@ -322,3 +316,7 @@ little-endian layout.
 - Golden fixtures: `vendor/arrow-rs/parquet-testing/data`.
 - Parity scripts must be run from the `crystal_forge` skill:
   `/Users/dominic/.agents/skills/crystal_forge/skills/cross-language-crystal-parity`.
+- Environment: the checkout is on exFAT, which emits macOS AppleDouble `._*`
+  sidecars; the `Makefile` strips them before format/lint/test (a `._foo_spec.cr`
+  matches crystal's `*_spec.cr` glob). If a git pack op prints
+  `non-monotonic index .../._pack-*.idx`, delete the sidecars.

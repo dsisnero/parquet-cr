@@ -10,6 +10,7 @@ Upstream is vendored as a git submodule at `vendor/arrow-rs`, pinned to release
 
 ## Documentation
 
+- [Resuming work](docs/resuming.md) — start here in a new session
 - [Architecture](docs/architecture.md)
 - [Development](docs/development.md)
 - [Coding Guidelines](docs/coding-guidelines.md)
