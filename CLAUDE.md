@@ -1,5 +1,9 @@
 # parquet-cr
 
+> **How to resume:** read `plans/parity.md` first and use its **Where we are**
+> block (current focus + ordered "Next up"), then run `make lint && make test`.
+> Details: [docs/resuming.md](docs/resuming.md). Do not re-derive state from git.
+
 Crystal port of the Apache Parquet `parquet` crate from
 [apache/arrow-rs](https://github.com/apache/arrow-rs), vendored at
 `vendor/arrow-rs` (release `60.0.0`, commit
