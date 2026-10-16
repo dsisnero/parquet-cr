@@ -55,6 +55,9 @@ little-endian layout.
     (`interval.cr`); the `GeometryBounder` (`bounding.cr`) with a minimal
     `WkbReader` + geometry model (`wkb.cr`); and the `Testing` WKB helpers
     (`testing.cr`).
+  - `parquet_derive` (`src/parquet/derive.cr`): the `include
+    Parquet::Derive::Record` macro (generating `T::Writer`/`T::Reader`) plus the
+    `Codec(T)` type mapping, with `spec/parquet/derive_spec.cr`.
   - Phase 1.7: `util/bit_pack.cr` (`BitPack.unpack8/16/32/64`) and `decode_page`
     CRC verification (`file/serialized_reader.cr`).
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
@@ -70,8 +73,11 @@ little-endian layout.
      (`src/parquet_geospatial/wkb.cr`), the `GeometryBounder`
      (`src/parquet_geospatial/bounding.cr`), and the `Testing` WKB helpers
      (`src/parquet_geospatial/testing.cr`) + all upstream `bounding.rs` tests.
-  3. Phase 3.3 `parquet_derive` (Crystal macros) + `parquet_derive_test` (**next**).
-  4. Phase 3.4 encryption — **blocked**: `ring` AEAD; Crystal's
+  3. ~~Phase 3.3 `parquet_derive` + `parquet_derive_test`.~~ **complete** —
+     `src/parquet/derive.cr` (`Parquet::Derive::Record` macro + `Codec(T)`) and
+     `spec/parquet/derive_spec.cr` (schema generation, read/write round-trip,
+     optional-but-valid, pruned/shuffled).
+  4. Phase 3.4 encryption (**next**) — **blocked**: `ring` AEAD; Crystal's
      `OpenSSL::Cipher` exposes no GCM `aad=` setter, so full AES-GCM (which
      Parquet encryption needs) is unavailable without a crypto shard. Either
      find a shard or record an intentional divergence.
@@ -123,11 +129,21 @@ little-endian layout.
     directly (upstream tests use the `wkt` crate); the `Testing` WKB helpers are
     ported. Inventory has no rows for `testing.rs`/`wkb` helpers (not in the
     generated ledger).
-- Last commit: `5dd438b docs: record parquet-variant value-layer/builder
-  divergences`; gates green (`make lint`, `make test` -> 740 examples, 0
-  failures).
-- Progress by counts (ledger): 1623 `ported`, 201 `intentional_divergence`,
-  1 `skipped`, 1690 `missing` (of 3515 rows).
+  - Derive macros: Rust's `#[derive(ParquetRecordWriter/Reader)]` (proc macros
+    over `syn`) become `include Parquet::Derive::Record` (a Crystal macro using
+    `@type.instance_vars` inside method bodies via `{% verbatim %}` +
+    `{% begin %}`). Upstream impls `RecordWriter for &[T]` / `RecordReader for
+    Vec<T>`; Crystal cannot subclass slices, so nested `T::Writer`/`T::Reader`
+    classes are generated. The reader constructs records positionally through
+    the record's `initialize` (declare fields in the same order; Rust uses
+    `Default` + pub field assignment). Field typing is Crystal-native
+    (`T?` => OPTIONAL; `Time` => TIMESTAMP_MILLIS; `Parquet::Derive::Date` =>
+    DATE). The syn-AST walkers (`Type.from*`, `last_part`, `leaf_type_recursive`)
+    and the Rust `Result`-alias hygiene test have no analogue.
+- Last commit: `947782a port: parquet-geospatial GeometryBounder with minimal WKB
+  reader`; gates green (`make lint`, `make test` -> 744 examples, 0 failures).
+- Progress by counts (ledger): 1638 `ported`, 213 `intentional_divergence`,
+  1 `skipped`, 1663 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -178,8 +194,9 @@ Chunk status by area:
   done (core crate complete);
   `parquet-geospatial`'s `Hint`/`Edges`/`Metadata` + `WkbType` metadata,
   `Interval`/`WraparoundInterval`, and `GeometryBounder` (+ minimal `WkbReader`/
-  `WkbGeometry` model and `Testing` helpers) done; the `WkbType` `ExtensionType`
-  impl, derive, encryption, arrow, and async remain pending.
+  `WkbGeometry` model and `Testing` helpers) done; `parquet_derive`
+  (`src/parquet/derive.cr`) done; the `WkbType` `ExtensionType` impl,
+  encryption, arrow, and async remain pending.
 
 ## Phase 0 — Project initialization
 
@@ -530,7 +547,15 @@ Chunk status by area:
 
 ### 3.3 Derive macros
 
-- [ ] `parquet_derive` (Crystal macros) + `parquet_derive_test`.
+- [x] `parquet_derive` (`src/parquet/derive.cr`, `spec/parquet/derive_spec.cr`):
+  the `include Parquet::Derive::Record` macro generates nested `T::Writer`/
+  `T::Reader` classes from the record's `instance_vars`, and `Codec(T)` maps
+  `Bool`/`Int8..64`/`UInt8..64`/`Float32/64`/`String`/`Bytes`/`UUID`/`Time`/
+  `Parquet::Derive::Date` (and their nilable forms) to schema, writer, and reader
+  code. Ported `parquet_derive_test` tests: schema generation, read/write
+  round-trip, optional-but-valid columns, pruned/shuffled columns. See the
+  divergence note for the `&[T]`/`Vec<T>` -> `T::Writer`/`T::Reader` mapping and
+  `syn`-AST replacement.
 
 ### 3.4 Encryption
 
@@ -580,6 +605,21 @@ Chunk status by area:
   (upstream `ArrowError::ExternalError`); `update_geometry` is public so tests
   can feed the model directly (upstream tests build geometries from WKT via the
   `wkt` crate).
+- Derive macros: `parquet_derive`'s proc macros (`#[derive(ParquetRecordWriter)]`
+  / `ParquetRecordReader`) are replaced by `include Parquet::Derive::Record`.
+  Rust impls `RecordWriter for &[T]` and `RecordReader for Vec<T>`; Crystal
+  cannot subclass slices, so nested `T::Writer < RecordWriter(T)` (holding
+  `Array(T)`) and `T::Reader < RecordReader(T)` (with a `records` getter) are
+  generated instead. The reader builds records positionally via the record's
+  `initialize` (fields must be declared in parameter order; Rust uses `Default`
+  + public field assignment). Field types are Crystal-native (`Bool`,
+  `Int8..64`, `UInt8..64`, `Float32/64`, `String`, `Bytes`, `UUID`, `Time` as
+  `TIMESTAMP_MILLIS`, `Parquet::Derive::Date` as `DATE`); nilable `T?` is
+  `OPTIONAL`; the borrowed Rust shapes (`&str`, `Arc<str>`, `&Option<..>`,
+  `Vec<u8>`, `[u8; N]`) and raw identifiers have no analogue. The `syn` AST
+  walkers (`Type.from*`/`last_part`/`leaf_type_recursive`) are replaced by
+  Crystal macro type introspection (`@type.instance_vars`, `TypeNode#union?`),
+  and the Rust `Result`-alias macro-hygiene test is not applicable.
 - Thrift traits: `ReadThrift`, `WriteThrift`, and `WriteThriftField` are Rust
   traits with an associated `ELEMENT_TYPE` constant. Crystal has no associated
   constants, so value dispatch lives on `ThriftCompactOutputProtocol` /

@@ -3487,30 +3487,30 @@ parquet/src/util/test_common/rand_gen.rs::method::FloatType.r#gen	method	missing
 parquet/src/util/test_common/rand_gen.rs::method::Int32Type.r#gen	method	missing	-	auto-generated
 parquet/src/util/test_common/rand_gen.rs::method::Int64Type.r#gen	method	missing	-	auto-generated
 parquet/src/util/test_common/rand_gen.rs::method::Int96Type.r#gen	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Field.copied_direct_fields	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Field.copied_direct_vals	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Field.from	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Field.option_into_vals	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Field.optional_definition_levels	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Field.parquet_type	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Field.reader_snippet	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Field.writer_snippet	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Type.column_reader	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Type.column_writer	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Type.converted_type	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Type.from	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Type.from_type	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Type.from_type_array	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Type.from_type_path	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Type.from_type_reference	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Type.from_type_slice	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Type.inner_type	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Type.last_part	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Type.leaf_type_recursive	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Type.leaf_type_recursive_helper	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Type.length	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Type.logical_type	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Type.physical_type	method	missing	-	auto-generated
-parquet_derive/src/parquet_field.rs::method::Type.repetition	method	missing	-	auto-generated
-parquet_derive_test/src/lib.rs::method::ARecord.do_nothing	method	missing	-	auto-generated
-parquet_derive_test/src/lib.rs::method::ARecord.validate	method	missing	-	auto-generated
+parquet_derive/src/parquet_field.rs::method::Field.copied_direct_fields	method	ported	src/parquet/derive.cr	Codec.read_required/from_physical
+parquet_derive/src/parquet_field.rs::method::Field.copied_direct_vals	method	ported	src/parquet/derive.cr	Codec.write_required
+parquet_derive/src/parquet_field.rs::method::Field.from	method	ported	src/parquet/derive.cr	derive macro over instance_vars
+parquet_derive/src/parquet_field.rs::method::Field.option_into_vals	method	ported	src/parquet/derive.cr	Codec.write_optional
+parquet_derive/src/parquet_field.rs::method::Field.optional_definition_levels	method	ported	src/parquet/derive.cr	Codec.write_optional def levels
+parquet_derive/src/parquet_field.rs::method::Field.parquet_type	method	ported	src/parquet/derive.cr	derive __parquet_schema
+parquet_derive/src/parquet_field.rs::method::Field.reader_snippet	method	ported	src/parquet/derive.cr	Codec(T).read_required/read_optional + derive read
+parquet_derive/src/parquet_field.rs::method::Field.writer_snippet	method	ported	src/parquet/derive.cr	Codec(T).write_required/write_optional + derive write
+parquet_derive/src/parquet_field.rs::method::Type.column_reader	method	ported	src/parquet/derive.cr	Codec read physical type
+parquet_derive/src/parquet_field.rs::method::Type.column_writer	method	ported	src/parquet/derive.cr	Codec write physical type
+parquet_derive/src/parquet_field.rs::method::Type.converted_type	method	ported	src/parquet/derive.cr	derive schema (TIMESTAMP_MILLIS)
+parquet_derive/src/parquet_field.rs::method::Type.from	method	intentional_divergence	src/parquet/derive.cr	Crystal macro type introspection replaces syn AST walking
+parquet_derive/src/parquet_field.rs::method::Type.from_type	method	intentional_divergence	src/parquet/derive.cr	Crystal macro type introspection replaces syn AST walking
+parquet_derive/src/parquet_field.rs::method::Type.from_type_array	method	intentional_divergence	src/parquet/derive.cr	Crystal macro type introspection replaces syn AST walking
+parquet_derive/src/parquet_field.rs::method::Type.from_type_path	method	intentional_divergence	src/parquet/derive.cr	Crystal macro type introspection replaces syn AST walking
+parquet_derive/src/parquet_field.rs::method::Type.from_type_reference	method	intentional_divergence	src/parquet/derive.cr	Crystal macro type introspection replaces syn AST walking
+parquet_derive/src/parquet_field.rs::method::Type.from_type_slice	method	intentional_divergence	src/parquet/derive.cr	Crystal macro type introspection replaces syn AST walking
+parquet_derive/src/parquet_field.rs::method::Type.inner_type	method	intentional_divergence	src/parquet/derive.cr	Crystal macro type introspection replaces syn AST walking
+parquet_derive/src/parquet_field.rs::method::Type.last_part	method	intentional_divergence	src/parquet/derive.cr	Crystal macro type introspection replaces syn AST walking
+parquet_derive/src/parquet_field.rs::method::Type.leaf_type_recursive	method	intentional_divergence	src/parquet/derive.cr	Crystal macro type introspection replaces syn AST walking
+parquet_derive/src/parquet_field.rs::method::Type.leaf_type_recursive_helper	method	intentional_divergence	src/parquet/derive.cr	Crystal macro type introspection replaces syn AST walking
+parquet_derive/src/parquet_field.rs::method::Type.length	method	ported	src/parquet/derive.cr	derive schema (UUID 16)
+parquet_derive/src/parquet_field.rs::method::Type.logical_type	method	ported	src/parquet/derive.cr	derive schema logical types
+parquet_derive/src/parquet_field.rs::method::Type.physical_type	method	ported	src/parquet/derive.cr	derive schema physical types
+parquet_derive/src/parquet_field.rs::method::Type.repetition	method	ported	src/parquet/derive.cr	derive schema (T? => OPTIONAL)
+parquet_derive_test/src/lib.rs::method::ARecord.do_nothing	method	intentional_divergence	src/parquet/derive.cr	Rust-specific Result-alias macro hygiene test; no Crystal analogue
+parquet_derive_test/src/lib.rs::method::ARecord.validate	method	intentional_divergence	src/parquet/derive.cr	Rust-specific Result-alias macro hygiene test; no Crystal analogue
