@@ -1693,8 +1693,8 @@ parquet/src/bin/parquet-fromcsv.rs::method::ParquetFromCsvError.fmt	method	missi
 parquet/src/bin/parquet-fromcsv.rs::method::ParquetFromCsvError.from	method	missing	-	auto-generated
 parquet/src/bin/parquet-fromcsv.rs::method::ParquetFromCsvError.with_context	method	missing	-	auto-generated
 parquet/src/bin/parquet-index.rs::method::Args.run	method	ported	src/parquet/bin/parquet_index.cr	ParquetIndex.run_with_reader; clap entry in bin/parquet-index.cr
-parquet/src/bin/parquet-layout.rs::method::Args.run	method	missing	-	serde_json pretty output not ported yet
-parquet/src/bin/parquet-layout.rs::method::DebugSerialize<T>.serialize	method	missing	-	serde Debug-serialize helper not modelled
+parquet/src/bin/parquet-layout.rs::method::Args.run	method	ported	src/parquet/bin/parquet_layout.cr	ParquetLayout.run/writer (JSON.build)
+parquet/src/bin/parquet-layout.rs::method::DebugSerialize<T>.serialize	method	intentional_divergence	src/parquet/bin/parquet_layout.cr	serde Debug wrapper replaced by to_s
 parquet/src/bin/parquet-rewrite.rs::method::BloomFilterPosition.from	method	missing	-	auto-generated
 parquet/src/bin/parquet-rewrite.rs::method::EnabledStatistics.from	method	missing	-	auto-generated
 parquet/src/bin/parquet-rewrite.rs::method::Encoding.from	method	missing	-	auto-generated

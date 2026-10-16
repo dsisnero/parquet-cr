@@ -54,20 +54,21 @@ little-endian layout.
   `RowGroupReader`, `ReadOptions`/`ReadOptionsBuilder`), the record API
   (`Field`/`Row`/`List`/`Map`, `TripletIter`, `TreeBuilder`/`Reader`/`RowIter`,
   wired into `get_row_iter`), `FilePageIterator` + the `PageIterator` trait, and
-  the CLI foundation (`bin/`, `parquet-index`) are done. Phase 2 is complete
-  except the remaining CLI tools (`2.5`).
+  the CLI (`bin/`): the foundation, `parquet-index`, `parquet-read`,
+  `parquet-rowcount`, `parquet-show-bloom-filter`, and `parquet-layout` are
+  done. Phase 2 is complete except `parquet-schema`/`parquet-concat` and the
+  arrow-dependent CLI tools (`2.5`).
 - Next up (take the first unchecked item):
-  1. Finish the CLI (`2.5`): `parquet-layout` (serde_json output),
-     `parquet-schema` (blocked on the schema printer), `parquet-concat` (blocked
-     on `append_column`), `parquet-read`/`parquet-rowcount`, and
-     `parquet-show-bloom-filter`; `parquet-rewrite`/`parquet-fromcsv` need arrow.
+  1. Finish the CLI (`2.5`): `parquet-schema` (needs the schema printer),
+     `parquet-concat` (needs `append_column`); `parquet-rewrite`/`parquet-fromcsv`
+     need `arrow`.
   2. Then Phase 3: `parquet_derive`-style record reader/writer traits (the
      `record_reader.rs`/`record_writer.rs` traits, used by `parquet_derive`;
      Phase 3.3), the variant/geospatial crates, and encryption.
   3. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 1306 `ported`, 183 `intentional_divergence`,
-  1 `skipped`, 2025 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1307 `ported`, 184 `intentional_divergence`,
+  1 `skipped`, 2023 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -102,10 +103,10 @@ Chunk status by area:
 - Phase 2.4 record: `api` (`Field`/`Row`/`List`/`Map`), `triplet`
   (`TripletIter`), and `reader` (`TreeBuilder`/`Reader`/`RowIter`) done;
   `get_row_iter` wired; `FilePageIterator` + the `PageIterator` trait done.
-- Phase 2.5 CLI: `cli` shared helper (`parse_column_path`) and `parquet-index`
-  done; `parquet-layout`/`parquet-schema`/`parquet-concat`/`parquet-read`/
-  `parquet-rowcount`/`parquet-show-bloom-filter` pending; `parquet-rewrite`/
-  `parquet-fromcsv` need arrow.
+- Phase 2.5 CLI: `cli` shared helper (`parse_column_path`), `parquet-index`,
+  `parquet-read`, `parquet-rowcount`, `parquet-show-bloom-filter`, and
+  `parquet-layout` done; `parquet-schema` (schema printer) and `parquet-concat`
+  (`append_column`) pending; `parquet-rewrite`/`parquet-fromcsv` need arrow.
 - Phase 3 (variant/geospatial/derive/encryption/arrow/async): pending.
 
 ## Phase 0 — Project initialization
@@ -379,10 +380,14 @@ Chunk status by area:
 - [x] `parquet-index` (`src/parquet/bin/parquet_index.cr`,
   `bin/parquet-index.cr`); `run` writes to an `IO`; `compute_row_counts`
   characterized. `parquet_index_spec.cr` ported.
-- [ ] `parquet-layout` (needs serde_json-style pretty output),
-  `parquet-schema` (needs the schema printer), `parquet-concat` (needs
-  `append_column`), `parquet-read`, `parquet-rowcount`,
-  `parquet-show-bloom-filter`.
+- [x] `parquet-read` (`parquet_read.cr`, `bin/parquet-read.cr`; `run`/`run_stdin`,
+  `-n`/`-j`), `parquet-rowcount` (`parquet_rowcount.cr`,
+  `bin/parquet-rowcount.cr`), `parquet-show-bloom-filter`
+  (`parquet_show_bloom_filter.cr`, `bin/parquet-show-bloom-filter.cr`), and
+  `parquet-layout` (`parquet_layout.cr`, `bin/parquet-layout.cr`; `JSON.build`
+  pretty output). Specs in `spec/parquet/bin/`.
+- [ ] `parquet-schema` (needs the schema printer), `parquet-concat` (needs
+  `append_column`).
 - [ ] `parquet-rewrite`/`parquet-fromcsv` — require `arrow`.
 
 ## Phase 3 — Advanced / optional
@@ -714,8 +719,12 @@ Chunk status by area:
   `GeneralError` where upstream returns `Result<_, String>`. `parquet-index`'s
   `Args.run` writes to an `IO` parameter (upstream prints to stdout) and the
   byte-array max fallback reproduces upstream's `min`-label copy-paste bug for
-  output parity. `parquet-concat`/`parquet-rewrite`/`parquet-fromcsv` (and
-  `parquet-layout`'s serde_json output) are deferred.
+  output parity. `parquet-read`/`parquet-rowcount`/`parquet-show-bloom-filter`/
+  `parquet-layout` likewise write to an `IO`; `parquet-layout` emits JSON via
+  `JSON.build` (pretty, 2-space) and its serde `DebugSerialize` wrapper is
+  `to_s`; `parquet-show-bloom-filter` raises on an invalid column path (upstream
+  prints and exits). `parquet-concat`/`parquet-rewrite`/`parquet-fromcsv` (and
+  `parquet-schema`) are deferred.
 - `chunk_reader`: `BytesChunkReader#get_read`/`get_bytes` and
   `FileChunkReader#get_bytes` raise the upstream `EOF` messages
   ("Expected to read ... while file has length ..."); `FileChunkReader` reads

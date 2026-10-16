@@ -60,6 +60,10 @@ require "./parquet/record/triplet"
 require "./parquet/record/reader"
 require "./parquet/bin/cli"
 require "./parquet/bin/parquet_index"
+require "./parquet/bin/parquet_read"
+require "./parquet/bin/parquet_rowcount"
+require "./parquet/bin/parquet_show_bloom_filter"
+require "./parquet/bin/parquet_layout"
 
 module Parquet
   VERSION = "0.1.0"
