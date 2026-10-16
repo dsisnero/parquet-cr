@@ -42,15 +42,17 @@ little-endian layout.
   `ParquetMetaDataReader`, and the   `ParquetMetaDataWriter`/
   `ThriftMetadataWriter` (footer + page-index serialization) are done, and the
   `util` bit layer (`BitReader`/`BitWriter`), the RLE/bit-packing hybrid
-  (`RleEncoder`/`RleDecoder`), and level encoding (`LevelEncoder`) are started.
+  (`RleEncoder`/`RleDecoder`), level encoding (`LevelEncoder`), and the PLAIN
+  codec (`PlainEncoder`/`PlainDecoder`) are started.
 - Next up (take the first unchecked item):
-  1. Encodings: plain/dictionary/delta/byte-stream-split/ALP, then the column
-     reader/writer, then serialized/file reader+writer, then record API and
-     bloom filter.
+  1. Encodings: dictionary, delta (binary-packed/length/byte-array),
+     byte-stream-split, and ALP; then the `DataType`/`Encoder`/`Decoder`
+     registries; then the column reader/writer, then serialized/file
+     reader+writer, then record API and bloom filter.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 622 `ported`, 87 `intentional_divergence`,
-  1 `skipped`, 2805 `missing` (of 3515 rows).
+- Progress by counts (ledger): 634 `ported`, 88 `intentional_divergence`,
+  1 `skipped`, 2792 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -179,8 +181,10 @@ Chunk status by area:
 - [x] Levels (`src/parquet/encodings/levels.cr`): `LevelEncoder`
   (v1_streaming/v2_streaming/put_with_observer/put_n_with_observer/consume/
   flush_to).
-- [ ] Plain, dictionary, delta, byte-stream-split, RLE codecs
-  (`encodings/encoding`).
+- [x] Plain (`src/parquet/encodings/plain.cr`): `PlainEncoder`/`PlainDecoder`
+  for all physical types (put/get/get_spaced/skip).
+- [ ] Dictionary, delta, byte-stream-split, RLE value codecs
+  (`encodings/encoding`, `encodings/decoding`).
 - [ ] ALP codec (`encodings/alp.rs`).
 - [ ] 7 upstream test modules ported.
 
@@ -401,6 +405,10 @@ Chunk status by area:
   `has_metadata?`, `parse_metadata` is public (upstream private), `metadata_size`
   returns `Int32?`, and `decode_schema` is implemented via a full metadata
   decode.
+- `encodings::plain`: Rust's `DataType`/`Encoder`/`Decoder` trait dispatch is
+  `PlainEncoder(T)`/`PlainDecoder(T)` with `T.class` and macro branches per
+  physical value type; `encode_all` is added as a test/characterization helper;
+  the `get_encoder`/`get_decoder` registries and `put_spaced` are not ported yet.
 - `encodings::levels`: the Rust `LevelEncoder::Rle`/`RleV2` enum is a struct
   with a `v2` flag plus the shared `RleEncoder`; observer callbacks are Crystal
   blocks; `flush_to` takes a block rather than a Rust `FnOnce`.

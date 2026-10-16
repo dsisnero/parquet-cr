@@ -2164,12 +2164,12 @@ parquet/src/encodings/decoding.rs::method::DictDecoder<T>.values_left	method	mis
 parquet/src/encodings/decoding.rs::method::FixedLenByteArray.get_decoder	method	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::method::FixedLenByteArrayType.to_byte_array	method	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::method::Int96Type.to_byte_array	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::PlainDecoder<T>.encoding	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::PlainDecoder<T>.get	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::PlainDecoder<T>.new	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::PlainDecoder<T>.set_data	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::PlainDecoder<T>.skip	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::PlainDecoder<T>.values_left	method	missing	-	auto-generated
+parquet/src/encodings/decoding.rs::method::PlainDecoder<T>.encoding	method	ported	src/parquet/encodings/plain.cr	PlainDecoder(T)
+parquet/src/encodings/decoding.rs::method::PlainDecoder<T>.get	method	ported	src/parquet/encodings/plain.cr	PlainDecoder(T) (T.class dispatch)
+parquet/src/encodings/decoding.rs::method::PlainDecoder<T>.new	method	ported	src/parquet/encodings/plain.cr	PlainDecoder(T).new(type_length)
+parquet/src/encodings/decoding.rs::method::PlainDecoder<T>.set_data	method	ported	src/parquet/encodings/plain.cr	PlainDecoder(T)
+parquet/src/encodings/decoding.rs::method::PlainDecoder<T>.skip	method	ported	src/parquet/encodings/plain.cr	PlainDecoder(T)
+parquet/src/encodings/decoding.rs::method::PlainDecoder<T>.values_left	method	ported	src/parquet/encodings/plain.cr	PlainDecoder(T)
 parquet/src/encodings/decoding.rs::method::RleValueDecoder<T>.default	method	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::method::RleValueDecoder<T>.encoding	method	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::method::RleValueDecoder<T>.get	method	missing	-	auto-generated
@@ -2291,13 +2291,13 @@ parquet/src/encodings/encoding/mod.rs::method::DeltaLengthByteArrayEncoder<T>.es
 parquet/src/encodings/encoding/mod.rs::method::DeltaLengthByteArrayEncoder<T>.flush_buffer	method	missing	-	auto-generated
 parquet/src/encodings/encoding/mod.rs::method::DeltaLengthByteArrayEncoder<T>.new	method	missing	-	auto-generated
 parquet/src/encodings/encoding/mod.rs::method::DeltaLengthByteArrayEncoder<T>.put	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::PlainEncoder<T>.default	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::PlainEncoder<T>.encoding	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::PlainEncoder<T>.estimated_data_encoded_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::PlainEncoder<T>.estimated_memory_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::PlainEncoder<T>.flush_buffer	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::PlainEncoder<T>.new	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::PlainEncoder<T>.put	method	missing	-	auto-generated
+parquet/src/encodings/encoding/mod.rs::method::PlainEncoder<T>.default	method	intentional_divergence	src/parquet/encodings/plain.cr	Rust Default/PhantomData; Crystal default initialize
+parquet/src/encodings/encoding/mod.rs::method::PlainEncoder<T>.encoding	method	ported	src/parquet/encodings/plain.cr	PlainEncoder(T)
+parquet/src/encodings/encoding/mod.rs::method::PlainEncoder<T>.estimated_data_encoded_size	method	ported	src/parquet/encodings/plain.cr	PlainEncoder(T)
+parquet/src/encodings/encoding/mod.rs::method::PlainEncoder<T>.estimated_memory_size	method	ported	src/parquet/encodings/plain.cr	PlainEncoder(T)
+parquet/src/encodings/encoding/mod.rs::method::PlainEncoder<T>.flush_buffer	method	ported	src/parquet/encodings/plain.cr	PlainEncoder(T)
+parquet/src/encodings/encoding/mod.rs::method::PlainEncoder<T>.new	method	ported	src/parquet/encodings/plain.cr	PlainEncoder(T)
+parquet/src/encodings/encoding/mod.rs::method::PlainEncoder<T>.put	method	ported	src/parquet/encodings/plain.cr	PlainEncoder(T) (T.class dispatch)
 parquet/src/encodings/encoding/mod.rs::method::RleValueEncoder<T>.default	method	missing	-	auto-generated
 parquet/src/encodings/encoding/mod.rs::method::RleValueEncoder<T>.encoding	method	missing	-	auto-generated
 parquet/src/encodings/encoding/mod.rs::method::RleValueEncoder<T>.estimated_data_encoded_size	method	missing	-	auto-generated
