@@ -2128,17 +2128,17 @@ parquet/src/encodings/decoding.rs::const::MAX_SKIP_BUFFER_VALUES	const	missing	-
 parquet/src/encodings/decoding.rs::method::BoolType.to_byte_array	method	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::method::ByteArray.get_decoder	method	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::method::ByteArrayType.to_byte_array	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.check_bit_width	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.default	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.encoding	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.get	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.get_offset	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.new	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.next_block	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.next_mini_block	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.set_data	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.skip	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.values_left	method	missing	-	auto-generated
+parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.check_bit_width	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackDecoder (private)
+parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.default	method	intentional_divergence	src/parquet/encodings/delta_bit_pack.cr	Rust Default; Crystal default initialize
+parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.encoding	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackDecoder
+parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.get	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackDecoder (get_batch path)
+parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.get_offset	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackDecoder
+parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.new	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackDecoder
+parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.next_block	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackDecoder (private)
+parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.next_mini_block	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackDecoder (private)
+parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.set_data	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackDecoder
+parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.skip	method	ported	src/parquet/encodings/delta_bit_pack.cr	scratch-buffer decode
+parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.values_left	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackDecoder
 parquet/src/encodings/decoding.rs::method::DeltaByteArrayDecoder<T>.default	method	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::method::DeltaByteArrayDecoder<T>.encoding	method	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::method::DeltaByteArrayDecoder<T>.get	method	missing	-	auto-generated
@@ -2264,19 +2264,19 @@ parquet/src/encodings/encoding/mod.rs::const::DEFAULT_RLE_BUFFER_LEN	const	missi
 parquet/src/encodings/encoding/mod.rs::const::DELTA_BIT_PACK_TYPE_ERROR	const	missing	-	auto-generated
 parquet/src/encodings/encoding/mod.rs::const::MAX_PAGE_HEADER_WRITER_SIZE	const	missing	-	auto-generated
 parquet/src/encodings/encoding/mod.rs::const::TEST_SET_SIZE	const	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.as_i64	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.assert_supported_type	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.default	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.encoding	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.estimated_data_encoded_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.estimated_memory_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.flush_block_values	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.flush_buffer	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.new	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.put	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.subtract	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.subtract_u64	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.write_page_header	method	missing	-	auto-generated
+parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.as_i64	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackEncoder (private)
+parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.assert_supported_type	method	intentional_divergence	src/parquet/encodings/delta_bit_pack.cr	INT32/INT64 restriction is structural via T.class
+parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.default	method	intentional_divergence	src/parquet/encodings/delta_bit_pack.cr	Rust Default; Crystal default initialize
+parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.encoding	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackEncoder
+parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.estimated_data_encoded_size	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackEncoder
+parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.estimated_memory_size	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackEncoder
+parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.flush_block_values	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackEncoder (private)
+parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.flush_buffer	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackEncoder
+parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.new	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackEncoder
+parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.put	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackEncoder
+parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.subtract	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackEncoder (private)
+parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.subtract_u64	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackEncoder (private)
+parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.write_page_header	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackEncoder (private)
 parquet/src/encodings/encoding/mod.rs::method::DeltaByteArrayEncoder<T>.default	method	missing	-	auto-generated
 parquet/src/encodings/encoding/mod.rs::method::DeltaByteArrayEncoder<T>.encoding	method	missing	-	auto-generated
 parquet/src/encodings/encoding/mod.rs::method::DeltaByteArrayEncoder<T>.estimated_data_encoded_size	method	missing	-	auto-generated
@@ -3398,7 +3398,7 @@ parquet/src/util/bit_util.rs::const::MAX_VLQ_BYTE_LEN	const	ported	src/parquet/u
 parquet/src/util/bit_util.rs::const::SIZE	const	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
 parquet/src/util/bit_util.rs::method::BitReader.from	method	ported	src/parquet/util/bit_util.cr	BitReader.from
 parquet/src/util/bit_util.rs::method::BitReader.get_aligned	method	ported	src/parquet/util/bit_util.cr	BitReader
-parquet/src/util/bit_util.rs::method::BitReader.get_aligned_bytes	method	missing	src/parquet/util/bit_util.cr	deferred to column decoder
+parquet/src/util/bit_util.rs::method::BitReader.get_aligned_bytes	method	ported	src/parquet/util/bit_util.cr	BitReader (appends to Array)
 parquet/src/util/bit_util.rs::method::BitReader.get_batch	method	ported	src/parquet/util/bit_util.cr	scalar get_batch loop (no SIMD unpack)
 parquet/src/util/bit_util.rs::method::BitReader.get_byte_offset	method	ported	src/parquet/util/bit_util.cr	BitReader
 parquet/src/util/bit_util.rs::method::BitReader.get_value	method	ported	src/parquet/util/bit_util.cr	BitReader

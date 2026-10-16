@@ -31,3 +31,5 @@ alias RleDecoder = Parquet::Encodings::RleDecoder
 alias LevelEncoder = Parquet::Encodings::LevelEncoder
 alias PlainEncoder = Parquet::Encodings::PlainEncoder
 alias PlainDecoder = Parquet::Encodings::PlainDecoder
+alias DeltaBitPackEncoder = Parquet::Encodings::DeltaBitPackEncoder
+alias DeltaBitPackDecoder = Parquet::Encodings::DeltaBitPackDecoder

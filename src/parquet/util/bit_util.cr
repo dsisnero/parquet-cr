@@ -302,6 +302,18 @@ module Parquet
         values_to_read
       end
 
+      # Reads up to `num_bytes` bytes at the next byte boundary, appending them
+      # to `buf`, and returns the count read.
+      def get_aligned_bytes(buf : Array(UInt8), num_bytes : Int32) : Int32
+        @byte_offset = get_byte_offset
+        @bit_offset = 0
+
+        to_read = Math.min(num_bytes, @buffer.size - @byte_offset)
+        buf.concat(@buffer[@byte_offset, to_read])
+        @byte_offset += to_read
+        to_read
+      end
+
       # Reads a `num_bytes`-sized little-endian value of type `T`.
       def get_aligned(type : T.class, num_bytes : Int32) : T? forall T
         @byte_offset = get_byte_offset
