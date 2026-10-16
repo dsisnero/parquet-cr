@@ -48,14 +48,15 @@ little-endian layout.
   interfaces + `get_encoder`/`get_decoder` registries, the writer/reader
   properties, the column level/value decoders, the column page
   types/interfaces, the bloom filter (`Sbbf`), the column writer value
-  encoder, and `ColumnReaderImpl` are done.
+  encoder, `ColumnReaderImpl`, and the compression `Codec` framework
+  (`GZipCodec`) are done.
 - Next up (take the first unchecked item):
   1. `ColumnWriterImpl` (`column/writer/mod.rs`), then serialized/file
      reader+writer, then record API.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 1129 `ported`, 136 `intentional_divergence`,
-  1 `skipped`, 2249 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1132 `ported`, 154 `intentional_divergence`,
+  1 `skipped`, 2228 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -176,9 +177,12 @@ Chunk status by area:
 
 ### 1.8 Compression
 
-- [ ] Codec dispatch + uncompressed/snappy/gzip/lzo/brotli/lz4/zstd paths.
+- [~] Codec dispatch + uncompressed/snappy/gzip/lzo/brotli/lz4/zstd paths:
+  `Codec` framework + `create_codec` + `GZipCodec` done
+  (`src/parquet/compression_codecs.cr`); snappy/lzo/brotli/lz4/zstd pending.
 - [ ] Select Crystal shards via `find-crystal-shards`; document any codec that
-  must be an intentional divergence.
+  must be an intentional divergence (snappy/lzo/brotli/lz4/zstd are currently
+  intentional divergences — `create_codec` raises).
 
 ## Phase 2 — Encodings, columns, files
 
@@ -569,6 +573,11 @@ Chunk status by area:
   `Parquet::Column::Writer` module methods   (upstream: free functions +
   `GenericColumnWriter` methods); `GenericColumnWriter::truncate_statistics`
   (which mutates `Statistics`) is deferred with the writer.
+- `compression::codecs`: the `Codec` trait (mutating `Vec<u8>` buffers) becomes
+  an abstract class appending to `Array(UInt8)`; only the GZIP codec is ported
+  (Crystal stdlib `Compress::Gzip`). Snappy/LZO/Brotli/LZ4/Zstd need Crystal
+  shards and are intentional divergences — `create_codec` raises for them.
+  `create_codec` is `Parquet::CompressionCodecs.create_codec`.
 - `column::writer` data holders: Rust's `LevelDataRef<'a>` enum (borrowed
   `&[i16]`) is a Crystal struct carrying a `Kind` with an owned `Array(Int16)`;
   `usize` sizes are `Int32`; `ColumnCloseResult::update_dictionary_location(mut

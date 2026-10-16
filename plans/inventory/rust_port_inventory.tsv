@@ -1938,9 +1938,9 @@ parquet/src/compression.rs::const::MAXIMUM_LEVEL	const	ported	src/parquet/compre
 parquet/src/compression.rs::const::MINIMUM_LEVEL	const	ported	src/parquet/compression.cr	per-level MINIMUM_LEVEL
 parquet/src/compression.rs::const::PREFIX_LEN	const	missing	-	auto-generated
 parquet/src/compression.rs::const::SIZE_U32	const	missing	-	auto-generated
-parquet/src/compression.rs::method::BrotliCodec.compress	method	missing	-	auto-generated
-parquet/src/compression.rs::method::BrotliCodec.decompress	method	missing	-	auto-generated
-parquet/src/compression.rs::method::BrotliCodec.new	method	missing	-	auto-generated
+parquet/src/compression.rs::method::BrotliCodec.compress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
+parquet/src/compression.rs::method::BrotliCodec.decompress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
+parquet/src/compression.rs::method::BrotliCodec.new	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
 parquet/src/compression.rs::method::BrotliLevel.compression_level	method	ported	src/parquet/compression.cr	BrotliLevel#compression_level
 parquet/src/compression.rs::method::BrotliLevel.default	method	ported	src/parquet/compression.cr	BrotliLevel#default
 parquet/src/compression.rs::method::BrotliLevel.try_new	method	ported	src/parquet/compression.cr	BrotliLevel#try_new
@@ -1948,27 +1948,27 @@ parquet/src/compression.rs::method::CodecOptions.default	method	ported	src/parqu
 parquet/src/compression.rs::method::CodecOptionsBuilder.build	method	ported	src/parquet/compression.cr	CodecOptions
 parquet/src/compression.rs::method::CodecOptionsBuilder.default	method	ported	src/parquet/compression.cr	CodecOptions
 parquet/src/compression.rs::method::CodecOptionsBuilder.set_backward_compatible_lz4	method	ported	src/parquet/compression.cr	CodecOptions
-parquet/src/compression.rs::method::GZipCodec.compress	method	missing	-	auto-generated
-parquet/src/compression.rs::method::GZipCodec.decompress	method	missing	-	auto-generated
-parquet/src/compression.rs::method::GZipCodec.new	method	missing	-	auto-generated
+parquet/src/compression.rs::method::GZipCodec.compress	method	ported	src/parquet/compression_codecs.cr	GZipCodec (Compress::Gzip)
+parquet/src/compression.rs::method::GZipCodec.decompress	method	ported	src/parquet/compression_codecs.cr	GZipCodec (Compress::Gzip)
+parquet/src/compression.rs::method::GZipCodec.new	method	ported	src/parquet/compression_codecs.cr	GZipCodec (Compress::Gzip)
 parquet/src/compression.rs::method::GzipLevel.compression_level	method	ported	src/parquet/compression.cr	GzipLevel#compression_level
 parquet/src/compression.rs::method::GzipLevel.default	method	ported	src/parquet/compression.cr	GzipLevel#default
 parquet/src/compression.rs::method::GzipLevel.try_new	method	ported	src/parquet/compression.cr	GzipLevel#try_new
-parquet/src/compression.rs::method::LZ4Codec.compress	method	missing	-	auto-generated
-parquet/src/compression.rs::method::LZ4Codec.decompress	method	missing	-	auto-generated
-parquet/src/compression.rs::method::LZ4Codec.new	method	missing	-	auto-generated
-parquet/src/compression.rs::method::LZ4HadoopCodec.compress	method	missing	-	auto-generated
-parquet/src/compression.rs::method::LZ4HadoopCodec.decompress	method	missing	-	auto-generated
-parquet/src/compression.rs::method::LZ4HadoopCodec.new	method	missing	-	auto-generated
-parquet/src/compression.rs::method::LZ4RawCodec.compress	method	missing	-	auto-generated
-parquet/src/compression.rs::method::LZ4RawCodec.decompress	method	missing	-	auto-generated
-parquet/src/compression.rs::method::LZ4RawCodec.new	method	missing	-	auto-generated
-parquet/src/compression.rs::method::SnappyCodec.compress	method	missing	-	auto-generated
-parquet/src/compression.rs::method::SnappyCodec.decompress	method	missing	-	auto-generated
-parquet/src/compression.rs::method::SnappyCodec.new	method	missing	-	auto-generated
-parquet/src/compression.rs::method::ZSTDCodec.compress	method	missing	-	auto-generated
-parquet/src/compression.rs::method::ZSTDCodec.decompress	method	missing	-	auto-generated
-parquet/src/compression.rs::method::ZSTDCodec.new	method	missing	-	auto-generated
+parquet/src/compression.rs::method::LZ4Codec.compress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
+parquet/src/compression.rs::method::LZ4Codec.decompress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
+parquet/src/compression.rs::method::LZ4Codec.new	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
+parquet/src/compression.rs::method::LZ4HadoopCodec.compress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
+parquet/src/compression.rs::method::LZ4HadoopCodec.decompress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
+parquet/src/compression.rs::method::LZ4HadoopCodec.new	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
+parquet/src/compression.rs::method::LZ4RawCodec.compress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
+parquet/src/compression.rs::method::LZ4RawCodec.decompress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
+parquet/src/compression.rs::method::LZ4RawCodec.new	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
+parquet/src/compression.rs::method::SnappyCodec.compress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
+parquet/src/compression.rs::method::SnappyCodec.decompress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
+parquet/src/compression.rs::method::SnappyCodec.new	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
+parquet/src/compression.rs::method::ZSTDCodec.compress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
+parquet/src/compression.rs::method::ZSTDCodec.decompress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
+parquet/src/compression.rs::method::ZSTDCodec.new	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
 parquet/src/compression.rs::method::ZstdLevel.compression_level	method	ported	src/parquet/compression.cr	ZstdLevel#compression_level
 parquet/src/compression.rs::method::ZstdLevel.default	method	ported	src/parquet/compression.cr	ZstdLevel#default
 parquet/src/compression.rs::method::ZstdLevel.try_new	method	ported	src/parquet/compression.cr	ZstdLevel#try_new
