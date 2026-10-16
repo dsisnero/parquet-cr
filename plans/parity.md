@@ -42,17 +42,17 @@ little-endian layout.
   `ParquetMetaDataReader`, and the   `ParquetMetaDataWriter`/
   `ThriftMetadataWriter` (footer + page-index serialization) are done, and the
   `util` bit layer (`BitReader`/`BitWriter`), the RLE/bit-packing hybrid
-  (`RleEncoder`/`RleDecoder`), level encoding (`LevelEncoder`), and the PLAIN,
-  DELTA_BINARY_PACKED, DELTA_LENGTH_BYTE_ARRAY, DELTA_BYTE_ARRAY, dictionary,
-  byte-stream-split, and RLE value codecs are done.
+  (`RleEncoder`/`RleDecoder`), level encoding (`LevelEncoder`), and all encodings
+  (PLAIN, DELTA_BINARY_PACKED, DELTA_LENGTH_BYTE_ARRAY, DELTA_BYTE_ARRAY,
+  dictionary, byte-stream-split, RLE value, ALP) are done.
 - Next up (take the first unchecked item):
-  1. Encodings: ALP; then the
-     `DataType`/`Encoder`/`Decoder` registries; then the column reader/writer,
-     then serialized/file reader+writer, then record API and bloom filter.
+  1. Encodings: the `DataType`/`Encoder`/`Decoder` registries; then the column
+     reader/writer, then serialized/file reader+writer, then record API and
+     bloom filter.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 748 `ported`, 103 `intentional_divergence`,
-  1 `skipped`, 2663 `missing` (of 3515 rows).
+- Progress by counts (ledger): 834 `ported`, 108 `intentional_divergence`,
+  1 `skipped`, 2572 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -75,7 +75,7 @@ Chunk status by area:
   done; serialized/file reader+writer, bloom filter pending.
 - Phase 2.1 encodings: RLE/bit-packing hybrid, levels, PLAIN,
   DELTA_BINARY_PACKED, DELTA_LENGTH_BYTE_ARRAY, DELTA_BYTE_ARRAY, dictionary,
-  byte-stream-split, and RLE value done; ALP and the encoder/decoder
+  byte-stream-split, RLE value, and ALP done; the `DataType`/`Encoder`/`Decoder`
   registries pending.
 - Phases 2.2 column, 2.4 record, 2.5 CLI: pending.
 - Phase 3 (variant/geospatial/derive/encryption/arrow/async): pending.
@@ -202,8 +202,11 @@ Chunk status by area:
   `VariableWidthByteStreamSplitEncoder(T)`/`Decoder(T)`.
 - [x] RLE value (`src/parquet/encodings/rle_value.cr`):
   `RleValueEncoder(T)`/`RleValueDecoder(T)` for BOOLEAN.
-- [ ] ALP codec (`encodings/alp.rs`, `encodings/encoding`, `encodings/decoding`).
-- [ ] 7 upstream test modules ported.
+- [x] ALP (`src/parquet/encodings/alp.cr`): `AlpEncoder(F)`/`AlpDecoder(F)` for
+  FLOAT/DOUBLE, plus `AlpHeader`/`AlpInfo`/`ForInfo(F)`/`AlpEncodedVectorView(F)`
+  and the `Alp` sampling/encoding helpers.
+- [x] 7+ upstream test modules ported (RLE, levels, plain, delta binary/length/
+  byte-array, dictionary, byte-stream-split, RLE value, ALP).
 
 ### 2.2 Column
 
@@ -482,6 +485,15 @@ Chunk status by area:
   decodes into a scratch `Array` before copying into the output buffer (the
   Crystal `RleDecoder#get_batch` only accepts an owning `Array`); the
   `DEFAULT_RLE_BUFFER_LEN` reservation is inlined as a `[0; 4]` length prefix.
+- `encodings::alp`: `AlpFloat`/`AlpExact` traits and their associated types are
+  replaced by `F.class`-dispatched `Alp` module methods (`Alp.encode_value`,
+  `Alp.exact_wrapping_add`, ...); the exact integer types (`u32`/`u64`) are
+  carried uniformly as `UInt64` with width-masked wrapping arithmetic so f32
+  wraps at 32 bits; `AlpHeader#serialize` returns `Bytes` (not `[u8; 7]`);
+  `AlpEncodedVectorView`'s `*_range` methods are inlined into `AlpDecoder`
+  (slice arithmetic at `load_current_vector`); `Scratch`/`StreamingPage` use
+  element counts for `estimated_memory_size` (no `Array` capacity); the
+  `is_better`/`rank` helpers become `better?`/`rank`.
 - `ParquetMetaDataWriter`/`ThriftMetadataWriter`: the `MetadataObjectWriter`
   encryption-dispatch layer is not modeled; the non-encryption write logic is
   inlined (`write_thrift_object`, `Metadata.write_file_metadata`), and the

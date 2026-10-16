@@ -2064,64 +2064,64 @@ parquet/src/data_type.rs::method::super::Int96.encode	method	missing	-	auto-gene
 parquet/src/data_type.rs::method::super::Int96.heap_size	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::Int96.set_data	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::Int96.skip	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::const::ALP_COMPRESSION_MODE	const	missing	-	auto-generated
-parquet/src/encodings/alp.rs::const::ALP_DEFAULT_LOG_VECTOR_SIZE	const	missing	-	auto-generated
-parquet/src/encodings/alp.rs::const::ALP_HEADER_SIZE	const	missing	-	auto-generated
-parquet/src/encodings/alp.rs::const::ALP_INTEGER_ENCODING_FOR_BIT_PACK	const	missing	-	auto-generated
-parquet/src/encodings/alp.rs::const::ALP_MAX_EXPONENT_F32	const	missing	-	auto-generated
-parquet/src/encodings/alp.rs::const::ALP_MAX_EXPONENT_F64	const	missing	-	auto-generated
-parquet/src/encodings/alp.rs::const::ALP_MAX_LOG_VECTOR_SIZE	const	missing	-	auto-generated
-parquet/src/encodings/alp.rs::const::ALP_MIN_LOG_VECTOR_SIZE	const	missing	-	auto-generated
-parquet/src/encodings/alp.rs::const::ALP_NEG_POW10_F32	const	missing	-	auto-generated
-parquet/src/encodings/alp.rs::const::ALP_NEG_POW10_F64	const	missing	-	auto-generated
-parquet/src/encodings/alp.rs::const::ALP_POW10_F32	const	missing	-	auto-generated
-parquet/src/encodings/alp.rs::const::ALP_POW10_F64	const	missing	-	auto-generated
-parquet/src/encodings/alp.rs::const::ENCODING_LOWER_LIMIT	const	missing	-	auto-generated
-parquet/src/encodings/alp.rs::const::ENCODING_SENTINEL	const	missing	-	auto-generated
-parquet/src/encodings/alp.rs::const::ENCODING_UPPER_LIMIT	const	missing	-	auto-generated
-parquet/src/encodings/alp.rs::const::MAGIC_NUMBER	const	missing	-	auto-generated
-parquet/src/encodings/alp.rs::const::MAX_EXPONENT	const	missing	-	auto-generated
-parquet/src/encodings/alp.rs::const::STORED_SIZE	const	missing	-	auto-generated
-parquet/src/encodings/alp.rs::const::WIDTH	const	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::AlpHeader.deserialize	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::AlpHeader.num_vectors	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::AlpHeader.serialize	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::AlpHeader.vector_num_elements	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::AlpInfo.extend_serialized	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::ForInfo<Exact>.extend_serialized	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::ForInfo<Exact>.get_bit_packed_size	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::ForInfo<Exact>.get_data_stored_size	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::ForInfo<Exact>.stored_size	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::f32.apply_scale	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::f32.decode_scale	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::f32.decode_value	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::f32.encode_scale	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::f32.fast_round	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::f32.from_exact_bits	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::f32.is_impossible_to_encode	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::f32.to_exact_bits	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::f64.apply_scale	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::f64.decode_scale	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::f64.decode_value	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::f64.encode_scale	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::f64.fast_round	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::f64.from_exact_bits	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::f64.is_impossible_to_encode	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::f64.to_exact_bits	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::u32.extend_le_bytes	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::u32.from_le_slice	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::u32.reinterpret_as_signed	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::u32.reinterpret_from_signed	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::u32.to_u64	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::u32.wrapping_add	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::u32.wrapping_sub	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::u64.extend_le_bytes	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::u64.from_le_slice	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::u64.reinterpret_as_signed	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::u64.reinterpret_from_signed	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::u64.to_u64	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::u64.wrapping_add	method	missing	-	auto-generated
-parquet/src/encodings/alp.rs::method::u64.wrapping_sub	method	missing	-	auto-generated
+parquet/src/encodings/alp.rs::const::ALP_COMPRESSION_MODE	const	ported	src/parquet/encodings/alp.cr	Alp::ALP_COMPRESSION_MODE
+parquet/src/encodings/alp.rs::const::ALP_DEFAULT_LOG_VECTOR_SIZE	const	ported	src/parquet/encodings/alp.cr	Alp::ALP_DEFAULT_LOG_VECTOR_SIZE
+parquet/src/encodings/alp.rs::const::ALP_HEADER_SIZE	const	ported	src/parquet/encodings/alp.cr	Alp::ALP_HEADER_SIZE
+parquet/src/encodings/alp.rs::const::ALP_INTEGER_ENCODING_FOR_BIT_PACK	const	ported	src/parquet/encodings/alp.cr	Alp::ALP_INTEGER_ENCODING_FOR_BIT_PACK
+parquet/src/encodings/alp.rs::const::ALP_MAX_EXPONENT_F32	const	ported	src/parquet/encodings/alp.cr	Alp::ALP_MAX_EXPONENT_F32
+parquet/src/encodings/alp.rs::const::ALP_MAX_EXPONENT_F64	const	ported	src/parquet/encodings/alp.cr	Alp::ALP_MAX_EXPONENT_F64
+parquet/src/encodings/alp.rs::const::ALP_MAX_LOG_VECTOR_SIZE	const	ported	src/parquet/encodings/alp.cr	Alp::ALP_MAX_LOG_VECTOR_SIZE
+parquet/src/encodings/alp.rs::const::ALP_MIN_LOG_VECTOR_SIZE	const	ported	src/parquet/encodings/alp.cr	Alp::ALP_MIN_LOG_VECTOR_SIZE
+parquet/src/encodings/alp.rs::const::ALP_NEG_POW10_F32	const	ported	src/parquet/encodings/alp.cr	Alp::ALP_NEG_POW10_F32
+parquet/src/encodings/alp.rs::const::ALP_NEG_POW10_F64	const	ported	src/parquet/encodings/alp.cr	Alp::ALP_NEG_POW10_F64
+parquet/src/encodings/alp.rs::const::ALP_POW10_F32	const	ported	src/parquet/encodings/alp.cr	Alp::ALP_POW10_F32
+parquet/src/encodings/alp.rs::const::ALP_POW10_F64	const	ported	src/parquet/encodings/alp.cr	Alp::ALP_POW10_F64
+parquet/src/encodings/alp.rs::const::ENCODING_LOWER_LIMIT	const	ported	src/parquet/encodings/alp.cr	Alp::ENCODING_LOWER_LIMIT
+parquet/src/encodings/alp.rs::const::ENCODING_SENTINEL	const	ported	src/parquet/encodings/alp.cr	Alp::ENCODING_SENTINEL
+parquet/src/encodings/alp.rs::const::ENCODING_UPPER_LIMIT	const	ported	src/parquet/encodings/alp.cr	Alp::ENCODING_UPPER_LIMIT
+parquet/src/encodings/alp.rs::const::MAGIC_NUMBER	const	ported	src/parquet/encodings/alp.cr	Alp::MAGIC_NUMBER
+parquet/src/encodings/alp.rs::const::MAX_EXPONENT	const	ported	src/parquet/encodings/alp.cr	Alp::MAX_EXPONENT
+parquet/src/encodings/alp.rs::const::STORED_SIZE	const	ported	src/parquet/encodings/alp.cr	Alp::STORED_SIZE
+parquet/src/encodings/alp.rs::const::WIDTH	const	ported	src/parquet/encodings/alp.cr	Alp::WIDTH
+parquet/src/encodings/alp.rs::method::AlpHeader.deserialize	method	ported	src/parquet/encodings/alp.cr	AlpHeader#deserialize
+parquet/src/encodings/alp.rs::method::AlpHeader.num_vectors	method	ported	src/parquet/encodings/alp.cr	AlpHeader#num_vectors
+parquet/src/encodings/alp.rs::method::AlpHeader.serialize	method	ported	src/parquet/encodings/alp.cr	AlpHeader#serialize
+parquet/src/encodings/alp.rs::method::AlpHeader.vector_num_elements	method	ported	src/parquet/encodings/alp.cr	AlpHeader#vector_num_elements
+parquet/src/encodings/alp.rs::method::AlpInfo.extend_serialized	method	ported	src/parquet/encodings/alp.cr	AlpInfo#extend_serialized
+parquet/src/encodings/alp.rs::method::ForInfo<Exact>.extend_serialized	method	ported	src/parquet/encodings/alp.cr	ForInfo<F>#extend_serialized
+parquet/src/encodings/alp.rs::method::ForInfo<Exact>.get_bit_packed_size	method	ported	src/parquet/encodings/alp.cr	ForInfo<F>#get_bit_packed_size
+parquet/src/encodings/alp.rs::method::ForInfo<Exact>.get_data_stored_size	method	ported	src/parquet/encodings/alp.cr	ForInfo<F>#get_data_stored_size
+parquet/src/encodings/alp.rs::method::ForInfo<Exact>.stored_size	method	ported	src/parquet/encodings/alp.cr	ForInfo<F>#stored_size
+parquet/src/encodings/alp.rs::method::f32.apply_scale	method	ported	src/parquet/encodings/alp.cr	Alp.apply_scale (float-type dispatch)
+parquet/src/encodings/alp.rs::method::f32.decode_scale	method	ported	src/parquet/encodings/alp.cr	Alp.decode_scale (float-type dispatch)
+parquet/src/encodings/alp.rs::method::f32.decode_value	method	ported	src/parquet/encodings/alp.cr	Alp.decode_value (float-type dispatch)
+parquet/src/encodings/alp.rs::method::f32.encode_scale	method	ported	src/parquet/encodings/alp.cr	Alp.encode_scale (float-type dispatch)
+parquet/src/encodings/alp.rs::method::f32.fast_round	method	ported	src/parquet/encodings/alp.cr	Alp.fast_round (float-type dispatch)
+parquet/src/encodings/alp.rs::method::f32.from_exact_bits	method	ported	src/parquet/encodings/alp.cr	Alp.from_exact_bits (float-type dispatch)
+parquet/src/encodings/alp.rs::method::f32.is_impossible_to_encode	method	ported	src/parquet/encodings/alp.cr	Alp.is_impossible_to_encode (float-type dispatch)
+parquet/src/encodings/alp.rs::method::f32.to_exact_bits	method	ported	src/parquet/encodings/alp.cr	Alp.to_exact_bits (float-type dispatch)
+parquet/src/encodings/alp.rs::method::f64.apply_scale	method	ported	src/parquet/encodings/alp.cr	Alp.apply_scale (float-type dispatch)
+parquet/src/encodings/alp.rs::method::f64.decode_scale	method	ported	src/parquet/encodings/alp.cr	Alp.decode_scale (float-type dispatch)
+parquet/src/encodings/alp.rs::method::f64.decode_value	method	ported	src/parquet/encodings/alp.cr	Alp.decode_value (float-type dispatch)
+parquet/src/encodings/alp.rs::method::f64.encode_scale	method	ported	src/parquet/encodings/alp.cr	Alp.encode_scale (float-type dispatch)
+parquet/src/encodings/alp.rs::method::f64.fast_round	method	ported	src/parquet/encodings/alp.cr	Alp.fast_round (float-type dispatch)
+parquet/src/encodings/alp.rs::method::f64.from_exact_bits	method	ported	src/parquet/encodings/alp.cr	Alp.from_exact_bits (float-type dispatch)
+parquet/src/encodings/alp.rs::method::f64.is_impossible_to_encode	method	ported	src/parquet/encodings/alp.cr	Alp.is_impossible_to_encode (float-type dispatch)
+parquet/src/encodings/alp.rs::method::f64.to_exact_bits	method	ported	src/parquet/encodings/alp.cr	Alp.to_exact_bits (float-type dispatch)
+parquet/src/encodings/alp.rs::method::u32.extend_le_bytes	method	ported	src/parquet/encodings/alp.cr	Alp.exact_extend_le_bytes (width dispatch)
+parquet/src/encodings/alp.rs::method::u32.from_le_slice	method	ported	src/parquet/encodings/alp.cr	Alp.exact_from_le_slice (width dispatch)
+parquet/src/encodings/alp.rs::method::u32.reinterpret_as_signed	method	ported	src/parquet/encodings/alp.cr	Alp.exact_reinterpret_as_signed (width dispatch)
+parquet/src/encodings/alp.rs::method::u32.reinterpret_from_signed	method	ported	src/parquet/encodings/alp.cr	Alp.exact_reinterpret_from_signed (width dispatch)
+parquet/src/encodings/alp.rs::method::u32.to_u64	method	ported	src/parquet/encodings/alp.cr	Alp.exact_to_u64 (width dispatch)
+parquet/src/encodings/alp.rs::method::u32.wrapping_add	method	ported	src/parquet/encodings/alp.cr	Alp.exact_wrapping_add (width dispatch)
+parquet/src/encodings/alp.rs::method::u32.wrapping_sub	method	ported	src/parquet/encodings/alp.cr	Alp.exact_wrapping_sub (width dispatch)
+parquet/src/encodings/alp.rs::method::u64.extend_le_bytes	method	ported	src/parquet/encodings/alp.cr	Alp.exact_extend_le_bytes (width dispatch)
+parquet/src/encodings/alp.rs::method::u64.from_le_slice	method	ported	src/parquet/encodings/alp.cr	Alp.exact_from_le_slice (width dispatch)
+parquet/src/encodings/alp.rs::method::u64.reinterpret_as_signed	method	ported	src/parquet/encodings/alp.cr	Alp.exact_reinterpret_as_signed (width dispatch)
+parquet/src/encodings/alp.rs::method::u64.reinterpret_from_signed	method	ported	src/parquet/encodings/alp.cr	Alp.exact_reinterpret_from_signed (width dispatch)
+parquet/src/encodings/alp.rs::method::u64.to_u64	method	ported	src/parquet/encodings/alp.cr	Alp.exact_to_u64 (width dispatch)
+parquet/src/encodings/alp.rs::method::u64.wrapping_add	method	ported	src/parquet/encodings/alp.cr	Alp.exact_wrapping_add (width dispatch)
+parquet/src/encodings/alp.rs::method::u64.wrapping_sub	method	ported	src/parquet/encodings/alp.cr	Alp.exact_wrapping_sub (width dispatch)
 parquet/src/encodings/decoding.rs::const::BLOCK_SIZE	const	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::const::I32_SIZE	const	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::const::MAX_SKIP_BUFFER_VALUES	const	missing	-	auto-generated
@@ -2182,20 +2182,20 @@ parquet/src/encodings/decoding.rs::method::f32.get_decoder	method	missing	-	auto
 parquet/src/encodings/decoding.rs::method::f64.get_decoder	method	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::method::i32.get_decoder	method	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::method::i64.get_decoder	method	missing	-	auto-generated
-parquet/src/encodings/decoding/alp_decoder.rs::const::DECODE_TILE_CAP	const	missing	-	auto-generated
-parquet/src/encodings/decoding/alp_decoder.rs::method::AlpDecoder<T>.encoding	method	missing	-	auto-generated
-parquet/src/encodings/decoding/alp_decoder.rs::method::AlpDecoder<T>.get	method	missing	-	auto-generated
-parquet/src/encodings/decoding/alp_decoder.rs::method::AlpDecoder<T>.load_current_vector	method	missing	-	auto-generated
-parquet/src/encodings/decoding/alp_decoder.rs::method::AlpDecoder<T>.new	method	missing	-	auto-generated
-parquet/src/encodings/decoding/alp_decoder.rs::method::AlpDecoder<T>.set_data	method	missing	-	auto-generated
-parquet/src/encodings/decoding/alp_decoder.rs::method::AlpDecoder<T>.skip	method	missing	-	auto-generated
-parquet/src/encodings/decoding/alp_decoder.rs::method::AlpDecoder<T>.values_left	method	missing	-	auto-generated
-parquet/src/encodings/decoding/alp_decoder.rs::method::AlpEncodedVectorView<Exact>.exception_positions_range	method	missing	-	auto-generated
-parquet/src/encodings/decoding/alp_decoder.rs::method::AlpEncodedVectorView<Exact>.exception_values_range	method	missing	-	auto-generated
-parquet/src/encodings/decoding/alp_decoder.rs::method::AlpEncodedVectorView<Exact>.expected_stored_size	method	missing	-	auto-generated
-parquet/src/encodings/decoding/alp_decoder.rs::method::AlpEncodedVectorView<Exact>.packed_values_range	method	missing	-	auto-generated
-parquet/src/encodings/decoding/alp_decoder.rs::method::u32.append_le_bytes	method	missing	-	auto-generated
-parquet/src/encodings/decoding/alp_decoder.rs::method::u64.append_le_bytes	method	missing	-	auto-generated
+parquet/src/encodings/decoding/alp_decoder.rs::const::DECODE_TILE_CAP	const	ported	src/parquet/encodings/alp.cr	Alp::DECODE_TILE_CAP
+parquet/src/encodings/decoding/alp_decoder.rs::method::AlpDecoder<T>.encoding	method	ported	src/parquet/encodings/alp.cr	AlpDecoder##encoding
+parquet/src/encodings/decoding/alp_decoder.rs::method::AlpDecoder<T>.get	method	ported	src/parquet/encodings/alp.cr	AlpDecoder##get
+parquet/src/encodings/decoding/alp_decoder.rs::method::AlpDecoder<T>.load_current_vector	method	ported	src/parquet/encodings/alp.cr	AlpDecoder##load_current_vector
+parquet/src/encodings/decoding/alp_decoder.rs::method::AlpDecoder<T>.new	method	ported	src/parquet/encodings/alp.cr	AlpDecoder##new
+parquet/src/encodings/decoding/alp_decoder.rs::method::AlpDecoder<T>.set_data	method	ported	src/parquet/encodings/alp.cr	AlpDecoder##set_data
+parquet/src/encodings/decoding/alp_decoder.rs::method::AlpDecoder<T>.skip	method	ported	src/parquet/encodings/alp.cr	AlpDecoder##skip
+parquet/src/encodings/decoding/alp_decoder.rs::method::AlpDecoder<T>.values_left	method	ported	src/parquet/encodings/alp.cr	AlpDecoder##values_left
+parquet/src/encodings/decoding/alp_decoder.rs::method::AlpEncodedVectorView<Exact>.exception_positions_range	method	intentional_divergence	src/parquet/encodings/alp.cr	inlined into AlpDecoder#load_current_vector
+parquet/src/encodings/decoding/alp_decoder.rs::method::AlpEncodedVectorView<Exact>.exception_values_range	method	intentional_divergence	src/parquet/encodings/alp.cr	inlined into AlpDecoder#load_current_vector
+parquet/src/encodings/decoding/alp_decoder.rs::method::AlpEncodedVectorView<Exact>.expected_stored_size	method	ported	src/parquet/encodings/alp.cr	AlpEncodedVectorView#expected_stored_size
+parquet/src/encodings/decoding/alp_decoder.rs::method::AlpEncodedVectorView<Exact>.packed_values_range	method	intentional_divergence	src/parquet/encodings/alp.cr	inlined into AlpDecoder#load_current_vector
+parquet/src/encodings/decoding/alp_decoder.rs::method::u32.append_le_bytes	method	intentional_divergence	src/parquet/encodings/alp.cr	test helper inlined in spec
+parquet/src/encodings/decoding/alp_decoder.rs::method::u64.append_le_bytes	method	intentional_divergence	src/parquet/encodings/alp.cr	test helper inlined in spec
 parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::ByteStreamSplitDecoder<T>.encoding	method	ported	src/parquet/encodings/byte_stream_split.cr	ByteStreamSplitDecoder<T> (encoding)
 parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::ByteStreamSplitDecoder<T>.get	method	ported	src/parquet/encodings/byte_stream_split.cr	ByteStreamSplitDecoder<T> (get)
 parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::ByteStreamSplitDecoder<T>.new	method	ported	src/parquet/encodings/byte_stream_split.cr	ByteStreamSplitDecoder<T> (new)
@@ -2208,25 +2208,25 @@ parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::VariableWid
 parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::VariableWidthByteStreamSplitDecoder<T>.set_data	method	ported	src/parquet/encodings/byte_stream_split.cr	VariableWidthByteStreamSplitDecoder<T> (set_data)
 parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::VariableWidthByteStreamSplitDecoder<T>.skip	method	ported	src/parquet/encodings/byte_stream_split.cr	VariableWidthByteStreamSplitDecoder<T> (skip)
 parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::VariableWidthByteStreamSplitDecoder<T>.values_left	method	ported	src/parquet/encodings/byte_stream_split.cr	VariableWidthByteStreamSplitDecoder<T> (values_left)
-parquet/src/encodings/encoding/alp_encoder.rs::const::MAX_COMBINATIONS	const	missing	-	auto-generated
-parquet/src/encodings/encoding/alp_encoder.rs::const::SAMPLES_PER_VECTOR	const	missing	-	auto-generated
-parquet/src/encodings/encoding/alp_encoder.rs::const::SAMPLE_VECTORS	const	missing	-	auto-generated
-parquet/src/encodings/encoding/alp_encoder.rs::const::SAMPLING_EARLY_EXIT_THRESHOLD	const	missing	-	auto-generated
-parquet/src/encodings/encoding/alp_encoder.rs::const::VECTOR_SIZE	const	missing	-	auto-generated
-parquet/src/encodings/encoding/alp_encoder.rs::method::AlpEncoder<T>.current_page_len	method	missing	-	auto-generated
-parquet/src/encodings/encoding/alp_encoder.rs::method::AlpEncoder<T>.encoding	method	missing	-	auto-generated
-parquet/src/encodings/encoding/alp_encoder.rs::method::AlpEncoder<T>.estimated_data_encoded_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/alp_encoder.rs::method::AlpEncoder<T>.estimated_memory_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/alp_encoder.rs::method::AlpEncoder<T>.flush_buffer	method	missing	-	auto-generated
-parquet/src/encodings/encoding/alp_encoder.rs::method::AlpEncoder<T>.new	method	missing	-	auto-generated
-parquet/src/encodings/encoding/alp_encoder.rs::method::AlpEncoder<T>.put	method	missing	-	auto-generated
-parquet/src/encodings/encoding/alp_encoder.rs::method::Scratch<F>.estimated_memory_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/alp_encoder.rs::method::Scratch<F>.new	method	missing	-	auto-generated
-parquet/src/encodings/encoding/alp_encoder.rs::method::StreamingPage<F>.estimated_memory_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/alp_encoder.rs::method::StreamingPage<F>.finish	method	missing	-	auto-generated
-parquet/src/encodings/encoding/alp_encoder.rs::method::StreamingPage<F>.new	method	missing	-	auto-generated
-parquet/src/encodings/encoding/alp_encoder.rs::method::StreamingPage<F>.push_vector	method	missing	-	auto-generated
-parquet/src/encodings/encoding/alp_encoder.rs::method::StreamingPage<F>.put	method	missing	-	auto-generated
+parquet/src/encodings/encoding/alp_encoder.rs::const::MAX_COMBINATIONS	const	ported	src/parquet/encodings/alp.cr	Alp::MAX_COMBINATIONS
+parquet/src/encodings/encoding/alp_encoder.rs::const::SAMPLES_PER_VECTOR	const	ported	src/parquet/encodings/alp.cr	Alp::SAMPLES_PER_VECTOR
+parquet/src/encodings/encoding/alp_encoder.rs::const::SAMPLE_VECTORS	const	ported	src/parquet/encodings/alp.cr	Alp::SAMPLE_VECTORS
+parquet/src/encodings/encoding/alp_encoder.rs::const::SAMPLING_EARLY_EXIT_THRESHOLD	const	ported	src/parquet/encodings/alp.cr	Alp::SAMPLING_EARLY_EXIT_THRESHOLD
+parquet/src/encodings/encoding/alp_encoder.rs::const::VECTOR_SIZE	const	ported	src/parquet/encodings/alp.cr	Alp::VECTOR_SIZE
+parquet/src/encodings/encoding/alp_encoder.rs::method::AlpEncoder<T>.current_page_len	method	ported	src/parquet/encodings/alp.cr	AlpEncoder##current_page_len
+parquet/src/encodings/encoding/alp_encoder.rs::method::AlpEncoder<T>.encoding	method	ported	src/parquet/encodings/alp.cr	AlpEncoder##encoding
+parquet/src/encodings/encoding/alp_encoder.rs::method::AlpEncoder<T>.estimated_data_encoded_size	method	ported	src/parquet/encodings/alp.cr	AlpEncoder##estimated_data_encoded_size
+parquet/src/encodings/encoding/alp_encoder.rs::method::AlpEncoder<T>.estimated_memory_size	method	ported	src/parquet/encodings/alp.cr	AlpEncoder##estimated_memory_size
+parquet/src/encodings/encoding/alp_encoder.rs::method::AlpEncoder<T>.flush_buffer	method	ported	src/parquet/encodings/alp.cr	AlpEncoder##flush_buffer
+parquet/src/encodings/encoding/alp_encoder.rs::method::AlpEncoder<T>.new	method	ported	src/parquet/encodings/alp.cr	AlpEncoder##new
+parquet/src/encodings/encoding/alp_encoder.rs::method::AlpEncoder<T>.put	method	ported	src/parquet/encodings/alp.cr	AlpEncoder##put
+parquet/src/encodings/encoding/alp_encoder.rs::method::Scratch<F>.estimated_memory_size	method	ported	src/parquet/encodings/alp.cr	Alp::Scratch##estimated_memory_size
+parquet/src/encodings/encoding/alp_encoder.rs::method::Scratch<F>.new	method	ported	src/parquet/encodings/alp.cr	Alp::Scratch##new
+parquet/src/encodings/encoding/alp_encoder.rs::method::StreamingPage<F>.estimated_memory_size	method	ported	src/parquet/encodings/alp.cr	Alp::StreamingPage##estimated_memory_size
+parquet/src/encodings/encoding/alp_encoder.rs::method::StreamingPage<F>.finish	method	ported	src/parquet/encodings/alp.cr	Alp::StreamingPage##finish
+parquet/src/encodings/encoding/alp_encoder.rs::method::StreamingPage<F>.new	method	ported	src/parquet/encodings/alp.cr	Alp::StreamingPage##new
+parquet/src/encodings/encoding/alp_encoder.rs::method::StreamingPage<F>.push_vector	method	ported	src/parquet/encodings/alp.cr	Alp::StreamingPage##push_vector
+parquet/src/encodings/encoding/alp_encoder.rs::method::StreamingPage<F>.put	method	ported	src/parquet/encodings/alp.cr	Alp::StreamingPage##put
 parquet/src/encodings/encoding/byte_stream_split_encoder.rs::const::BLOCK_SIZE	const	intentional_divergence	src/parquet/encodings/byte_stream_split.cr	block-4 split kernel replaced by a runtime type_size routine
 parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::ByteStreamSplitEncoder<T>.encoding	method	ported	src/parquet/encodings/byte_stream_split.cr	ByteStreamSplitEncoder<T> (encoding)
 parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::ByteStreamSplitEncoder<T>.estimated_data_encoded_size	method	ported	src/parquet/encodings/byte_stream_split.cr	ByteStreamSplitEncoder<T> (estimated_data_encoded_size)
