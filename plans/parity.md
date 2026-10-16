@@ -47,16 +47,15 @@ little-endian layout.
   dictionary, byte-stream-split, RLE value, ALP), the `Encoder`/`Decoder`
   interfaces + `get_encoder`/`get_decoder` registries, the writer/reader
   properties, the column level/value decoders, the column page
-  types/interfaces, the bloom filter (`Sbbf`), and the column writer value
-  encoder are done.
+  types/interfaces, the bloom filter (`Sbbf`), the column writer value
+  encoder, and `ColumnReaderImpl` are done.
 - Next up (take the first unchecked item):
-  1. `ColumnReaderImpl`/`ColumnWriterImpl` (`column/reader.rs`,
-     `column/writer/mod.rs`), then serialized/file reader+writer, then record
-     API.
+  1. `ColumnWriterImpl` (`column/writer/mod.rs`), then serialized/file
+     reader+writer, then record API.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 1103 `ported`, 121 `intentional_divergence`,
-  1 `skipped`, 2290 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1109 `ported`, 134 `intentional_divergence`,
+  1 `skipped`, 2271 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -216,8 +215,12 @@ Chunk status by area:
 
 ### 2.2 Column
 
-- [ ] `ColumnDescriptor`, `ColumnReader`, `ColumnWriter`.
-- [ ] `ColumnReaderImpl`/`ColumnWriterImpl`.
+- [~] `ColumnDescriptor` + `ColumnReader` (interface) done; `ColumnWriter`
+  (interface) pending.
+- [x] `ColumnReaderImpl` (`src/parquet/column/reader.cr`): `get_column_reader`/
+  `get_typed_column_reader`, `ColumnReaderImpl(T)` (read_records/skip_records/
+  has_next/read_new_page/parse_v1_level).
+- [ ] `ColumnWriterImpl`.
 - [x] Column writer value encoder + statistics/encoding helpers
   (`src/parquet/column/writer/encoder.cr`): `ColumnValueEncoder`(+Impl(T)),
   `DictionaryPage`, `DataPageValues(T)`, `get_min_max`/`update_min`/`update_max`/
@@ -546,6 +549,14 @@ Chunk status by area:
   `fallback_encoding`, `has_dictionary_support`, `create_bloom_filter`,
   byte-budget counting) live on the `Column::Writer` module; geospatial
   accumulators are not ported (`flush_geospatial_statistics` returns `nil`).
+- `column::reader`: Rust's `ColumnReader` enum becomes an abstract `ColumnReader`
+  class with the single generic `ColumnReaderImpl(T)` subclass (instead of one
+  variant per physical type); `GenericColumnReader<R, D, V>` is not
+  parameterized (`ColumnReaderImpl(T)` fixes the level/value decoders);
+  `read_records` drops the internal reservation callback; `get_column_reader`/
+  `get_typed_column_reader`/`parse_v1_level`/`check_partial_record_fits` are
+  `Parquet::Column` module methods. The upstream `ColumnReaderTester`/`make_pages`
+  random test infrastructure is not ported (characterization specs used).
 - `encodings::byte_stream_split`: `ByteStreamSplitEncoder(T)`/`Decoder(T)` and
   `VariableWidthByteStreamSplitEncoder(T)`/`Decoder(T)` with `T.class`; the
   constant `split_streams_const`/`join_streams_const` and `_variable` kernels

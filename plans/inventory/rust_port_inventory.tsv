@@ -1795,25 +1795,25 @@ parquet/src/column/page_store.rs::method::PageKey.new	method	missing	-	auto-gene
 parquet/src/column/page_store.rs::method::PageStoreArgs<'_>.column_descriptor	method	missing	-	auto-generated
 parquet/src/column/page_store.rs::method::PageStoreArgs<'_>.column_index	method	missing	-	auto-generated
 parquet/src/column/page_store.rs::method::PageStoreArgs<'_>.new	method	missing	-	auto-generated
-parquet/src/column/reader.rs::const::MAX_DEF_LEVEL	const	missing	-	auto-generated
-parquet/src/column/reader.rs::const::MAX_REP_LEVEL	const	missing	-	auto-generated
-parquet/src/column/reader.rs::const::NUM_LEVELS	const	missing	-	auto-generated
-parquet/src/column/reader.rs::const::NUM_PAGES	const	missing	-	auto-generated
-parquet/src/column/reader.rs::method::ColumnReaderTester<T>.dict_v1	method	missing	-	auto-generated
-parquet/src/column/reader.rs::method::ColumnReaderTester<T>.dict_v2	method	missing	-	auto-generated
-parquet/src/column/reader.rs::method::ColumnReaderTester<T>.new	method	missing	-	auto-generated
-parquet/src/column/reader.rs::method::ColumnReaderTester<T>.plain_v1	method	missing	-	auto-generated
-parquet/src/column/reader.rs::method::ColumnReaderTester<T>.plain_v2	method	missing	-	auto-generated
-parquet/src/column/reader.rs::method::ColumnReaderTester<T>.test_read_batch	method	missing	-	auto-generated
-parquet/src/column/reader.rs::method::ColumnReaderTester<T>.test_read_batch_general	method	missing	-	auto-generated
-parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.has_next	method	missing	-	auto-generated
-parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.new_with_decoders	method	missing	-	auto-generated
-parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.read_dictionary_page	method	missing	-	auto-generated
-parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.read_new_page	method	missing	-	auto-generated
-parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.read_records	method	missing	-	auto-generated
-parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.read_records_with_reservation	method	missing	-	auto-generated
-parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.skip_records	method	missing	-	auto-generated
-parquet/src/column/reader.rs::method::GenericColumnReader<RepetitionLevelDecoderImpl, DefinitionLevelDecoderImpl, V>.new	method	missing	-	auto-generated
+parquet/src/column/reader.rs::const::MAX_DEF_LEVEL	const	intentional_divergence	spec/parquet/column/reader_spec.cr	upstream test infra not ported
+parquet/src/column/reader.rs::const::MAX_REP_LEVEL	const	intentional_divergence	spec/parquet/column/reader_spec.cr	upstream test infra not ported
+parquet/src/column/reader.rs::const::NUM_LEVELS	const	intentional_divergence	spec/parquet/column/reader_spec.cr	upstream test infra not ported
+parquet/src/column/reader.rs::const::NUM_PAGES	const	intentional_divergence	spec/parquet/column/reader_spec.cr	upstream test infra not ported
+parquet/src/column/reader.rs::method::ColumnReaderTester<T>.dict_v1	method	intentional_divergence	spec/parquet/column/reader_spec.cr	upstream test infra not ported
+parquet/src/column/reader.rs::method::ColumnReaderTester<T>.dict_v2	method	intentional_divergence	spec/parquet/column/reader_spec.cr	upstream test infra not ported
+parquet/src/column/reader.rs::method::ColumnReaderTester<T>.new	method	intentional_divergence	spec/parquet/column/reader_spec.cr	upstream test infra not ported
+parquet/src/column/reader.rs::method::ColumnReaderTester<T>.plain_v1	method	intentional_divergence	spec/parquet/column/reader_spec.cr	upstream test infra not ported
+parquet/src/column/reader.rs::method::ColumnReaderTester<T>.plain_v2	method	intentional_divergence	spec/parquet/column/reader_spec.cr	upstream test infra not ported
+parquet/src/column/reader.rs::method::ColumnReaderTester<T>.test_read_batch	method	intentional_divergence	spec/parquet/column/reader_spec.cr	upstream test infra not ported
+parquet/src/column/reader.rs::method::ColumnReaderTester<T>.test_read_batch_general	method	intentional_divergence	spec/parquet/column/reader_spec.cr	upstream test infra not ported
+parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.has_next	method	ported	src/parquet/column/reader.cr	ColumnReaderImpl
+parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.new_with_decoders	method	intentional_divergence	src/parquet/column/reader.cr	ColumnReaderImpl(T) fixes the decoders
+parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.read_dictionary_page	method	ported	src/parquet/column/reader.cr	ColumnReaderImpl
+parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.read_new_page	method	ported	src/parquet/column/reader.cr	ColumnReaderImpl
+parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.read_records	method	ported	src/parquet/column/reader.cr	ColumnReaderImpl
+parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.read_records_with_reservation	method	intentional_divergence	src/parquet/column/reader.cr	reservation callback not modeled
+parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.skip_records	method	ported	src/parquet/column/reader.cr	ColumnReaderImpl
+parquet/src/column/reader.rs::method::GenericColumnReader<RepetitionLevelDecoderImpl, DefinitionLevelDecoderImpl, V>.new	method	ported	src/parquet/column/reader.cr	ColumnReaderImpl
 parquet/src/column/reader/decoder.rs::const::ENCODING_SLOTS	const	ported	src/parquet/column/reader/decoder.cr	column reader decoder
 parquet/src/column/reader/decoder.rs::const::REPETITION_LEVELS_BATCH_SIZE	const	ported	src/parquet/column/reader/decoder.cr	column reader decoder
 parquet/src/column/reader/decoder.rs::const::SKIP_BUFFER_SIZE	const	ported	src/parquet/column/reader/decoder.cr	column reader decoder
