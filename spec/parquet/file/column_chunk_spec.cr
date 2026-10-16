@@ -61,4 +61,62 @@ describe Parquet::File::Metadata::ColumnChunkMetaData do
 
     result.should eq(expected)
   end
+
+  # Characterization: column crypto metadata (ColumnChunk field 8) plus an
+  # encrypted metadata blob (field 9). With the footer encrypted
+  # (`plaintext_footer_mode` false) the plaintext meta_data (field 3) is skipped,
+  # and the reader returns early once `encrypted_column_metadata` is seen.
+  it "round-trips encrypted column chunk metadata" do
+    column_descr = ParquetTestHelpers.test_schema_descr.column(0)
+    crypto = Parquet::File::ColumnCryptoMetaData.encryption_with_column_key(
+      Parquet::File::EncryptionWithColumnKey.new(["x"], Bytes[1, 2, 3])
+    )
+
+    col_metadata = PMeta::ColumnChunkMetaData.builder(column_descr)
+      .set_file_path("file_path")
+      .set_column_crypto_metadata(crypto)
+      .set_encrypted_column_metadata(Bytes[9, 8, 7])
+      .build
+
+    io = IO::Memory.new
+    col_metadata.write_thrift(Parquet::Thrift::ThriftCompactOutputProtocol.new(io))
+    result = PMeta.read_column_chunk(
+      Parquet::Thrift::ThriftSliceInputProtocol.new(io.to_slice), column_descr, 0
+    )
+
+    result.crypto_metadata.should eq(crypto)
+    result.encrypted_column_metadata.should eq(Bytes[9, 8, 7])
+    result.file_path.should eq("file_path")
+    result.should eq(col_metadata)
+  end
+
+  # Characterization: when the footer is plaintext (`plaintext_footer_mode` true)
+  # the plaintext meta_data is still written alongside the encrypted blob.
+  it "writes plaintext meta_data in plaintext-footer mode" do
+    column_descr = ParquetTestHelpers.test_schema_descr.column(0)
+    crypto = Parquet::File::ColumnCryptoMetaData::ENCRYPTION_WITH_FOOTER_KEY
+
+    col_metadata = PMeta::ColumnChunkMetaData.builder(column_descr)
+      .set_encodings_mask(ParquetTestHelpers.enc_mask(Parquet::Encoding::PLAIN, Parquet::Encoding::RLE))
+      .set_num_values(10_i64)
+      .set_compression_codec(Parquet::CompressionCodec::SNAPPY)
+      .set_total_compressed_size(20_i64)
+      .set_total_uncompressed_size(30_i64)
+      .set_data_page_offset(40_i64)
+      .set_column_crypto_metadata(crypto)
+      .set_encrypted_column_metadata(Bytes[1, 2])
+      .set_plaintext_footer_mode(true)
+      .build
+
+    io = IO::Memory.new
+    col_metadata.write_thrift(Parquet::Thrift::ThriftCompactOutputProtocol.new(io))
+    result = PMeta.read_column_chunk(
+      Parquet::Thrift::ThriftSliceInputProtocol.new(io.to_slice), column_descr, 0
+    )
+
+    result.num_values.should eq(10)
+    result.data_page_offset.should eq(40)
+    result.crypto_metadata.should eq(crypto)
+    result.encrypted_column_metadata.should eq(Bytes[1, 2])
+  end
 end

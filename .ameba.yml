@@ -25,6 +25,7 @@ Naming/QueryBoolMethods:
     - src/parquet/file/reader.cr
     - src/parquet/record/api.cr
     - src/parquet_variant/variant/metadata.cr
+    - src/parquet/file/metadata/column_chunk.cr
 
 # The variant value types keep the upstream `is_fully_validated` accessor name
 # (with a Crystal-idiomatic `fully_validated?` alias alongside it).
@@ -52,3 +53,4 @@ Metrics/CyclomaticComplexity:
     - src/parquet_variant/variant.cr
     - src/parquet_variant/variant/debug.cr
     - src/parquet_variant/builder/state.cr
+    - src/parquet/file/metadata/column_chunk.cr

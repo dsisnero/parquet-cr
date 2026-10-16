@@ -2489,7 +2489,7 @@ parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.column_type	method
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.compressed_size	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.compression	method	missing	-	auto-generated
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.compression_codec	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
-parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.crypto_metadata	method	missing	-	auto-generated
+parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.crypto_metadata	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData#crypto_metadata (fields 8/9 wired)
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.data_page_offset	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.definition_level_histogram	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.dictionary_page_offset	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
@@ -2517,7 +2517,7 @@ parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.from	method
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.new	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_bloom_filter_length	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_bloom_filter_offset	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
-parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_column_crypto_metadata	method	missing	-	auto-generated
+parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_column_crypto_metadata	method	ported	src/parquet/file/metadata/column_chunk.cr	set_column_crypto_metadata
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_column_index_length	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_column_index_offset	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_compression	method	missing	-	auto-generated
@@ -2527,7 +2527,7 @@ parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_definit
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_dictionary_page_offset	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_encodings	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_encodings_mask	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
-parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_encrypted_column_metadata	method	missing	-	auto-generated
+parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_encrypted_column_metadata	method	ported	src/parquet/file/metadata/column_chunk.cr	set_encrypted_column_metadata (+ plaintext_footer_mode)
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_file_path	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_geo_statistics	method	missing	-	auto-generated
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_index_page_offset	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
@@ -3107,7 +3107,7 @@ parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.new	method	p
 parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.next_column	method	ported	src/parquet/file/writer.cr	SerializedRowGroupWriter
 parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.next_column_desc	method	ported	src/parquet/file/writer.cr	SerializedRowGroupWriter
 parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.next_column_with_factory	method	intentional_divergence	src/parquet/file/writer.cr	factory hook inlined into next_column
-parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.set_column_crypto_metadata	method	intentional_divergence	-	encryption not ported
+parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.set_column_crypto_metadata	method	intentional_divergence	src/parquet/file/metadata/column_chunk.cr	metadata layer ported; writer encryption integration still pending
 parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.set_page_writer_encryptor	method	intentional_divergence	-	encryption not ported
 parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.with_file_encryptor	method	intentional_divergence	-	encryption not ported
 parquet/src/file/writer.rs::method::TrackedWrite<W>.bytes_written	method	ported	src/parquet/file/tracked_write.cr	TrackedWrite

@@ -1,4 +1,5 @@
 require "../metadata"
+require "../column_crypto_metadata"
 
 # Ported from `parquet/src/file/metadata/mod.rs` and
 # `parquet/src/file/metadata/thrift/mod.rs` (apache/arrow-rs 60.0.0,
@@ -84,6 +85,11 @@ module Parquet
         property unencoded_byte_array_data_bytes : Int64?
         property repetition_level_histogram : LevelHistogram?
         property definition_level_histogram : LevelHistogram?
+        property column_crypto_metadata : ::Parquet::File::ColumnCryptoMetaData?
+        property encrypted_column_metadata : Bytes?
+        # When true, the footer is plaintext; affects serialization when
+        # `encrypted_column_metadata` is present (write-only).
+        property plaintext_footer_mode : Bool
 
         def initialize(@column_descr : Parquet::Schema::ColumnDescriptor)
           @encodings = EncodingMask.try_new(0)
@@ -107,6 +113,14 @@ module Parquet
           @unencoded_byte_array_data_bytes = nil
           @repetition_level_histogram = nil
           @definition_level_histogram = nil
+          @column_crypto_metadata = nil
+          @encrypted_column_metadata = nil
+          @plaintext_footer_mode = false
+        end
+
+        # The encryption metadata for this column chunk, if any.
+        def crypto_metadata : ::Parquet::File::ColumnCryptoMetaData?
+          @column_crypto_metadata
         end
 
         # Returns a builder for column chunk metadata.
@@ -201,7 +215,10 @@ module Parquet
             column_index_length == other.column_index_length &&
             unencoded_byte_array_data_bytes == other.unencoded_byte_array_data_bytes &&
             repetition_level_histogram == other.repetition_level_histogram &&
-            definition_level_histogram == other.definition_level_histogram
+            definition_level_histogram == other.definition_level_histogram &&
+            column_crypto_metadata == other.column_crypto_metadata &&
+            encrypted_column_metadata == other.encrypted_column_metadata &&
+            plaintext_footer_mode == other.plaintext_footer_mode
         end
 
         def self.thrift_element_type : ::Parquet::Thrift::ElementType
@@ -216,9 +233,14 @@ module Parquet
           end
           last_field_id = ::Parquet::Thrift.write_thrift_field(prot, @file_offset, 2_i16, last_field_id)
 
-          prot.write_field_begin(::Parquet::Thrift::FieldType::Struct, 3_i16, last_field_id)
-          Metadata.serialize_column_meta_data(self, prot)
-          last_field_id = 3_i16
+          # Skip writing the plaintext meta_data when the footer is encrypted and
+          # an encrypted blob is present (matches upstream).
+          write_meta_data = @encrypted_column_metadata.nil? || @plaintext_footer_mode
+          if write_meta_data
+            prot.write_field_begin(::Parquet::Thrift::FieldType::Struct, 3_i16, last_field_id)
+            Metadata.serialize_column_meta_data(self, prot)
+            last_field_id = 3_i16
+          end
 
           if v = @offset_index_offset
             last_field_id = ::Parquet::Thrift.write_thrift_field(prot, v, 4_i16, last_field_id)
@@ -230,7 +252,13 @@ module Parquet
             last_field_id = ::Parquet::Thrift.write_thrift_field(prot, v, 6_i16, last_field_id)
           end
           if v = @column_index_length
-            ::Parquet::Thrift.write_thrift_field(prot, v, 7_i16, last_field_id)
+            last_field_id = ::Parquet::Thrift.write_thrift_field(prot, v, 7_i16, last_field_id)
+          end
+          if crypto = @column_crypto_metadata
+            last_field_id = ::Parquet::Thrift.write_thrift_field(prot, crypto, 8_i16, last_field_id)
+          end
+          if encrypted_meta = @encrypted_column_metadata
+            ::Parquet::Thrift.write_thrift_field(prot, encrypted_meta, 9_i16, last_field_id)
           end
 
           prot.write_struct_end
@@ -392,6 +420,24 @@ module Parquet
           self
         end
 
+        # ameba:disable Naming/AccessorMethodName
+        def set_column_crypto_metadata(value : ::Parquet::File::ColumnCryptoMetaData?) : self
+          @meta.column_crypto_metadata = value
+          self
+        end
+
+        # ameba:disable Naming/AccessorMethodName
+        def set_encrypted_column_metadata(value : Bytes?) : self
+          @meta.encrypted_column_metadata = value
+          self
+        end
+
+        # ameba:disable Naming/AccessorMethodName
+        def set_plaintext_footer_mode(value : Bool) : self
+          @meta.plaintext_footer_mode = value
+          self
+        end
+
         def build : ColumnChunkMetaData
           @meta
         end
@@ -536,6 +582,10 @@ module Parquet
             column.column_index_offset = prot.read_i64
           when 7
             column.column_index_length = prot.read_i32
+          when 8
+            column.column_crypto_metadata = ::Parquet::File::ColumnCryptoMetaData.read_thrift(prot)
+          when 9
+            column.encrypted_column_metadata = prot.read_bytes
           else
             prot.skip(field_ident.field_type)
           end
@@ -543,6 +593,10 @@ module Parquet
         end
 
         raise general_err!("Required field file_offset is missing") unless has_file_offset
+
+        # If encrypted, return early; the remaining metadata is populated after
+        # the (encrypted) footer is decrypted.
+        return column if column.encrypted_column_metadata
 
         validate_column_metadata(col_meta_mask)
         column
