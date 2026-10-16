@@ -33,45 +33,67 @@ little-endian layout.
 - Plan layout: single file. If it grows too large, split into
   `plans/parity/<area>.md`, link each here, and mark each split file
   complete/in-progress plus the file being worked on next.
-- Current focus: **Phase 2 — encodings, columns, files.** The core
-  value/wire layer (errors, thrift protocol, `basic`, `Compression`, `data_type`
-  value types, `schema`), the file metadata + statistics + footer round-trip, the offset/
-  column index core + decode, the page-index builders, the
-  `ParquetMetaDataBuilder`/`ParquetMetaDataOptions` plumbing, the sans-IO
-  `ParquetMetaDataPushDecoder`, the synchronous `ChunkReader`-driven
-  `ParquetMetaDataReader`, and the   `ParquetMetaDataWriter`/
-  `ThriftMetadataWriter` (footer + page-index serialization) are done, and the
-  `util` bit layer (`BitReader`/`BitWriter`), the RLE/bit-packing hybrid
-  (`RleEncoder`/`RleDecoder`), level encoding (`LevelEncoder`), all encodings
-  (PLAIN, DELTA_BINARY_PACKED, DELTA_LENGTH_BYTE_ARRAY, DELTA_BYTE_ARRAY,
-  dictionary, byte-stream-split, RLE value, ALP), the `Encoder`/`Decoder`
-  interfaces + `get_encoder`/`get_decoder` registries, the writer/reader
-  properties, the column level/value decoders, the column page
-  types/interfaces, the bloom filter (`Sbbf`), the column writer value
-  encoder, the column reader/writer impls, the compression `Codec` framework
-  (`GZipCodec`), the serialized page reader/writer, and the file-level
-  `SerializedFileWriter`/`SerializedFileReader` (with `FileReader`/
-  `RowGroupReader`, `ReadOptions`/`ReadOptionsBuilder`), the record API
-  (`Field`/`Row`/`List`/`Map`, `TripletIter`, `TreeBuilder`/`Reader`/`RowIter`,
-  wired into `get_row_iter`), the `RecordReader(T)`/`RecordWriter(T)` traits,
-  `FilePageIterator` + the `PageIterator` trait, the schema printer, the
-  `append_column` splice path, and the CLI (`bin/`): the foundation,
-  `parquet-index`, `parquet-read`, `parquet-rowcount`, `parquet-show-bloom-filter`,
-  `parquet-layout`, `parquet-schema`, and `parquet-concat` are done. **Phase 2 is
-  complete** except the arrow-dependent CLI tools
-  (`parquet-rewrite`/`parquet-fromcsv`). Phase 3 has started:
-  `parquet-variant`'s `VariantPath`/`VariantPathElement` + dot/bracket parser,
-  the `utils` helpers, `OffsetSizeBytes`/`map_bytes_to_offsets`,
-  `VariantMetadata`, and `VariantDecimal4`/`8`/`16` (`src/parquet_variant/`,
-  tests ported); `parquet-geospatial`'s `Hint`/`Edges`/`Metadata` + `WkbType`
-  metadata (`types.cr`) and `Interval`/`WraparoundInterval` (`interval.cr`).
-- Next up (take the first unchecked item):
-  1. Phase 3.1: the rest of `parquet-variant` (`Variant`, `ValueBuilder`,
-     `VariantObject`/`VariantList`, the value decoder); then `-compute`/`-json`.
-  2. Phase 3.2 `parquet-geospatial` `bounding.rs` (`GeoBounder`, needs
-     `geo-traits`/`wkb`); Phase 3.3 `parquet_derive`; Phase 3.4 encryption.
-  3. Deferred: async/object-store suffix fetchers, encryption, and the arrow
-     `parquet-rewrite`/`parquet-fromcsv` are intentional divergences (recorded).
+- Current focus: **Phase 3 — advanced/optional.** **Phase 2 is complete** except
+  the arrow-dependent CLI tools (`parquet-rewrite`/`parquet-fromcsv`). Done in
+  Phase 3 so far:
+  - `parquet-variant` (`src/parquet_variant/`): `VariantPath`/
+    `VariantPathElement` + dot/bracket parser (`path.cr`); `utils` helpers
+    (`utils.cr`); `OffsetSizeBytes`/`map_bytes_to_offsets`, `VariantBasicType`/
+    `VariantPrimitiveType`, and the primitive `decode_*` helpers (`decoder.cr`);
+    `ShortString` (`short_string.cr`); `VariantMetadata`
+    (`variant/metadata.cr`); `VariantDecimal4`/`8`/`16` (`variant/decimal.cr`);
+    and the metadata builders `MetadataBuilder`/`WritableMetadataBuilder`/
+    `ReadOnlyMetadataBuilder` (`builder/metadata.cr`).
+  - `parquet-geospatial` (`src/parquet_geospatial/`): `Hint`/`Edges`/`Metadata`
+    + the metadata side of `WkbType` (`types.cr`); `Interval`/`WraparoundInterval`
+    (`interval.cr`).
+  - Phase 1.7: `util/bit_pack.cr` (`BitPack.unpack8/16/32/64`) and `decode_page`
+    CRC verification (`file/serialized_reader.cr`).
+  - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
+    `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
+- Next up (take the first unchecked item; each is ~one commit):
+  1. **Phase 3.1 `parquet-variant` value layer — large; sequence it:**
+     a. read side: `Variant` (`vendor/arrow-rs/parquet-variant/src/variant.rs`),
+        `VariantObject` (`variant/object.rs`), `VariantList` (`variant/list.rs`)
+        (mutually recursive: put them in one file or forward-declare). This needs
+        the metadata builder (done) and the value decoder (done).
+     b. writer side: `ValueBuilder`/`VariantBuilder` (`builder.rs`),
+        `ObjectBuilder` (`builder/object.rs`), `ListBuilder` (`builder/list.rs`).
+     Most upstream object/list/builder tests construct values via
+     `VariantBuilder`, so (b) is needed before those tests can run; `Variant` is
+     needed by both. Port `Variant`'s construction (`try_new`/
+     `try_new_with_metadata[_and_shallow_validation]`), the `From<..>` impls,
+     the `as_*` accessors, `Debug`, and `get_path`.
+  2. Phase 3.2 `parquet-geospatial` `bounding.rs` (`GeoBounder`) — **blocked**:
+     depends on the `geo-traits`/`wkb` crates. Either port a minimal WKB reader
+     or record an intentional divergence.
+  3. Phase 3.3 `parquet_derive` (Crystal macros) + `parquet_derive_test`.
+  4. Phase 3.4 encryption — **blocked**: `ring` AEAD; Crystal's
+     `OpenSSL::Cipher` exposes no GCM `aad=` setter, so full AES-GCM (which
+     Parquet encryption needs) is unavailable without a crypto shard. Either
+     find a shard or record an intentional divergence.
+  5. Deferred (recorded divergences): async/object-store suffix fetchers, arrow
+     interop (`parquet/src/arrow/`), `parquet-variant-compute`/`-json`, and the
+     arrow `parquet-rewrite`/`parquet-fromcsv` CLI tools.
+- **Scoping notes / gotchas (found while porting; avoids re-derivation):**
+  - Crystal `String.new(Bytes)`/`String#byte_slice?` do **not** validate UTF-8
+    and **copy** substrings, so the variant crate's zero-copy APIs
+    (`VariantMetadata#borrowed_field_id`, borrowed `&str` returns) are
+    intentional divergences implemented as name searches.
+  - Crystal has no date-only/time-of-day types: variant/geospatial dates and
+    times map to `Time` / `Time::Span`; `Uuid` → `UUID`.
+  - Crystal has no cargo feature flags: feature-gated code (e.g. the `crc` page
+    checksum, `json`) is always on.
+  - SNAPPY/LZO/Brotli/LZ4/Zstd codecs need Crystal shards; fixture-based tests
+    that would use `.snappy.parquet` are exercised with uncompressed fixtures.
+  - Enum-with-payload Rust types are modelled either as a sealed class hierarchy
+    (`Field`, `Page`, `Type`, `LogicalType`) or a struct with a `Kind` + payload
+    (`Compression`, `DecodeResult`, `ColumnOrder`); pick per module and record the
+    choice in `plans/parity.md`.
+  - `T.class` dispatch replaces Rust traits with associated consts/generics
+    (`Encodings.get_encoder`, `FromBytes`, `AsBytes`).
+- Last commit: `32aa94c port: page CRC checksum verification in decode_page`;
+  gates green (`make lint`, `make test` -> 635 examples, 0 failures).
 - Progress by counts (ledger): 1423 `ported`, 187 `intentional_divergence`,
   1 `skipped`, 1904 `missing` (of 3515 rows).
 
@@ -84,12 +106,14 @@ Chunk status by area:
   macro and encryption IDL pending.
 - Phase 1.4 basic: complete (enums, `LogicalType`, `SortOrder`/`ColumnOrder`,
   `EncodingMask`, `Compression` + levels).
-- Phase 1.5 data type: value types done; `DataType` trait + `make_type!` pending.
+- Phase 1.5 data type: value types + `AsBytes` done; `DataType` trait +
+  `make_type!` deferred (`T.class` dispatch is used instead).
 - Phase 1.6 schema: `types`, descriptors, parser, thrift conversion, page
-  headers done; printer + primitive builder pending.
+  headers, and printer done (`schema/primitive.rs` does not exist at 60.0.0;
+  `PrimitiveTypeBuilder` covers it).
 - Phase 1.7 util: `BitReader`/`BitWriter`, `Interner`/`Storage`, `PushBuffers`,
-  `common_prefix_length`, and bit packing (`BitPack.unpack*`) done; cursor/page
-  readers pending.
+  `common_prefix_length`, bit packing (`BitPack.unpack*`), and `decode_page` CRC
+  verification done (no `util/cursor.rs` at 60.0.0).
 - Phase 1.8 compression: `Codec` framework + `GZipCodec` done;
   snappy/lzo/brotli/lz4/zstd pending (need Crystal shards).
 - Phase 2.3 file metadata/statistics/page-index core, column-index decode,
@@ -191,9 +215,10 @@ Chunk status by area:
   `AsBytes` trait (`src/parquet/data_type.cr`).
 - [ ] `DataType` trait + `make_type!` (physical-type `TYPE`/`get_physical_type`/
   `get_type_size`, encode/decode) — depends on the column reader/writer.
-- [ ] `AsBytes`/`SliceAsBytes` for primitives, `str`, `Vec<u8>`, `bool`. Until
-      this lands, the column-index write path encodes primitives with
-      `FromBytes.to_le_slice` (identical little-endian bytes).
+- [x] `AsBytes` for primitives, `str`, `Bytes`, `bool` (`as_bytes` on the value
+  types; `data_type_spec.cr` ports `test_as_bytes`). `SliceAsBytes` is not
+  modelled (Crystal uses `Bytes`/`Slice` directly); the column-index write path
+  encodes primitives with `FromBytes.to_le_slice`.
 
 ### 1.6 Schema
 
@@ -206,7 +231,9 @@ Chunk status by area:
 - [x] Schema printer (`src/parquet/schema/printer.cr`): `print_parquet_metadata`,
   `print_file_metadata`, `print_schema`, `Printer`, `print_timeunit`,
   `print_logical_and_converted`; `printer_spec.cr` (10 upstream tests) ported.
-- [ ] Primitive builders (`schema/primitive.rs`). 4 upstream test modules.
+- [x] Primitive builders: `schema/primitive.rs` does not exist at `60.0.0`;
+  `PrimitiveTypeBuilder` (`schema/types.cr`) covers the API (ported in Phase 1.6
+  with the schema tests).
 
 ### 1.7 Util
 
@@ -219,7 +246,8 @@ Chunk status by area:
 - [x] Bit packing (`src/parquet/util/bit_pack.cr`): `BitPack.unpack8`/`16`/`32`/
   `64` (scalar; the `NUM_BITS` const generic is a `num_bits` parameter);
   `bit_pack_spec.cr` ported.
-- [ ] Cursor and page readers (`util/` remaining).
+- [x] Cursor / page readers: there is no `util/cursor.rs` at `60.0.0`; the
+  `SerializedPageReader` (Phase 2.3) covers page reading.
 - [x] CRC32 page-checksum verification (`src/parquet/file/serialized_reader.cr`):
   `decode_page` verifies `page_header.crc` via `Digest::CRC32` (always on, since
   Crystal has no feature flags); `page_crc_spec.cr` ported.

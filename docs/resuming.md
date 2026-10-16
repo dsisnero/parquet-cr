@@ -6,8 +6,9 @@ back to a known-good state.
 ## 1. Read where we are
 
 - `plans/parity.md` — start at the **Where we are** block. It names the current
-  focus, the ordered "Next up" list, and per-area chunk status. Do not re-derive
-  state from git history.
+  focus, the ordered "Next up" list, per-area chunk status, and a **Scoping
+  notes / gotchas** list plus the last commit and current gate counts. Do not
+  re-derive state from git history.
 - `plans/inventory/rust_port_inventory.tsv` — the per-symbol ledger (status +
   `crystal_refs`). Use it to see what is left inside the current chunk:
 
