@@ -176,8 +176,13 @@ little-endian layout.
   `spec/parquet/file/column_chunk_spec.cr`. (Metadata fields are `property`;
   `encodings` iterator is `encodings_list`; `Compression`-typed getters/setters
   and encryption/geo fields not yet ported.)
-- [ ] `ParquetMetaData`, `FileMetaData`, `RowGroupMetaData`, and thrift
-  read/write (`file/metadata/mod.rs`, `file/metadata/thrift/mod.rs`).
+- [x] `RowGroupMetaData` + `RowGroupMetaDataBuilder` and thrift read/write
+  (`src/parquet/file/metadata/row_group.cr`). Upstream
+  `test_row_group_metadata_thrift_conversion`,
+  `..._conversion_empty`, and `..._corrupted` ported to
+  `spec/parquet/file/row_group_spec.cr`.
+- [ ] `ParquetMetaData`, `FileMetaData`, and thrift read/write
+  (`file/metadata/mod.rs`, `file/metadata/thrift/mod.rs`).
 - [x] Statistics and value stats (`src/parquet/file/statistics.cr`):
   `Statistics`, `ValueStatistics<T>`, and `from_thrift_page_stats`/
   `page_stats_to_thrift` (thrift `PageStatistics`). Upstream `statistics.rs`

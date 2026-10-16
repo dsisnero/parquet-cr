@@ -18,3 +18,5 @@ alias SColumnPath = Parquet::Schema::ColumnPath
 alias SColumnDescriptor = Parquet::Schema::ColumnDescriptor
 alias SSchemaDescriptor = Parquet::Schema::SchemaDescriptor
 alias STokenizer = Parquet::Schema::Tokenizer
+
+alias PMeta = Parquet::File::Metadata

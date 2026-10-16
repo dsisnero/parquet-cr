@@ -1,4 +1,5 @@
 require "spec"
 require "../src/parquet-cr"
 require "./support/parquet_aliases"
+require "./support/parquet_helpers"
 require "./support/thrift_roundtrip"

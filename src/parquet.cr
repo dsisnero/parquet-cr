@@ -10,6 +10,7 @@ require "./parquet/schema/thrift"
 require "./parquet/file/statistics"
 require "./parquet/file/metadata"
 require "./parquet/file/metadata/column_chunk"
+require "./parquet/file/metadata/row_group"
 
 module Parquet
   VERSION = "0.1.0"

@@ -109,6 +109,12 @@ revision is recorded per entry.
   validation and page-encoding-stats condensation). Upstream
   `test_column_chunk_metadata_thrift_conversion` ported to
   `spec/parquet/file/column_chunk_spec.cr`.
+- `RowGroupMetaData` (`src/parquet/file/metadata/row_group.cr`): the row-group
+  metadata type, its builder, and thrift read/write (`RowGroup`, including the
+  column-count checks and required-field validation). Upstream
+  `test_row_group_metadata_thrift_conversion{,_empty,_corrupted}` ported to
+  `spec/parquet/file/row_group_spec.cr`; moved shared spec helpers into
+  `spec/support/parquet_helpers.cr`.
 - Harden `Makefile` gates by stripping macOS AppleDouble `._*` sidecars (whose
   names can match crystal's `*_spec.cr` glob on exFAT volumes).
 
