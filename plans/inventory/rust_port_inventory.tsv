@@ -1835,9 +1835,9 @@ parquet/src/column/reader/decoder.rs::method::RepetitionLevelDecoderImpl.new	met
 parquet/src/column/reader/decoder.rs::method::RepetitionLevelDecoderImpl.read_rep_levels	method	ported	src/parquet/column/reader/decoder.cr	column reader decoder
 parquet/src/column/reader/decoder.rs::method::RepetitionLevelDecoderImpl.set_data	method	ported	src/parquet/column/reader/decoder.cr	column reader decoder
 parquet/src/column/reader/decoder.rs::method::RepetitionLevelDecoderImpl.skip_rep_levels	method	ported	src/parquet/column/reader/decoder.cr	column reader decoder
-parquet/src/column/writer/byte_budget_chunker.rs::method::ByteBudgetChunker.byte_budget_sub_batch	method	missing	-	auto-generated
-parquet/src/column/writer/byte_budget_chunker.rs::method::ByteBudgetChunker.new	method	missing	-	auto-generated
-parquet/src/column/writer/byte_budget_chunker.rs::method::ByteBudgetChunker.pick_sub_batch	method	missing	-	auto-generated
+parquet/src/column/writer/byte_budget_chunker.rs::method::ByteBudgetChunker.byte_budget_sub_batch	method	ported	src/parquet/column/writer/byte_budget_chunker.cr	ByteBudgetChunker
+parquet/src/column/writer/byte_budget_chunker.rs::method::ByteBudgetChunker.new	method	ported	src/parquet/column/writer/byte_budget_chunker.cr	ByteBudgetChunker
+parquet/src/column/writer/byte_budget_chunker.rs::method::ByteBudgetChunker.pick_sub_batch	method	ported	src/parquet/column/writer/byte_budget_chunker.cr	ByteBudgetChunker
 parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.compresses_against_previous_value	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
 parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.count_values_within_byte_budget	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
 parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.count_values_within_byte_budget_gather	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder

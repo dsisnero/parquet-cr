@@ -55,8 +55,8 @@ little-endian layout.
      reader+writer, then record API.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 1143 `ported`, 164 `intentional_divergence`,
-  1 `skipped`, 2207 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1146 `ported`, 164 `intentional_divergence`,
+  1 `skipped`, 2204 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -227,6 +227,9 @@ Chunk status by area:
   `can_truncate_value`/`is_utf8`/`truncate_min_value`/`truncate_max_value`.
 - [x] Column writer data holders (`src/parquet/column/writer.cr`):
   `ColumnCloseResult`, `PageMetrics`, `ColumnMetrics(T)`, `LevelDataRef`.
+- [x] Column writer byte-budget chunker
+  (`src/parquet/column/writer/byte_budget_chunker.cr`): `ByteBudgetChunker` +
+  `SubBatchStrategy`.
 - [x] `ColumnReaderImpl` (`src/parquet/column/reader.cr`): `get_column_reader`/
   `get_typed_column_reader`, `ColumnReaderImpl(T)` (read_records/skip_records/
   has_next/read_new_page/parse_v1_level).
@@ -593,6 +596,10 @@ Chunk status by area:
   `usize` sizes are `Int32`; `ColumnCloseResult::update_dictionary_location(mut
   self)` mutates and returns `self`; `PageMetrics`/`ColumnMetrics<T>` are
   mutable classes.
+- `column::writer::byte_budget_chunker`: `SubBatchStrategy` is a struct carrying
+  a `Kind` + `Int32` size; `usize` fields are `Int32`; `pick_sub_batch` takes the
+  value type `T` explicitly (the encoder's `Values` associated type is not
+  modelled here).
 - `encodings::byte_stream_split`: `ByteStreamSplitEncoder(T)`/`Decoder(T)` and
   `VariableWidthByteStreamSplitEncoder(T)`/`Decoder(T)` with `T.class`; the
   constant `split_streams_const`/`join_streams_const` and `_variable` kernels
