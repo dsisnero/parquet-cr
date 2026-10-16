@@ -452,7 +452,6 @@ module Parquet
 
     # Converts `Statistics` into a thrift `PageStatistics`.
     def self.page_stats_to_thrift(stats : Statistics?) : Format::PageStatistics?
-      stats = stats
       return nil if stats.nil?
 
       null_count = stats.null_count_opt.try(&.to_i64)

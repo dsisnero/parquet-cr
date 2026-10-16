@@ -169,9 +169,15 @@ little-endian layout.
   `test_level_histogram_update_from_levels_compat` ported to
   `spec/parquet/file/metadata_spec.cr`. (`is_empty` is `empty?`; `HeapSize` not
   ported.)
-- [ ] `ParquetMetaData`, `FileMetaData`, `RowGroupMetaData`,
-  `ColumnChunkMetaData`, their builders, and thrift conversion
-  (`file/metadata/mod.rs`, `file/metadata/thrift/mod.rs`).
+- [x] `ColumnChunkMetaData` + `ColumnChunkMetaDataBuilder` and thrift
+  read/write (`src/parquet/file/metadata/column_chunk.cr`), plus the thrift
+  structs `KeyValue`, `PageEncodingStats`, `SortingColumn`, `SizeStatistics`.
+  Upstream `test_column_chunk_metadata_thrift_conversion` ported to
+  `spec/parquet/file/column_chunk_spec.cr`. (Metadata fields are `property`;
+  `encodings` iterator is `encodings_list`; `Compression`-typed getters/setters
+  and encryption/geo fields not yet ported.)
+- [ ] `ParquetMetaData`, `FileMetaData`, `RowGroupMetaData`, and thrift
+  read/write (`file/metadata/mod.rs`, `file/metadata/thrift/mod.rs`).
 - [x] Statistics and value stats (`src/parquet/file/statistics.cr`):
   `Statistics`, `ValueStatistics<T>`, and `from_thrift_page_stats`/
   `page_stats_to_thrift` (thrift `PageStatistics`). Upstream `statistics.rs`

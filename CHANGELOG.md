@@ -102,6 +102,13 @@ revision is recorded per entry.
   `set?`/`only?`/`all_set`, `encodings`, and thrift reading. Upstream
   `test_encoding_roundtrip`, `test_invalid_encoding_mask`, and
   `test_encoding_mask_is_only` ported to `spec/parquet/basic_spec.cr`.
+- `ColumnChunkMetaData` (`src/parquet/file/metadata/column_chunk.cr`): the
+  column-chunk metadata type, its builder, the `KeyValue`/`PageEncodingStats`/
+  `SortingColumn`/`SizeStatistics` thrift structs, and thrift
+  read/write (`ColumnChunk`/`ColumnMetaData`, incl. the required-field mask
+  validation and page-encoding-stats condensation). Upstream
+  `test_column_chunk_metadata_thrift_conversion` ported to
+  `spec/parquet/file/column_chunk_spec.cr`.
 - Harden `Makefile` gates by stripping macOS AppleDouble `._*` sidecars (whose
   names can match crystal's `*_spec.cr` glob on exFAT volumes).
 
