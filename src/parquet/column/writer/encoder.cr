@@ -169,6 +169,9 @@ module Parquet
           else
             a > b
           end
+        {% elsif T == Bool %}
+          # Rust `bool: Ord` (`false < true`).
+          a && !b
         {% else %}
           a > b
         {% end %}

@@ -11,6 +11,9 @@ module Parquet
     end
 
     # Wraps an `IO`, tracking the number of bytes written through it.
+    #
+    # Divergence: Rust's `TrackedWrite<W>` keeps the concrete `W`; here the
+    # wrapped `IO` is erased, so `inner`/`into_inner` return `IO`.
     class TrackedWrite < IO
       getter bytes_written : Int64
 
@@ -24,6 +27,26 @@ module Parquet
       def write(slice : Bytes) : Nil
         @io.write(slice)
         @bytes_written += slice.size
+      end
+
+      # Returns the underlying writer.
+      def inner : IO
+        @io
+      end
+
+      # Returns the underlying writer (writes bypass the byte counter).
+      def inner_mut : IO
+        @io
+      end
+
+      # Returns the underlying writer.
+      def into_inner : IO
+        @io
+      end
+
+      def flush : Nil
+        @io.flush
+        nil
       end
     end
   end

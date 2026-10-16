@@ -4,6 +4,8 @@
 # Ports the `Length`/`ChunkReader` traits (as an abstract class) and the `Bytes`
 # and `File` implementations. Divergence: Rust's associated `T: Read` return of
 # `get_read` maps to `IO`; `Bytes`/`File` impls wrap into explicit reader types.
+require "../errors"
+
 module Parquet
   module File
     # A source of Parquet file bytes, read random-access by offset.
@@ -29,15 +31,16 @@ module Parquet
 
       def get_bytes(start : UInt64, length : Int32) : Bytes
         from = start.to_i32
-        if from + length > @bytes.size
-          raise Parquet::EOFError.new(
-            "Requested range #{start}..#{start + length.to_u64} exceeds buffer length #{@bytes.size}"
-          )
+        if start > len || start + length.to_u64 > len
+          raise eof_err!("Expected to read #{length} bytes at offset #{start}, while file has length #{len}")
         end
         @bytes[from, length]
       end
 
       def get_read(start : UInt64) : IO
+        if start > len
+          raise eof_err!("Expected to read at offset #{start}, while file has length #{len}")
+        end
         from = start.to_i32
         IO::Memory.new(@bytes[from, @bytes.size - from])
       end
@@ -57,11 +60,24 @@ module Parquet
       end
 
       def get_bytes(start : UInt64, length : Int32) : Bytes
-        @file.read_at(start, length)
+        buffer = Bytes.new(length)
+        read = 0
+        @file.read_at(start, length) do |io|
+          read = io.read(buffer)
+        end
+        if read != length
+          raise eof_err!("Expected to read #{length} bytes, read only #{read}")
+        end
+        buffer
       end
 
       def get_read(start : UInt64) : IO
-        IO::Memory.new(@file.read_at(start, (@file.size - start).to_i32))
+        remaining = (@file.size - start).to_i32
+        buffer = Bytes.new(remaining)
+        @file.read_at(start, remaining) do |io|
+          io.read_fully(buffer)
+        end
+        IO::Memory.new(buffer)
       end
     end
   end

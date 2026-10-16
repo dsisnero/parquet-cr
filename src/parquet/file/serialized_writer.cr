@@ -15,7 +15,7 @@ require "../column/page"
 module Parquet
   module File
     # Writes pages into a `TrackedWrite` sink.
-    class SerializedPageWriter
+    class SerializedPageWriter < Column::PageWriter
       def initialize(@sink : TrackedWrite)
       end
 

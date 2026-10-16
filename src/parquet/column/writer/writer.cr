@@ -21,6 +21,8 @@ module Parquet
     module Writer
       # A column writer for a Parquet column chunk.
       abstract class ColumnWriter
+        # Finalizes writes and returns the column chunk metadata and indexes.
+        abstract def close : ColumnCloseResult
       end
 
       # Typed column writer for a primitive column.

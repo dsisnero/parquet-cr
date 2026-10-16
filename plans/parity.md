@@ -49,14 +49,17 @@ little-endian layout.
   properties, the column level/value decoders, the column page
   types/interfaces, the bloom filter (`Sbbf`), the column writer value
   encoder, the column reader/writer impls, the compression `Codec` framework
-  (`GZipCodec`), and the serialized page reader/writer are done.
+  (`GZipCodec`), the serialized page reader/writer, and the file-level
+  `SerializedFileWriter`/`SerializedFileReader` (with `FileReader`/
+  `RowGroupReader`, `ReadOptions`/`ReadOptionsBuilder`) are done.
 - Next up (take the first unchecked item):
-  1. `SerializedFileWriter`/`SerializedFileReader` (file-level), then the record
-     API.
+  1. The record API (`record/`): `Triplet`/`Field`/`Record`, `RowIter`/
+     `RowAccessor`, and record reader/writer — needed for the deferred
+     `get_row_iter`/`FilePageIterator`.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 1173 `ported`, 168 `intentional_divergence`,
-  1 `skipped`, 2173 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1231 `ported`, 184 `intentional_divergence`,
+  1 `skipped`, 2099 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -79,8 +82,9 @@ Chunk status by area:
   page-index builders, the `ParquetMetaData` page-index plumbing, the sans-IO
   `ParquetMetaDataPushDecoder`, the synchronous `ChunkReader`-driven
   `ParquetMetaDataReader`, the `ParquetMetaDataWriter`/`ThriftMetadataWriter`,
-  the bloom filter (`Sbbf`), and the serialized page reader/writer done;
-  `SerializedFileReader`/`SerializedFileWriter` pending.
+  the bloom filter (`Sbbf`), the serialized page reader/writer, and the
+  file-level `SerializedFileReader`/`SerializedFileWriter` done; the offset-index
+  `Pages` state and the record API (`RowIter`) pending.
 - Phase 2.1 encodings: complete (all codecs, the `Encoder`/`Decoder`
   interfaces, and the `get_encoder`/`get_decoder` registries).
 - Phase 2.2 column: `ColumnDescriptor`, column page types/interfaces, the
@@ -312,13 +316,26 @@ Chunk status by area:
   `file_magic` (`src/parquet/file/tracked_write.cr`).
 - [~] Serialized page reader/writer: `SerializedPageWriter` + `SerializedPageReader`
   (offset-stream state) + `decode_page` done
-  (`src/parquet/file/serialized_{writer,reader}.cr`); `SerializedFileWriter`/
-  `SerializedFileReader` and the offset-index `Pages` state pending.
-- [ ] Reader/writer (`file/reader`, `file/writer`).
+  (`src/parquet/file/serialized_{writer,reader}.cr`); the offset-index `Pages`
+  state, `peek_next_page_offset`, CRC verification, and the `Iterator` impl are
+  pending.
+- [x] `SerializedFileWriter`/`SerializedRowGroupWriter`/`SerializedColumnWriter`
+  + `write_bloom_filters`/`OnClose*` (`src/parquet/file/writer.cr`) and
+  `FileReader`/`RowGroupReader`/`SerializedFileReader`/`SerializedRowGroupReader`
+  + `ReadOptions`/`ReadOptionsBuilder`/`get_midpoint_offset`
+  (`src/parquet/file/reader.cr`); `get_row_iter` (record API), `FilePageIterator`
+  (`PageIterator` trait), and the arrow `append_column*` splice paths are
+  deferred. Writer spec + reader spec ported (`writer_spec.cr`, `reader_spec.cr`).
 - [x] Bloom filter (`src/parquet/bloom_filter.cr`): `Sbbf` + `Block`, the
   `BloomFilterHeader` thrift struct, and the header/serialization helpers;
   `Parquet::XxHash64` (`src/parquet/util/xxhash.cr`).
-- [ ] 12 upstream test modules ported.
+- [~] Upstream test modules ported: `writer.rs` (`test_file_writer_*`,
+  `test_row_group_writer_*`, `test_bytes_writer_*`, `test_column_offset_index_file`,
+  `test_boolean_roundtrip`) in `writer_spec.cr`, and `reader.rs`/
+  `serialized_reader.rs` (`test_bytes_chunk_reader_*`, `test_file_reader`,
+  `test_reuse_file_chunk`, `test_file_reader_with_no_filter`/`_predicate`/
+  `_range`) in `reader_spec.cr`; the remaining `arrow`/record-dependent modules
+  are pending.
 
 ### 2.4 Record API
 
@@ -606,6 +623,33 @@ Chunk status by area:
   offset-stream `Values` state); the reader constructor is
   `SerializedPageReader.new_for_column`. `decode_page` is a `Parquet::File`
   module method.
+- `file::writer`: `SerializedFileWriter<W: Write>` is a single
+  `SerializedFileWriter` over an `IO` (via `TrackedWrite`); `TrackedWrite` now
+  exposes `inner`/`inner_mut`/`into_inner`/`flush` (all over the erased `IO`).
+  The `OnCloseColumnChunk`/`OnCloseRowGroup` callbacks are `Proc`s whose
+  closures capture the owning writer (the row-group path threads the
+  `SerializedPageWriter`/`ColumnWriter` and the file path threads the row-group
+  metadata/index arrays); `next_column_with_factory` and `get_on_close` are
+  inlined into `next_column`. Encryption (`file_encryptor`,
+  `set_column_crypto_metadata`, the page encryptor), the `Debug` impl, the
+  arrow-only `append_column*` splicing paths, and the
+  `parquet_buf`/`HeapSize` helpers are not ported; `start_file` is public.
+  `SerializedRowGroupWriter#close` returns the same `RowGroupMetaData` instance
+  recorded in the file (upstream returns a pre-bloom-filter clone), so
+  `flushed_row_groups` and `close` alias.
+- `file::reader`: `FileReader`/`RowGroupReader` (upstream traits) are abstract
+  classes; `ReadGroupPredicate` is a `Proc`; `SerializedFileReader<R>`/
+  `SerializedRowGroupReader<R>` are non-generic over `ChunkReader` and their
+  `Arc<R>`/lifetimes are erased. `with_range(start, end)` takes `end_` (Crystal
+  reserves `end`) and raises `GeneralError` where upstream panics.
+  `get_row_iter` (record `RowIter`) and `FilePageIterator` (the `PageIterator`
+  trait) are deferred to the record chunk; the `TryFrom<File>`/path constructors
+  map to `SerializedFileReader.new`, and the `IntoIterator`/`try_from` impls are
+  not modelled.
+- `chunk_reader`: `BytesChunkReader#get_read`/`get_bytes` and
+  `FileChunkReader#get_bytes` raise the upstream `EOF` messages
+  ("Expected to read ... while file has length ..."); `FileChunkReader` reads
+  through `File#read_at` blocks (Crystal's `read_at` yields an `IO`).
 - `column::writer` data holders: Rust's `LevelDataRef<'a>` enum (borrowed
   `&[i16]`) is a Crystal struct carrying a `Kind` with an owned `Array(Int16)`;
   `usize` sizes are `Int32`; `ColumnCloseResult::update_dictionary_location(mut

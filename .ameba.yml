@@ -15,17 +15,21 @@ Naming/AccessorMethodName:
     - src/parquet/file/properties.cr
     - src/parquet/compression.cr
     - src/parquet/column/writer/writer.cr
+    - src/parquet/file/reader.cr
 
 Naming/QueryBoolMethods:
   Excluded:
     - src/parquet/file/properties.cr
     - src/parquet/compression.cr
+    - src/parquet/file/reader.cr
 
 # The column writer is a large, direct port; its upstream `not_nil!`-equivalent
-# unwraps and cyclic control flow are kept as-is.
+# unwraps and cyclic control flow are kept as-is. The serialized file/row-group
+# writers are likewise direct ports.
 Lint/NotNil:
   Excluded:
     - src/parquet/column/writer/writer.cr
+    - src/parquet/file/writer.cr
 
 Lint/ShadowingOuterLocalVar:
   Excluded:

@@ -218,7 +218,7 @@ module Parquet
             reader.get_bytes(offset, SBBF_HEADER_SIZE_ESTIMATE)
           end
 
-        header, bitset_offset = chunk_read_bloom_filter_header_and_offset(offset, buffer)
+        header, bitset_offset = BloomFilter.chunk_read_bloom_filter_header_and_offset(offset, buffer)
 
         bitset =
           if column_metadata.bloom_filter_length
