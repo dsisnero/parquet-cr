@@ -2437,10 +2437,10 @@ parquet/src/errors.rs::method::ParquetError.source	method	ported	src/parquet/err
 parquet/src/errors.rs::method::io::Error.from	method	ported	src/parquet/errors.cr	ParquetError subclass hierarchy; upstream Display strings preserved; Result mapped to exceptions
 parquet/src/file/column_crypto_metadata.rs::method::ColumnCryptoMetaData.heap_size	method	missing	-	auto-generated
 parquet/src/file/column_crypto_metadata.rs::method::EncryptionWithColumnKey.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/footer_tail.rs::method::FooterTail.is_encrypted_footer	method	missing	-	auto-generated
-parquet/src/file/metadata/footer_tail.rs::method::FooterTail.metadata_length	method	missing	-	auto-generated
-parquet/src/file/metadata/footer_tail.rs::method::FooterTail.try_from	method	missing	-	auto-generated
-parquet/src/file/metadata/footer_tail.rs::method::FooterTail.try_new	method	missing	-	auto-generated
+parquet/src/file/metadata/footer_tail.rs::method::FooterTail.is_encrypted_footer	method	ported	src/parquet/file/metadata/footer_tail.cr	renamed FooterTail#encrypted_footer?
+parquet/src/file/metadata/footer_tail.rs::method::FooterTail.metadata_length	method	ported	src/parquet/file/metadata/footer_tail.cr	FooterTail
+parquet/src/file/metadata/footer_tail.rs::method::FooterTail.try_from	method	ported	src/parquet/file/metadata/footer_tail.cr	FooterTail
+parquet/src/file/metadata/footer_tail.rs::method::FooterTail.try_new	method	ported	src/parquet/file/metadata/footer_tail.cr	FooterTail
 parquet/src/file/metadata/memory.rs::method::Arc<T>.heap_size	method	missing	-	auto-generated
 parquet/src/file/metadata/memory.rs::method::Arc<dyn HeapSize>.heap_size	method	missing	-	auto-generated
 parquet/src/file/metadata/memory.rs::method::BoundaryOrder.heap_size	method	missing	-	auto-generated
@@ -2678,27 +2678,27 @@ parquet/src/file/metadata/page_index.rs::method::RowGroupPageIndex.new	method	po
 parquet/src/file/metadata/page_index.rs::method::RowGroupPageIndex.num_data_pages	method	ported	src/parquet/file/metadata/page_index.cr	RowGroupPageIndex
 parquet/src/file/metadata/page_index.rs::method::RowGroupPageIndex.offset_index	method	ported	src/parquet/file/metadata/page_index.cr	RowGroupPageIndex
 parquet/src/file/metadata/page_index.rs::method::RowGroupPageIndex.page_locations	method	ported	src/parquet/file/metadata/page_index.cr	RowGroupPageIndex
-parquet/src/file/metadata/parser.rs::method::MetadataParser.decode_metadata	method	missing	-	auto-generated
-parquet/src/file/metadata/parser.rs::method::MetadataParser.new	method	missing	-	auto-generated
-parquet/src/file/metadata/parser.rs::method::MetadataParser.with_file_decryption_properties	method	missing	-	auto-generated
-parquet/src/file/metadata/parser.rs::method::MetadataParser.with_metadata_options	method	missing	-	auto-generated
-parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.clear_all_ranges	method	missing	-	auto-generated
-parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.get_bytes	method	missing	-	auto-generated
-parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.push_range	method	missing	-	auto-generated
-parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.push_ranges	method	missing	-	auto-generated
-parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.try_decode	method	missing	-	auto-generated
-parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.try_new	method	missing	-	auto-generated
-parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.try_new_with_footer_tail	method	missing	-	auto-generated
-parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.try_new_with_metadata	method	missing	-	auto-generated
-parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.with_column_index_policy	method	missing	-	auto-generated
-parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.with_file_decryption_properties	method	missing	-	auto-generated
-parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.with_metadata_options	method	missing	-	auto-generated
-parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.with_offset_index_policy	method	missing	-	auto-generated
-parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.with_page_index_policy	method	missing	-	auto-generated
+parquet/src/file/metadata/parser.rs::method::MetadataParser.decode_metadata	method	ported	src/parquet/file/metadata/parser.cr	MetadataParser
+parquet/src/file/metadata/parser.rs::method::MetadataParser.new	method	ported	src/parquet/file/metadata/parser.cr	MetadataParser
+parquet/src/file/metadata/parser.rs::method::MetadataParser.with_file_decryption_properties	method	intentional_divergence	src/parquet/file/metadata/parser.cr	encryption feature not ported
+parquet/src/file/metadata/parser.rs::method::MetadataParser.with_metadata_options	method	ported	src/parquet/file/metadata/parser.cr	MetadataParser
+parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.clear_all_ranges	method	ported	src/parquet/file/metadata/push_decoder.cr	ParquetMetaDataPushDecoder
+parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.get_bytes	method	ported	src/parquet/file/metadata/push_decoder.cr	ParquetMetaDataPushDecoder (private)
+parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.push_range	method	ported	src/parquet/file/metadata/push_decoder.cr	ParquetMetaDataPushDecoder
+parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.push_ranges	method	ported	src/parquet/file/metadata/push_decoder.cr	ParquetMetaDataPushDecoder
+parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.try_decode	method	ported	src/parquet/file/metadata/push_decoder.cr	ParquetMetaDataPushDecoder
+parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.try_new	method	ported	src/parquet/file/metadata/push_decoder.cr	ParquetMetaDataPushDecoder
+parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.try_new_with_footer_tail	method	ported	src/parquet/file/metadata/push_decoder.cr	upstream pub(crate); public here
+parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.try_new_with_metadata	method	ported	src/parquet/file/metadata/push_decoder.cr	upstream pub(crate); public here
+parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.with_column_index_policy	method	ported	src/parquet/file/metadata/push_decoder.cr	ParquetMetaDataPushDecoder
+parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.with_file_decryption_properties	method	intentional_divergence	src/parquet/file/metadata/push_decoder.cr	encryption feature not ported
+parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.with_metadata_options	method	ported	src/parquet/file/metadata/push_decoder.cr	ParquetMetaDataPushDecoder
+parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.with_offset_index_policy	method	ported	src/parquet/file/metadata/push_decoder.cr	ParquetMetaDataPushDecoder
+parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.with_page_index_policy	method	ported	src/parquet/file/metadata/push_decoder.cr	ParquetMetaDataPushDecoder
 parquet/src/file/metadata/reader.rs::method::MetadataFetchFn<F>.fetch	method	missing	-	auto-generated
 parquet/src/file/metadata/reader.rs::method::MetadataSuffixFetchFn<F1, F2>.fetch	method	missing	-	auto-generated
 parquet/src/file/metadata/reader.rs::method::MetadataSuffixFetchFn<F1, F2>.fetch_suffix	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::PageIndexPolicy.from	method	missing	-	auto-generated
+parquet/src/file/metadata/reader.rs::method::PageIndexPolicy.from	method	ported	src/parquet/file/metadata/reader.cr	PageIndexPolicy.from(Bool)
 parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.decode_footer_metadata	method	missing	-	auto-generated
 parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.decode_metadata	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataReader.decode_metadata
 parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.decode_metadata_with_options	method	missing	-	auto-generated
@@ -3450,21 +3450,21 @@ parquet/src/util/interner.rs::method::Interner<S>.into_inner	method	missing	-	au
 parquet/src/util/interner.rs::method::Interner<S>.new	method	missing	-	auto-generated
 parquet/src/util/interner.rs::method::Interner<S>.storage	method	missing	-	auto-generated
 parquet/src/util/prefix.rs::const::BLOCK	const	missing	-	auto-generated
-parquet/src/util/push_buffers.rs::method::PushBuffers.buffered_bytes	method	missing	-	auto-generated
-parquet/src/util/push_buffers.rs::method::PushBuffers.clear_all_ranges	method	missing	-	auto-generated
-parquet/src/util/push_buffers.rs::method::PushBuffers.clear_ranges	method	missing	-	auto-generated
-parquet/src/util/push_buffers.rs::method::PushBuffers.file_len	method	missing	-	auto-generated
-parquet/src/util/push_buffers.rs::method::PushBuffers.fmt	method	missing	-	auto-generated
-parquet/src/util/push_buffers.rs::method::PushBuffers.get_bytes	method	missing	-	auto-generated
-parquet/src/util/push_buffers.rs::method::PushBuffers.get_read	method	missing	-	auto-generated
-parquet/src/util/push_buffers.rs::method::PushBuffers.has_range	method	missing	-	auto-generated
-parquet/src/util/push_buffers.rs::method::PushBuffers.iter	method	missing	-	auto-generated
-parquet/src/util/push_buffers.rs::method::PushBuffers.len	method	missing	-	auto-generated
-parquet/src/util/push_buffers.rs::method::PushBuffers.new	method	missing	-	auto-generated
-parquet/src/util/push_buffers.rs::method::PushBuffers.push_range	method	missing	-	auto-generated
-parquet/src/util/push_buffers.rs::method::PushBuffers.push_ranges	method	missing	-	auto-generated
-parquet/src/util/push_buffers.rs::method::PushBuffers.read	method	missing	-	auto-generated
-parquet/src/util/push_buffers.rs::method::PushBuffers.with_offset	method	missing	-	auto-generated
+parquet/src/util/push_buffers.rs::method::PushBuffers.buffered_bytes	method	intentional_divergence	src/parquet/util/push_buffers.cr	arrow-feature only; not needed by metadata push decoder
+parquet/src/util/push_buffers.rs::method::PushBuffers.clear_all_ranges	method	ported	src/parquet/util/push_buffers.cr	PushBuffers
+parquet/src/util/push_buffers.rs::method::PushBuffers.clear_ranges	method	intentional_divergence	src/parquet/util/push_buffers.cr	arrow-feature only; not ported
+parquet/src/util/push_buffers.rs::method::PushBuffers.file_len	method	ported	src/parquet/util/push_buffers.cr	PushBuffers
+parquet/src/util/push_buffers.rs::method::PushBuffers.fmt	method	intentional_divergence	src/parquet/util/push_buffers.cr	Rust Display impl; not ported
+parquet/src/util/push_buffers.rs::method::PushBuffers.get_bytes	method	ported	src/parquet/util/push_buffers.cr	PushBuffers
+parquet/src/util/push_buffers.rs::method::PushBuffers.get_read	method	intentional_divergence	src/parquet/util/push_buffers.cr	ChunkReader trait not ported
+parquet/src/util/push_buffers.rs::method::PushBuffers.has_range	method	ported	src/parquet/util/push_buffers.cr	renamed PushBuffers#has_range?
+parquet/src/util/push_buffers.rs::method::PushBuffers.iter	method	ported	src/parquet/util/push_buffers.cr	inlined into PushBuffers methods
+parquet/src/util/push_buffers.rs::method::PushBuffers.len	method	intentional_divergence	src/parquet/util/push_buffers.cr	Length trait not ported
+parquet/src/util/push_buffers.rs::method::PushBuffers.new	method	ported	src/parquet/util/push_buffers.cr	PushBuffers
+parquet/src/util/push_buffers.rs::method::PushBuffers.push_range	method	ported	src/parquet/util/push_buffers.cr	PushBuffers
+parquet/src/util/push_buffers.rs::method::PushBuffers.push_ranges	method	ported	src/parquet/util/push_buffers.cr	PushBuffers
+parquet/src/util/push_buffers.rs::method::PushBuffers.read	method	intentional_divergence	src/parquet/util/push_buffers.cr	Read impl (arrow push decoder) not ported
+parquet/src/util/push_buffers.rs::method::PushBuffers.with_offset	method	intentional_divergence	src/parquet/util/push_buffers.cr	ChunkReader offset support not ported
 parquet/src/util/test_common/page_util.rs::method::DataPageBuilderImpl.add_def_levels	method	missing	-	auto-generated
 parquet/src/util/test_common/page_util.rs::method::DataPageBuilderImpl.add_indices	method	missing	-	auto-generated
 parquet/src/util/test_common/page_util.rs::method::DataPageBuilderImpl.add_levels	method	missing	-	auto-generated

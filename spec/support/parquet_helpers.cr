@@ -1,5 +1,12 @@
 # Shared helpers for Parquet specs.
 module ParquetTestHelpers
+  FIXTURE_DIR = File.expand_path("../../vendor/arrow-rs/parquet-testing/data", __DIR__)
+
+  # Reads a golden fixture from `parquet-testing/data` as a byte buffer.
+  def self.fixture_bytes(name : String) : Bytes
+    File.read(File.join(FIXTURE_DIR, name)).to_slice.dup
+  end
+
   # Builds a two-column (`a`, `b`, both INT32) test schema descriptor.
   def self.test_schema_descr : Parquet::Schema::SchemaDescriptor
     a = Parquet::Schema::Type.primitive_type_builder("a", Parquet::Type::INT32).build.as(Parquet::Schema::Type)

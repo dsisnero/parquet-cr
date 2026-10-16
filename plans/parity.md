@@ -36,17 +36,17 @@ little-endian layout.
 - Current focus: **Phase 2 — file metadata + page-index integration.** The core
   value/wire layer (errors, thrift protocol, `basic`, `data_type` value types,
   `schema`), the file metadata + statistics + footer round-trip, the offset/
-  column index core + decode, the page-index builders, and the
-  `ParquetMetaDataBuilder`/`ParquetMetaDataOptions` plumbing are done.
+  column index core + decode, the page-index builders, the
+  `ParquetMetaDataBuilder`/`ParquetMetaDataOptions` plumbing, and the
+  sans-IO `ParquetMetaDataPushDecoder` are done.
 - Next up (take the first unchecked item):
-  1. `ParquetMetaDataPushDecoder` and the fetch/suffix machinery of
-     `ParquetMetaDataReader`/`ParquetMetaDataWriter` (channel-driven metadata
-     parsing). The synchronous `decode_offset_index`/`acc_range` are done.
-     Async/object-store suffix fetches are likely an intentional divergence.
+  1. Pull-based `ParquetMetaDataReader`/`ParquetMetaDataWriter` fetch/suffix
+     machinery driven by `ChunkReader` (`reader.rs`/`writer.rs`); async/
+     object-store suffix fetches are likely an intentional divergence.
   2. Encodings (RLE/bit-packing, levels, plain/dictionary/delta/ALP), then
      column reader/writer, then file reader/writer, then record API.
-- Progress by counts (ledger): 488 `ported`, 25 `intentional_divergence`,
-  1 `skipped`, 3001 `missing` (of 3515 rows).
+- Progress by counts (ledger): 516 `ported`, 34 `intentional_divergence`,
+  1 `skipped`, 2964 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -63,8 +63,9 @@ Chunk status by area:
 - Phase 1.7 util: pending (`bit_util` partially needed by column code).
 - Phase 1.8 compression: pending.
 - Phase 2.3 file metadata/statistics/page-index core, column-index decode,
-  page-index builders, and the `ParquetMetaData` page-index plumbing done;
-  `ParquetMetaDataPushDecoder`, file reader/writer, bloom filter pending.
+  page-index builders, the `ParquetMetaData` page-index plumbing, and the
+  sans-IO `ParquetMetaDataPushDecoder` done; pull-based reader/writer fetch
+  machinery, file reader/writer, bloom filter pending.
 - Phases 2.1 encodings, 2.2 column, 2.4 record, 2.5 CLI: pending.
 - Phase 3 (variant/geospatial/derive/encryption/arrow/async): pending.
 
@@ -153,7 +154,8 @@ Chunk status by area:
 
 ### 1.7 Util
 
-- [ ] Bit utilities, cursor, page/bit readers (`util/`, 11 files).
+- [x] `PushBuffers` (`src/parquet/util/push_buffers.cr`).
+- [ ] Bit utilities, cursor, page/bit readers (`util/`, remaining files).
 - [ ] CRC32 checksum helpers.
 
 ### 1.8 Compression
@@ -211,8 +213,13 @@ Chunk status by area:
   `ParquetMetaDataOptions`/`ParquetStatisticsPolicy`
   (`src/parquet/file/metadata/{parquet_metadata,options}.cr`), plus
   `decode_offset_index`/`acc_range` (`index_reader.cr`).
-- [ ] `ParquetMetaDataPushDecoder` and the full `ParquetMetaDataReader`/`Writer`
-  IO machinery (async, suffix fetches).
+- [x] `ParquetMetaDataPushDecoder` + `MetadataParser` + `parse_page_index` +
+  `range_for_page_index` (`src/parquet/file/metadata/{push_decoder,parser}.cr`),
+  `FooterTail` (`footer_tail.cr`), `PageIndexPolicy` (`reader.cr`), `DecodeResult`
+  (`src/parquet/decode_result.cr`), and `PushBuffers`
+  (`src/parquet/util/push_buffers.cr`).
+- [ ] Pull-based `ParquetMetaDataReader`/`ParquetMetaDataWriter` fetch/suffix IO
+  machinery (`ChunkReader`; async/object-store).
 - [ ] Serialized reader/writer (footer + page headers).
 - [ ] Reader/writer (`file/reader`, `file/writer`).
 - [ ] Bloom filter (`bloom_filter/`).
@@ -357,6 +364,21 @@ Chunk status by area:
   `SkipExcept(Set(Int32))`, `KeepAll`/`SkipAll` are constants, and `is_skip` →
   `skip?`. `set_*` keep upstream names under ameba disables; `Default`/`new` map
   to the default initializer.
+- `DecodeResult<T>`: Rust's generic enum is a generic class carrying a `Kind`
+  plus the payload (`needs_data?`/`data?`/`finished?`, `ranges`, `data`).
+- `FooterTail`: `is_encrypted_footer` → `encrypted_footer?`;
+  `try_new`/`try_from` both take a `Bytes` (Crystal has no fixed-size array).
+- `PushBuffers`: the `ChunkReader`/`Length`/`Display`/`Read` impls and the
+  arrow-only `buffered_bytes`/`clear_ranges` are not ported; `has_range` →
+  `has_range?`; `get_bytes` returns a `Bytes` slice and raises
+  `NeedMoreDataRangeError`.
+- `ParquetMetaDataPushDecoder`: `PageIndexPolicy` is an enum with
+  `from(Bool)`; the `try_new_with_footer_tail`/`try_new_with_metadata`
+  constructors (upstream `pub(crate)`) are public; encryption
+  (`with_file_decryption_properties`) is not ported, and an encrypted footer
+  raises as upstream does without the feature. `MetadataParser` threads
+  `metadata_options` through but statistics-skipping/schema overrides are not
+  applied yet.
 
 ## Notes
 

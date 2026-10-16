@@ -222,8 +222,11 @@ module Parquet
 
       # Decodes `ParquetMetaData` from the thrift-encoded footer (without the
       # trailing length + magic).
+      #
+      # Divergence: `options` is accepted for parity but statistics-skipping /
+      # schema overrides are not applied yet.
       # ameba:disable Metrics/CyclomaticComplexity
-      def self.parquet_metadata_from_bytes(bytes : Bytes) : ParquetMetaData
+      def self.parquet_metadata_from_bytes(bytes : Bytes, _options : ParquetMetaDataOptions? = nil) : ParquetMetaData
         prot = ::Parquet::Thrift::ThriftSliceInputProtocol.new(bytes)
 
         version = nil.as(Int32?)

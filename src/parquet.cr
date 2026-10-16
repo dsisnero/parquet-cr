@@ -1,4 +1,6 @@
 require "./parquet/errors"
+require "./parquet/decode_result"
+require "./parquet/util/push_buffers"
 require "./parquet/thrift"
 require "./parquet/macros"
 require "./parquet/basic"
@@ -17,6 +19,10 @@ require "./parquet/file/page_index/offset_index"
 require "./parquet/file/page_index/column_index"
 require "./parquet/file/page_index/index_reader"
 require "./parquet/file/metadata/page_index"
+require "./parquet/file/metadata/footer_tail"
+require "./parquet/file/metadata/reader"
+require "./parquet/file/metadata/parser"
+require "./parquet/file/metadata/push_decoder"
 
 module Parquet
   VERSION = "0.1.0"
