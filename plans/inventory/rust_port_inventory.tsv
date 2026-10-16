@@ -2309,12 +2309,12 @@ parquet/src/encodings/encoding/mod.rs::method::T.test_dict_internal	method	missi
 parquet/src/encodings/encoding/mod.rs::method::T.test_internal	method	missing	-	auto-generated
 parquet/src/encodings/encoding/mod.rs::method::f32.get_encoder	method	missing	-	auto-generated
 parquet/src/encodings/encoding/mod.rs::method::f64.get_encoder	method	missing	-	auto-generated
-parquet/src/encodings/levels.rs::method::LevelEncoder.consume	method	missing	-	auto-generated
-parquet/src/encodings/levels.rs::method::LevelEncoder.flush_to	method	missing	-	auto-generated
-parquet/src/encodings/levels.rs::method::LevelEncoder.put_n_with_observer	method	missing	-	auto-generated
-parquet/src/encodings/levels.rs::method::LevelEncoder.put_with_observer	method	missing	-	auto-generated
-parquet/src/encodings/levels.rs::method::LevelEncoder.v1_streaming	method	missing	-	auto-generated
-parquet/src/encodings/levels.rs::method::LevelEncoder.v2_streaming	method	missing	-	auto-generated
+parquet/src/encodings/levels.rs::method::LevelEncoder.consume	method	ported	src/parquet/encodings/levels.cr	LevelEncoder
+parquet/src/encodings/levels.rs::method::LevelEncoder.flush_to	method	ported	src/parquet/encodings/levels.cr	LevelEncoder (block instead of FnOnce)
+parquet/src/encodings/levels.rs::method::LevelEncoder.put_n_with_observer	method	ported	src/parquet/encodings/levels.cr	LevelEncoder (block observer)
+parquet/src/encodings/levels.rs::method::LevelEncoder.put_with_observer	method	ported	src/parquet/encodings/levels.cr	LevelEncoder (block observer)
+parquet/src/encodings/levels.rs::method::LevelEncoder.v1_streaming	method	ported	src/parquet/encodings/levels.cr	LevelEncoder.v1_streaming
+parquet/src/encodings/levels.rs::method::LevelEncoder.v2_streaming	method	ported	src/parquet/encodings/levels.cr	LevelEncoder.v2_streaming
 parquet/src/encodings/rle.rs::const::BIT_PACK_GROUP_SIZE	const	ported	src/parquet/encodings/rle.cr	Encodings::BIT_PACK_GROUP_SIZE
 parquet/src/encodings/rle.rs::const::CHUNK	const	intentional_divergence	src/parquet/encodings/rle.cr	test-only const
 parquet/src/encodings/rle.rs::const::MAX_GROUPS_PER_BIT_PACKED_RUN	const	ported	src/parquet/encodings/rle.cr	Encodings::MAX_GROUPS_PER_BIT_PACKED_RUN

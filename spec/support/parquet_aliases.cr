@@ -28,3 +28,4 @@ alias BitUtil = Parquet::Util::BitUtil
 
 alias RleEncoder = Parquet::Encodings::RleEncoder
 alias RleDecoder = Parquet::Encodings::RleDecoder
+alias LevelEncoder = Parquet::Encodings::LevelEncoder

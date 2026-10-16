@@ -41,16 +41,16 @@ little-endian layout.
   `ParquetMetaDataPushDecoder`, the synchronous `ChunkReader`-driven
   `ParquetMetaDataReader`, and the   `ParquetMetaDataWriter`/
   `ThriftMetadataWriter` (footer + page-index serialization) are done, and the
-  `util` bit layer (`BitReader`/`BitWriter`) plus the RLE/bit-packing hybrid
-  (`RleEncoder`/`RleDecoder`) are started.
+  `util` bit layer (`BitReader`/`BitWriter`), the RLE/bit-packing hybrid
+  (`RleEncoder`/`RleDecoder`), and level encoding (`LevelEncoder`) are started.
 - Next up (take the first unchecked item):
-  1. Encodings: levels (`encodings/levels.rs`), then plain/dictionary/delta/ALP,
-     then the column reader/writer, then serialized/file reader+writer, then
-     record API and bloom filter.
+  1. Encodings: plain/dictionary/delta/byte-stream-split/ALP, then the column
+     reader/writer, then serialized/file reader+writer, then record API and
+     bloom filter.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 616 `ported`, 87 `intentional_divergence`,
-  1 `skipped`, 2811 `missing` (of 3515 rows).
+- Progress by counts (ledger): 622 `ported`, 87 `intentional_divergence`,
+  1 `skipped`, 2805 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -176,7 +176,9 @@ Chunk status by area:
 
 - [x] RLE / bit-packing hybrid (`src/parquet/encodings/rle.cr`):
   `RleEncoder`/`RleDecoder`.
-- [ ] Levels (`encodings/levels.rs`).
+- [x] Levels (`src/parquet/encodings/levels.cr`): `LevelEncoder`
+  (v1_streaming/v2_streaming/put_with_observer/put_n_with_observer/consume/
+  flush_to).
 - [ ] Plain, dictionary, delta, byte-stream-split, RLE codecs
   (`encodings/encoding`).
 - [ ] ALP codec (`encodings/alp.rs`).
@@ -399,6 +401,9 @@ Chunk status by area:
   `has_metadata?`, `parse_metadata` is public (upstream private), `metadata_size`
   returns `Int32?`, and `decode_schema` is implemented via a full metadata
   decode.
+- `encodings::levels`: the Rust `LevelEncoder::Rle`/`RleV2` enum is a struct
+  with a `v2` flag plus the shared `RleEncoder`; observer callbacks are Crystal
+  blocks; `flush_to` takes a block rather than a Rust `FnOnce`.
 - `encodings::rle`: `FromBitpacked` generic dispatch becomes `T.class`
   (`get(T.class)`/`get_batch(T.class, buffer)`); the decoder's batch/dict paths
   read values with the scalar path (no `unpack`/`index_buf` chunking);
