@@ -114,7 +114,7 @@ little-endian layout.
 - Last commit: `4e0ea76 port: parquet-variant value layer read side
   (Variant/VariantObject/VariantList)`; gates green (`make lint`, `make test` ->
   730 examples, 0 failures).
-- Progress by counts (ledger): 1611 `ported`, 203 `intentional_divergence`,
+- Progress by counts (ledger): 1613 `ported`, 201 `intentional_divergence`,
   1 `skipped`, 1700 `missing` (of 3515 rows).
 
 Chunk status by area:
@@ -538,6 +538,23 @@ Chunk status by area:
   functions raise `ParquetError` subclasses instead of returning a result type;
   `ParquetError::External(Box<dyn Error>)` maps to `ExternalError` holding an
   `Exception`. Display strings are preserved exactly.
+- Variant value layer: the `Variant` enum is a sealed class hierarchy; built-in
+  type names are shadowed inside the class body (built-ins written `::Foo`).
+  `Option<()>` → `Bool` (`Variant#as_null`); Rust `From`/`TryFrom` become
+  `Variant.from_*` factories; the Rust `Debug` impls become
+  `Variant#debug_string(pretty)`/`#debug_to`. Fallible accessors raise instead of
+  returning `Result` (see the Errors entry).
+- Variant builders: Rust's affine borrows and `Drop`-based rollback are not
+  modelled, so an unfinished child builder is rolled back explicitly via
+  `abandon` (`ParentState#rollback`), and multiple children may coexist (Rust
+  forbids it). `Into<Variant>` is the `VariantValue` union +
+  `ValueConversion.to_variant`; bare `Time` (date/UTC/naive) is deliberately not
+  a `VariantValue` (wrap with `Variant.from_date`/`from_datetime_utc`/
+  `from_naive_datetime`; only `Time::Span` maps via `from_time`). The
+  `VariantBuilderExt` trait and its `ObjectFieldBuilder` wrapper (only used by
+  `parquet-variant-compute`) are not ported; the builders expose the equivalent
+  inherent methods, so `append_null` maps to `append_value(Variant.from_nil)`.
+  The `try_*` builder methods raise instead of returning `Result`.
 - Thrift traits: `ReadThrift`, `WriteThrift`, and `WriteThriftField` are Rust
   traits with an associated `ELEMENT_TYPE` constant. Crystal has no associated
   constants, so value dispatch lives on `ThriftCompactOutputProtocol` /

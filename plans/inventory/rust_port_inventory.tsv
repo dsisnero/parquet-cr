@@ -323,9 +323,9 @@ parquet-variant/src/builder.rs::method::ValueBuilder.append_int16	method	ported	
 parquet-variant/src/builder.rs::method::ValueBuilder.append_int32	method	ported	src/parquet_variant/builder/state.cr	append_int32
 parquet-variant/src/builder.rs::method::ValueBuilder.append_int64	method	ported	src/parquet_variant/builder/state.cr	append_int64
 parquet-variant/src/builder.rs::method::ValueBuilder.append_int8	method	ported	src/parquet_variant/builder/state.cr	append_int8
-parquet-variant/src/builder.rs::method::ValueBuilder.append_list	method	ported	src/parquet_variant/builder/state.cr	append_list
+parquet-variant/src/builder.rs::method::ValueBuilder.append_list	method	ported	src/parquet_variant/builder/state.cr	append_list; VariantValue union replaces Into<Variant>
 parquet-variant/src/builder.rs::method::ValueBuilder.append_null	method	ported	src/parquet_variant/builder/state.cr	append_null
-parquet-variant/src/builder.rs::method::ValueBuilder.append_object	method	ported	src/parquet_variant/builder/state.cr	append_object
+parquet-variant/src/builder.rs::method::ValueBuilder.append_object	method	ported	src/parquet_variant/builder/state.cr	append_object; VariantValue union replaces Into<Variant>
 parquet-variant/src/builder.rs::method::ValueBuilder.append_primitive_header	method	ported	src/parquet_variant/builder/state.cr	append_primitive_header
 parquet-variant/src/builder.rs::method::ValueBuilder.append_short_string	method	ported	src/parquet_variant/builder/state.cr	append_short_string
 parquet-variant/src/builder.rs::method::ValueBuilder.append_slice	method	ported	src/parquet_variant/builder/state.cr	append_slice
@@ -337,19 +337,19 @@ parquet-variant/src/builder.rs::method::ValueBuilder.append_timestamp_ntz_micros
 parquet-variant/src/builder.rs::method::ValueBuilder.append_timestamp_ntz_nanos	method	ported	src/parquet_variant/builder/state.cr	append_timestamp_ntz_nanos
 parquet-variant/src/builder.rs::method::ValueBuilder.append_u8	method	ported	src/parquet_variant/builder/state.cr	ValueBuilder#append_byte
 parquet-variant/src/builder.rs::method::ValueBuilder.append_uuid	method	ported	src/parquet_variant/builder/state.cr	append_uuid
-parquet-variant/src/builder.rs::method::ValueBuilder.append_variant	method	ported	src/parquet_variant/builder/state.cr	append_variant
-parquet-variant/src/builder.rs::method::ValueBuilder.append_variant_bytes	method	ported	src/parquet_variant/builder/state.cr	append_variant_bytes
+parquet-variant/src/builder.rs::method::ValueBuilder.append_variant	method	ported	src/parquet_variant/builder/state.cr	append_variant; VariantValue union replaces Into<Variant>
+parquet-variant/src/builder.rs::method::ValueBuilder.append_variant_bytes	method	ported	src/parquet_variant/builder/state.cr	append_variant_bytes; VariantValue union replaces Into<Variant>
 parquet-variant/src/builder.rs::method::ValueBuilder.inner_mut	method	intentional_divergence	src/parquet_variant/builder/state.cr	ValueBuilder#buffer exposes the Array(UInt8)
 parquet-variant/src/builder.rs::method::ValueBuilder.into_inner	method	ported	src/parquet_variant/builder/state.cr	into_inner
 parquet-variant/src/builder.rs::method::ValueBuilder.new	method	ported	src/parquet_variant/builder/state.cr	new
 parquet-variant/src/builder.rs::method::ValueBuilder.offset	method	ported	src/parquet_variant/builder/state.cr	offset
-parquet-variant/src/builder.rs::method::ValueBuilder.try_append_list	method	ported	src/parquet_variant/builder/state.cr	try_append_list
-parquet-variant/src/builder.rs::method::ValueBuilder.try_append_object	method	ported	src/parquet_variant/builder/state.cr	try_append_object
-parquet-variant/src/builder.rs::method::ValueBuilder.try_append_variant	method	ported	src/parquet_variant/builder/state.cr	try_append_variant
+parquet-variant/src/builder.rs::method::ValueBuilder.try_append_list	method	ported	src/parquet_variant/builder/state.cr	try_append_list; raises (Result->exception)
+parquet-variant/src/builder.rs::method::ValueBuilder.try_append_object	method	ported	src/parquet_variant/builder/state.cr	try_append_object; raises (Result->exception)
+parquet-variant/src/builder.rs::method::ValueBuilder.try_append_variant	method	ported	src/parquet_variant/builder/state.cr	try_append_variant; raises (Result->exception)
 parquet-variant/src/builder.rs::method::VariantBuilder.add_field_name	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#add_field_name
 parquet-variant/src/builder.rs::method::VariantBuilder.append_null	method	intentional_divergence	src/parquet_variant/builder/variant_builder.cr	VariantBuilderExt not ported; use append_value(Variant.from_nil)
-parquet-variant/src/builder.rs::method::VariantBuilder.append_value	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#append_value
-parquet-variant/src/builder.rs::method::VariantBuilder.append_value_bytes	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#append_value_bytes
+parquet-variant/src/builder.rs::method::VariantBuilder.append_value	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#append_value; VariantValue union replaces Into<Variant>
+parquet-variant/src/builder.rs::method::VariantBuilder.append_value_bytes	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#append_value_bytes; VariantValue union replaces Into<Variant>
 parquet-variant/src/builder.rs::method::VariantBuilder.check_no_top_level_value	method	ported	src/parquet_variant/builder/variant_builder.cr	check_no_top_level_value
 parquet-variant/src/builder.rs::method::VariantBuilder.ensure_no_top_level_value	method	ported	src/parquet_variant/builder/variant_builder.cr	ensure_no_top_level_value
 parquet-variant/src/builder.rs::method::VariantBuilder.finish	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#finish
@@ -358,16 +358,16 @@ parquet-variant/src/builder.rs::method::VariantBuilder.new	method	ported	src/par
 parquet-variant/src/builder.rs::method::VariantBuilder.new_list	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#new_list
 parquet-variant/src/builder.rs::method::VariantBuilder.new_object	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#new_object
 parquet-variant/src/builder.rs::method::VariantBuilder.reserve	method	intentional_divergence	src/parquet_variant/builder/variant_builder.cr	not ported (Array growth)
-parquet-variant/src/builder.rs::method::VariantBuilder.try_append_value	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#try_append_value
+parquet-variant/src/builder.rs::method::VariantBuilder.try_append_value	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#try_append_value; raises (Result->exception)
 parquet-variant/src/builder.rs::method::VariantBuilder.try_append_value_bytes	method	ported	src/parquet_variant/builder/variant_builder.cr	append_value_bytes raises
-parquet-variant/src/builder.rs::method::VariantBuilder.try_finish	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#try_finish
+parquet-variant/src/builder.rs::method::VariantBuilder.try_finish	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#try_finish; raises (Result->exception)
 parquet-variant/src/builder.rs::method::VariantBuilder.try_new_list	method	ported	src/parquet_variant/builder/variant_builder.cr	new_list raises on an existing top-level value
 parquet-variant/src/builder.rs::method::VariantBuilder.try_new_object	method	ported	src/parquet_variant/builder/variant_builder.cr	new_object raises on an existing top-level value
-parquet-variant/src/builder.rs::method::VariantBuilder.try_with_value	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#try_with_value
+parquet-variant/src/builder.rs::method::VariantBuilder.try_with_value	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#try_with_value; raises (Result->exception)
 parquet-variant/src/builder.rs::method::VariantBuilder.with_field_names	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#with_field_names
 parquet-variant/src/builder.rs::method::VariantBuilder.with_metadata	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#with_metadata
 parquet-variant/src/builder.rs::method::VariantBuilder.with_validate_unique_fields	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#with_validate_unique_fields
-parquet-variant/src/builder.rs::method::VariantBuilder.with_value	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#with_value
+parquet-variant/src/builder.rs::method::VariantBuilder.with_value	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#with_value; VariantValue union replaces Into<Variant>
 parquet-variant/src/builder/list.rs::method::ListBuilder<'_, S>.append_null	method	intentional_divergence	src/parquet_variant/builder/list_builder.cr	VariantBuilderExt not ported; use append_value(Variant.from_nil)
 parquet-variant/src/builder/list.rs::method::ListBuilder<'_, S>.append_value	method	ported	src/parquet_variant/builder/list_builder.cr	append_value
 parquet-variant/src/builder/list.rs::method::ListBuilder<'_, S>.extend	method	ported	src/parquet_variant/builder/list_builder.cr	extend
@@ -448,14 +448,14 @@ parquet-variant/src/path.rs::method::VariantPathElement<'a>.index	method	ported	
 parquet-variant/src/variant.rs::const::MAX_NESTING_DEPTH	const	ported	src/parquet_variant/variant.cr	MAX_NESTING_DEPTH
 parquet-variant/src/variant.rs::const::MAX_SHORT_STRING_BYTES	const	ported	src/parquet_variant/short_string.cr	MAX_SHORT_STRING_BYTES
 parquet-variant/src/variant.rs::method::&'a str.from	method	ported	src/parquet_variant/variant.cr	Variant.from(String)
-parquet-variant/src/variant.rs::method::HexString<'_>.fmt	method	intentional_divergence	src/parquet_variant/variant.cr	binary hex Debug helper deferred to 3.1b
-parquet-variant/src/variant.rs::method::InvalidVariant.fmt	method	intentional_divergence	src/parquet_variant/variant.cr	invalid-value Debug sentinel deferred to 3.1b
+parquet-variant/src/variant.rs::method::HexString<'_>.fmt	method	ported	src/parquet_variant/variant/debug.cr	hex_bytes helper
+parquet-variant/src/variant.rs::method::InvalidVariant.fmt	method	intentional_divergence	src/parquet_variant/variant/debug.cr	no invalid-value sentinel; iter raises instead
 parquet-variant/src/variant.rs::method::ShortString<'_>.as_ref	method	ported	src/parquet_variant/short_string.cr	ShortString#as_str
 parquet-variant/src/variant.rs::method::ShortString<'_>.deref	method	intentional_divergence	src/parquet_variant/short_string.cr	Deref maps to #value/#as_str
 parquet-variant/src/variant.rs::method::ShortString<'a>.as_str	method	ported	src/parquet_variant/short_string.cr	ShortString#as_str
 parquet-variant/src/variant.rs::method::ShortString<'a>.try_from	method	ported	src/parquet_variant/short_string.cr	ShortString.try_new
 parquet-variant/src/variant.rs::method::ShortString<'a>.try_new	method	ported	src/parquet_variant/short_string.cr	ShortString.try_new
-parquet-variant/src/variant.rs::method::Variant<'_, '_>.fmt	method	intentional_divergence	src/parquet_variant/variant.cr	to_s replaces Rust Debug; exact Debug output with value builder (3.1b)
+parquet-variant/src/variant.rs::method::Variant<'_, '_>.fmt	method	ported	src/parquet_variant/variant/debug.cr	Variant#debug_string/#debug_to (compact + alternate)
 parquet-variant/src/variant.rs::method::Variant<'_, '_>.from	method	ported	src/parquet_variant/variant.cr	Variant.from_* factories (From impls)
 parquet-variant/src/variant.rs::method::Variant<'_, '_>.try_from	method	ported	src/parquet_variant/variant.cr	TryFrom<(int, u8)> via VariantDecimalN.try_new
 parquet-variant/src/variant.rs::method::Variant<'_, 'v>.from	method	ported	src/parquet_variant/variant.cr	Variant.from_* factories (From impls)
