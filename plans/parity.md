@@ -89,7 +89,7 @@ Chunk status by area:
   headers done; printer + primitive builder pending.
 - Phase 1.7 util: `BitReader`/`BitWriter`, `Interner`/`Storage`, `PushBuffers`,
   `common_prefix_length`, and bit packing (`BitPack.unpack*`) done; cursor/page
-  readers and CRC32 pending.
+  readers pending.
 - Phase 1.8 compression: `Codec` framework + `GZipCodec` done;
   snappy/lzo/brotli/lz4/zstd pending (need Crystal shards).
 - Phase 2.3 file metadata/statistics/page-index core, column-index decode,
@@ -220,7 +220,9 @@ Chunk status by area:
   `64` (scalar; the `NUM_BITS` const generic is a `num_bits` parameter);
   `bit_pack_spec.cr` ported.
 - [ ] Cursor and page readers (`util/` remaining).
-- [ ] CRC32 checksum helpers.
+- [x] CRC32 page-checksum verification (`src/parquet/file/serialized_reader.cr`):
+  `decode_page` verifies `page_header.crc` via `Digest::CRC32` (always on, since
+  Crystal has no feature flags); `page_crc_spec.cr` ported.
 
 ### 1.8 Compression
 
@@ -350,8 +352,7 @@ Chunk status by area:
 - [~] Serialized page reader/writer: `SerializedPageWriter` + `SerializedPageReader`
   (offset-stream state) + `decode_page` done
   (`src/parquet/file/serialized_{writer,reader}.cr`); the offset-index `Pages`
-  state, `peek_next_page_offset`, CRC verification, and the `Iterator` impl are
-  pending.
+  state, `peek_next_page_offset`, and the `Iterator` impl are pending.
 - [x] `SerializedFileWriter`/`SerializedRowGroupWriter`/`SerializedColumnWriter`
   + `write_bloom_filters`/`OnClose*` (`src/parquet/file/writer.cr`) and
   `FileReader`/`RowGroupReader`/`SerializedFileReader`/`SerializedRowGroupReader`
@@ -710,9 +711,9 @@ Chunk status by area:
    `create_codec` is `Parquet::CompressionCodecs.create_codec`.
 - `file::serialized_reader`/`serialized_writer`: `SerializedPageWriter`'s
   `W: Write` becomes the concrete `TrackedWrite`; page encryption is not ported;
-  `SerializedPageReader`'s offset-index `Pages` state, `Iterator` impl, CRC
-  verification, and `peek_next_page_offset` are not ported (only the
-  offset-stream `Values` state); the reader constructor is
+  `SerializedPageReader`'s offset-index `Pages` state, `Iterator` impl, and
+  `peek_next_page_offset` are not ported (only the offset-stream `Values` state);
+  CRC verification is always performed (`decode_page`); the reader constructor is
   `SerializedPageReader.new_for_column`. `decode_page` is a `Parquet::File`
   module method.
 - `file::writer`: `SerializedFileWriter<W: Write>` is a single

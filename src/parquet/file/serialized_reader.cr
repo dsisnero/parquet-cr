@@ -1,3 +1,4 @@
+require "digest/crc32"
 require "../errors"
 require "../thrift"
 require "../basic"
@@ -14,8 +15,9 @@ require "../column/page"
 # ef1fa157977633f0ba21aa921f9ef3d5c669235b).
 #
 # Ports the serialized page reader (the offset-stream state) and `decode_page`.
-# Divergence: the offset-index-driven `Pages` state, page encryption, and CRC
-# verification are not ported; `R: ChunkReader` is a concrete generic parameter.
+# Divergence: the offset-index-driven `Pages` state and page encryption are not
+# ported; `R: ChunkReader` is a concrete generic parameter. The `crc`-feature
+# page-checksum verification is always performed (Crystal has no feature flags).
 module Parquet
   module File
     # Decodes a `Page` from the provided `buffer`.
@@ -26,6 +28,12 @@ module Parquet
       physical_type : Parquet::Type,
       decompressor : CompressionCodecs::Codec?,
     ) : Column::Page
+      if expected_crc = page_header.crc
+        if Digest::CRC32.checksum(buffer) != expected_crc.to_u32
+          raise general_err!("Page CRC checksum mismatch")
+        end
+      end
+
       offset = 0
       can_decompress = true
 
