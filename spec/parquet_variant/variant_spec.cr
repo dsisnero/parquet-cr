@@ -161,3 +161,197 @@ describe ParquetVariant::Variant do
     variant.get_path(nested).not_nil!.should eq(bar.not_nil!)
   end
 end
+
+private alias VBD = ParquetVariant::VariantBuilder
+
+# Upstream `test_variant_all_subtypes_debug`.
+describe "ParquetVariant::Variant debug formatting" do
+  it "formats every variant subtype like the upstream Debug impl" do
+    builder = VBD.new
+    root_obj = builder.new_object
+
+    root_obj.insert("null", nil)
+    root_obj.insert("boolean_true", true)
+    root_obj.insert("boolean_false", false)
+    root_obj.insert("int8", 42i8)
+    root_obj.insert("int16", 1234i16)
+    root_obj.insert("int32", 123456i32)
+    root_obj.insert("int64", 1234567890123456789i64)
+    root_obj.insert("float", 1.234f32)
+    root_obj.insert("double", 1.23456789f64)
+
+    root_obj.insert("date", V.from_date(Time.utc(2024, 12, 25)))
+    root_obj.insert(
+      "timestamp_micros",
+      V::TimestampMicros.new(Time.utc(2024, 12, 25, 15, 30, 45, nanosecond: 123_000_000)),
+    )
+    root_obj.insert(
+      "timestamp_ntz_micros",
+      V::TimestampNtzMicros.new(Time.utc(2024, 12, 25, 15, 30, 45, nanosecond: 123_000_000)),
+    )
+    root_obj.insert(
+      "timestamp_nanos",
+      V::TimestampNanos.new(Time.utc(2025, 8, 15, 12, 3, 4, nanosecond: 123_456_789)),
+    )
+    root_obj.insert(
+      "timestamp_ntz_nanos",
+      V::TimestampNtzNanos.new(Time.utc(2025, 8, 15, 12, 3, 4, nanosecond: 123_456_789)),
+    )
+
+    root_obj.insert("decimal4", D4.try_new(1234, 2_u8))
+    root_obj.insert("decimal8", D8.try_new(123456789_i64, 3_u8))
+    root_obj.insert("decimal16", D16.try_new(123456789012345678901234567890_i128, 4_u8))
+
+    root_obj.insert("binary", Bytes[0x01, 0x02, 0x03, 0x04, 0xde, 0xad, 0xbe, 0xef])
+    root_obj.insert(
+      "string",
+      "This is a long string that exceeds the short string limit and contains emoji 🦀",
+    )
+    root_obj.insert("short_string", "Short string with emoji 🎉")
+    root_obj.insert("time", V.from_time(Time::Span.new(hours: 1, minutes: 2, seconds: 3, nanoseconds: 4_000)))
+    root_obj.insert("uuid", V.from(UUID.new("67e55044-10b1-426f-9247-bb680e5fe0c8")))
+
+    nested_obj = root_obj.new_object("nested_object")
+    nested_obj.insert("inner_key1", "inner_value1")
+    nested_obj.insert("inner_key2", 999i32)
+    nested_obj.finish
+
+    mixed_list = root_obj.new_list("mixed_list")
+    mixed_list.append_value(1i32)
+    mixed_list.append_value("two")
+    mixed_list.append_value(true)
+    mixed_list.append_value(4.0f32)
+    mixed_list.append_value(nil)
+    nested_list = mixed_list.new_list
+    nested_list.append_value("nested")
+    nested_list.append_value(10i8)
+    nested_list.finish
+    mixed_list.finish
+
+    root_obj.finish
+
+    metadata, value = builder.finish
+    variant = V.try_new(metadata, value)
+
+    debug_output = variant.debug_string(false)
+    debug_output.should contain("\"null\": Null")
+    debug_output.should contain("\"boolean_true\": BooleanTrue")
+    debug_output.should contain("\"int8\": Int8(42)")
+    debug_output.should contain("\"binary\": Binary(01 02 03 04 de ad be ef)")
+    debug_output.should contain("\"uuid\": Uuid(67e55044-10b1-426f-9247-bb680e5fe0c8)")
+    debug_output.should contain("\"time\": Time(01:02:03.000004)")
+
+    expected_compact = %({"binary": Binary(01 02 03 04 de ad be ef), "boolean_false": BooleanFalse, "boolean_true": BooleanTrue, "date": Date(2024-12-25), "decimal16": Decimal16(VariantDecimal16 { integer: 123456789012345678901234567890, scale: 4 }), "decimal4": Decimal4(VariantDecimal4 { integer: 1234, scale: 2 }), "decimal8": Decimal8(VariantDecimal8 { integer: 123456789, scale: 3 }), "double": Double(1.23456789), "float": Float(1.234), "int16": Int16(1234), "int32": Int32(123456), "int64": Int64(1234567890123456789), "int8": Int8(42), "mixed_list": [Int32(1), ShortString(ShortString("two")), BooleanTrue, Float(4.0), Null, [ShortString(ShortString("nested")), Int8(10)]], "nested_object": {"inner_key1": ShortString(ShortString("inner_value1")), "inner_key2": Int32(999)}, "null": Null, "short_string": ShortString(ShortString("Short string with emoji 🎉")), "string": String("This is a long string that exceeds the short string limit and contains emoji 🦀"), "time": Time(01:02:03.000004), "timestamp_micros": TimestampMicros(2024-12-25T15:30:45.123Z), "timestamp_nanos": TimestampNanos(2025-08-15T12:03:04.123456789Z), "timestamp_ntz_micros": TimestampNtzMicros(2024-12-25T15:30:45.123), "timestamp_ntz_nanos": TimestampNtzNanos(2025-08-15T12:03:04.123456789), "uuid": Uuid(67e55044-10b1-426f-9247-bb680e5fe0c8)})
+    debug_output.should eq(expected_compact)
+
+    expected_pretty = <<-PRETTY
+{
+    "binary": Binary(01 02 03 04 de ad be ef),
+    "boolean_false": BooleanFalse,
+    "boolean_true": BooleanTrue,
+    "date": Date(
+        2024-12-25,
+    ),
+    "decimal16": Decimal16(
+        VariantDecimal16 {
+            integer: 123456789012345678901234567890,
+            scale: 4,
+        },
+    ),
+    "decimal4": Decimal4(
+        VariantDecimal4 {
+            integer: 1234,
+            scale: 2,
+        },
+    ),
+    "decimal8": Decimal8(
+        VariantDecimal8 {
+            integer: 123456789,
+            scale: 3,
+        },
+    ),
+    "double": Double(
+        1.23456789,
+    ),
+    "float": Float(
+        1.234,
+    ),
+    "int16": Int16(
+        1234,
+    ),
+    "int32": Int32(
+        123456,
+    ),
+    "int64": Int64(
+        1234567890123456789,
+    ),
+    "int8": Int8(
+        42,
+    ),
+    "mixed_list": [
+        Int32(
+            1,
+        ),
+        ShortString(
+            ShortString(
+                "two",
+            ),
+        ),
+        BooleanTrue,
+        Float(
+            4.0,
+        ),
+        Null,
+        [
+            ShortString(
+                ShortString(
+                    "nested",
+                ),
+            ),
+            Int8(
+                10,
+            ),
+        ],
+    ],
+    "nested_object": {
+        "inner_key1": ShortString(
+            ShortString(
+                "inner_value1",
+            ),
+        ),
+        "inner_key2": Int32(
+            999,
+        ),
+    },
+    "null": Null,
+    "short_string": ShortString(
+        ShortString(
+            "Short string with emoji 🎉",
+        ),
+    ),
+    "string": String(
+        "This is a long string that exceeds the short string limit and contains emoji 🦀",
+    ),
+    "time": Time(
+        01:02:03.000004,
+    ),
+    "timestamp_micros": TimestampMicros(
+        2024-12-25T15:30:45.123Z,
+    ),
+    "timestamp_nanos": TimestampNanos(
+        2025-08-15T12:03:04.123456789Z,
+    ),
+    "timestamp_ntz_micros": TimestampNtzMicros(
+        2024-12-25T15:30:45.123,
+    ),
+    "timestamp_ntz_nanos": TimestampNtzNanos(
+        2025-08-15T12:03:04.123456789,
+    ),
+    "uuid": Uuid(
+        67e55044-10b1-426f-9247-bb680e5fe0c8,
+    ),
+}
+PRETTY
+    variant.debug_string(true).should eq(expected_pretty.chomp)
+  end
+end

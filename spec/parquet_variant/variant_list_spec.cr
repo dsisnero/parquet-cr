@@ -87,3 +87,141 @@ private def make_nested_lists(depth : Int32) : Bytes
   end
   value
 end
+
+private alias V = ParquetVariant::Variant
+private alias VB = ParquetVariant::VariantBuilder
+
+# Builds a list of `i32` values and returns `{metadata, value}`.
+private def make_listi32(range : Range(Int32, Int32)) : Tuple(Bytes, Bytes)
+  builder = VB.new
+  list_builder = builder.new_list
+  range.each { |v| list_builder.append_value(v) }
+  list_builder.finish
+  builder.finish
+end
+
+# Builds a list of `i64` values and returns `{metadata, value}`.
+private def make_listi64(range : Range(Int64, Int64)) : Tuple(Bytes, Bytes)
+  builder = VB.new
+  list_builder = builder.new_list
+  range.each { |v| list_builder.append_value(v) }
+  list_builder.finish
+  builder.finish
+end
+
+# Upstream `test_large_variant_list_with_child_length`.
+private def large_variant_list_with_child_length(
+  list_size : Int32,
+  single_child_item_len : Int32,
+  expected_num_element_size : ParquetVariant::OffsetSizeBytes,
+  expected_offset_size_bytes : ParquetVariant::OffsetSizeBytes,
+) : Nil
+  builder = VB.new
+  list_builder = builder.new_list
+
+  expected_list = [] of String
+  list_size.times do |i|
+    random_string = (i % 256).chr.to_s * single_child_item_len
+    list_builder.append_value(random_string)
+    expected_list << random_string
+  end
+  list_builder.finish
+
+  metadata, value = builder.finish
+  variant = V.try_new(metadata, value)
+  variant_list = variant.as_list.not_nil!
+
+  variant_list.header.offset_size.should eq(expected_offset_size_bytes)
+  variant_list.header.num_elements_size.should eq(expected_num_element_size)
+  variant_list.len.should eq(list_size)
+
+  list_size.times do |i|
+    variant_list.get(i).not_nil!.as_string.should eq(expected_list[i])
+  end
+end
+
+describe ParquetVariant::VariantList do
+  # Upstream `test_large_variant_list_with_total_child_length_between_2_pow_8_and_2_pow_16`.
+  it "chooses 2-byte offsets for 2^8..2^16 total child length" do
+    large_variant_list_with_child_length(1, 500, ParquetVariant::OffsetSizeBytes::One,
+      ParquetVariant::OffsetSizeBytes::Two)
+    large_variant_list_with_child_length(255, 2, ParquetVariant::OffsetSizeBytes::One,
+      ParquetVariant::OffsetSizeBytes::Two)
+    large_variant_list_with_child_length(256, 2, ParquetVariant::OffsetSizeBytes::Four,
+      ParquetVariant::OffsetSizeBytes::Two)
+    large_variant_list_with_child_length(300, 2, ParquetVariant::OffsetSizeBytes::Four,
+      ParquetVariant::OffsetSizeBytes::Two)
+  end
+
+  # Upstream `test_large_variant_list_with_total_child_length_between_2_pow_16_and_2_pow_24`.
+  it "chooses 3-byte offsets for 2^16..2^24 total child length" do
+    large_variant_list_with_child_length(1, 70_000, ParquetVariant::OffsetSizeBytes::One,
+      ParquetVariant::OffsetSizeBytes::Three)
+    large_variant_list_with_child_length(255, 275, ParquetVariant::OffsetSizeBytes::One,
+      ParquetVariant::OffsetSizeBytes::Three)
+    large_variant_list_with_child_length(256, 274, ParquetVariant::OffsetSizeBytes::Four,
+      ParquetVariant::OffsetSizeBytes::Three)
+    large_variant_list_with_child_length(300, 234, ParquetVariant::OffsetSizeBytes::Four,
+      ParquetVariant::OffsetSizeBytes::Three)
+  end
+
+  # Upstream `test_large_variant_list_with_total_child_length_between_2_pow_24_and_2_pow_32`.
+  it "chooses 4-byte offsets for 2^24..2^32 total child length" do
+    large_variant_list_with_child_length(1, 20_000_000, ParquetVariant::OffsetSizeBytes::One,
+      ParquetVariant::OffsetSizeBytes::Four)
+    large_variant_list_with_child_length(255, 78_432, ParquetVariant::OffsetSizeBytes::One,
+      ParquetVariant::OffsetSizeBytes::Four)
+    large_variant_list_with_child_length(256, 78_125, ParquetVariant::OffsetSizeBytes::Four,
+      ParquetVariant::OffsetSizeBytes::Four)
+    large_variant_list_with_child_length(300, 66_667, ParquetVariant::OffsetSizeBytes::Four,
+      ParquetVariant::OffsetSizeBytes::Four)
+  end
+
+  # Upstream `test_variant_list_equality`.
+  it "treats lists with the same values as equal" do
+    m1, v1 = make_listi32(0...10)
+    m2, v2 = make_listi32(0...10)
+    V.new(m1, v1).should eq(V.new(m2, v2))
+  end
+
+  # Upstream `test_variant_list_equality_different_length`.
+  it "distinguishes lists of different lengths" do
+    m1, v1 = make_listi32(0...10)
+    m2, v2 = make_listi32(0...5)
+    V.new(m1, v1).should_not eq(V.new(m2, v2))
+  end
+
+  # Upstream `test_variant_list_equality_different_values`.
+  it "distinguishes lists with different values" do
+    m1, v1 = make_listi32(0...10)
+    m2, v2 = make_listi32(5...15)
+    V.new(m1, v1).should_not eq(V.new(m2, v2))
+  end
+
+  # Upstream `test_variant_list_equality_different_types`.
+  it "distinguishes lists with different element types" do
+    m1, v1 = make_listi32(0...10)
+    m2, v2 = make_listi64(0_i64...10_i64)
+    V.new(m1, v1).should_not eq(V.new(m2, v2))
+  end
+
+  # Upstream `test_variant_list_equality_slices`.
+  it "compares sub-lists within an object" do
+    builder = VB.new
+    object_builder = builder.new_object
+
+    m1, v1 = make_listi32(0...10)
+    object_builder.insert("list1", V.new(m1, v1))
+    m2, v2 = make_listi32(0...10)
+    object_builder.insert("list2", V.new(m2, v2))
+    m3, v3 = make_listi32(10...20)
+    object_builder.insert("list3", V.new(m3, v3))
+    object_builder.finish
+
+    metadata, value = builder.finish
+    variant = V.try_new(metadata, value)
+    object = variant.as_object.not_nil!
+    object.get("list1").not_nil!.should eq(object.get("list2").not_nil!)
+    object.get("list1").not_nil!.should_not eq(object.get("list3").not_nil!)
+  end
+end

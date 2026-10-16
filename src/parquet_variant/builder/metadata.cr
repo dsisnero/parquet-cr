@@ -72,6 +72,12 @@ module ParquetVariant
       @names[i]
     end
 
+    # Uniform `MetadataBuilder` interface: registers `field_name` and returns its
+    # (possibly newly-created) field id (never fails for the writable builder).
+    def try_upsert_field_name(field_name : String) : UInt32
+      upsert_field_name(field_name)
+    end
+
     def num_field_names : Int32
       @names.size
     end

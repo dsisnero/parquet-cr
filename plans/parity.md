@@ -43,9 +43,13 @@ little-endian layout.
     `ShortString` (`short_string.cr`); `VariantMetadata`
     (`variant/metadata.cr`); `VariantDecimal4`/`8`/`16` (`variant/decimal.cr`);
     the metadata builders `MetadataBuilder`/`WritableMetadataBuilder`/
-    `ReadOnlyMetadataBuilder` (`builder/metadata.cr`); and the **value layer read
-    side** `Variant` (`variant.cr`), `VariantObject` (`variant/object.cr`), and
-    `VariantList` (`variant/list.cr`).
+    `ReadOnlyMetadataBuilder` (`builder/metadata.cr`); the **value layer** read
+    side `Variant` (`variant.cr`), `VariantObject` (`variant/object.cr`),
+    `VariantList` (`variant/list.cr`), Rust-compatible `Debug`
+    (`variant/debug.cr`); and the **value builder** `ValueBuilder`/`ParentState`/
+    `BuilderSpecificState` (`builder/state.cr`), `VariantBuilder`
+    (`builder/variant_builder.cr`), `ObjectBuilder` (`builder/object_builder.cr`),
+    and `ListBuilder` (`builder/list_builder.cr`).
   - `parquet-geospatial` (`src/parquet_geospatial/`): `Hint`/`Edges`/`Metadata`
     + the metadata side of `WkbType` (`types.cr`); `Interval`/`WraparoundInterval`
     (`interval.cr`).
@@ -54,15 +58,11 @@ little-endian layout.
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
-  1. **Phase 3.1 `parquet-variant` value layer — large; sequence it:**
-     a. ~~read side: `Variant`, `VariantObject`, `VariantList`.~~ **done** —
-        `src/parquet_variant/variant.cr`, `variant/object.cr`, `variant/list.cr`
-        + `spec/parquet_variant/variant_{,_object,_list}_spec.cr`.
-     b. writer side (**next**): `ValueBuilder`/`VariantBuilder` (`builder.rs`),
-        `ObjectBuilder` (`builder/object.rs`), `ListBuilder` (`builder/list.rs`).
-        Most upstream object/list/builder tests construct values via
-        `VariantBuilder`, so (b) is needed before those tests (and the exact
-        `Debug`/`HexString`/`InvalidVariant` formatting tests) can run.
+  1. ~~Phase 3.1 `parquet-variant` value layer.~~ **complete** —
+     `src/parquet_variant/variant.cr`, `variant/object.cr`, `variant/list.cr`,
+     `variant/debug.cr`, `builder/{state,variant_builder,object_builder,list_builder}.cr`
+     + specs. All `parquet-variant` core tests are ported (including the exact
+     `Debug`/`HexString`/`InvalidVariant` formatting test).
   2. Phase 3.2 `parquet-geospatial` `bounding.rs` (`GeoBounder`) — **blocked**:
      depends on the `geo-traits`/`wkb` crates. Either port a minimal WKB reader
      or record an intentional divergence.
@@ -101,11 +101,21 @@ little-endian layout.
     module and record the choice in `plans/parity.md`.
   - `T.class` dispatch replaces Rust traits with associated consts/generics
     (`Encodings.get_encoder`, `FromBytes`, `AsBytes`).
-- Last commit: `91095e0 docs: make parity.md Where-we-are self-contained for a
-  fresh session`; gates green (`make lint`, `make test` -> 655 examples, 0
-  failures).
-- Progress by counts (ledger): 1513 `ported`, 191 `intentional_divergence`,
-  1 `skipped`, 1810 `missing` (of 3515 rows).
+  - Variant value builders: Rust's affine borrows and `Drop`-based rollback are
+    not modelled, so an unfinished child builder must be rolled back explicitly
+    via `abandon` (`ValueBuilder.truncate`/`ParentState#rollback`); multiple
+    children may exist at once (Rust forbids it). `Into<Variant>` is the
+    `VariantValue` union + `ValueConversion.to_variant`; bare `Time`
+    (date/UTC/naive) is not a `VariantValue` (wrap with `Variant.from_date`/
+    `from_datetime_utc`/`from_naive_datetime`; only `Time::Span` maps via
+    `from_time`). `VariantBuilderExt`/`ObjectFieldBuilder` (used by
+    `parquet-variant-compute`) are not ported. The Rust `Debug` impls are
+    `Variant#debug_string(pretty)`/`Variant#debug_to` (`variant/debug.cr`).
+- Last commit: `4e0ea76 port: parquet-variant value layer read side
+  (Variant/VariantObject/VariantList)`; gates green (`make lint`, `make test` ->
+  730 examples, 0 failures).
+- Progress by counts (ledger): 1611 `ported`, 203 `intentional_divergence`,
+  1 `skipped`, 1700 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -150,12 +160,13 @@ Chunk status by area:
 - Phase 3 (variant/geospatial/derive/encryption/arrow/async): `parquet-variant`'s
   `VariantPath`/`VariantPathElement` + parser, the `utils` helpers,
   `OffsetSizeBytes`/`map_bytes_to_offsets`, the value decoder + `ShortString`,
-  `VariantMetadata`, `VariantDecimal4`/`8`/`16`, the metadata builders, and the
-  value layer read side (`Variant`/`VariantObject`/`VariantList`) done;
+  `VariantMetadata`, `VariantDecimal4`/`8`/`16`, the metadata builders, the value
+  layer read side (`Variant`/`VariantObject`/`VariantList` + `Debug`) and the
+  value builder (`ValueBuilder`/`VariantBuilder`/`ObjectBuilder`/`ListBuilder`)
+  done (core crate complete);
   `parquet-geospatial`'s `Hint`/`Edges`/`Metadata` + `WkbType` metadata and
-  `Interval`/`WraparoundInterval` done; the `Variant` value builder
-  (`ValueBuilder`/`VariantBuilder`/`ObjectBuilder`/`ListBuilder`), geospatial
-  bounding, derive, encryption, arrow, and async remain pending.
+  `Interval`/`WraparoundInterval` done; geospatial bounding, derive, encryption,
+  arrow, and async remain pending.
 
 ## Phase 0 — Project initialization
 
@@ -469,17 +480,24 @@ Chunk status by area:
   `VariantDecimal4`/`8`/`16` + `VariantDecimalType`
   (`src/parquet_variant/variant/decimal.cr`, `decimal_spec.cr`), the metadata
   builders `MetadataBuilder`/`WritableMetadataBuilder`/`ReadOnlyMetadataBuilder`
-  (`src/parquet_variant/builder/metadata.cr`, `builder_metadata_spec.cr`), and
-  the value layer read side `Variant` (`src/parquet_variant/variant.cr`),
-  `VariantObject` (`src/parquet_variant/variant/object.cr`), and `VariantList`
-  (`src/parquet_variant/variant/list.cr`) with specs
-  (`spec/parquet_variant/variant_spec.cr`, `variant_object_spec.cr`,
-  `variant_list_spec.cr`) done; `ValueBuilder`/`VariantBuilder`,
-  `ObjectBuilder`/`ListBuilder`, and the builder-dependent object/list tests
-  (and exact `Debug`/`HexString`/`InvalidVariant` formatting) pending.
-  `VariantMetadata#borrowed_field_id`'s zero-copy fast path and the raw-pointer
-  zero-copy `Variant` byte/model APIs are intentional divergences (Crystal copies
-  substrings).
+  (`src/parquet_variant/builder/metadata.cr`, `builder_metadata_spec.cr`), the
+  value layer read side `Variant` (`src/parquet_variant/variant.cr`),
+  `VariantObject` (`src/parquet_variant/variant/object.cr`), `VariantList`
+  (`src/parquet_variant/variant/list.cr`), and the Rust-compatible `Debug`
+  formatting (`src/parquet_variant/variant/debug.cr`), and the value builder
+  `ValueBuilder`/`ParentState`/`BuilderSpecificState`
+  (`src/parquet_variant/builder/state.cr`), `VariantBuilder`
+  (`src/parquet_variant/builder/variant_builder.cr`), `ObjectBuilder`
+  (`src/parquet_variant/builder/object_builder.cr`), and `ListBuilder`
+  (`src/parquet_variant/builder/list_builder.cr`) with full specs
+  (`spec/parquet_variant/variant_*_spec.cr`, `builder_*_spec.cr`) done. All core
+  `parquet-variant` upstream tests are ported (including the builder rollback
+  tests via `abandon` and the exact `Debug`/`HexString`/`InvalidVariant`
+  formatting test).
+  `VariantMetadata#borrowed_field_id`'s zero-copy fast path, the raw-pointer
+  zero-copy `Variant` byte/model APIs, Rust `Drop`-based rollback, and
+  `VariantBuilderExt`/`ObjectFieldBuilder` are intentional divergences (Crystal
+  copies substrings; explicit `abandon`; builder handles all types directly).
 - [ ] `parquet-variant-compute`.
 - [ ] `parquet-variant-json`.
 

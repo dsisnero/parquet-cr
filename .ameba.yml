@@ -50,3 +50,5 @@ Metrics/CyclomaticComplexity:
   Excluded:
     - src/parquet/column/writer/writer.cr
     - src/parquet_variant/variant.cr
+    - src/parquet_variant/variant/debug.cr
+    - src/parquet_variant/builder/state.cr

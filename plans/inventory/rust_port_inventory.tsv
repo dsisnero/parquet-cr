@@ -300,92 +300,92 @@ parquet-variant-json/src/to_json.rs::method::Variant<'_, '_>.to_json_value	metho
 parquet-variant/benches/variant_builder.rs::method::RandomStringGenerator.new	method	missing	-	auto-generated
 parquet-variant/benches/variant_builder.rs::method::RandomStringGenerator.next	method	missing	-	auto-generated
 parquet-variant/benches/variant_validation.rs::const::SUFFIXES	const	missing	-	auto-generated
-parquet-variant/src/builder.rs::const::BASIC_TYPE_BITS	const	missing	-	auto-generated
-parquet-variant/src/builder.rs::const::EMPTY_BUILDER_MSG	const	missing	-	auto-generated
-parquet-variant/src/builder.rs::const::ONE_TOP_LEVEL_VALUE_MSG	const	missing	-	auto-generated
-parquet-variant/src/builder.rs::const::UNIX_EPOCH_DATE	const	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ParentState<'_, S>.drop	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ParentState<'a, ()>.variant	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ParentState<'a, S>.finish	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ParentState<'a, S>.metadata_builder	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ParentState<'a, S>.new	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ParentState<'a, S>.rollback	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ParentState<'a, S>.value_builder	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_binary	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_bool	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_date	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_decimal16	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_decimal4	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_decimal8	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_double	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_float	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_int16	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_int32	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_int64	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_int8	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_list	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_null	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_object	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_primitive_header	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_short_string	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_slice	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_string	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_time_micros	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_timestamp_micros	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_timestamp_nanos	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_timestamp_ntz_micros	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_timestamp_ntz_nanos	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_u8	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_uuid	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_variant	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.append_variant_bytes	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.inner_mut	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.into_inner	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.new	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.offset	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.try_append_list	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.try_append_object	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::ValueBuilder.try_append_variant	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.add_field_name	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.append_null	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.append_value	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.append_value_bytes	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.check_no_top_level_value	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.ensure_no_top_level_value	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.finish	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.has_top_level_value	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.new	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.new_list	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.new_object	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.reserve	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.try_append_value	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.try_append_value_bytes	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.try_finish	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.try_new_list	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.try_new_object	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.try_with_value	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.with_field_names	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.with_metadata	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.with_validate_unique_fields	method	missing	-	auto-generated
-parquet-variant/src/builder.rs::method::VariantBuilder.with_value	method	missing	-	auto-generated
-parquet-variant/src/builder/list.rs::method::ListBuilder<'_, S>.append_null	method	missing	-	auto-generated
-parquet-variant/src/builder/list.rs::method::ListBuilder<'_, S>.append_value	method	missing	-	auto-generated
-parquet-variant/src/builder/list.rs::method::ListBuilder<'_, S>.extend	method	missing	-	auto-generated
-parquet-variant/src/builder/list.rs::method::ListBuilder<'_, S>.try_new_list	method	missing	-	auto-generated
-parquet-variant/src/builder/list.rs::method::ListBuilder<'_, S>.try_new_object	method	missing	-	auto-generated
-parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.append_value	method	missing	-	auto-generated
-parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.append_value_bytes	method	missing	-	auto-generated
-parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.finish	method	missing	-	auto-generated
-parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.new	method	missing	-	auto-generated
-parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.new_list	method	missing	-	auto-generated
-parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.new_object	method	missing	-	auto-generated
-parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.parent_state	method	missing	-	auto-generated
-parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.try_append_value	method	missing	-	auto-generated
-parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.try_with_value	method	missing	-	auto-generated
-parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.with_validate_unique_fields	method	missing	-	auto-generated
-parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.with_value	method	missing	-	auto-generated
-parquet-variant/src/builder/list.rs::method::ListState<'_>.rollback	method	missing	-	auto-generated
-parquet-variant/src/builder/list.rs::method::ParentState<'a, ListState<'a>>.list	method	missing	-	auto-generated
+parquet-variant/src/builder.rs::const::BASIC_TYPE_BITS	const	intentional_divergence	src/parquet_variant/builder/state.cr	inlined as literal shift amounts
+parquet-variant/src/builder.rs::const::EMPTY_BUILDER_MSG	const	ported	src/parquet_variant/builder/variant_builder.cr	EMPTY_BUILDER_MSG
+parquet-variant/src/builder.rs::const::ONE_TOP_LEVEL_VALUE_MSG	const	ported	src/parquet_variant/builder/variant_builder.cr	ONE_TOP_LEVEL_VALUE_MSG
+parquet-variant/src/builder.rs::const::UNIX_EPOCH_DATE	const	intentional_divergence	src/parquet_variant/builder/state.cr	dates encoded via Time#to_unix // 86400
+parquet-variant/src/builder.rs::method::ParentState<'_, S>.drop	method	intentional_divergence	src/parquet_variant/builder/state.cr	no Drop; explicit `abandon`/`rollback`
+parquet-variant/src/builder.rs::method::ParentState<'a, ()>.variant	method	ported	src/parquet_variant/builder/state.cr	variant
+parquet-variant/src/builder.rs::method::ParentState<'a, S>.finish	method	ported	src/parquet_variant/builder/state.cr	finish
+parquet-variant/src/builder.rs::method::ParentState<'a, S>.metadata_builder	method	ported	src/parquet_variant/builder/state.cr	metadata_builder
+parquet-variant/src/builder.rs::method::ParentState<'a, S>.new	method	ported	src/parquet_variant/builder/state.cr	new
+parquet-variant/src/builder.rs::method::ParentState<'a, S>.rollback	method	ported	src/parquet_variant/builder/state.cr	rollback
+parquet-variant/src/builder.rs::method::ParentState<'a, S>.value_builder	method	ported	src/parquet_variant/builder/state.cr	value_builder
+parquet-variant/src/builder.rs::method::ValueBuilder.append_binary	method	ported	src/parquet_variant/builder/state.cr	append_binary
+parquet-variant/src/builder.rs::method::ValueBuilder.append_bool	method	ported	src/parquet_variant/builder/state.cr	append_bool
+parquet-variant/src/builder.rs::method::ValueBuilder.append_date	method	ported	src/parquet_variant/builder/state.cr	append_date
+parquet-variant/src/builder.rs::method::ValueBuilder.append_decimal16	method	ported	src/parquet_variant/builder/state.cr	append_decimal16
+parquet-variant/src/builder.rs::method::ValueBuilder.append_decimal4	method	ported	src/parquet_variant/builder/state.cr	append_decimal4
+parquet-variant/src/builder.rs::method::ValueBuilder.append_decimal8	method	ported	src/parquet_variant/builder/state.cr	append_decimal8
+parquet-variant/src/builder.rs::method::ValueBuilder.append_double	method	ported	src/parquet_variant/builder/state.cr	append_double
+parquet-variant/src/builder.rs::method::ValueBuilder.append_float	method	ported	src/parquet_variant/builder/state.cr	append_float
+parquet-variant/src/builder.rs::method::ValueBuilder.append_int16	method	ported	src/parquet_variant/builder/state.cr	append_int16
+parquet-variant/src/builder.rs::method::ValueBuilder.append_int32	method	ported	src/parquet_variant/builder/state.cr	append_int32
+parquet-variant/src/builder.rs::method::ValueBuilder.append_int64	method	ported	src/parquet_variant/builder/state.cr	append_int64
+parquet-variant/src/builder.rs::method::ValueBuilder.append_int8	method	ported	src/parquet_variant/builder/state.cr	append_int8
+parquet-variant/src/builder.rs::method::ValueBuilder.append_list	method	ported	src/parquet_variant/builder/state.cr	append_list
+parquet-variant/src/builder.rs::method::ValueBuilder.append_null	method	ported	src/parquet_variant/builder/state.cr	append_null
+parquet-variant/src/builder.rs::method::ValueBuilder.append_object	method	ported	src/parquet_variant/builder/state.cr	append_object
+parquet-variant/src/builder.rs::method::ValueBuilder.append_primitive_header	method	ported	src/parquet_variant/builder/state.cr	append_primitive_header
+parquet-variant/src/builder.rs::method::ValueBuilder.append_short_string	method	ported	src/parquet_variant/builder/state.cr	append_short_string
+parquet-variant/src/builder.rs::method::ValueBuilder.append_slice	method	ported	src/parquet_variant/builder/state.cr	append_slice
+parquet-variant/src/builder.rs::method::ValueBuilder.append_string	method	ported	src/parquet_variant/builder/state.cr	append_string
+parquet-variant/src/builder.rs::method::ValueBuilder.append_time_micros	method	ported	src/parquet_variant/builder/state.cr	append_time_micros
+parquet-variant/src/builder.rs::method::ValueBuilder.append_timestamp_micros	method	ported	src/parquet_variant/builder/state.cr	append_timestamp_micros
+parquet-variant/src/builder.rs::method::ValueBuilder.append_timestamp_nanos	method	ported	src/parquet_variant/builder/state.cr	append_timestamp_nanos
+parquet-variant/src/builder.rs::method::ValueBuilder.append_timestamp_ntz_micros	method	ported	src/parquet_variant/builder/state.cr	append_timestamp_ntz_micros
+parquet-variant/src/builder.rs::method::ValueBuilder.append_timestamp_ntz_nanos	method	ported	src/parquet_variant/builder/state.cr	append_timestamp_ntz_nanos
+parquet-variant/src/builder.rs::method::ValueBuilder.append_u8	method	ported	src/parquet_variant/builder/state.cr	ValueBuilder#append_byte
+parquet-variant/src/builder.rs::method::ValueBuilder.append_uuid	method	ported	src/parquet_variant/builder/state.cr	append_uuid
+parquet-variant/src/builder.rs::method::ValueBuilder.append_variant	method	ported	src/parquet_variant/builder/state.cr	append_variant
+parquet-variant/src/builder.rs::method::ValueBuilder.append_variant_bytes	method	ported	src/parquet_variant/builder/state.cr	append_variant_bytes
+parquet-variant/src/builder.rs::method::ValueBuilder.inner_mut	method	intentional_divergence	src/parquet_variant/builder/state.cr	ValueBuilder#buffer exposes the Array(UInt8)
+parquet-variant/src/builder.rs::method::ValueBuilder.into_inner	method	ported	src/parquet_variant/builder/state.cr	into_inner
+parquet-variant/src/builder.rs::method::ValueBuilder.new	method	ported	src/parquet_variant/builder/state.cr	new
+parquet-variant/src/builder.rs::method::ValueBuilder.offset	method	ported	src/parquet_variant/builder/state.cr	offset
+parquet-variant/src/builder.rs::method::ValueBuilder.try_append_list	method	ported	src/parquet_variant/builder/state.cr	try_append_list
+parquet-variant/src/builder.rs::method::ValueBuilder.try_append_object	method	ported	src/parquet_variant/builder/state.cr	try_append_object
+parquet-variant/src/builder.rs::method::ValueBuilder.try_append_variant	method	ported	src/parquet_variant/builder/state.cr	try_append_variant
+parquet-variant/src/builder.rs::method::VariantBuilder.add_field_name	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#add_field_name
+parquet-variant/src/builder.rs::method::VariantBuilder.append_null	method	intentional_divergence	src/parquet_variant/builder/variant_builder.cr	VariantBuilderExt not ported; use append_value(Variant.from_nil)
+parquet-variant/src/builder.rs::method::VariantBuilder.append_value	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#append_value
+parquet-variant/src/builder.rs::method::VariantBuilder.append_value_bytes	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#append_value_bytes
+parquet-variant/src/builder.rs::method::VariantBuilder.check_no_top_level_value	method	ported	src/parquet_variant/builder/variant_builder.cr	check_no_top_level_value
+parquet-variant/src/builder.rs::method::VariantBuilder.ensure_no_top_level_value	method	ported	src/parquet_variant/builder/variant_builder.cr	ensure_no_top_level_value
+parquet-variant/src/builder.rs::method::VariantBuilder.finish	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#finish
+parquet-variant/src/builder.rs::method::VariantBuilder.has_top_level_value	method	ported	src/parquet_variant/builder/variant_builder.cr	has_top_level_value
+parquet-variant/src/builder.rs::method::VariantBuilder.new	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#new
+parquet-variant/src/builder.rs::method::VariantBuilder.new_list	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#new_list
+parquet-variant/src/builder.rs::method::VariantBuilder.new_object	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#new_object
+parquet-variant/src/builder.rs::method::VariantBuilder.reserve	method	intentional_divergence	src/parquet_variant/builder/variant_builder.cr	not ported (Array growth)
+parquet-variant/src/builder.rs::method::VariantBuilder.try_append_value	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#try_append_value
+parquet-variant/src/builder.rs::method::VariantBuilder.try_append_value_bytes	method	ported	src/parquet_variant/builder/variant_builder.cr	append_value_bytes raises
+parquet-variant/src/builder.rs::method::VariantBuilder.try_finish	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#try_finish
+parquet-variant/src/builder.rs::method::VariantBuilder.try_new_list	method	ported	src/parquet_variant/builder/variant_builder.cr	new_list raises on an existing top-level value
+parquet-variant/src/builder.rs::method::VariantBuilder.try_new_object	method	ported	src/parquet_variant/builder/variant_builder.cr	new_object raises on an existing top-level value
+parquet-variant/src/builder.rs::method::VariantBuilder.try_with_value	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#try_with_value
+parquet-variant/src/builder.rs::method::VariantBuilder.with_field_names	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#with_field_names
+parquet-variant/src/builder.rs::method::VariantBuilder.with_metadata	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#with_metadata
+parquet-variant/src/builder.rs::method::VariantBuilder.with_validate_unique_fields	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#with_validate_unique_fields
+parquet-variant/src/builder.rs::method::VariantBuilder.with_value	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#with_value
+parquet-variant/src/builder/list.rs::method::ListBuilder<'_, S>.append_null	method	intentional_divergence	src/parquet_variant/builder/list_builder.cr	VariantBuilderExt not ported; use append_value(Variant.from_nil)
+parquet-variant/src/builder/list.rs::method::ListBuilder<'_, S>.append_value	method	ported	src/parquet_variant/builder/list_builder.cr	append_value
+parquet-variant/src/builder/list.rs::method::ListBuilder<'_, S>.extend	method	ported	src/parquet_variant/builder/list_builder.cr	extend
+parquet-variant/src/builder/list.rs::method::ListBuilder<'_, S>.try_new_list	method	ported	src/parquet_variant/builder/list_builder.cr	new_list
+parquet-variant/src/builder/list.rs::method::ListBuilder<'_, S>.try_new_object	method	ported	src/parquet_variant/builder/list_builder.cr	new_object
+parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.append_value	method	ported	src/parquet_variant/builder/list_builder.cr	append_value
+parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.append_value_bytes	method	ported	src/parquet_variant/builder/list_builder.cr	append_value_bytes
+parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.finish	method	ported	src/parquet_variant/builder/list_builder.cr	finish
+parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.new	method	ported	src/parquet_variant/builder/list_builder.cr	new
+parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.new_list	method	ported	src/parquet_variant/builder/list_builder.cr	new_list
+parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.new_object	method	ported	src/parquet_variant/builder/list_builder.cr	new_object
+parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.parent_state	method	ported	src/parquet_variant/builder/list_builder.cr	parent_state
+parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.try_append_value	method	ported	src/parquet_variant/builder/list_builder.cr	try_append_value
+parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.try_with_value	method	ported	src/parquet_variant/builder/list_builder.cr	try_with_value
+parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.with_validate_unique_fields	method	ported	src/parquet_variant/builder/list_builder.cr	with_validate_unique_fields
+parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.with_value	method	ported	src/parquet_variant/builder/list_builder.cr	with_value
+parquet-variant/src/builder/list.rs::method::ListState<'_>.rollback	method	ported	src/parquet_variant/builder/list_builder.cr	rollback
+parquet-variant/src/builder/list.rs::method::ParentState<'a, ListState<'a>>.list	method	ported	src/parquet_variant/builder/list_builder.cr	list
 parquet-variant/src/builder/metadata.rs::method::ReadOnlyMetadataBuilder<'_>.field_name	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
 parquet-variant/src/builder/metadata.rs::method::ReadOnlyMetadataBuilder<'_>.finish	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
 parquet-variant/src/builder/metadata.rs::method::ReadOnlyMetadataBuilder<'_>.num_field_names	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
@@ -403,30 +403,30 @@ parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.offset	
 parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.truncate_field_names	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
 parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.try_upsert_field_name	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
 parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.upsert_field_name	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
-parquet-variant/src/builder/object.rs::const::DUPLICATE_ENTRY_METADATA	const	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectBuilder<'_, S>.extend	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.finish	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.insert	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.insert_bytes	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.new	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.new_list	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.new_object	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.parent_state	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.try_insert	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.try_insert_bytes	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.try_new_list	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.try_new_object	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.try_with_field	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.with_field	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.with_validate_unique_fields	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectFieldBuilder<'_, '_, '_, S>.append_null	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectFieldBuilder<'_, '_, '_, S>.append_value	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectFieldBuilder<'_, '_, '_, S>.try_new_list	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectFieldBuilder<'_, '_, '_, S>.try_new_object	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectFieldBuilder<'o, 'v, 's, S>.new	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectHeaderWriter<OFFSET_SIZE, ID_SIZE>.write	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ObjectState<'_>.rollback	method	missing	-	auto-generated
-parquet-variant/src/builder/object.rs::method::ParentState<'a, ObjectState<'a>>.try_object	method	missing	-	auto-generated
+parquet-variant/src/builder/object.rs::const::DUPLICATE_ENTRY_METADATA	const	ported	spec/parquet_variant/builder_object_spec.cr	DUPLICATE_ENTRY_METADATA
+parquet-variant/src/builder/object.rs::method::ObjectBuilder<'_, S>.extend	method	ported	src/parquet_variant/builder/object_builder.cr	extend
+parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.finish	method	ported	src/parquet_variant/builder/object_builder.cr	finish
+parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.insert	method	ported	src/parquet_variant/builder/object_builder.cr	insert
+parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.insert_bytes	method	ported	src/parquet_variant/builder/object_builder.cr	insert_bytes
+parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.new	method	ported	src/parquet_variant/builder/object_builder.cr	new
+parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.new_list	method	ported	src/parquet_variant/builder/object_builder.cr	new_list
+parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.new_object	method	ported	src/parquet_variant/builder/object_builder.cr	new_object
+parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.parent_state	method	ported	src/parquet_variant/builder/object_builder.cr	parent_state
+parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.try_insert	method	ported	src/parquet_variant/builder/object_builder.cr	try_insert
+parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.try_insert_bytes	method	ported	src/parquet_variant/builder/object_builder.cr	insert_bytes raises
+parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.try_new_list	method	ported	src/parquet_variant/builder/object_builder.cr	try_new_list
+parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.try_new_object	method	ported	src/parquet_variant/builder/object_builder.cr	try_new_object
+parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.try_with_field	method	ported	src/parquet_variant/builder/object_builder.cr	try_with_field
+parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.with_field	method	ported	src/parquet_variant/builder/object_builder.cr	with_field
+parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.with_validate_unique_fields	method	ported	src/parquet_variant/builder/object_builder.cr	with_validate_unique_fields
+parquet-variant/src/builder/object.rs::method::ObjectFieldBuilder<'_, '_, '_, S>.append_null	method	intentional_divergence	src/parquet_variant/builder/object_builder.cr	VariantBuilderExt not ported
+parquet-variant/src/builder/object.rs::method::ObjectFieldBuilder<'_, '_, '_, S>.append_value	method	intentional_divergence	src/parquet_variant/builder/object_builder.cr	VariantBuilderExt not ported
+parquet-variant/src/builder/object.rs::method::ObjectFieldBuilder<'_, '_, '_, S>.try_new_list	method	intentional_divergence	src/parquet_variant/builder/object_builder.cr	VariantBuilderExt not ported
+parquet-variant/src/builder/object.rs::method::ObjectFieldBuilder<'_, '_, '_, S>.try_new_object	method	intentional_divergence	src/parquet_variant/builder/object_builder.cr	VariantBuilderExt not ported
+parquet-variant/src/builder/object.rs::method::ObjectFieldBuilder<'o, 'v, 's, S>.new	method	intentional_divergence	src/parquet_variant/builder/object_builder.cr	VariantBuilderExt not ported
+parquet-variant/src/builder/object.rs::method::ObjectHeaderWriter<OFFSET_SIZE, ID_SIZE>.write	method	ported	src/parquet_variant/builder/object_builder.cr	inlined into ObjectBuilder#finish
+parquet-variant/src/builder/object.rs::method::ObjectState<'_>.rollback	method	ported	src/parquet_variant/builder/object_builder.cr	rollback
+parquet-variant/src/builder/object.rs::method::ParentState<'a, ObjectState<'a>>.try_object	method	ported	src/parquet_variant/builder/object_builder.cr	try_object
 parquet-variant/src/decoder.rs::method::OffsetSizeBytes.try_new	method	ported	src/parquet_variant/decoder.cr	OffsetSizeBytes.try_new
 parquet-variant/src/decoder.rs::method::OffsetSizeBytes.unpack_u32	method	ported	src/parquet_variant/decoder.cr	OffsetSizeBytes#unpack_u32
 parquet-variant/src/decoder.rs::method::OffsetSizeBytes.unpack_u32_at_offset	method	ported	src/parquet_variant/decoder.cr	OffsetSizeBytes#unpack_u32_at_offset
