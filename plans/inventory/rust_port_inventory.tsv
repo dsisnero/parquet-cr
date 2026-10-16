@@ -2196,18 +2196,18 @@ parquet/src/encodings/decoding/alp_decoder.rs::method::AlpEncodedVectorView<Exac
 parquet/src/encodings/decoding/alp_decoder.rs::method::AlpEncodedVectorView<Exact>.packed_values_range	method	missing	-	auto-generated
 parquet/src/encodings/decoding/alp_decoder.rs::method::u32.append_le_bytes	method	missing	-	auto-generated
 parquet/src/encodings/decoding/alp_decoder.rs::method::u64.append_le_bytes	method	missing	-	auto-generated
-parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::ByteStreamSplitDecoder<T>.encoding	method	missing	-	auto-generated
-parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::ByteStreamSplitDecoder<T>.get	method	missing	-	auto-generated
-parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::ByteStreamSplitDecoder<T>.new	method	missing	-	auto-generated
-parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::ByteStreamSplitDecoder<T>.set_data	method	missing	-	auto-generated
-parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::ByteStreamSplitDecoder<T>.skip	method	missing	-	auto-generated
-parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::ByteStreamSplitDecoder<T>.values_left	method	missing	-	auto-generated
-parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::VariableWidthByteStreamSplitDecoder<T>.encoding	method	missing	-	auto-generated
-parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::VariableWidthByteStreamSplitDecoder<T>.get	method	missing	-	auto-generated
-parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::VariableWidthByteStreamSplitDecoder<T>.new	method	missing	-	auto-generated
-parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::VariableWidthByteStreamSplitDecoder<T>.set_data	method	missing	-	auto-generated
-parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::VariableWidthByteStreamSplitDecoder<T>.skip	method	missing	-	auto-generated
-parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::VariableWidthByteStreamSplitDecoder<T>.values_left	method	missing	-	auto-generated
+parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::ByteStreamSplitDecoder<T>.encoding	method	ported	src/parquet/encodings/byte_stream_split.cr	ByteStreamSplitDecoder<T> (encoding)
+parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::ByteStreamSplitDecoder<T>.get	method	ported	src/parquet/encodings/byte_stream_split.cr	ByteStreamSplitDecoder<T> (get)
+parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::ByteStreamSplitDecoder<T>.new	method	ported	src/parquet/encodings/byte_stream_split.cr	ByteStreamSplitDecoder<T> (new)
+parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::ByteStreamSplitDecoder<T>.set_data	method	ported	src/parquet/encodings/byte_stream_split.cr	ByteStreamSplitDecoder<T> (set_data)
+parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::ByteStreamSplitDecoder<T>.skip	method	ported	src/parquet/encodings/byte_stream_split.cr	ByteStreamSplitDecoder<T> (skip)
+parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::ByteStreamSplitDecoder<T>.values_left	method	ported	src/parquet/encodings/byte_stream_split.cr	ByteStreamSplitDecoder<T> (values_left)
+parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::VariableWidthByteStreamSplitDecoder<T>.encoding	method	ported	src/parquet/encodings/byte_stream_split.cr	VariableWidthByteStreamSplitDecoder<T> (encoding)
+parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::VariableWidthByteStreamSplitDecoder<T>.get	method	ported	src/parquet/encodings/byte_stream_split.cr	VariableWidthByteStreamSplitDecoder<T> (get)
+parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::VariableWidthByteStreamSplitDecoder<T>.new	method	ported	src/parquet/encodings/byte_stream_split.cr	VariableWidthByteStreamSplitDecoder<T> (new)
+parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::VariableWidthByteStreamSplitDecoder<T>.set_data	method	ported	src/parquet/encodings/byte_stream_split.cr	VariableWidthByteStreamSplitDecoder<T> (set_data)
+parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::VariableWidthByteStreamSplitDecoder<T>.skip	method	ported	src/parquet/encodings/byte_stream_split.cr	VariableWidthByteStreamSplitDecoder<T> (skip)
+parquet/src/encodings/decoding/byte_stream_split_decoder.rs::method::VariableWidthByteStreamSplitDecoder<T>.values_left	method	ported	src/parquet/encodings/byte_stream_split.cr	VariableWidthByteStreamSplitDecoder<T> (values_left)
 parquet/src/encodings/encoding/alp_encoder.rs::const::MAX_COMBINATIONS	const	missing	-	auto-generated
 parquet/src/encodings/encoding/alp_encoder.rs::const::SAMPLES_PER_VECTOR	const	missing	-	auto-generated
 parquet/src/encodings/encoding/alp_encoder.rs::const::SAMPLE_VECTORS	const	missing	-	auto-generated
@@ -2227,19 +2227,19 @@ parquet/src/encodings/encoding/alp_encoder.rs::method::StreamingPage<F>.finish	m
 parquet/src/encodings/encoding/alp_encoder.rs::method::StreamingPage<F>.new	method	missing	-	auto-generated
 parquet/src/encodings/encoding/alp_encoder.rs::method::StreamingPage<F>.push_vector	method	missing	-	auto-generated
 parquet/src/encodings/encoding/alp_encoder.rs::method::StreamingPage<F>.put	method	missing	-	auto-generated
-parquet/src/encodings/encoding/byte_stream_split_encoder.rs::const::BLOCK_SIZE	const	missing	-	auto-generated
-parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::ByteStreamSplitEncoder<T>.encoding	method	missing	-	auto-generated
-parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::ByteStreamSplitEncoder<T>.estimated_data_encoded_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::ByteStreamSplitEncoder<T>.estimated_memory_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::ByteStreamSplitEncoder<T>.flush_buffer	method	missing	-	auto-generated
-parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::ByteStreamSplitEncoder<T>.new	method	missing	-	auto-generated
-parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::ByteStreamSplitEncoder<T>.put	method	missing	-	auto-generated
-parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::VariableWidthByteStreamSplitEncoder<T>.encoding	method	missing	-	auto-generated
-parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::VariableWidthByteStreamSplitEncoder<T>.estimated_data_encoded_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::VariableWidthByteStreamSplitEncoder<T>.estimated_memory_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::VariableWidthByteStreamSplitEncoder<T>.flush_buffer	method	missing	-	auto-generated
-parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::VariableWidthByteStreamSplitEncoder<T>.new	method	missing	-	auto-generated
-parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::VariableWidthByteStreamSplitEncoder<T>.put	method	missing	-	auto-generated
+parquet/src/encodings/encoding/byte_stream_split_encoder.rs::const::BLOCK_SIZE	const	intentional_divergence	src/parquet/encodings/byte_stream_split.cr	block-4 split kernel replaced by a runtime type_size routine
+parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::ByteStreamSplitEncoder<T>.encoding	method	ported	src/parquet/encodings/byte_stream_split.cr	ByteStreamSplitEncoder<T> (encoding)
+parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::ByteStreamSplitEncoder<T>.estimated_data_encoded_size	method	ported	src/parquet/encodings/byte_stream_split.cr	ByteStreamSplitEncoder<T> (estimated_data_encoded_size)
+parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::ByteStreamSplitEncoder<T>.estimated_memory_size	method	ported	src/parquet/encodings/byte_stream_split.cr	ByteStreamSplitEncoder<T> (estimated_memory_size)
+parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::ByteStreamSplitEncoder<T>.flush_buffer	method	ported	src/parquet/encodings/byte_stream_split.cr	ByteStreamSplitEncoder<T> (flush_buffer)
+parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::ByteStreamSplitEncoder<T>.new	method	ported	src/parquet/encodings/byte_stream_split.cr	ByteStreamSplitEncoder<T> (new)
+parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::ByteStreamSplitEncoder<T>.put	method	ported	src/parquet/encodings/byte_stream_split.cr	ByteStreamSplitEncoder<T> (put)
+parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::VariableWidthByteStreamSplitEncoder<T>.encoding	method	ported	src/parquet/encodings/byte_stream_split.cr	VariableWidthByteStreamSplitEncoder<T> (encoding)
+parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::VariableWidthByteStreamSplitEncoder<T>.estimated_data_encoded_size	method	ported	src/parquet/encodings/byte_stream_split.cr	VariableWidthByteStreamSplitEncoder<T> (estimated_data_encoded_size)
+parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::VariableWidthByteStreamSplitEncoder<T>.estimated_memory_size	method	ported	src/parquet/encodings/byte_stream_split.cr	VariableWidthByteStreamSplitEncoder<T> (estimated_memory_size)
+parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::VariableWidthByteStreamSplitEncoder<T>.flush_buffer	method	ported	src/parquet/encodings/byte_stream_split.cr	VariableWidthByteStreamSplitEncoder<T> (flush_buffer)
+parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::VariableWidthByteStreamSplitEncoder<T>.new	method	ported	src/parquet/encodings/byte_stream_split.cr	VariableWidthByteStreamSplitEncoder<T> (new)
+parquet/src/encodings/encoding/byte_stream_split_encoder.rs::method::VariableWidthByteStreamSplitEncoder<T>.put	method	ported	src/parquet/encodings/byte_stream_split.cr	VariableWidthByteStreamSplitEncoder<T> (put)
 parquet/src/encodings/encoding/dict_encoder.rs::const::TYPE_LEN	const	intentional_divergence	spec/parquet/encodings/dict_spec.cr	test-local constant inlined as literal
 parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.bit_width	method	ported	src/parquet/encodings/dict.cr	DictEncoder#bit_width (private)
 parquet/src/encodings/encoding/dict_encoder.rs::method::DictEncoder<T>.dict_encoded_size	method	ported	src/parquet/encodings/dict.cr	DictEncoder#dict_encoded_size

@@ -43,16 +43,16 @@ little-endian layout.
   `ThriftMetadataWriter` (footer + page-index serialization) are done, and the
   `util` bit layer (`BitReader`/`BitWriter`), the RLE/bit-packing hybrid
   (`RleEncoder`/`RleDecoder`), level encoding (`LevelEncoder`), and the PLAIN,
-  DELTA_BINARY_PACKED, DELTA_LENGTH_BYTE_ARRAY, DELTA_BYTE_ARRAY, and dictionary
-  codecs are done.
+  DELTA_BINARY_PACKED, DELTA_LENGTH_BYTE_ARRAY, DELTA_BYTE_ARRAY, dictionary,
+  and byte-stream-split codecs are done.
 - Next up (take the first unchecked item):
-  1. Encodings: byte-stream-split, RLE value, and ALP; then the
+  1. Encodings: RLE value and ALP; then the
      `DataType`/`Encoder`/`Decoder` registries; then the column reader/writer,
      then serialized/file reader+writer, then record API and bloom filter.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 712 `ported`, 99 `intentional_divergence`,
-  1 `skipped`, 2703 `missing` (of 3515 rows).
+- Progress by counts (ledger): 736 `ported`, 100 `intentional_divergence`,
+  1 `skipped`, 2678 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -74,9 +74,9 @@ Chunk status by area:
   `ParquetMetaDataReader`, and the `ParquetMetaDataWriter`/`ThriftMetadataWriter`
   done; serialized/file reader+writer, bloom filter pending.
 - Phase 2.1 encodings: RLE/bit-packing hybrid, levels, PLAIN,
-  DELTA_BINARY_PACKED, DELTA_LENGTH_BYTE_ARRAY, DELTA_BYTE_ARRAY, and dictionary
-  done; byte-stream-split, RLE value, ALP, and the encoder/decoder registries
-  pending.
+  DELTA_BINARY_PACKED, DELTA_LENGTH_BYTE_ARRAY, DELTA_BYTE_ARRAY, dictionary,
+  and byte-stream-split done; RLE value, ALP, and the encoder/decoder
+  registries pending.
 - Phases 2.2 column, 2.4 record, 2.5 CLI: pending.
 - Phase 3 (variant/geospatial/derive/encryption/arrow/async): pending.
 
@@ -197,8 +197,10 @@ Chunk status by area:
   `DeltaByteArrayEncoder(T)`/`DeltaByteArrayDecoder(T)`.
 - [x] Dictionary codec (`src/parquet/encodings/dict.cr`): `DictEncoder(T)` and
   `DictDecoder(T)`, plus `KeyStorage(T)`; `util/interner.cr`.
-- [ ] Byte-stream-split, RLE value, ALP codecs
-  (`encodings/encoding`, `encodings/decoding`).
+- [x] BYTE_STREAM_SPLIT (`src/parquet/encodings/byte_stream_split.cr`):
+  `ByteStreamSplitEncoder(T)`/`Decoder(T)` and
+  `VariableWidthByteStreamSplitEncoder(T)`/`Decoder(T)`.
+- [ ] RLE value and ALP codecs (`encodings/encoding`, `encodings/decoding`).
 - [ ] ALP codec (`encodings/alp.rs`).
 - [ ] 7 upstream test modules ported.
 
@@ -467,6 +469,13 @@ Chunk status by area:
   `str`, and `Vec<u8>` remain pending. `dict_encoding_size` /
   `variable_length_bytes` are realized per-type inside
   `DictEncoder::KeyStorage<T>` rather than on a `ParquetValueType` trait.
+- `encodings::byte_stream_split`: `ByteStreamSplitEncoder(T)`/`Decoder(T)` and
+  `VariableWidthByteStreamSplitEncoder(T)`/`Decoder(T)` with `T.class`; the
+  constant `split_streams_const`/`join_streams_const` and `_variable` kernels
+  are a single runtime `type_size` routine (byte-identical layout; the upstream
+  block-4 loop only reorders the same writes); the fixed-width decoder joins
+  into a scratch buffer and decodes each value with `IO::ByteFormat::LittleEndian`
+  instead of a memory reinterpret; unsupported types raise as upstream.
 - `ParquetMetaDataWriter`/`ThriftMetadataWriter`: the `MetadataObjectWriter`
   encryption-dispatch layer is not modeled; the non-encryption write logic is
   inlined (`write_thrift_object`, `Metadata.write_file_metadata`), and the

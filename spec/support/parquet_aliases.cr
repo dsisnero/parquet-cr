@@ -43,3 +43,8 @@ alias DictDecoder = Parquet::Encodings::DictDecoder
 alias PInt96 = Parquet::Int96
 alias PByteArray = Parquet::ByteArray
 alias PFixedLenByteArray = Parquet::FixedLenByteArray
+
+alias ByteStreamSplitEncoder = Parquet::Encodings::ByteStreamSplitEncoder
+alias ByteStreamSplitDecoder = Parquet::Encodings::ByteStreamSplitDecoder
+alias VariableWidthByteStreamSplitEncoder = Parquet::Encodings::VariableWidthByteStreamSplitEncoder
+alias VariableWidthByteStreamSplitDecoder = Parquet::Encodings::VariableWidthByteStreamSplitDecoder
