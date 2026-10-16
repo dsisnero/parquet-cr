@@ -1885,40 +1885,40 @@ parquet/src/column/writer/mod.rs::method::ColumnWriter<'_>.close	method	missing	
 parquet/src/column/writer/mod.rs::method::ColumnWriter<'_>.get_estimated_total_bytes	method	missing	-	auto-generated
 parquet/src/column/writer/mod.rs::method::ColumnWriter<'_>.memory_size	method	missing	-	auto-generated
 parquet/src/column/writer/mod.rs::method::ColumnWriter<'_>.set_distinct_count_override	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.add_data_page	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.build_column_metadata	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.can_truncate_value	method	ported	src/parquet/column/writer/truncate.cr	Writer.can_truncate_value
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.close	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.create_level_encoder	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.dict_fallback	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.flush_data_pages	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.get_descriptor	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.get_estimated_total_bytes	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.get_nan_count	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.get_total_bytes_written	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.get_total_rows_written	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.has_non_dictionary_data_page	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.is_utf8	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.memory_size	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.new	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.set_column_chunk_encryption_properties	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.set_distinct_count_override	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.set_page_size_exemption	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.should_add_data_page	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.should_dict_fallback	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.truncate_max_value	method	ported	src/parquet/column/writer/truncate.cr	Writer.truncate_max_value
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.truncate_min_value	method	ported	src/parquet/column/writer/truncate.cr	Writer.truncate_min_value
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.truncate_statistics	method	ported	src/parquet/column/writer/truncate.cr	Writer.truncate_statistics
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.update_column_offset_index	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.update_metrics_for_page	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.window_end_for_values	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_batch	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_batch_internal	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_batch_with_statistics	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_data_page	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_dictionary_page	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_granular_chunk	method	missing	-	auto-generated
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_mini_batch	method	missing	-	auto-generated
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.add_data_page	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.build_column_metadata	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.can_truncate_value	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.close	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.create_level_encoder	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.dict_fallback	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.flush_data_pages	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.get_descriptor	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.get_estimated_total_bytes	method	intentional_divergence	src/parquet/column/writer/writer.cr	arrow-only
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.get_nan_count	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.get_total_bytes_written	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.get_total_rows_written	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.has_non_dictionary_data_page	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.is_utf8	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.memory_size	method	intentional_divergence	src/parquet/column/writer/writer.cr	arrow-only
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.new	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.set_column_chunk_encryption_properties	method	intentional_divergence	src/parquet/column/writer/writer.cr	encryption not ported
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.set_distinct_count_override	method	intentional_divergence	src/parquet/column/writer/writer.cr	arrow-only
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.set_page_size_exemption	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.should_add_data_page	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.should_dict_fallback	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.truncate_max_value	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.truncate_min_value	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.truncate_statistics	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.update_column_offset_index	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.update_metrics_for_page	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.window_end_for_values	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_batch	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_batch_internal	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_batch_with_statistics	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_data_page	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_dictionary_page	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_granular_chunk	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_mini_batch	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
 parquet/src/column/writer/mod.rs::method::LevelDataRef<'_>.first	method	ported	src/parquet/column/writer.cr	writer data holders
 parquet/src/column/writer/mod.rs::method::LevelDataRef<'_>.len	method	ported	src/parquet/column/writer.cr	writer data holders
 parquet/src/column/writer/mod.rs::method::LevelDataRef<'_>.slice	method	ported	src/parquet/column/writer.cr	writer data holders

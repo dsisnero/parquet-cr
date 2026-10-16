@@ -48,15 +48,15 @@ little-endian layout.
   interfaces + `get_encoder`/`get_decoder` registries, the writer/reader
   properties, the column level/value decoders, the column page
   types/interfaces, the bloom filter (`Sbbf`), the column writer value
-  encoder, `ColumnReaderImpl`, the compression `Codec` framework
+  encoder, the column reader/writer impls, the compression `Codec` framework
   (`GZipCodec`), and the serialized page reader/writer are done.
 - Next up (take the first unchecked item):
-  1. `ColumnWriterImpl` (`column/writer/mod.rs`), then serialized/file
-     reader+writer, then record API.
+  1. `SerializedFileWriter`/`SerializedFileReader` (file-level), then the record
+     API.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 1147 `ported`, 163 `intentional_divergence`,
-  1 `skipped`, 2204 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1173 `ported`, 167 `intentional_divergence`,
+  1 `skipped`, 2174 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -219,8 +219,12 @@ Chunk status by area:
 
 ### 2.2 Column
 
-- [~] `ColumnDescriptor` + `ColumnReader` (interface) done; `ColumnWriter`
-  (interface) pending.
+- [x] `ColumnDescriptor` + `ColumnReader` done; column writer in progress.
+- [~] `ColumnWriterImpl` (`src/parquet/column/writer/writer.cr`):
+  `GenericColumnWriter(T)` (write_batch/close/add_data_page/write_mini_batch/
+  write_granular_chunk/column+offset index/metadata) + `ColumnWriter` dispatch
+  (`get_column_writer`/`get_typed_column_writer`); arrow/geospatial/encryption
+  paths deferred.
 - [x] Column writer statistics-truncation helpers
   (`src/parquet/column/writer/truncate.cr`): `truncate_utf8`/
   `truncate_and_increment_utf8`/`increment_utf8`/`increment`,
@@ -601,6 +605,15 @@ Chunk status by area:
   a `Kind` + `Int32` size; `usize` fields are `Int32`; `pick_sub_batch` takes the
   value type `T` explicitly (the encoder's `Values` associated type is not
   modelled here).
+- `column::writer`: `GenericColumnWriter<'a, E>` becomes `GenericColumnWriter(T)`
+  fixing `E = ColumnValueEncoderImpl(T)`; the `ColumnWriter` enum becomes an
+  abstract class with the single generic `ColumnWriterImpl(T)` subclass; `usize`
+  becomes `Int32`; `encodings` is a `Set(Encoding)`; the writer's geospatial,
+  encryption, and arrow-only paths (`get_estimated_total_bytes`, `memory_size`,
+  `set_distinct_count_override`, `set_column_chunk_encryption_properties`) are
+  not ported. `Naming/AccessorMethodName`, `Lint/NotNil`,
+  `Lint/ShadowingOuterLocalVar`, and `Metrics/CyclomaticComplexity` are excluded
+  for `src/parquet/column/writer/writer.cr` in `.ameba.yml`.
 - `encodings::byte_stream_split`: `ByteStreamSplitEncoder(T)`/`Decoder(T)` and
   `VariableWidthByteStreamSplitEncoder(T)`/`Decoder(T)` with `T.class`; the
   constant `split_streams_const`/`join_streams_const` and `_variable` kernels

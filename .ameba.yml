@@ -14,8 +14,23 @@ Naming/AccessorMethodName:
   Excluded:
     - src/parquet/file/properties.cr
     - src/parquet/compression.cr
+    - src/parquet/column/writer/writer.cr
 
 Naming/QueryBoolMethods:
   Excluded:
     - src/parquet/file/properties.cr
     - src/parquet/compression.cr
+
+# The column writer is a large, direct port; its upstream `not_nil!`-equivalent
+# unwraps and cyclic control flow are kept as-is.
+Lint/NotNil:
+  Excluded:
+    - src/parquet/column/writer/writer.cr
+
+Lint/ShadowingOuterLocalVar:
+  Excluded:
+    - src/parquet/column/writer/writer.cr
+
+Metrics/CyclomaticComplexity:
+  Excluded:
+    - src/parquet/column/writer/writer.cr

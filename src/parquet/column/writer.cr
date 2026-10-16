@@ -210,6 +210,18 @@ module Parquet
           end
         end
 
+        def absent? : Bool
+          @kind == Kind::Absent
+        end
+
+        def materialized? : Bool
+          @kind == Kind::Materialized
+        end
+
+        def uniform? : Bool
+          @kind == Kind::Uniform
+        end
+
         def len : Int32
           case @kind
           when Kind::Absent       then 0
