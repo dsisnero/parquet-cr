@@ -63,16 +63,17 @@ little-endian layout.
   `parquet-variant`'s `VariantPath`/`VariantPathElement` + dot/bracket parser,
   the `utils` helpers, `OffsetSizeBytes`/`map_bytes_to_offsets`,
   `VariantMetadata`, and `VariantDecimal4`/`8`/`16` (`src/parquet_variant/`,
-  tests ported).
+  tests ported); `parquet-geospatial`'s `Hint`/`Edges`/`Metadata` + `WkbType`
+  metadata (`src/parquet_geospatial/types.cr`).
 - Next up (take the first unchecked item):
   1. Phase 3.1: the rest of `parquet-variant` (`Variant`, `VariantBuilder`,
      `VariantObject`/`VariantList`, the decoder); then `-compute`/`-json`.
-  2. Phase 3.3 `parquet_derive` (Crystal macros); Phase 3.2 geospatial; Phase 3.4
-     encryption.
+  2. Phase 3.2 `parquet-geospatial` `bounding.rs`/`interval.rs` (need
+     `geo-traits`/`wkb`); Phase 3.3 `parquet_derive`; Phase 3.4 encryption.
   3. Deferred: async/object-store suffix fetchers, encryption, and the arrow
      `parquet-rewrite`/`parquet-fromcsv` are intentional divergences (recorded).
-- Progress by counts (ledger): 1358 `ported`, 182 `intentional_divergence`,
-  1 `skipped`, 1974 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1365 `ported`, 185 `intentional_divergence`,
+  1 `skipped`, 1964 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -115,8 +116,10 @@ Chunk status by area:
 - Phase 3 (variant/geospatial/derive/encryption/arrow/async): `parquet-variant`'s
   `VariantPath`/`VariantPathElement` + parser, the `utils` helpers,
   `OffsetSizeBytes`/`map_bytes_to_offsets`, `VariantMetadata`, and
-  `VariantDecimal4`/`8`/`16` done; the `Variant` encoding/builder/decoder,
-  geospatial, derive, encryption, arrow, and async remain pending.
+  `VariantDecimal4`/`8`/`16` done; `parquet-geospatial`'s `Hint`/`Edges`/
+  `Metadata` + `WkbType` metadata done; the `Variant` encoding/builder/decoder,
+  geospatial bounding/interval, derive, encryption, arrow, and async remain
+  pending.
 
 ## Phase 0 — Project initialization
 
@@ -426,7 +429,11 @@ Chunk status by area:
 
 ### 3.2 Geospatial
 
-- [ ] GeoParquet GEOMETRY/GEOGRAPHY logical types + bounding statistics.
+- [~] GeoParquet GEOMETRY/GEOGRAPHY logical types + bounding statistics:
+  `Hint`/`Edges`/`Metadata` + the metadata side of `WkbType`
+  (`src/parquet_geospatial/types.cr`, `types_spec.cr`) done; `bounding.rs`
+  (`GeoBounder`), `interval.rs`, and the `ExtensionType` impl (arrow-schema
+  `Field`/`DataType`) pending.
 
 ### 3.3 Derive macros
 
@@ -787,6 +794,14 @@ Chunk status by area:
   `define_variant_decimal` macro). `Int128` is the `VariantDecimal16` native type;
   `%`/`/` map to `Int#remainder`/`Int#tdiv` to match Rust's truncated semantics;
   overflow during rescale raises `InvalidArgumentError`.
+- `parquet-geospatial`: lives in `src/parquet_geospatial/` (`ParquetGeospatial`
+  module), required from `src/parquet-cr.cr`; `serde_json::Value` is `JSON::Any`
+  (`Metadata#to_json`/`.from_json` are hand-written to preserve the
+  `{"crs":..,"edges":..}` field order and skip absent fields);
+  `ArrowError::JsonError` is `ParquetGeospatial::JsonError`; `Edges`'s
+  `#[serde(rename_all = "lowercase")]` is `json_key`/`from_json_key`; the
+  `arrow_schema::ExtensionType` impl (`NAME`, `supports_data_type`, `try_new`,
+  `Field` registration) is deferred to the Arrow interop chunk.
 - `chunk_reader`: `BytesChunkReader#get_read`/`get_bytes` and
   `FileChunkReader#get_bytes` raise the upstream `EOF` messages
   ("Expected to read ... while file has length ..."); `FileChunkReader` reads

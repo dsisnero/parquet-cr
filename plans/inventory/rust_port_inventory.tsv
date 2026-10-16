@@ -45,16 +45,16 @@ parquet-geospatial/src/interval.rs::method::WraparoundInterval.mid	method	missin
 parquet-geospatial/src/interval.rs::method::WraparoundInterval.new	method	missing	-	auto-generated
 parquet-geospatial/src/interval.rs::method::WraparoundInterval.split	method	missing	-	auto-generated
 parquet-geospatial/src/interval.rs::method::WraparoundInterval.width	method	missing	-	auto-generated
-parquet-geospatial/src/types.rs::const::NAME	const	missing	-	auto-generated
-parquet-geospatial/src/types.rs::method::Metadata.crs_is_lon_lat	method	missing	-	auto-generated
-parquet-geospatial/src/types.rs::method::Metadata.new	method	missing	-	auto-generated
-parquet-geospatial/src/types.rs::method::Metadata.type_hint	method	missing	-	auto-generated
-parquet-geospatial/src/types.rs::method::WkbType.deserialize_metadata	method	missing	-	auto-generated
-parquet-geospatial/src/types.rs::method::WkbType.metadata	method	missing	-	auto-generated
-parquet-geospatial/src/types.rs::method::WkbType.new	method	missing	-	auto-generated
-parquet-geospatial/src/types.rs::method::WkbType.serialize_metadata	method	missing	-	auto-generated
-parquet-geospatial/src/types.rs::method::WkbType.supports_data_type	method	missing	-	auto-generated
-parquet-geospatial/src/types.rs::method::WkbType.try_new	method	missing	-	auto-generated
+parquet-geospatial/src/types.rs::const::NAME	const	intentional_divergence	src/parquet_geospatial/types.cr	ExtensionType const; needs arrow-schema
+parquet-geospatial/src/types.rs::method::Metadata.crs_is_lon_lat	method	ported	src/parquet_geospatial/types.cr	Metadata#crs_is_lon_lat
+parquet-geospatial/src/types.rs::method::Metadata.new	method	ported	src/parquet_geospatial/types.cr	Metadata.new
+parquet-geospatial/src/types.rs::method::Metadata.type_hint	method	ported	src/parquet_geospatial/types.cr	Metadata#type_hint
+parquet-geospatial/src/types.rs::method::WkbType.deserialize_metadata	method	ported	src/parquet_geospatial/types.cr	WkbType.deserialize_metadata
+parquet-geospatial/src/types.rs::method::WkbType.metadata	method	ported	src/parquet_geospatial/types.cr	WkbType#metadata
+parquet-geospatial/src/types.rs::method::WkbType.new	method	ported	src/parquet_geospatial/types.cr	WkbType#initialize
+parquet-geospatial/src/types.rs::method::WkbType.serialize_metadata	method	ported	src/parquet_geospatial/types.cr	WkbType#serialize_metadata
+parquet-geospatial/src/types.rs::method::WkbType.supports_data_type	method	intentional_divergence	src/parquet_geospatial/types.cr	needs arrow-schema DataType
+parquet-geospatial/src/types.rs::method::WkbType.try_new	method	intentional_divergence	src/parquet_geospatial/types.cr	needs arrow-schema DataType
 parquet-variant-compute/benches/variant_kernels.rs::const::SHRED_VARIANT_OBJECT_ROWS	const	missing	-	auto-generated
 parquet-variant-compute/benches/variant_kernels.rs::const::VARIANT_ARRAY_BUILD_ROWS	const	missing	-	auto-generated
 parquet-variant-compute/benches/variant_kernels.rs::const::VARIANT_GET_UNSHREDDED_OBJECT_ROWS	const	missing	-	auto-generated
