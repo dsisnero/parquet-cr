@@ -33,3 +33,7 @@ alias PlainEncoder = Parquet::Encodings::PlainEncoder
 alias PlainDecoder = Parquet::Encodings::PlainDecoder
 alias DeltaBitPackEncoder = Parquet::Encodings::DeltaBitPackEncoder
 alias DeltaBitPackDecoder = Parquet::Encodings::DeltaBitPackDecoder
+alias DeltaLengthByteArrayEncoder = Parquet::Encodings::DeltaLengthByteArrayEncoder
+alias DeltaLengthByteArrayDecoder = Parquet::Encodings::DeltaLengthByteArrayDecoder
+alias DeltaByteArrayEncoder = Parquet::Encodings::DeltaByteArrayEncoder
+alias DeltaByteArrayDecoder = Parquet::Encodings::DeltaByteArrayDecoder

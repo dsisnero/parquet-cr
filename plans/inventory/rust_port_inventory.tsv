@@ -2139,20 +2139,20 @@ parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.next_mini_bloc
 parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.set_data	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackDecoder
 parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.skip	method	ported	src/parquet/encodings/delta_bit_pack.cr	scratch-buffer decode
 parquet/src/encodings/decoding.rs::method::DeltaBitPackDecoder<T>.values_left	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackDecoder
-parquet/src/encodings/decoding.rs::method::DeltaByteArrayDecoder<T>.default	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaByteArrayDecoder<T>.encoding	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaByteArrayDecoder<T>.get	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaByteArrayDecoder<T>.new	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaByteArrayDecoder<T>.set_data	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaByteArrayDecoder<T>.skip	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaByteArrayDecoder<T>.values_left	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaLengthByteArrayDecoder<T>.default	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaLengthByteArrayDecoder<T>.encoding	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaLengthByteArrayDecoder<T>.get	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaLengthByteArrayDecoder<T>.new	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaLengthByteArrayDecoder<T>.set_data	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaLengthByteArrayDecoder<T>.skip	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::DeltaLengthByteArrayDecoder<T>.values_left	method	missing	-	auto-generated
+parquet/src/encodings/decoding.rs::method::DeltaByteArrayDecoder<T>.default	method	intentional_divergence	src/parquet/encodings/delta_byte_array.cr	Rust Default; Crystal default initialize
+parquet/src/encodings/decoding.rs::method::DeltaByteArrayDecoder<T>.encoding	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaByteArrayDecoder(T)
+parquet/src/encodings/decoding.rs::method::DeltaByteArrayDecoder<T>.get	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaByteArrayDecoder(T)
+parquet/src/encodings/decoding.rs::method::DeltaByteArrayDecoder<T>.new	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaByteArrayDecoder(T)
+parquet/src/encodings/decoding.rs::method::DeltaByteArrayDecoder<T>.set_data	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaByteArrayDecoder(T)
+parquet/src/encodings/decoding.rs::method::DeltaByteArrayDecoder<T>.skip	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaByteArrayDecoder(T)
+parquet/src/encodings/decoding.rs::method::DeltaByteArrayDecoder<T>.values_left	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaByteArrayDecoder(T)
+parquet/src/encodings/decoding.rs::method::DeltaLengthByteArrayDecoder<T>.default	method	intentional_divergence	src/parquet/encodings/delta_byte_array.cr	Rust Default; Crystal default initialize
+parquet/src/encodings/decoding.rs::method::DeltaLengthByteArrayDecoder<T>.encoding	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaLengthByteArrayDecoder
+parquet/src/encodings/decoding.rs::method::DeltaLengthByteArrayDecoder<T>.get	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaLengthByteArrayDecoder
+parquet/src/encodings/decoding.rs::method::DeltaLengthByteArrayDecoder<T>.new	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaLengthByteArrayDecoder
+parquet/src/encodings/decoding.rs::method::DeltaLengthByteArrayDecoder<T>.set_data	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaLengthByteArrayDecoder
+parquet/src/encodings/decoding.rs::method::DeltaLengthByteArrayDecoder<T>.skip	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaLengthByteArrayDecoder
+parquet/src/encodings/decoding.rs::method::DeltaLengthByteArrayDecoder<T>.values_left	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaLengthByteArrayDecoder
 parquet/src/encodings/decoding.rs::method::DictDecoder<T>.default	method	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::method::DictDecoder<T>.encoding	method	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::method::DictDecoder<T>.get	method	missing	-	auto-generated
@@ -2277,20 +2277,20 @@ parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.put	method
 parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.subtract	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackEncoder (private)
 parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.subtract_u64	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackEncoder (private)
 parquet/src/encodings/encoding/mod.rs::method::DeltaBitPackEncoder<T>.write_page_header	method	ported	src/parquet/encodings/delta_bit_pack.cr	DeltaBitPackEncoder (private)
-parquet/src/encodings/encoding/mod.rs::method::DeltaByteArrayEncoder<T>.default	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaByteArrayEncoder<T>.encoding	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaByteArrayEncoder<T>.estimated_data_encoded_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaByteArrayEncoder<T>.estimated_memory_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaByteArrayEncoder<T>.flush_buffer	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaByteArrayEncoder<T>.new	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaByteArrayEncoder<T>.put	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaLengthByteArrayEncoder<T>.default	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaLengthByteArrayEncoder<T>.encoding	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaLengthByteArrayEncoder<T>.estimated_data_encoded_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaLengthByteArrayEncoder<T>.estimated_memory_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaLengthByteArrayEncoder<T>.flush_buffer	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaLengthByteArrayEncoder<T>.new	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::DeltaLengthByteArrayEncoder<T>.put	method	missing	-	auto-generated
+parquet/src/encodings/encoding/mod.rs::method::DeltaByteArrayEncoder<T>.default	method	intentional_divergence	src/parquet/encodings/delta_byte_array.cr	Rust Default; Crystal default initialize
+parquet/src/encodings/encoding/mod.rs::method::DeltaByteArrayEncoder<T>.encoding	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaByteArrayEncoder(T)
+parquet/src/encodings/encoding/mod.rs::method::DeltaByteArrayEncoder<T>.estimated_data_encoded_size	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaByteArrayEncoder(T)
+parquet/src/encodings/encoding/mod.rs::method::DeltaByteArrayEncoder<T>.estimated_memory_size	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaByteArrayEncoder(T)
+parquet/src/encodings/encoding/mod.rs::method::DeltaByteArrayEncoder<T>.flush_buffer	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaByteArrayEncoder(T)
+parquet/src/encodings/encoding/mod.rs::method::DeltaByteArrayEncoder<T>.new	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaByteArrayEncoder(T)
+parquet/src/encodings/encoding/mod.rs::method::DeltaByteArrayEncoder<T>.put	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaByteArrayEncoder(T)
+parquet/src/encodings/encoding/mod.rs::method::DeltaLengthByteArrayEncoder<T>.default	method	intentional_divergence	src/parquet/encodings/delta_byte_array.cr	Rust Default; Crystal default initialize
+parquet/src/encodings/encoding/mod.rs::method::DeltaLengthByteArrayEncoder<T>.encoding	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaLengthByteArrayEncoder
+parquet/src/encodings/encoding/mod.rs::method::DeltaLengthByteArrayEncoder<T>.estimated_data_encoded_size	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaLengthByteArrayEncoder
+parquet/src/encodings/encoding/mod.rs::method::DeltaLengthByteArrayEncoder<T>.estimated_memory_size	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaLengthByteArrayEncoder
+parquet/src/encodings/encoding/mod.rs::method::DeltaLengthByteArrayEncoder<T>.flush_buffer	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaLengthByteArrayEncoder
+parquet/src/encodings/encoding/mod.rs::method::DeltaLengthByteArrayEncoder<T>.new	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaLengthByteArrayEncoder
+parquet/src/encodings/encoding/mod.rs::method::DeltaLengthByteArrayEncoder<T>.put	method	ported	src/parquet/encodings/delta_byte_array.cr	DeltaLengthByteArrayEncoder
 parquet/src/encodings/encoding/mod.rs::method::PlainEncoder<T>.default	method	intentional_divergence	src/parquet/encodings/plain.cr	Rust Default/PhantomData; Crystal default initialize
 parquet/src/encodings/encoding/mod.rs::method::PlainEncoder<T>.encoding	method	ported	src/parquet/encodings/plain.cr	PlainEncoder(T)
 parquet/src/encodings/encoding/mod.rs::method::PlainEncoder<T>.estimated_data_encoded_size	method	ported	src/parquet/encodings/plain.cr	PlainEncoder(T)

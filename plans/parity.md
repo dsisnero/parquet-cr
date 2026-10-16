@@ -42,17 +42,17 @@ little-endian layout.
   `ParquetMetaDataReader`, and the   `ParquetMetaDataWriter`/
   `ThriftMetadataWriter` (footer + page-index serialization) are done, and the
   `util` bit layer (`BitReader`/`BitWriter`), the RLE/bit-packing hybrid
-  (`RleEncoder`/`RleDecoder`), level encoding (`LevelEncoder`), and the PLAIN and
-  DELTA_BINARY_PACKED codecs are started.
+  (`RleEncoder`/`RleDecoder`), level encoding (`LevelEncoder`), and the PLAIN,
+  DELTA_BINARY_PACKED, DELTA_LENGTH_BYTE_ARRAY, and DELTA_BYTE_ARRAY codecs are
+  started.
 - Next up (take the first unchecked item):
-  1. Encodings: dictionary, delta-length/delta-byte-array, byte-stream-split, and
-     ALP; then the `DataType`/`Encoder`/`Decoder` registries; then the column
-     reader/writer, then serialized/file reader+writer, then record API and
-     bloom filter.
+  1. Encodings: dictionary, byte-stream-split, and ALP; then the
+     `DataType`/`Encoder`/`Decoder` registries; then the column reader/writer,
+     then serialized/file reader+writer, then record API and bloom filter.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 656 `ported`, 91 `intentional_divergence`,
-  1 `skipped`, 2767 `missing` (of 3515 rows).
+- Progress by counts (ledger): 680 `ported`, 95 `intentional_divergence`,
+  1 `skipped`, 2739 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -185,8 +185,12 @@ Chunk status by area:
   for all physical types (put/get/get_spaced/skip).
 - [x] DELTA_BINARY_PACKED (`src/parquet/encodings/delta_bit_pack.cr`):
   `DeltaBitPackEncoder`/`DeltaBitPackDecoder` for INT32/INT64.
-- [ ] Dictionary, delta-length/delta-byte-array, byte-stream-split, RLE value
-  codecs (`encodings/encoding`, `encodings/decoding`).
+- [x] DELTA_LENGTH_BYTE_ARRAY / DELTA_BYTE_ARRAY
+  (`src/parquet/encodings/delta_byte_array.cr`):
+  `DeltaLengthByteArrayEncoder`/`Decoder` and
+  `DeltaByteArrayEncoder(T)`/`DeltaByteArrayDecoder(T)`.
+- [ ] Dictionary, byte-stream-split, RLE value, ALP codecs
+  (`encodings/encoding`, `encodings/decoding`).
 - [ ] ALP codec (`encodings/alp.rs`).
 - [ ] 7 upstream test modules ported.
 
@@ -407,6 +411,11 @@ Chunk status by area:
   `has_metadata?`, `parse_metadata` is public (upstream private), `metadata_size`
   returns `Int32?`, and `decode_schema` is implemented via a full metadata
   decode.
+- `encodings::delta_byte_array`: `DeltaByteArrayEncoder(T)`/
+  `DeltaByteArrayDecoder(T)` with `T.class` (BYTE_ARRAY/FIXED_LEN_BYTE_ARRAY);
+  `DeltaByteArrayDecoder#prefix_lengths` is exposed for the negative-length
+  check; the decoder `get` constructs values via `ByteArray`/`FixedLenByteArray`
+  rather than Rust `set_from_bytes`.
 - `encodings::delta_bit_pack`: `DeltaBitPackEncoder(T)`/`DeltaBitPackDecoder(T)`
   with `T.class` (INT32/INT64 only, enforced by construction); the decoder `get`
   reads each mini-block's packed deltas via `BitReader#get_batch`; `skip`
