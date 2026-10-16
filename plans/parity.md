@@ -33,21 +33,20 @@ little-endian layout.
 - Plan layout: single file. If it grows too large, split into
   `plans/parity/<area>.md`, link each here, and mark each split file
   complete/in-progress plus the file being worked on next.
-- Current focus: **Phase 2 — page-index completion.** The core value/wire layer
-  (errors, thrift protocol, `basic`, `data_type` value types, `schema`),
-  the file metadata + statistics + footer round-trip, and the offset/column
-  index *core* are done.
+- Current focus: **Phase 2 — file metadata + page-index integration.** The core
+  value/wire layer (errors, thrift protocol, `basic`, `data_type` value types,
+  `schema`), the file metadata + statistics + footer round-trip, the offset/
+  column index core + decode, and the page-index builders are done.
 - Next up (take the first unchecked item):
-  1. Page-index builders `PageIndexBuilder`/`ColumnIndexBuilder`/
-     `OffsetIndexBuilder` (`file/metadata/page_index.rs` +
-     `file/page_index/mod.rs`); tests `test_page_index_builder_partial_population`,
-     `test_page_index_builder_empty_to_none`, `test_rebuild_page_index`.
-     `ParquetMetaDataBuilder`/`ParquetMetaDataOptions` and the full reader/writer
-     IO machinery follow in this chunk.
+  1. `ParquetMetaDataBuilder`/`ParquetMetaDataOptions` and `ParquetMetaData`'s
+     `page_index` plumbing (`file/metadata/mod.rs`,
+     `file/metadata/parquet_metadata.rs`), then the full reader/writer IO
+     machinery (`decode_offset_index`/`acc_range`, and the
+     `ParquetMetaDataReader`/`Writer` suffix fetches).
   2. Encodings (RLE/bit-packing, levels, plain/dictionary/delta/ALP), then
      column reader/writer, then file reader/writer, then record API.
-- Progress by counts (ledger): 419 `ported`, 15 `intentional_divergence`,
-  1 `skipped`, 3080 `missing` (of 3515 rows).
+- Progress by counts (ledger): 456 `ported`, 19 `intentional_divergence`,
+  1 `skipped`, 3039 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -63,8 +62,9 @@ Chunk status by area:
   headers done; printer + primitive builder pending.
 - Phase 1.7 util: pending (`bit_util` partially needed by column code).
 - Phase 1.8 compression: pending.
-- Phase 2.3 file metadata/statistics/page-index core and column-index decode
-  done; page-index builders, file reader/writer, bloom filter pending.
+- Phase 2.3 file metadata/statistics/page-index core, column-index decode, and
+  page-index builders done; page-index metadata plumbing, file reader/writer,
+  bloom filter pending.
 - Phases 2.1 encodings, 2.2 column, 2.4 record, 2.5 CLI: pending.
 - Phase 3 (variant/geospatial/derive/encryption/arrow/async): pending.
 
@@ -201,9 +201,11 @@ Chunk status by area:
 - [x] `ByteArrayColumnIndex`, `ColumnIndexMetaData`, and `decode_column_index`
   (`src/parquet/file/page_index/{column_index,index_reader}.cr`), including the
   `WriteThrift` impls for both index types.
-- [ ] Page-index builders (`PageIndexBuilder`/`ColumnIndexBuilder`/
-  `OffsetIndexBuilder`) — tests `test_page_index_builder_partial_population`,
-  `..._empty_to_none`, `test_rebuild_page_index`.
+- [x] Page-index builders: `ColumnIndexBuilder`/`OffsetIndexBuilder`
+  (`src/parquet/file/metadata.cr`) and `PageIndexProvider`/`RowGroupPageIndex`/
+  `PageIndex`/`PageIndexBuilder` (`src/parquet/file/metadata/page_index.cr`).
+  Tests `test_page_index_builder_partial_population`,
+  `..._empty_to_none`, `test_rebuild_page_index` ported.
 - [ ] `ParquetMetaDataBuilder`, `ParquetMetaDataOptions`, and the full
   `ParquetMetaDataReader`/`Writer` IO machinery (async, suffix fetches).
 - [ ] Serialized reader/writer (footer + page headers).
@@ -326,6 +328,15 @@ Chunk status by area:
   are not modelled; `write_thrift` is an instance method and the min/max
   `list<binary>` fields are encoded by hand exactly as upstream. Primitive
   min/max bytes are produced via `FromBytes.to_le_slice` (see Phase 1.5).
+- `PageIndexProvider`: Rust trait with `as_any` downcasting is an abstract class;
+  `as_any` is not modelled. Predicates use `?` (`has_column_indexes` →
+  `column_indexes?`, `has_offset_indexes` → `offset_indexes?`, `is_complete` →
+  `complete?`). `PageIndex: HeapSize` (`memory.rs`) is deferred.
+- `PageIndexBuilder`: `empty_index`/`is_empty_index` are private instance methods
+  (`empty_index`/`index_empty?`); the Rust `From<PageIndex>` impl maps to
+  `PageIndexBuilder.new_from` (and `PageIndex#into_builder`). `ColumnIndexBuilder`
+  `valid` → `valid?`; `set_boundary_order` keeps its upstream name under an
+  ameba `AccessorMethodName` disable.
 
 ## Notes
 

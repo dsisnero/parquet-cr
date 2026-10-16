@@ -2541,16 +2541,16 @@ parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_statist
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_total_compressed_size	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_total_uncompressed_size	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_unencoded_byte_array_data_bytes	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
-parquet/src/file/metadata/mod.rs::method::ColumnIndexBuilder.append	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ColumnIndexBuilder.append_histograms	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ColumnIndexBuilder.build	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ColumnIndexBuilder.build_byte_array_index	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ColumnIndexBuilder.build_nan_counts	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ColumnIndexBuilder.build_page_index	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ColumnIndexBuilder.new	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ColumnIndexBuilder.set_boundary_order	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ColumnIndexBuilder.to_invalid	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ColumnIndexBuilder.valid	method	missing	-	auto-generated
+parquet/src/file/metadata/mod.rs::method::ColumnIndexBuilder.append	method	ported	src/parquet/file/metadata.cr	ColumnIndexBuilder
+parquet/src/file/metadata/mod.rs::method::ColumnIndexBuilder.append_histograms	method	ported	src/parquet/file/metadata.cr	ColumnIndexBuilder
+parquet/src/file/metadata/mod.rs::method::ColumnIndexBuilder.build	method	ported	src/parquet/file/metadata.cr	ColumnIndexBuilder
+parquet/src/file/metadata/mod.rs::method::ColumnIndexBuilder.build_byte_array_index	method	ported	src/parquet/file/metadata.cr	ColumnIndexBuilder (private)
+parquet/src/file/metadata/mod.rs::method::ColumnIndexBuilder.build_nan_counts	method	ported	src/parquet/file/metadata.cr	ColumnIndexBuilder (private instance)
+parquet/src/file/metadata/mod.rs::method::ColumnIndexBuilder.build_page_index	method	ported	src/parquet/file/metadata.cr	ColumnIndexBuilder (private)
+parquet/src/file/metadata/mod.rs::method::ColumnIndexBuilder.new	method	ported	src/parquet/file/metadata.cr	ColumnIndexBuilder
+parquet/src/file/metadata/mod.rs::method::ColumnIndexBuilder.set_boundary_order	method	ported	src/parquet/file/metadata.cr	ColumnIndexBuilder
+parquet/src/file/metadata/mod.rs::method::ColumnIndexBuilder.to_invalid	method	ported	src/parquet/file/metadata.cr	ColumnIndexBuilder
+parquet/src/file/metadata/mod.rs::method::ColumnIndexBuilder.valid	method	ported	src/parquet/file/metadata.cr	renamed ColumnIndexBuilder#valid?
 parquet/src/file/metadata/mod.rs::method::FileMetaData.column_order	method	ported	src/parquet/file/metadata/parquet_metadata.cr	FileMetaData
 parquet/src/file/metadata/mod.rs::method::FileMetaData.column_orders	method	ported	src/parquet/file/metadata/parquet_metadata.cr	FileMetaData
 parquet/src/file/metadata/mod.rs::method::FileMetaData.created_by	method	ported	src/parquet/file/metadata/parquet_metadata.cr	FileMetaData
@@ -2576,12 +2576,12 @@ parquet/src/file/metadata/mod.rs::method::LevelHistogram.reset	method	ported	src
 parquet/src/file/metadata/mod.rs::method::LevelHistogram.try_new	method	ported	src/parquet/file/metadata.cr	LevelHistogram
 parquet/src/file/metadata/mod.rs::method::LevelHistogram.update_from_levels	method	ported	src/parquet/file/metadata.cr	LevelHistogram
 parquet/src/file/metadata/mod.rs::method::LevelHistogram.values	method	ported	src/parquet/file/metadata.cr	LevelHistogram
-parquet/src/file/metadata/mod.rs::method::OffsetIndexBuilder.append_offset_and_size	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::OffsetIndexBuilder.append_row_count	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::OffsetIndexBuilder.append_unencoded_byte_array_data_bytes	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::OffsetIndexBuilder.build	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::OffsetIndexBuilder.default	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::OffsetIndexBuilder.new	method	missing	-	auto-generated
+parquet/src/file/metadata/mod.rs::method::OffsetIndexBuilder.append_offset_and_size	method	ported	src/parquet/file/metadata.cr	OffsetIndexBuilder
+parquet/src/file/metadata/mod.rs::method::OffsetIndexBuilder.append_row_count	method	ported	src/parquet/file/metadata.cr	OffsetIndexBuilder
+parquet/src/file/metadata/mod.rs::method::OffsetIndexBuilder.append_unencoded_byte_array_data_bytes	method	ported	src/parquet/file/metadata.cr	OffsetIndexBuilder
+parquet/src/file/metadata/mod.rs::method::OffsetIndexBuilder.build	method	ported	src/parquet/file/metadata.cr	OffsetIndexBuilder
+parquet/src/file/metadata/mod.rs::method::OffsetIndexBuilder.default	method	intentional_divergence	src/parquet/file/metadata.cr	Rust Default impl; Crystal default initialize
+parquet/src/file/metadata/mod.rs::method::OffsetIndexBuilder.new	method	ported	src/parquet/file/metadata.cr	OffsetIndexBuilder
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.eq	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.file_decryptor	method	missing	-	auto-generated
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.file_metadata	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
@@ -2653,31 +2653,31 @@ parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.with_schema
 parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.with_size_stats_policy	method	missing	-	auto-generated
 parquet/src/file/metadata/options.rs::method::ParquetStatisticsPolicy.is_skip	method	missing	-	auto-generated
 parquet/src/file/metadata/options.rs::method::ParquetStatisticsPolicy.skip_except	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::PageIndex.as_any	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::PageIndex.column_index	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::PageIndex.column_indexes_raw	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::PageIndex.has_column_indexes	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::PageIndex.has_offset_indexes	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::PageIndex.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::PageIndex.into_builder	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::PageIndex.new	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::PageIndex.offset_index	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::PageIndex.offset_indexes_raw	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::PageIndexBuilder.allocate_column_indexes	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::PageIndexBuilder.allocate_offset_indexes	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::PageIndexBuilder.build	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::PageIndexBuilder.empty_index	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::PageIndexBuilder.from	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::PageIndexBuilder.is_empty_index	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::PageIndexBuilder.new	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::PageIndexBuilder.new_from	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::PageIndexBuilder.put_column_index	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::PageIndexBuilder.put_offset_index	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::RowGroupPageIndex.column_index	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::RowGroupPageIndex.new	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::RowGroupPageIndex.num_data_pages	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::RowGroupPageIndex.offset_index	method	missing	-	auto-generated
-parquet/src/file/metadata/page_index.rs::method::RowGroupPageIndex.page_locations	method	missing	-	auto-generated
+parquet/src/file/metadata/page_index.rs::method::PageIndex.as_any	method	intentional_divergence	src/parquet/file/metadata/page_index.cr	no trait objects in Crystal; downcast unused
+parquet/src/file/metadata/page_index.rs::method::PageIndex.column_index	method	ported	src/parquet/file/metadata/page_index.cr	PageIndex
+parquet/src/file/metadata/page_index.rs::method::PageIndex.column_indexes_raw	method	ported	src/parquet/file/metadata/page_index.cr	PageIndex
+parquet/src/file/metadata/page_index.rs::method::PageIndex.has_column_indexes	method	ported	src/parquet/file/metadata/page_index.cr	renamed PageIndex#column_indexes?
+parquet/src/file/metadata/page_index.rs::method::PageIndex.has_offset_indexes	method	ported	src/parquet/file/metadata/page_index.cr	renamed PageIndex#offset_indexes?
+parquet/src/file/metadata/page_index.rs::method::PageIndex.heap_size	method	intentional_divergence	src/parquet/file/metadata/page_index.cr	HeapSize (memory.rs) not ported
+parquet/src/file/metadata/page_index.rs::method::PageIndex.into_builder	method	ported	src/parquet/file/metadata/page_index.cr	PageIndex
+parquet/src/file/metadata/page_index.rs::method::PageIndex.new	method	ported	src/parquet/file/metadata/page_index.cr	PageIndex
+parquet/src/file/metadata/page_index.rs::method::PageIndex.offset_index	method	ported	src/parquet/file/metadata/page_index.cr	PageIndex
+parquet/src/file/metadata/page_index.rs::method::PageIndex.offset_indexes_raw	method	ported	src/parquet/file/metadata/page_index.cr	PageIndex
+parquet/src/file/metadata/page_index.rs::method::PageIndexBuilder.allocate_column_indexes	method	ported	src/parquet/file/metadata/page_index.cr	PageIndexBuilder
+parquet/src/file/metadata/page_index.rs::method::PageIndexBuilder.allocate_offset_indexes	method	ported	src/parquet/file/metadata/page_index.cr	PageIndexBuilder
+parquet/src/file/metadata/page_index.rs::method::PageIndexBuilder.build	method	ported	src/parquet/file/metadata/page_index.cr	PageIndexBuilder
+parquet/src/file/metadata/page_index.rs::method::PageIndexBuilder.empty_index	method	ported	src/parquet/file/metadata/page_index.cr	PageIndexBuilder (private instance)
+parquet/src/file/metadata/page_index.rs::method::PageIndexBuilder.from	method	intentional_divergence	src/parquet/file/metadata/page_index.cr	Rust From impl; use PageIndexBuilder.new_from
+parquet/src/file/metadata/page_index.rs::method::PageIndexBuilder.is_empty_index	method	ported	src/parquet/file/metadata/page_index.cr	renamed PageIndexBuilder#index_empty? (private)
+parquet/src/file/metadata/page_index.rs::method::PageIndexBuilder.new	method	ported	src/parquet/file/metadata/page_index.cr	PageIndexBuilder
+parquet/src/file/metadata/page_index.rs::method::PageIndexBuilder.new_from	method	ported	src/parquet/file/metadata/page_index.cr	PageIndexBuilder
+parquet/src/file/metadata/page_index.rs::method::PageIndexBuilder.put_column_index	method	ported	src/parquet/file/metadata/page_index.cr	PageIndexBuilder
+parquet/src/file/metadata/page_index.rs::method::PageIndexBuilder.put_offset_index	method	ported	src/parquet/file/metadata/page_index.cr	PageIndexBuilder
+parquet/src/file/metadata/page_index.rs::method::RowGroupPageIndex.column_index	method	ported	src/parquet/file/metadata/page_index.cr	RowGroupPageIndex
+parquet/src/file/metadata/page_index.rs::method::RowGroupPageIndex.new	method	ported	src/parquet/file/metadata/page_index.cr	RowGroupPageIndex
+parquet/src/file/metadata/page_index.rs::method::RowGroupPageIndex.num_data_pages	method	ported	src/parquet/file/metadata/page_index.cr	RowGroupPageIndex
+parquet/src/file/metadata/page_index.rs::method::RowGroupPageIndex.offset_index	method	ported	src/parquet/file/metadata/page_index.cr	RowGroupPageIndex
+parquet/src/file/metadata/page_index.rs::method::RowGroupPageIndex.page_locations	method	ported	src/parquet/file/metadata/page_index.cr	RowGroupPageIndex
 parquet/src/file/metadata/parser.rs::method::MetadataParser.decode_metadata	method	missing	-	auto-generated
 parquet/src/file/metadata/parser.rs::method::MetadataParser.new	method	missing	-	auto-generated
 parquet/src/file/metadata/parser.rs::method::MetadataParser.with_file_decryption_properties	method	missing	-	auto-generated
