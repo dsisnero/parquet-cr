@@ -3392,57 +3392,57 @@ parquet/src/schema/visitor.rs::method::TestVisitor.visit_list_with_item	method	m
 parquet/src/schema/visitor.rs::method::TestVisitor.visit_map	method	missing	-	auto-generated
 parquet/src/schema/visitor.rs::method::TestVisitor.visit_primitive	method	missing	-	auto-generated
 parquet/src/schema/visitor.rs::method::TestVisitor.visit_struct	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::const::BATCH_SIZE	const	missing	-	auto-generated
-parquet/src/util/bit_util.rs::const::BIT_CAPACITY	const	missing	-	auto-generated
-parquet/src/util/bit_util.rs::const::MAX_VLQ_BYTE_LEN	const	missing	-	auto-generated
-parquet/src/util/bit_util.rs::const::SIZE	const	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitReader.from	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitReader.get_aligned	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitReader.get_aligned_bytes	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitReader.get_batch	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitReader.get_byte_offset	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitReader.get_value	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitReader.get_vlq_int	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitReader.get_zigzag_vlq_int	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitReader.load_buffered_values	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitReader.new	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitReader.reset	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitReader.skip	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitWriter.buffer	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitWriter.byte_offset	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitWriter.bytes_written	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitWriter.clear	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitWriter.consume	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitWriter.estimated_memory_size	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitWriter.flush	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitWriter.flush_buffer	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitWriter.flush_buffer_mut	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitWriter.get_next_byte_ptr	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitWriter.new	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitWriter.new_from_buf	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitWriter.put_aligned	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitWriter.put_aligned_offset	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitWriter.put_value	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitWriter.put_vlq_int	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitWriter.put_zigzag_vlq_int	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitWriter.skip	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::BitWriter.write_at	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::ByteArray.from_le_bytes	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::ByteArray.try_from_le_slice	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::FixedLenByteArray.from_le_bytes	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::FixedLenByteArray.try_from_le_slice	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::Int96.from_le_bytes	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::Int96.try_from_le_slice	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::bool.from_le_bytes	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::bool.from_u64	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::bool.try_from_le_slice	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::bool.unpack_batch	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::f32.from_le_bytes	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::f32.try_from_le_slice	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::f64.from_le_bytes	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::f64.try_from_le_slice	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::u64.from_u64	method	missing	-	auto-generated
-parquet/src/util/bit_util.rs::method::u64.unpack_batch	method	missing	-	auto-generated
+parquet/src/util/bit_util.rs::const::BATCH_SIZE	const	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
+parquet/src/util/bit_util.rs::const::BIT_CAPACITY	const	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
+parquet/src/util/bit_util.rs::const::MAX_VLQ_BYTE_LEN	const	ported	src/parquet/util/bit_util.cr	BitUtil::MAX_VLQ_BYTE_LEN
+parquet/src/util/bit_util.rs::const::SIZE	const	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
+parquet/src/util/bit_util.rs::method::BitReader.from	method	ported	src/parquet/util/bit_util.cr	BitReader.from
+parquet/src/util/bit_util.rs::method::BitReader.get_aligned	method	ported	src/parquet/util/bit_util.cr	BitReader
+parquet/src/util/bit_util.rs::method::BitReader.get_aligned_bytes	method	missing	src/parquet/util/bit_util.cr	deferred to column decoder
+parquet/src/util/bit_util.rs::method::BitReader.get_batch	method	ported	src/parquet/util/bit_util.cr	scalar get_batch loop (no SIMD unpack)
+parquet/src/util/bit_util.rs::method::BitReader.get_byte_offset	method	ported	src/parquet/util/bit_util.cr	BitReader
+parquet/src/util/bit_util.rs::method::BitReader.get_value	method	ported	src/parquet/util/bit_util.cr	BitReader
+parquet/src/util/bit_util.rs::method::BitReader.get_vlq_int	method	ported	src/parquet/util/bit_util.cr	BitReader
+parquet/src/util/bit_util.rs::method::BitReader.get_zigzag_vlq_int	method	ported	src/parquet/util/bit_util.cr	BitReader
+parquet/src/util/bit_util.rs::method::BitReader.load_buffered_values	method	ported	src/parquet/util/bit_util.cr	BitReader (private)
+parquet/src/util/bit_util.rs::method::BitReader.new	method	ported	src/parquet/util/bit_util.cr	BitReader
+parquet/src/util/bit_util.rs::method::BitReader.reset	method	ported	src/parquet/util/bit_util.cr	BitReader
+parquet/src/util/bit_util.rs::method::BitReader.skip	method	ported	src/parquet/util/bit_util.cr	BitReader
+parquet/src/util/bit_util.rs::method::BitWriter.buffer	method	ported	src/parquet/util/bit_util.cr	BitWriter
+parquet/src/util/bit_util.rs::method::BitWriter.byte_offset	method	ported	src/parquet/util/bit_util.cr	BitWriter
+parquet/src/util/bit_util.rs::method::BitWriter.bytes_written	method	ported	src/parquet/util/bit_util.cr	BitWriter
+parquet/src/util/bit_util.rs::method::BitWriter.clear	method	ported	src/parquet/util/bit_util.cr	BitWriter
+parquet/src/util/bit_util.rs::method::BitWriter.consume	method	ported	src/parquet/util/bit_util.cr	BitWriter
+parquet/src/util/bit_util.rs::method::BitWriter.estimated_memory_size	method	ported	src/parquet/util/bit_util.cr	BitWriter
+parquet/src/util/bit_util.rs::method::BitWriter.flush	method	ported	src/parquet/util/bit_util.cr	BitWriter
+parquet/src/util/bit_util.rs::method::BitWriter.flush_buffer	method	ported	src/parquet/util/bit_util.cr	BitWriter
+parquet/src/util/bit_util.rs::method::BitWriter.flush_buffer_mut	method	intentional_divergence	src/parquet/util/bit_util.cr	mutable borrow API not ported
+parquet/src/util/bit_util.rs::method::BitWriter.get_next_byte_ptr	method	ported	src/parquet/util/bit_util.cr	BitWriter
+parquet/src/util/bit_util.rs::method::BitWriter.new	method	ported	src/parquet/util/bit_util.cr	BitWriter
+parquet/src/util/bit_util.rs::method::BitWriter.new_from_buf	method	ported	src/parquet/util/bit_util.cr	BitWriter
+parquet/src/util/bit_util.rs::method::BitWriter.put_aligned	method	ported	src/parquet/util/bit_util.cr	LE byte encoding (no AsBytes trait)
+parquet/src/util/bit_util.rs::method::BitWriter.put_aligned_offset	method	ported	src/parquet/util/bit_util.cr	BitWriter
+parquet/src/util/bit_util.rs::method::BitWriter.put_value	method	ported	src/parquet/util/bit_util.cr	BitWriter
+parquet/src/util/bit_util.rs::method::BitWriter.put_vlq_int	method	ported	src/parquet/util/bit_util.cr	BitWriter
+parquet/src/util/bit_util.rs::method::BitWriter.put_zigzag_vlq_int	method	ported	src/parquet/util/bit_util.cr	BitWriter
+parquet/src/util/bit_util.rs::method::BitWriter.skip	method	ported	src/parquet/util/bit_util.cr	BitWriter
+parquet/src/util/bit_util.rs::method::BitWriter.write_at	method	ported	src/parquet/util/bit_util.cr	BitWriter
+parquet/src/util/bit_util.rs::method::ByteArray.from_le_bytes	method	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
+parquet/src/util/bit_util.rs::method::ByteArray.try_from_le_slice	method	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
+parquet/src/util/bit_util.rs::method::FixedLenByteArray.from_le_bytes	method	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
+parquet/src/util/bit_util.rs::method::FixedLenByteArray.try_from_le_slice	method	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
+parquet/src/util/bit_util.rs::method::Int96.from_le_bytes	method	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
+parquet/src/util/bit_util.rs::method::Int96.try_from_le_slice	method	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
+parquet/src/util/bit_util.rs::method::bool.from_le_bytes	method	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
+parquet/src/util/bit_util.rs::method::bool.from_u64	method	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
+parquet/src/util/bit_util.rs::method::bool.try_from_le_slice	method	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
+parquet/src/util/bit_util.rs::method::bool.unpack_batch	method	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
+parquet/src/util/bit_util.rs::method::f32.from_le_bytes	method	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
+parquet/src/util/bit_util.rs::method::f32.try_from_le_slice	method	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
+parquet/src/util/bit_util.rs::method::f64.from_le_bytes	method	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
+parquet/src/util/bit_util.rs::method::f64.try_from_le_slice	method	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
+parquet/src/util/bit_util.rs::method::u64.from_u64	method	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
+parquet/src/util/bit_util.rs::method::u64.unpack_batch	method	intentional_divergence	src/parquet/util/bit_util.cr	FromBytes/FromBitpacked traits not modeled (T.class dispatch instead)
 parquet/src/util/interner.rs::const::DEFAULT_DEDUP_CAPACITY	const	missing	-	auto-generated
 parquet/src/util/interner.rs::method::Interner<S>.estimated_memory_size	method	missing	-	auto-generated
 parquet/src/util/interner.rs::method::Interner<S>.intern	method	missing	-	auto-generated

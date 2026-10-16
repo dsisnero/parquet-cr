@@ -1,6 +1,7 @@
 require "./parquet/errors"
 require "./parquet/decode_result"
 require "./parquet/util/push_buffers"
+require "./parquet/util/bit_util"
 require "./parquet/thrift"
 require "./parquet/macros"
 require "./parquet/basic"

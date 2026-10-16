@@ -39,16 +39,18 @@ little-endian layout.
   column index core + decode, the page-index builders, the
   `ParquetMetaDataBuilder`/`ParquetMetaDataOptions` plumbing, the sans-IO
   `ParquetMetaDataPushDecoder`, the synchronous `ChunkReader`-driven
-  `ParquetMetaDataReader`, and the `ParquetMetaDataWriter`/
-  `ThriftMetadataWriter` (footer + page-index serialization) are done.
+  `ParquetMetaDataReader`, and the   `ParquetMetaDataWriter`/
+  `ThriftMetadataWriter` (footer + page-index serialization) are done, and the
+  `util` bit layer (`BitReader`/`BitWriter`/`bit_util` helpers) is started.
 - Next up (take the first unchecked item):
-  1. Encodings (RLE/bit-packing, levels, plain/dictionary/delta/ALP) and the
-     `util` bit readers, then the column reader/writer, then serialized/file
-     reader+writer, then record API and bloom filter.
+  1. Encodings: the RLE/bit-packing hybrid (`encodings/rle.rs`) and levels
+     (`encodings/levels.rs`), then plain/dictionary/delta/ALP, then the column
+     reader/writer, then serialized/file reader+writer, then record API and
+     bloom filter.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 556 `ported`, 63 `intentional_divergence`,
-  1 `skipped`, 2895 `missing` (of 3515 rows).
+- Progress by counts (ledger): 586 `ported`, 83 `intentional_divergence`,
+  1 `skipped`, 2845 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -158,7 +160,8 @@ Chunk status by area:
 ### 1.7 Util
 
 - [x] `PushBuffers` (`src/parquet/util/push_buffers.cr`).
-- [ ] Bit utilities, cursor, page/bit readers (`util/`, remaining files).
+- [x] `BitReader`/`BitWriter` + helpers (`src/parquet/util/bit_util.cr`).
+- [ ] Bit packing (`util/bit_pack.rs`), cursor, page readers (`util/` remaining).
 - [ ] CRC32 checksum helpers.
 
 ### 1.8 Compression
@@ -395,6 +398,12 @@ Chunk status by area:
   `has_metadata?`, `parse_metadata` is public (upstream private), `metadata_size`
   returns `Int32?`, and `decode_schema` is implemented via a full metadata
   decode.
+- `util::bit_util`: Rust's `FromBytes`/`FromBitpacked` traits (with associated
+  `BIT_CAPACITY`/`BATCH_SIZE` consts and SIMD `unpack_batch`) are replaced by
+  explicit `T.class` dispatch; `get_batch` is a scalar loop (no `unpack8/16/32/
+  64`); `put_aligned`/`put_aligned_offset` encode via `IO::ByteFormat::
+  LittleEndian` rather than the `AsBytes` trait; `BitWriter#flush_buffer_mut`
+  and `BitReader#get_aligned_bytes` are not ported.
 - `ParquetMetaDataWriter`/`ThriftMetadataWriter`: the `MetadataObjectWriter`
   encryption-dispatch layer is not modeled; the non-encryption write logic is
   inlined (`write_thrift_object`, `Metadata.write_file_metadata`), and the

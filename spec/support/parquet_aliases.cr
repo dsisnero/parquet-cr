@@ -21,3 +21,7 @@ alias STokenizer = Parquet::Schema::Tokenizer
 
 alias PMeta = Parquet::File::Metadata
 alias PPI = Parquet::File::PageIndex
+
+alias BitReader = Parquet::Util::BitReader
+alias BitWriter = Parquet::Util::BitWriter
+alias BitUtil = Parquet::Util::BitUtil
