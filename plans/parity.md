@@ -54,8 +54,8 @@ little-endian layout.
      reader+writer, then record API.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 1109 `ported`, 134 `intentional_divergence`,
-  1 `skipped`, 2271 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1112 `ported`, 136 `intentional_divergence`,
+  1 `skipped`, 2266 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -217,6 +217,10 @@ Chunk status by area:
 
 - [~] `ColumnDescriptor` + `ColumnReader` (interface) done; `ColumnWriter`
   (interface) pending.
+- [x] Column writer statistics-truncation helpers
+  (`src/parquet/column/writer/truncate.cr`): `truncate_utf8`/
+  `truncate_and_increment_utf8`/`increment_utf8`/`increment`,
+  `can_truncate_value`/`is_utf8`/`truncate_min_value`/`truncate_max_value`.
 - [x] `ColumnReaderImpl` (`src/parquet/column/reader.cr`): `get_column_reader`/
   `get_typed_column_reader`, `ColumnReaderImpl(T)` (read_records/skip_records/
   has_next/read_new_page/parse_v1_level).
@@ -557,6 +561,12 @@ Chunk status by area:
   `get_typed_column_reader`/`parse_v1_level`/`check_partial_record_fits` are
   `Parquet::Column` module methods. The upstream `ColumnReaderTester`/`make_pages`
   random test infrastructure is not ported (characterization specs used).
+- `column::writer::truncate`: the statistics-truncation helpers (`truncate_utf8`,
+  `truncate_and_increment_utf8`, `increment_utf8`, `increment`) and
+  `can_truncate_value`/`is_utf8`/`truncate_min_value`/`truncate_max_value` are
+  `Parquet::Column::Writer` module methods (upstream: free functions +
+  `GenericColumnWriter` methods); `GenericColumnWriter::truncate_statistics`
+  (which mutates `Statistics`) is deferred with the writer.
 - `encodings::byte_stream_split`: `ByteStreamSplitEncoder(T)`/`Decoder(T)` and
   `VariableWidthByteStreamSplitEncoder(T)`/`Decoder(T)` with `T.class`; the
   constant `split_streams_const`/`join_streams_const` and `_variable` kernels
