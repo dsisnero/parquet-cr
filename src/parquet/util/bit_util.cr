@@ -55,6 +55,32 @@ module Parquet
         buffer[0, size].copy_from(src[0, size])
         IO::Memory.new(buffer).read_bytes(T, IO::ByteFormat::LittleEndian)
       end
+
+      # Converts the low bits of `raw` to `T` (the `FromBitpacked::from_u64`
+      # operation). Integer conversions reinterpret the low bits.
+      def self.from_u64(type : T.class, raw : UInt64) : T forall T
+        {% if T == Bool %}
+          raw != 0
+        {% elsif T == Int8 %}
+          raw.to_u8!.unsafe_as(Int8)
+        {% elsif T == Int16 %}
+          raw.to_u16!.unsafe_as(Int16)
+        {% elsif T == Int32 %}
+          raw.to_u32!.unsafe_as(Int32)
+        {% elsif T == Int64 %}
+          raw.unsafe_as(Int64)
+        {% elsif T == UInt8 %}
+          raw.to_u8!
+        {% elsif T == UInt16 %}
+          raw.to_u16!
+        {% elsif T == UInt32 %}
+          raw.to_u32!
+        {% elsif T == UInt64 %}
+          raw
+        {% else %}
+          {% raise "BitUtil.from_u64: unsupported type #{T}" %}
+        {% end %}
+      end
     end
 
     # Writes bit packed values to an in-memory buffer.
@@ -242,17 +268,22 @@ module Parquet
         raw = next_bits(num_bits)
         return nil if raw.nil?
 
-        convert_value(T, raw)
+        BitUtil.from_u64(T, raw)
       end
 
       # Reads up to `batch.size` `num_bits`-bit values, returning the count.
       def get_batch(type : T.class, batch : Array(T), num_bits : Int32) : Int32 forall T
+        get_batch(T, Slice.new(batch.to_unsafe, batch.size), num_bits)
+      end
+
+      # Reads up to `batch.size` `num_bits`-bit values into a slice.
+      def get_batch(type : T.class, batch : Slice(T), num_bits : Int32) : Int32 forall T
         remaining_bits = (@buffer.size - @byte_offset) * 8 - @bit_offset
         values_to_read = Math.min(batch.size, remaining_bits // num_bits)
 
         i = 0
         while i < values_to_read
-          batch[i] = convert_value(T, next_bits(num_bits).as(UInt64))
+          batch[i] = BitUtil.from_u64(T, next_bits(num_bits).as(UInt64))
           i += 1
         end
         values_to_read
@@ -341,30 +372,6 @@ module Parquet
       private def load_buffered_values : Nil
         bytes_to_read = Math.min(@buffer.size - @byte_offset, 8)
         @buffered_values = BitUtil.read_num_bytes(UInt64, bytes_to_read, @buffer[@byte_offset, bytes_to_read])
-      end
-
-      private def convert_value(type : T.class, raw : UInt64) : T forall T
-        {% if T == Bool %}
-          raw != 0
-        {% elsif T == Int8 %}
-          raw.to_u8!.unsafe_as(Int8)
-        {% elsif T == Int16 %}
-          raw.to_u16!.unsafe_as(Int16)
-        {% elsif T == Int32 %}
-          raw.to_u32!.unsafe_as(Int32)
-        {% elsif T == Int64 %}
-          raw.unsafe_as(Int64)
-        {% elsif T == UInt8 %}
-          raw.to_u8!
-        {% elsif T == UInt16 %}
-          raw.to_u16!
-        {% elsif T == UInt32 %}
-          raw.to_u32!
-        {% elsif T == UInt64 %}
-          raw
-        {% else %}
-          {% raise "BitReader#convert_value: unsupported type #{T}" %}
-        {% end %}
       end
     end
   end

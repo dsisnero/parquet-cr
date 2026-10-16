@@ -41,16 +41,16 @@ little-endian layout.
   `ParquetMetaDataPushDecoder`, the synchronous `ChunkReader`-driven
   `ParquetMetaDataReader`, and the   `ParquetMetaDataWriter`/
   `ThriftMetadataWriter` (footer + page-index serialization) are done, and the
-  `util` bit layer (`BitReader`/`BitWriter`/`bit_util` helpers) is started.
+  `util` bit layer (`BitReader`/`BitWriter`) plus the RLE/bit-packing hybrid
+  (`RleEncoder`/`RleDecoder`) are started.
 - Next up (take the first unchecked item):
-  1. Encodings: the RLE/bit-packing hybrid (`encodings/rle.rs`) and levels
-     (`encodings/levels.rs`), then plain/dictionary/delta/ALP, then the column
-     reader/writer, then serialized/file reader+writer, then record API and
-     bloom filter.
+  1. Encodings: levels (`encodings/levels.rs`), then plain/dictionary/delta/ALP,
+     then the column reader/writer, then serialized/file reader+writer, then
+     record API and bloom filter.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 586 `ported`, 83 `intentional_divergence`,
-  1 `skipped`, 2845 `missing` (of 3515 rows).
+- Progress by counts (ledger): 616 `ported`, 87 `intentional_divergence`,
+  1 `skipped`, 2811 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -174,7 +174,8 @@ Chunk status by area:
 
 ### 2.1 Encodings
 
-- [ ] RLE / bit-packing hybrid (`encodings/rle.rs`).
+- [x] RLE / bit-packing hybrid (`src/parquet/encodings/rle.cr`):
+  `RleEncoder`/`RleDecoder`.
 - [ ] Levels (`encodings/levels.rs`).
 - [ ] Plain, dictionary, delta, byte-stream-split, RLE codecs
   (`encodings/encoding`).
@@ -398,6 +399,11 @@ Chunk status by area:
   `has_metadata?`, `parse_metadata` is public (upstream private), `metadata_size`
   returns `Int32?`, and `decode_schema` is implemented via a full metadata
   decode.
+- `encodings::rle`: `FromBitpacked` generic dispatch becomes `T.class`
+  (`get(T.class)`/`get_batch(T.class, buffer)`); the decoder's batch/dict paths
+  read values with the scalar path (no `unpack`/`index_buf` chunking);
+  `is_accumulating_rle` → `accumulating_rle?`, `is_empty` → `empty?`,
+  `RleEncoder#flush_buffer_mut` is not ported.
 - `util::bit_util`: Rust's `FromBytes`/`FromBitpacked` traits (with associated
   `BIT_CAPACITY`/`BATCH_SIZE` consts and SIMD `unpack_batch`) are replaced by
   explicit `T.class` dispatch; `get_batch` is a scalar loop (no `unpack8/16/32/

@@ -2315,40 +2315,40 @@ parquet/src/encodings/levels.rs::method::LevelEncoder.put_n_with_observer	method
 parquet/src/encodings/levels.rs::method::LevelEncoder.put_with_observer	method	missing	-	auto-generated
 parquet/src/encodings/levels.rs::method::LevelEncoder.v1_streaming	method	missing	-	auto-generated
 parquet/src/encodings/levels.rs::method::LevelEncoder.v2_streaming	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::const::BIT_PACK_GROUP_SIZE	const	missing	-	auto-generated
-parquet/src/encodings/rle.rs::const::CHUNK	const	missing	-	auto-generated
-parquet/src/encodings/rle.rs::const::MAX_GROUPS_PER_BIT_PACKED_RUN	const	missing	-	auto-generated
-parquet/src/encodings/rle.rs::const::MAX_RLE_DICTIONARY_BIT_WIDTH	const	missing	-	auto-generated
-parquet/src/encodings/rle.rs::const::MAX_WIDTH	const	missing	-	auto-generated
-parquet/src/encodings/rle.rs::const::RLE_DECODER_INDEX_BUFFER_SIZE	const	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleDecoder.get	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleDecoder.get_batch	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleDecoder.get_batch_with_dict	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleDecoder.new	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleDecoder.oob	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleDecoder.reload	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleDecoder.set_data	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleDecoder.skip	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleEncoder.buffer	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleEncoder.clear	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleEncoder.consume	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleEncoder.estimated_memory_size	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleEncoder.extend_run	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleEncoder.finish_bit_packed_run	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleEncoder.flush	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleEncoder.flush_bit_packed_run	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleEncoder.flush_buffer	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleEncoder.flush_buffer_mut	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleEncoder.flush_buffered_values	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleEncoder.flush_rle_run	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleEncoder.is_accumulating_rle	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleEncoder.is_empty	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleEncoder.len	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleEncoder.max_buffer_size	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleEncoder.new	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleEncoder.new_from_buf	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleEncoder.put	method	missing	-	auto-generated
-parquet/src/encodings/rle.rs::method::RleEncoder.skip	method	missing	-	auto-generated
+parquet/src/encodings/rle.rs::const::BIT_PACK_GROUP_SIZE	const	ported	src/parquet/encodings/rle.cr	Encodings::BIT_PACK_GROUP_SIZE
+parquet/src/encodings/rle.rs::const::CHUNK	const	intentional_divergence	src/parquet/encodings/rle.cr	test-only const
+parquet/src/encodings/rle.rs::const::MAX_GROUPS_PER_BIT_PACKED_RUN	const	ported	src/parquet/encodings/rle.cr	Encodings::MAX_GROUPS_PER_BIT_PACKED_RUN
+parquet/src/encodings/rle.rs::const::MAX_RLE_DICTIONARY_BIT_WIDTH	const	ported	src/parquet/encodings/rle.cr	Encodings::MAX_RLE_DICTIONARY_BIT_WIDTH
+parquet/src/encodings/rle.rs::const::MAX_WIDTH	const	intentional_divergence	src/parquet/encodings/rle.cr	test-only const
+parquet/src/encodings/rle.rs::const::RLE_DECODER_INDEX_BUFFER_SIZE	const	intentional_divergence	src/parquet/encodings/rle.cr	batch index buffer not used (scalar dict decode)
+parquet/src/encodings/rle.rs::method::RleDecoder.get	method	ported	src/parquet/encodings/rle.cr	get(T.class)
+parquet/src/encodings/rle.rs::method::RleDecoder.get_batch	method	ported	src/parquet/encodings/rle.cr	get_batch(T.class, buffer)
+parquet/src/encodings/rle.rs::method::RleDecoder.get_batch_with_dict	method	ported	src/parquet/encodings/rle.cr	scalar dict mapping, no index_buf chunking
+parquet/src/encodings/rle.rs::method::RleDecoder.new	method	ported	src/parquet/encodings/rle.cr	RleDecoder
+parquet/src/encodings/rle.rs::method::RleDecoder.oob	method	ported	src/parquet/encodings/rle.cr	inlined as RleDecoder#dict_oob
+parquet/src/encodings/rle.rs::method::RleDecoder.reload	method	ported	src/parquet/encodings/rle.cr	RleDecoder (private)
+parquet/src/encodings/rle.rs::method::RleDecoder.set_data	method	ported	src/parquet/encodings/rle.cr	RleDecoder
+parquet/src/encodings/rle.rs::method::RleDecoder.skip	method	ported	src/parquet/encodings/rle.cr	RleDecoder
+parquet/src/encodings/rle.rs::method::RleEncoder.buffer	method	ported	src/parquet/encodings/rle.cr	RleEncoder
+parquet/src/encodings/rle.rs::method::RleEncoder.clear	method	ported	src/parquet/encodings/rle.cr	RleEncoder
+parquet/src/encodings/rle.rs::method::RleEncoder.consume	method	ported	src/parquet/encodings/rle.cr	RleEncoder
+parquet/src/encodings/rle.rs::method::RleEncoder.estimated_memory_size	method	ported	src/parquet/encodings/rle.cr	RleEncoder
+parquet/src/encodings/rle.rs::method::RleEncoder.extend_run	method	ported	src/parquet/encodings/rle.cr	RleEncoder
+parquet/src/encodings/rle.rs::method::RleEncoder.finish_bit_packed_run	method	ported	src/parquet/encodings/rle.cr	RleEncoder (private)
+parquet/src/encodings/rle.rs::method::RleEncoder.flush	method	ported	src/parquet/encodings/rle.cr	RleEncoder
+parquet/src/encodings/rle.rs::method::RleEncoder.flush_bit_packed_run	method	ported	src/parquet/encodings/rle.cr	RleEncoder (private)
+parquet/src/encodings/rle.rs::method::RleEncoder.flush_buffer	method	ported	src/parquet/encodings/rle.cr	RleEncoder
+parquet/src/encodings/rle.rs::method::RleEncoder.flush_buffer_mut	method	intentional_divergence	src/parquet/encodings/rle.cr	mutable borrow API not ported
+parquet/src/encodings/rle.rs::method::RleEncoder.flush_buffered_values	method	ported	src/parquet/encodings/rle.cr	RleEncoder (private)
+parquet/src/encodings/rle.rs::method::RleEncoder.flush_rle_run	method	ported	src/parquet/encodings/rle.cr	RleEncoder (private)
+parquet/src/encodings/rle.rs::method::RleEncoder.is_accumulating_rle	method	ported	src/parquet/encodings/rle.cr	renamed RleEncoder#accumulating_rle?
+parquet/src/encodings/rle.rs::method::RleEncoder.is_empty	method	ported	src/parquet/encodings/rle.cr	renamed RleEncoder#empty?
+parquet/src/encodings/rle.rs::method::RleEncoder.len	method	ported	src/parquet/encodings/rle.cr	RleEncoder
+parquet/src/encodings/rle.rs::method::RleEncoder.max_buffer_size	method	ported	src/parquet/encodings/rle.cr	RleEncoder.max_buffer_size
+parquet/src/encodings/rle.rs::method::RleEncoder.new	method	ported	src/parquet/encodings/rle.cr	RleEncoder
+parquet/src/encodings/rle.rs::method::RleEncoder.new_from_buf	method	ported	src/parquet/encodings/rle.cr	RleEncoder.new_from_buf
+parquet/src/encodings/rle.rs::method::RleEncoder.put	method	ported	src/parquet/encodings/rle.cr	RleEncoder
+parquet/src/encodings/rle.rs::method::RleEncoder.skip	method	ported	src/parquet/encodings/rle.cr	RleEncoder
 parquet/src/encryption/ciphers.rs::const::NONCE_LEN	const	missing	-	auto-generated
 parquet/src/encryption/ciphers.rs::const::RIGHT_TWELVE	const	missing	-	auto-generated
 parquet/src/encryption/ciphers.rs::const::SIZE_LEN	const	missing	-	auto-generated
