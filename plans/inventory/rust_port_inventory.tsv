@@ -386,23 +386,23 @@ parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.with_validate_un
 parquet-variant/src/builder/list.rs::method::ListBuilder<'a, S>.with_value	method	missing	-	auto-generated
 parquet-variant/src/builder/list.rs::method::ListState<'_>.rollback	method	missing	-	auto-generated
 parquet-variant/src/builder/list.rs::method::ParentState<'a, ListState<'a>>.list	method	missing	-	auto-generated
-parquet-variant/src/builder/metadata.rs::method::ReadOnlyMetadataBuilder<'_>.field_name	method	missing	-	auto-generated
-parquet-variant/src/builder/metadata.rs::method::ReadOnlyMetadataBuilder<'_>.finish	method	missing	-	auto-generated
-parquet-variant/src/builder/metadata.rs::method::ReadOnlyMetadataBuilder<'_>.num_field_names	method	missing	-	auto-generated
-parquet-variant/src/builder/metadata.rs::method::ReadOnlyMetadataBuilder<'_>.truncate_field_names	method	missing	-	auto-generated
-parquet-variant/src/builder/metadata.rs::method::ReadOnlyMetadataBuilder<'_>.try_upsert_field_name	method	missing	-	auto-generated
-parquet-variant/src/builder/metadata.rs::method::ReadOnlyMetadataBuilder<'m>.new	method	missing	-	auto-generated
-parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.extend	method	missing	-	auto-generated
-parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.field_name	method	missing	-	auto-generated
-parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.finish	method	missing	-	auto-generated
-parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.from_iter	method	missing	-	auto-generated
-parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.into_inner	method	missing	-	auto-generated
-parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.metadata_size	method	missing	-	auto-generated
-parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.num_field_names	method	missing	-	auto-generated
-parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.offset	method	missing	-	auto-generated
-parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.truncate_field_names	method	missing	-	auto-generated
-parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.try_upsert_field_name	method	missing	-	auto-generated
-parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.upsert_field_name	method	missing	-	auto-generated
+parquet-variant/src/builder/metadata.rs::method::ReadOnlyMetadataBuilder<'_>.field_name	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
+parquet-variant/src/builder/metadata.rs::method::ReadOnlyMetadataBuilder<'_>.finish	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
+parquet-variant/src/builder/metadata.rs::method::ReadOnlyMetadataBuilder<'_>.num_field_names	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
+parquet-variant/src/builder/metadata.rs::method::ReadOnlyMetadataBuilder<'_>.truncate_field_names	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
+parquet-variant/src/builder/metadata.rs::method::ReadOnlyMetadataBuilder<'_>.try_upsert_field_name	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
+parquet-variant/src/builder/metadata.rs::method::ReadOnlyMetadataBuilder<'m>.new	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
+parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.extend	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
+parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.field_name	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
+parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.finish	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
+parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.from_iter	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
+parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.into_inner	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
+parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.metadata_size	method	intentional_divergence	src/parquet_variant/builder/metadata.cr	private reserve-size helper; not ported
+parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.num_field_names	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
+parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.offset	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
+parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.truncate_field_names	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
+parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.try_upsert_field_name	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
+parquet-variant/src/builder/metadata.rs::method::WritableMetadataBuilder.upsert_field_name	method	ported	src/parquet_variant/builder/metadata.cr	ParquetVariant metadata builder
 parquet-variant/src/builder/object.rs::const::DUPLICATE_ENTRY_METADATA	const	missing	-	auto-generated
 parquet-variant/src/builder/object.rs::method::ObjectBuilder<'_, S>.extend	method	missing	-	auto-generated
 parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.finish	method	missing	-	auto-generated

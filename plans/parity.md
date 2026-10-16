@@ -66,14 +66,14 @@ little-endian layout.
   tests ported); `parquet-geospatial`'s `Hint`/`Edges`/`Metadata` + `WkbType`
   metadata (`types.cr`) and `Interval`/`WraparoundInterval` (`interval.cr`).
 - Next up (take the first unchecked item):
-  1. Phase 3.1: the rest of `parquet-variant` (`Variant`, `VariantBuilder`,
-     `VariantObject`/`VariantList`, the decoder); then `-compute`/`-json`.
+  1. Phase 3.1: the rest of `parquet-variant` (`Variant`, `ValueBuilder`,
+     `VariantObject`/`VariantList`, the value decoder); then `-compute`/`-json`.
   2. Phase 3.2 `parquet-geospatial` `bounding.rs` (`GeoBounder`, needs
      `geo-traits`/`wkb`); Phase 3.3 `parquet_derive`; Phase 3.4 encryption.
   3. Deferred: async/object-store suffix fetchers, encryption, and the arrow
      `parquet-rewrite`/`parquet-fromcsv` are intentional divergences (recorded).
-- Progress by counts (ledger): 1401 `ported`, 185 `intentional_divergence`,
-  1 `skipped`, 1928 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1417 `ported`, 186 `intentional_divergence`,
+  1 `skipped`, 1911 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -115,11 +115,12 @@ Chunk status by area:
   `parquet-rewrite`/`parquet-fromcsv` need arrow.
 - Phase 3 (variant/geospatial/derive/encryption/arrow/async): `parquet-variant`'s
   `VariantPath`/`VariantPathElement` + parser, the `utils` helpers,
-  `OffsetSizeBytes`/`map_bytes_to_offsets`, `VariantMetadata`, and
-  `VariantDecimal4`/`8`/`16` done; `parquet-geospatial`'s `Hint`/`Edges`/
-  `Metadata` + `WkbType` metadata and `Interval`/`WraparoundInterval` done; the
-  `Variant` encoding/builder/decoder, geospatial bounding, derive, encryption,
-  arrow, and async remain pending.
+  `OffsetSizeBytes`/`map_bytes_to_offsets`, `VariantMetadata`,
+  `VariantDecimal4`/`8`/`16`, and the metadata builders done;
+  `parquet-geospatial`'s `Hint`/`Edges`/`Metadata` + `WkbType` metadata and
+  `Interval`/`WraparoundInterval` done; the `Variant` encoding/value builder/
+  decoder, geospatial bounding, derive, encryption, arrow, and async remain
+  pending.
 
 ## Phase 0 — Project initialization
 
@@ -420,10 +421,12 @@ Chunk status by area:
   (`src/parquet_variant/decoder.cr`), `VariantMetadata`
   (`src/parquet_variant/variant/metadata.cr`, `metadata_spec.cr`), and
   `VariantDecimal4`/`8`/`16` + `VariantDecimalType`
-  (`src/parquet_variant/variant/decimal.cr`, `decimal_spec.cr`) done;
-  `Variant`, `VariantBuilder`, the rest of the decoder, and `VariantObject`/
-  `VariantList` pending. `VariantMetadata#borrowed_field_id`'s zero-copy fast
-  path is an intentional divergence (Crystal copies substrings).
+  (`src/parquet_variant/variant/decimal.cr`, `decimal_spec.cr`), and the metadata
+  builders `MetadataBuilder`/`WritableMetadataBuilder`/`ReadOnlyMetadataBuilder`
+  (`src/parquet_variant/builder/metadata.cr`, `builder_metadata_spec.cr`) done;
+  `Variant`, `VariantBuilder`/`ValueBuilder`, the rest of the decoder, and
+  `VariantObject`/`VariantList` pending. `VariantMetadata#borrowed_field_id`'s
+  zero-copy fast path is an intentional divergence (Crystal copies substrings).
 - [ ] `parquet-variant-compute`.
 - [ ] `parquet-variant-json`.
 
@@ -796,6 +799,14 @@ Chunk status by area:
   `define_variant_decimal` macro). `Int128` is the `VariantDecimal16` native type;
   `%`/`/` map to `Int#remainder`/`Int#tdiv` to match Rust's truncated semantics;
   overflow during rescale raises `InvalidArgumentError`.
+- `parquet-variant::builder::metadata`: `MetadataBuilder` is a marker module
+  (`int_size`/`write_offset` are module methods); `IndexSet` is an
+  insertion-ordered `Array(String)` + `Hash(String, Int32)`;
+  `Extend`/`FromIterator` are `#extend`/`.from_iter`; `is_sorted` → `sorted?`;
+  `into_inner` returns a `Bytes` copy; the private `metadata_size` reserve helper
+  is not ported; `ReadOnlyMetadataBuilder`'s borrowed fast path is disabled, so
+  it always searches by name and raises `InvalidArgumentError` for unknown
+  fields.
 - `parquet-geospatial`: lives in `src/parquet_geospatial/` (`ParquetGeospatial`
   module), required from `src/parquet-cr.cr`; `serde_json::Value` is `JSON::Any`
   (`Metadata#to_json`/`.from_json` are hand-written to preserve the
