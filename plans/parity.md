@@ -88,8 +88,8 @@ Chunk status by area:
 - Phase 1.6 schema: `types`, descriptors, parser, thrift conversion, page
   headers done; printer + primitive builder pending.
 - Phase 1.7 util: `BitReader`/`BitWriter`, `Interner`/`Storage`, `PushBuffers`,
-  and `common_prefix_length` done; bit packing (`bit_pack.rs`), cursor/page
-  readers, and CRC32 pending.
+  `common_prefix_length`, and bit packing (`BitPack.unpack*`) done; cursor/page
+  readers and CRC32 pending.
 - Phase 1.8 compression: `Codec` framework + `GZipCodec` done;
   snappy/lzo/brotli/lz4/zstd pending (need Crystal shards).
 - Phase 2.3 file metadata/statistics/page-index core, column-index decode,
@@ -216,7 +216,10 @@ Chunk status by area:
       dictionary encoder.
 - [x] `common_prefix_length` (`src/parquet/util/prefix.cr`) used by
       DELTA_BYTE_ARRAY; the upstream 32-byte block scan is a scalar scan.
-- [ ] Bit packing (`util/bit_pack.rs`), cursor, page readers (`util/` remaining).
+- [x] Bit packing (`src/parquet/util/bit_pack.cr`): `BitPack.unpack8`/`16`/`32`/
+  `64` (scalar; the `NUM_BITS` const generic is a `num_bits` parameter);
+  `bit_pack_spec.cr` ported.
+- [ ] Cursor and page readers (`util/` remaining).
 - [ ] CRC32 checksum helpers.
 
 ### 1.8 Compression
@@ -612,6 +615,10 @@ Chunk status by area:
   64`); `put_aligned`/`put_aligned_offset` encode via `IO::ByteFormat::
   LittleEndian` rather than the `AsBytes` trait; `BitWriter#flush_buffer_mut`
   and `BitReader#get_aligned_bytes` are not ported.
+- `util::bit_pack`: the `unpack::<NUM_BITS>` const generic is an explicit
+  `num_bits` parameter and the `seq_macro`/SIMD kernels are a scalar loop; the
+  fixed `[T; bits]` output is an `Array(T)` of the same length; the helpers are
+  `Parquet::Util::BitPack.unpack8`/`16`/`32`/`64`.
 - `util::interner`: Rust's `Storage` trait (with `Key`/`Value` associated types)
   is an abstract generic class `Storage(Key, Value)`; the `hashbrown::HashTable`
   dedup table is a `Hash(Bytes, Key)` keyed on `value.as_bytes`, preserving the
