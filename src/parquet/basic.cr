@@ -5,6 +5,8 @@
 # the Thrift IDL. `LogicalType`, `Compression`, `SortOrder`, `ColumnOrder`,
 # `EncodingMask`, and the geospatial enums are ported with their features; see
 # `plans/parity.md`.
+require "./compression"
+
 module Parquet
   # Mirrors thrift enum `Type`.
   #
@@ -745,6 +747,166 @@ module Parquet
     LZ4_RAW      = 7
   end
   define_thrift_enum(CompressionCodec)
+
+  # Supported block compression algorithms.
+  #
+  # Divergence: Rust's `Compression` enum with payload variants
+  # (`GZIP(GzipLevel)`/`BROTLI(BrotliLevel)`/`ZSTD(ZstdLevel)`) is a Crystal
+  # struct carrying a `Kind` plus an optional level (`Int32?`); the unit
+  # variants are constants and the payload variants are `Compression.gzip`/
+  # `.brotli`/`.zstd` (validating the level). `Display` reproduces the Rust
+  # `#[derive(Debug)]` form, e.g. `GZIP(GzipLevel(6))`.
+  struct Compression
+    # Compression algorithm discriminant.
+    enum Kind
+      UNCOMPRESSED
+      SNAPPY
+      GZIP
+      LZO
+      BROTLI
+      LZ4
+      ZSTD
+      LZ4_RAW
+    end
+
+    getter kind : Kind
+    getter level : Int32?
+
+    def initialize(@kind : Kind, @level : Int32? = nil)
+    end
+
+    UNCOMPRESSED = new(Kind::UNCOMPRESSED)
+    SNAPPY       = new(Kind::SNAPPY)
+    LZO          = new(Kind::LZO)
+    LZ4          = new(Kind::LZ4)
+    LZ4_RAW      = new(Kind::LZ4_RAW)
+
+    def self.default : Compression
+      UNCOMPRESSED
+    end
+
+    # GZIP compression at `level` (defaults to 6).
+    def self.gzip(level : Int32 = GzipLevel.default.compression_level) : Compression
+      GzipLevel.try_new(level)
+      new(Kind::GZIP, level)
+    end
+
+    # BROTLI compression at `level` (defaults to 1).
+    def self.brotli(level : Int32 = BrotliLevel.default.compression_level) : Compression
+      BrotliLevel.try_new(level)
+      new(Kind::BROTLI, level)
+    end
+
+    # ZSTD compression at `level` (defaults to 1).
+    def self.zstd(level : Int32 = ZstdLevel.default.compression_level) : Compression
+      ZstdLevel.try_new(level)
+      new(Kind::ZSTD, level)
+    end
+
+    def self.from_codec(codec : CompressionCodec) : Compression
+      case codec
+      when CompressionCodec::UNCOMPRESSED then UNCOMPRESSED
+      when CompressionCodec::SNAPPY       then SNAPPY
+      when CompressionCodec::GZIP         then gzip
+      when CompressionCodec::LZO          then LZO
+      when CompressionCodec::BROTLI       then brotli
+      when CompressionCodec::LZ4          then LZ4
+      when CompressionCodec::ZSTD         then zstd
+      when CompressionCodec::LZ4_RAW      then LZ4_RAW
+      else
+        raise general_err!("unknown compression codec: #{codec}")
+      end
+    end
+
+    def codec : CompressionCodec
+      case @kind
+      when Kind::UNCOMPRESSED then CompressionCodec::UNCOMPRESSED
+      when Kind::SNAPPY       then CompressionCodec::SNAPPY
+      when Kind::GZIP         then CompressionCodec::GZIP
+      when Kind::LZO          then CompressionCodec::LZO
+      when Kind::BROTLI       then CompressionCodec::BROTLI
+      when Kind::LZ4          then CompressionCodec::LZ4
+      when Kind::ZSTD         then CompressionCodec::ZSTD
+      else                         CompressionCodec::LZ4_RAW
+      end
+    end
+
+    # Parses `str`, e.g. `"SNAPPY"`, `"gzip(9)"`, `"zstd(-3)"`.
+    def self.from_str(str : String) : Compression
+      codec, level = split_compression_string(str)
+      case codec
+      when "UNCOMPRESSED", "uncompressed"
+        check_level_is_none(level)
+        UNCOMPRESSED
+      when "SNAPPY", "snappy"
+        check_level_is_none(level)
+        SNAPPY
+      when "GZIP", "gzip"
+        gzip(require_level(codec, level))
+      when "LZO", "lzo"
+        check_level_is_none(level)
+        LZO
+      when "BROTLI", "brotli"
+        brotli(require_level(codec, level))
+      when "LZ4", "lz4"
+        check_level_is_none(level)
+        LZ4
+      when "ZSTD", "zstd"
+        zstd(require_level(codec, level))
+      when "LZ4_RAW", "lz4_raw"
+        check_level_is_none(level)
+        LZ4_RAW
+      else
+        raise general_err!("unsupported compression #{codec}")
+      end
+    end
+
+    def self.from_str?(str : String) : Compression?
+      from_str(str)
+    rescue Parquet::ParquetError
+      nil
+    end
+
+    def to_s(io : IO) : Nil
+      case @kind
+      when Kind::GZIP   then io << "GZIP(GzipLevel(" << @level << "))"
+      when Kind::BROTLI then io << "BROTLI(BrotliLevel(" << @level << "))"
+      when Kind::ZSTD   then io << "ZSTD(ZstdLevel(" << @level << "))"
+      else                   io << @kind
+      end
+    end
+
+    def_equals @kind, @level
+    def_hash @kind, @level
+
+    private def self.split_compression_string(str : String) : Tuple(String, Int32?)
+      if idx = str.index('(')
+        codec = str[0, idx]
+        level_str = str[idx + 1, str.size - idx - 1]
+        parsed = level_str.size > 0 ? level_str[0, level_str.size - 1] : ""
+        level = parsed.to_i32? || raise general_err!("invalid compression level: #{level_str}")
+        {codec, level}
+      else
+        {str, nil}
+      end
+    end
+
+    private def self.check_level_is_none(level : Int32?) : Nil
+      raise general_err!("compression level is not supported") unless level.nil?
+    end
+
+    private def self.require_level(codec : String, level : Int32?) : Int32
+      level || raise general_err!("#{codec} requires a compression level")
+    end
+  end
+
+  # `Compression` -> `CompressionCodec` conversion (upstream `From<Compression>
+  # for CompressionCodec`).
+  enum CompressionCodec
+    def self.from(compression : Compression) : CompressionCodec
+      compression.codec
+    end
+  end
 
   # Mirrors thrift enum `PageType`.
   #

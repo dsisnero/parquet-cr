@@ -34,8 +34,8 @@ little-endian layout.
   `plans/parity/<area>.md`, link each here, and mark each split file
   complete/in-progress plus the file being worked on next.
 - Current focus: **Phase 2 — file metadata + page-index integration.** The core
-  value/wire layer (errors, thrift protocol, `basic`, `data_type` value types,
-  `schema`), the file metadata + statistics + footer round-trip, the offset/
+  value/wire layer (errors, thrift protocol, `basic`, `Compression`, `data_type`
+  value types, `schema`), the file metadata + statistics + footer round-trip, the offset/
   column index core + decode, the page-index builders, the
   `ParquetMetaDataBuilder`/`ParquetMetaDataOptions` plumbing, the sans-IO
   `ParquetMetaDataPushDecoder`, the synchronous `ChunkReader`-driven
@@ -51,8 +51,8 @@ little-endian layout.
      record API and bloom filter.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 843 `ported`, 108 `intentional_divergence`,
-  1 `skipped`, 2563 `missing` (of 3515 rows).
+- Progress by counts (ledger): 858 `ported`, 108 `intentional_divergence`,
+  1 `skipped`, 2548 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -61,8 +61,8 @@ Chunk status by area:
 - Phase 1.2 thrift protocol: complete.
 - Phase 1.3 thrift macros: enum/union/struct/empty done; generic mixed-union
   macro and encryption IDL pending.
-- Phase 1.4 basic: enums, `LogicalType`, `SortOrder`/`ColumnOrder`,
-  `EncodingMask` done; `Compression` enum pending.
+- Phase 1.4 basic: complete (enums, `LogicalType`, `SortOrder`/`ColumnOrder`,
+  `EncodingMask`, `Compression` + levels).
 - Phase 1.5 data type: value types done; `DataType` trait + `make_type!` pending.
 - Phase 1.6 schema: `types`, descriptors, parser, thrift conversion, page
   headers done; printer + primitive builder pending.
@@ -137,8 +137,9 @@ Chunk status by area:
 - [x] `SortOrder`, `ColumnOrder` (incl. `column_order_for_type`).
 - [x] `EncodingMask` (`try_new`, `new_from_encodings`, `set?`/`only?`/`all_set`,
   `encodings`, thrift reading).
-- [ ] `Compression` enum, `CompressionCodec`<->`Compression` conversions, and
-  `Compression` `Display`/`from_str`.
+- [x] `Compression` enum, `CompressionCodec`<->`Compression` conversions, and
+  `Compression` `Display`/`from_str`; `GzipLevel`/`BrotliLevel`/`ZstdLevel`
+  (`src/parquet/compression.cr`).
 
 ### 1.5 Data type model
 
@@ -474,6 +475,15 @@ Chunk status by area:
   `str`, and `Vec<u8>` remain pending. `dict_encoding_size` /
   `variable_length_bytes` are realized per-type inside
   `DictEncoder::KeyStorage<T>` rather than on a `ParquetValueType` trait.
+- `Compression`/levels: Rust's payload enum is a Crystal struct carrying a
+  `Kind` + optional level (`Int32?`); the unit variants are constants and the
+  payload variants are `Compression.gzip`/`.brotli`/`.zstd` (validating the
+  level). `Display` reproduces the Rust `#[derive(Debug)]` form. The
+  `CompressionLevel<T>` trait (associated `MINIMUM_LEVEL`/`MAXIMUM_LEVEL`) is a
+  `CompressionUtil.validate_level` helper; gzip/brotli levels are `Int32`
+  (upstream `u32`). `CompressionCodec::from(Compression)` is
+  `CompressionCodec.from`; `From<CompressionCodec>` is `Compression.from_codec`.
+  The compression *codecs* (`Codec` implementations) remain pending (Phase 1.8).
 - `encodings::byte_stream_split`: `ByteStreamSplitEncoder(T)`/`Decoder(T)` and
   `VariableWidthByteStreamSplitEncoder(T)`/`Decoder(T)` with `T.class`; the
   constant `split_streams_const`/`join_streams_const` and `_variable` kernels

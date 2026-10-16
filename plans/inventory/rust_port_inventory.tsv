@@ -1646,10 +1646,10 @@ parquet/src/basic.rs::method::ColumnOrder.read_thrift	method	ported	src/parquet/
 parquet/src/basic.rs::method::ColumnOrder.sort_order	method	ported	src/parquet/basic.cr	ColumnOrder#sort_order
 parquet/src/basic.rs::method::ColumnOrder.sort_order_for_type	method	intentional_divergence	src/parquet/basic.cr	deprecated upstream alias for get_sort_order_for_type; not provided
 parquet/src/basic.rs::method::ColumnOrder.write_thrift	method	ported	src/parquet/basic.cr	hand-written union write
-parquet/src/basic.rs::method::Compression.fmt	method	missing	-	auto-generated
-parquet/src/basic.rs::method::Compression.from	method	missing	-	auto-generated
-parquet/src/basic.rs::method::Compression.from_str	method	missing	-	auto-generated
-parquet/src/basic.rs::method::CompressionCodec.from	method	missing	-	auto-generated
+parquet/src/basic.rs::method::Compression.fmt	method	ported	src/parquet/basic.cr	Compression#to_s (Debug form)
+parquet/src/basic.rs::method::Compression.from	method	ported	src/parquet/basic.cr	Compression.from_codec
+parquet/src/basic.rs::method::Compression.from_str	method	ported	src/parquet/basic.cr	Compression.from_str
+parquet/src/basic.rs::method::CompressionCodec.from	method	ported	src/parquet/basic.cr	CompressionCodec.from
 parquet/src/basic.rs::method::ConvertedType.from	method	ported	src/parquet/basic.cr	From<Option<LogicalType>>; reverse conversion intentionally omitted (type loss)
 parquet/src/basic.rs::method::ConvertedType.from_str	method	ported	src/parquet/basic.cr	Enum.parse?-based; member names are the accepted strings
 parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.fmt	method	ported	src/parquet/basic.cr	Display via EdgeInterpolationAlgorithm#to_s (value-wrapping struct)
@@ -1934,16 +1934,16 @@ parquet/src/column/writer/mod.rs::method::TestPageWriter.write_page	method	missi
 parquet/src/compression.rs::const::BROTLI_DEFAULT_BUFFER_SIZE	const	missing	-	auto-generated
 parquet/src/compression.rs::const::BROTLI_DEFAULT_LG_WINDOW_SIZE	const	missing	-	auto-generated
 parquet/src/compression.rs::const::LZ4_BUFFER_SIZE	const	missing	-	auto-generated
-parquet/src/compression.rs::const::MAXIMUM_LEVEL	const	missing	-	auto-generated
-parquet/src/compression.rs::const::MINIMUM_LEVEL	const	missing	-	auto-generated
+parquet/src/compression.rs::const::MAXIMUM_LEVEL	const	ported	src/parquet/compression.cr	per-level MAXIMUM_LEVEL
+parquet/src/compression.rs::const::MINIMUM_LEVEL	const	ported	src/parquet/compression.cr	per-level MINIMUM_LEVEL
 parquet/src/compression.rs::const::PREFIX_LEN	const	missing	-	auto-generated
 parquet/src/compression.rs::const::SIZE_U32	const	missing	-	auto-generated
 parquet/src/compression.rs::method::BrotliCodec.compress	method	missing	-	auto-generated
 parquet/src/compression.rs::method::BrotliCodec.decompress	method	missing	-	auto-generated
 parquet/src/compression.rs::method::BrotliCodec.new	method	missing	-	auto-generated
-parquet/src/compression.rs::method::BrotliLevel.compression_level	method	missing	-	auto-generated
-parquet/src/compression.rs::method::BrotliLevel.default	method	missing	-	auto-generated
-parquet/src/compression.rs::method::BrotliLevel.try_new	method	missing	-	auto-generated
+parquet/src/compression.rs::method::BrotliLevel.compression_level	method	ported	src/parquet/compression.cr	BrotliLevel#compression_level
+parquet/src/compression.rs::method::BrotliLevel.default	method	ported	src/parquet/compression.cr	BrotliLevel#default
+parquet/src/compression.rs::method::BrotliLevel.try_new	method	ported	src/parquet/compression.cr	BrotliLevel#try_new
 parquet/src/compression.rs::method::CodecOptions.default	method	missing	-	auto-generated
 parquet/src/compression.rs::method::CodecOptionsBuilder.build	method	missing	-	auto-generated
 parquet/src/compression.rs::method::CodecOptionsBuilder.default	method	missing	-	auto-generated
@@ -1951,9 +1951,9 @@ parquet/src/compression.rs::method::CodecOptionsBuilder.set_backward_compatible_
 parquet/src/compression.rs::method::GZipCodec.compress	method	missing	-	auto-generated
 parquet/src/compression.rs::method::GZipCodec.decompress	method	missing	-	auto-generated
 parquet/src/compression.rs::method::GZipCodec.new	method	missing	-	auto-generated
-parquet/src/compression.rs::method::GzipLevel.compression_level	method	missing	-	auto-generated
-parquet/src/compression.rs::method::GzipLevel.default	method	missing	-	auto-generated
-parquet/src/compression.rs::method::GzipLevel.try_new	method	missing	-	auto-generated
+parquet/src/compression.rs::method::GzipLevel.compression_level	method	ported	src/parquet/compression.cr	GzipLevel#compression_level
+parquet/src/compression.rs::method::GzipLevel.default	method	ported	src/parquet/compression.cr	GzipLevel#default
+parquet/src/compression.rs::method::GzipLevel.try_new	method	ported	src/parquet/compression.cr	GzipLevel#try_new
 parquet/src/compression.rs::method::LZ4Codec.compress	method	missing	-	auto-generated
 parquet/src/compression.rs::method::LZ4Codec.decompress	method	missing	-	auto-generated
 parquet/src/compression.rs::method::LZ4Codec.new	method	missing	-	auto-generated
@@ -1969,9 +1969,9 @@ parquet/src/compression.rs::method::SnappyCodec.new	method	missing	-	auto-genera
 parquet/src/compression.rs::method::ZSTDCodec.compress	method	missing	-	auto-generated
 parquet/src/compression.rs::method::ZSTDCodec.decompress	method	missing	-	auto-generated
 parquet/src/compression.rs::method::ZSTDCodec.new	method	missing	-	auto-generated
-parquet/src/compression.rs::method::ZstdLevel.compression_level	method	missing	-	auto-generated
-parquet/src/compression.rs::method::ZstdLevel.default	method	missing	-	auto-generated
-parquet/src/compression.rs::method::ZstdLevel.try_new	method	missing	-	auto-generated
+parquet/src/compression.rs::method::ZstdLevel.compression_level	method	ported	src/parquet/compression.cr	ZstdLevel#compression_level
+parquet/src/compression.rs::method::ZstdLevel.default	method	ported	src/parquet/compression.cr	ZstdLevel#default
+parquet/src/compression.rs::method::ZstdLevel.try_new	method	ported	src/parquet/compression.cr	ZstdLevel#try_new
 parquet/src/data_type.rs::const::JULIAN_DAY_OF_EPOCH	const	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
 parquet/src/data_type.rs::const::MICROSECONDS	const	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
 parquet/src/data_type.rs::const::MICROSECONDS_IN_DAY	const	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
