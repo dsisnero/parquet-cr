@@ -1814,27 +1814,27 @@ parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.read_records	
 parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.read_records_with_reservation	method	missing	-	auto-generated
 parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.skip_records	method	missing	-	auto-generated
 parquet/src/column/reader.rs::method::GenericColumnReader<RepetitionLevelDecoderImpl, DefinitionLevelDecoderImpl, V>.new	method	missing	-	auto-generated
-parquet/src/column/reader/decoder.rs::const::ENCODING_SLOTS	const	missing	-	auto-generated
-parquet/src/column/reader/decoder.rs::const::REPETITION_LEVELS_BATCH_SIZE	const	missing	-	auto-generated
-parquet/src/column/reader/decoder.rs::const::SKIP_BUFFER_SIZE	const	missing	-	auto-generated
-parquet/src/column/reader/decoder.rs::method::ColumnValueDecoderImpl<T>.new	method	missing	-	auto-generated
-parquet/src/column/reader/decoder.rs::method::ColumnValueDecoderImpl<T>.read	method	missing	-	auto-generated
-parquet/src/column/reader/decoder.rs::method::ColumnValueDecoderImpl<T>.set_data	method	missing	-	auto-generated
-parquet/src/column/reader/decoder.rs::method::ColumnValueDecoderImpl<T>.set_dict	method	missing	-	auto-generated
-parquet/src/column/reader/decoder.rs::method::ColumnValueDecoderImpl<T>.skip_values	method	missing	-	auto-generated
-parquet/src/column/reader/decoder.rs::method::DefinitionLevelDecoderImpl.new	method	missing	-	auto-generated
-parquet/src/column/reader/decoder.rs::method::DefinitionLevelDecoderImpl.read_def_levels	method	missing	-	auto-generated
-parquet/src/column/reader/decoder.rs::method::DefinitionLevelDecoderImpl.set_data	method	missing	-	auto-generated
-parquet/src/column/reader/decoder.rs::method::DefinitionLevelDecoderImpl.skip_def_levels	method	missing	-	auto-generated
-parquet/src/column/reader/decoder.rs::method::LevelDecoder.new	method	missing	-	auto-generated
-parquet/src/column/reader/decoder.rs::method::LevelDecoder.read	method	missing	-	auto-generated
-parquet/src/column/reader/decoder.rs::method::RepetitionLevelDecoderImpl.count_records	method	missing	-	auto-generated
-parquet/src/column/reader/decoder.rs::method::RepetitionLevelDecoderImpl.fill_buf	method	missing	-	auto-generated
-parquet/src/column/reader/decoder.rs::method::RepetitionLevelDecoderImpl.flush_partial	method	missing	-	auto-generated
-parquet/src/column/reader/decoder.rs::method::RepetitionLevelDecoderImpl.new	method	missing	-	auto-generated
-parquet/src/column/reader/decoder.rs::method::RepetitionLevelDecoderImpl.read_rep_levels	method	missing	-	auto-generated
-parquet/src/column/reader/decoder.rs::method::RepetitionLevelDecoderImpl.set_data	method	missing	-	auto-generated
-parquet/src/column/reader/decoder.rs::method::RepetitionLevelDecoderImpl.skip_rep_levels	method	missing	-	auto-generated
+parquet/src/column/reader/decoder.rs::const::ENCODING_SLOTS	const	ported	src/parquet/column/reader/decoder.cr	column reader decoder
+parquet/src/column/reader/decoder.rs::const::REPETITION_LEVELS_BATCH_SIZE	const	ported	src/parquet/column/reader/decoder.cr	column reader decoder
+parquet/src/column/reader/decoder.rs::const::SKIP_BUFFER_SIZE	const	ported	src/parquet/column/reader/decoder.cr	column reader decoder
+parquet/src/column/reader/decoder.rs::method::ColumnValueDecoderImpl<T>.new	method	ported	src/parquet/column/reader/decoder.cr	column reader decoder
+parquet/src/column/reader/decoder.rs::method::ColumnValueDecoderImpl<T>.read	method	ported	src/parquet/column/reader/decoder.cr	column reader decoder
+parquet/src/column/reader/decoder.rs::method::ColumnValueDecoderImpl<T>.set_data	method	ported	src/parquet/column/reader/decoder.cr	column reader decoder
+parquet/src/column/reader/decoder.rs::method::ColumnValueDecoderImpl<T>.set_dict	method	ported	src/parquet/column/reader/decoder.cr	column reader decoder
+parquet/src/column/reader/decoder.rs::method::ColumnValueDecoderImpl<T>.skip_values	method	ported	src/parquet/column/reader/decoder.cr	column reader decoder
+parquet/src/column/reader/decoder.rs::method::DefinitionLevelDecoderImpl.new	method	ported	src/parquet/column/reader/decoder.cr	column reader decoder
+parquet/src/column/reader/decoder.rs::method::DefinitionLevelDecoderImpl.read_def_levels	method	ported	src/parquet/column/reader/decoder.cr	column reader decoder
+parquet/src/column/reader/decoder.rs::method::DefinitionLevelDecoderImpl.set_data	method	ported	src/parquet/column/reader/decoder.cr	column reader decoder
+parquet/src/column/reader/decoder.rs::method::DefinitionLevelDecoderImpl.skip_def_levels	method	ported	src/parquet/column/reader/decoder.cr	column reader decoder
+parquet/src/column/reader/decoder.rs::method::LevelDecoder.new	method	ported	src/parquet/column/reader/decoder.cr	column reader decoder
+parquet/src/column/reader/decoder.rs::method::LevelDecoder.read	method	ported	src/parquet/column/reader/decoder.cr	column reader decoder
+parquet/src/column/reader/decoder.rs::method::RepetitionLevelDecoderImpl.count_records	method	ported	src/parquet/column/reader/decoder.cr	column reader decoder
+parquet/src/column/reader/decoder.rs::method::RepetitionLevelDecoderImpl.fill_buf	method	ported	src/parquet/column/reader/decoder.cr	column reader decoder
+parquet/src/column/reader/decoder.rs::method::RepetitionLevelDecoderImpl.flush_partial	method	ported	src/parquet/column/reader/decoder.cr	column reader decoder
+parquet/src/column/reader/decoder.rs::method::RepetitionLevelDecoderImpl.new	method	ported	src/parquet/column/reader/decoder.cr	column reader decoder
+parquet/src/column/reader/decoder.rs::method::RepetitionLevelDecoderImpl.read_rep_levels	method	ported	src/parquet/column/reader/decoder.cr	column reader decoder
+parquet/src/column/reader/decoder.rs::method::RepetitionLevelDecoderImpl.set_data	method	ported	src/parquet/column/reader/decoder.cr	column reader decoder
+parquet/src/column/reader/decoder.rs::method::RepetitionLevelDecoderImpl.skip_rep_levels	method	ported	src/parquet/column/reader/decoder.cr	column reader decoder
 parquet/src/column/writer/byte_budget_chunker.rs::method::ByteBudgetChunker.byte_budget_sub_batch	method	missing	-	auto-generated
 parquet/src/column/writer/byte_budget_chunker.rs::method::ByteBudgetChunker.new	method	missing	-	auto-generated
 parquet/src/column/writer/byte_budget_chunker.rs::method::ByteBudgetChunker.pick_sub_batch	method	missing	-	auto-generated

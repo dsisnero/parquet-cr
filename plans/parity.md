@@ -45,15 +45,16 @@ little-endian layout.
   (`RleEncoder`/`RleDecoder`), level encoding (`LevelEncoder`), all encodings
   (PLAIN, DELTA_BINARY_PACKED, DELTA_LENGTH_BYTE_ARRAY, DELTA_BYTE_ARRAY,
   dictionary, byte-stream-split, RLE value, ALP), the `Encoder`/`Decoder`
-  interfaces + `get_encoder`/`get_decoder` registries, and the writer/reader
-  properties are done.
+  interfaces + `get_encoder`/`get_decoder` registries, the writer/reader
+  properties, and the column level/value decoders are done.
 - Next up (take the first unchecked item):
-  1. Column reader/writer (`column/`), then serialized/file reader+writer, then
-     record API and bloom filter.
+  1. Column writer/reader encoders (`column/writer/encoder.rs`), page read/write
+     (`column/page.rs`), then `ColumnReaderImpl`/`ColumnWriterImpl`, then
+     serialized/file reader+writer, then record API and bloom filter.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 1017 `ported`, 111 `intentional_divergence`,
-  1 `skipped`, 2386 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1038 `ported`, 111 `intentional_divergence`,
+  1 `skipped`, 2365 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -215,6 +216,10 @@ Chunk status by area:
 
 - [ ] `ColumnDescriptor`, `ColumnReader`, `ColumnWriter`.
 - [ ] `ColumnReaderImpl`/`ColumnWriterImpl`, page read/write.
+- [x] Column level/value decoders (`src/parquet/column/reader/decoder.cr`):
+  `ColumnLevelDecoder`/`RepetitionLevelDecoder`/`DefinitionLevelDecoder`/
+  `ColumnValueDecoder` abstract classes + `DefinitionLevelDecoderImpl`,
+  `RepetitionLevelDecoderImpl`, `ColumnValueDecoderImpl(T)`, `LevelDecoder`.
 - [x] Writer properties + reader properties (`src/parquet/file/properties.cr`):
   `WriterProperties`(+builder), `ReaderProperties`(+builder), `WriterVersion`,
   `EnabledStatistics`, `BloomFilterPosition`, `BloomFilterProperties`(+builder),
@@ -499,6 +504,12 @@ Chunk status by area:
   The builder/config types keep upstream `set_*`/non-`?` bool accessor names;
   `Naming/AccessorMethodName` and `Naming/QueryBoolMethods` are excluded for
   `file/properties.cr` and `compression.cr` in `.ameba.yml`.
+- `column::reader::decoder`: the `ColumnLevelDecoder`/`RepetitionLevelDecoder`/
+  `DefinitionLevelDecoder`/`ColumnValueDecoder` traits (with associated `Buffer`
+  types) become abstract classes; all buffers are `Array(Int16)`/`Array(T)`;
+  `EncodingMask::is_set` → `set?`; the per-encoding decoder bucket array is sized
+  `EncodingMask::MAX_ENCODING + 1` (no `Encoding::MAX_DISCRIMINANT`); the value
+  decoder decodes into a scratch `Array(T)` and appends (no in-place tail write).
 - `encodings::byte_stream_split`: `ByteStreamSplitEncoder(T)`/`Decoder(T)` and
   `VariableWidthByteStreamSplitEncoder(T)`/`Decoder(T)` with `T.class`; the
   constant `split_streams_const`/`join_streams_const` and `_variable` kernels
