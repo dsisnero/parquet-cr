@@ -48,15 +48,15 @@ little-endian layout.
   interfaces + `get_encoder`/`get_decoder` registries, the writer/reader
   properties, the column level/value decoders, the column page
   types/interfaces, the bloom filter (`Sbbf`), the column writer value
-  encoder, `ColumnReaderImpl`, and the compression `Codec` framework
-  (`GZipCodec`) are done.
+  encoder, `ColumnReaderImpl`, the compression `Codec` framework
+  (`GZipCodec`), and the serialized page reader/writer are done.
 - Next up (take the first unchecked item):
   1. `ColumnWriterImpl` (`column/writer/mod.rs`), then serialized/file
      reader+writer, then record API.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 1132 `ported`, 154 `intentional_divergence`,
-  1 `skipped`, 2228 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1143 `ported`, 164 `intentional_divergence`,
+  1 `skipped`, 2207 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -292,7 +292,10 @@ Chunk status by area:
 - [x] `ParquetMetaDataWriter`/`ThriftMetadataWriter` page-index footer
   serialization (`src/parquet/file/metadata/writer.cr`) and `TrackedWrite`/
   `file_magic` (`src/parquet/file/tracked_write.cr`).
-- [ ] Serialized reader/writer (footer + page headers).
+- [~] Serialized page reader/writer: `SerializedPageWriter` + `SerializedPageReader`
+  (offset-stream state) + `decode_page` done
+  (`src/parquet/file/serialized_{writer,reader}.cr`); `SerializedFileWriter`/
+  `SerializedFileReader` and the offset-index `Pages` state pending.
 - [ ] Reader/writer (`file/reader`, `file/writer`).
 - [x] Bloom filter (`src/parquet/bloom_filter.cr`): `Sbbf` + `Block`, the
   `BloomFilterHeader` thrift struct, and the header/serialization helpers;
@@ -577,7 +580,14 @@ Chunk status by area:
   an abstract class appending to `Array(UInt8)`; only the GZIP codec is ported
   (Crystal stdlib `Compress::Gzip`). Snappy/LZO/Brotli/LZ4/Zstd need Crystal
   shards and are intentional divergences — `create_codec` raises for them.
-  `create_codec` is `Parquet::CompressionCodecs.create_codec`.
+   `create_codec` is `Parquet::CompressionCodecs.create_codec`.
+- `file::serialized_reader`/`serialized_writer`: `SerializedPageWriter`'s
+  `W: Write` becomes the concrete `TrackedWrite`; page encryption is not ported;
+  `SerializedPageReader`'s offset-index `Pages` state, `Iterator` impl, CRC
+  verification, and `peek_next_page_offset` are not ported (only the
+  offset-stream `Values` state); the reader constructor is
+  `SerializedPageReader.new_for_column`. `decode_page` is a `Parquet::File`
+  module method.
 - `column::writer` data holders: Rust's `LevelDataRef<'a>` enum (borrowed
   `&[i16]`) is a Crystal struct carrying a `Kind` with an owned `Array(Int16)`;
   `usize` sizes are `Int32`; `ColumnCloseResult::update_dictionary_location(mut

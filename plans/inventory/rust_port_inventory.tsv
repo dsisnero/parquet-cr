@@ -3009,20 +3009,20 @@ parquet/src/file/serialized_reader.rs::method::SerializedFileReader<R>.metadata	
 parquet/src/file/serialized_reader.rs::method::SerializedFileReader<R>.new	method	missing	-	auto-generated
 parquet/src/file/serialized_reader.rs::method::SerializedFileReader<R>.new_with_options	method	missing	-	auto-generated
 parquet/src/file/serialized_reader.rs::method::SerializedFileReader<R>.num_row_groups	method	missing	-	auto-generated
-parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.add_crypto_context	method	missing	-	auto-generated
-parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.at_record_boundary	method	missing	-	auto-generated
-parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.get_next_page	method	missing	-	auto-generated
-parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.new	method	missing	-	auto-generated
-parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.new_with_properties	method	missing	-	auto-generated
-parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.next	method	missing	-	auto-generated
-parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.peek_next_page	method	missing	-	auto-generated
-parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.peek_next_page_offset	method	missing	-	auto-generated
-parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.read_page_header_len	method	missing	-	auto-generated
-parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.read_page_header_len_from_bytes	method	missing	-	auto-generated
-parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.skip_next_page	method	missing	-	auto-generated
-parquet/src/file/serialized_reader.rs::method::SerializedPageReaderContext.decrypt_page_data	method	missing	-	auto-generated
-parquet/src/file/serialized_reader.rs::method::SerializedPageReaderContext.page_crypto_context	method	missing	-	auto-generated
-parquet/src/file/serialized_reader.rs::method::SerializedPageReaderContext.read_page_header	method	missing	-	auto-generated
+parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.add_crypto_context	method	intentional_divergence	src/parquet/file/serialized_reader.cr	encryption not ported
+parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.at_record_boundary	method	ported	src/parquet/file/serialized_reader.cr	inherited PageReader default
+parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.get_next_page	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#get_next_page
+parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.new	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader.new_for_column
+parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.new_with_properties	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader.new_for_column
+parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.next	method	intentional_divergence	src/parquet/file/serialized_reader.cr	Iterator impl not modelled
+parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.peek_next_page	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#peek_next_page
+parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.peek_next_page_offset	method	intentional_divergence	src/parquet/file/serialized_reader.cr	not ported
+parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.read_page_header_len	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#read_page_header_len
+parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.read_page_header_len_from_bytes	method	intentional_divergence	src/parquet/file/serialized_reader.cr	Pages state not ported
+parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.skip_next_page	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#skip_next_page
+parquet/src/file/serialized_reader.rs::method::SerializedPageReaderContext.decrypt_page_data	method	intentional_divergence	src/parquet/file/serialized_reader.cr	encryption not ported
+parquet/src/file/serialized_reader.rs::method::SerializedPageReaderContext.page_crypto_context	method	intentional_divergence	src/parquet/file/serialized_reader.cr	encryption not ported
+parquet/src/file/serialized_reader.rs::method::SerializedPageReaderContext.read_page_header	method	intentional_divergence	src/parquet/file/serialized_reader.cr	inlined into read_page_header_len
 parquet/src/file/serialized_reader.rs::method::SerializedRowGroupReader<'_, R>.get_column_bloom_filter	method	missing	-	auto-generated
 parquet/src/file/serialized_reader.rs::method::SerializedRowGroupReader<'_, R>.get_column_page_reader	method	missing	-	auto-generated
 parquet/src/file/serialized_reader.rs::method::SerializedRowGroupReader<'_, R>.get_row_iter	method	missing	-	auto-generated
@@ -3087,13 +3087,13 @@ parquet/src/file/writer.rs::method::SerializedFileWriter<W>.schema_descr_ptr	met
 parquet/src/file/writer.rs::method::SerializedFileWriter<W>.start_file	method	missing	-	auto-generated
 parquet/src/file/writer.rs::method::SerializedFileWriter<W>.write_all	method	missing	-	auto-generated
 parquet/src/file/writer.rs::method::SerializedFileWriter<W>.write_metadata	method	missing	-	auto-generated
-parquet/src/file/writer.rs::method::SerializedPageWriter<'_, W>.close	method	missing	-	auto-generated
-parquet/src/file/writer.rs::method::SerializedPageWriter<'_, W>.page_encryptor_and_sink_mut	method	missing	-	auto-generated
-parquet/src/file/writer.rs::method::SerializedPageWriter<'_, W>.page_encryptor_mut	method	missing	-	auto-generated
-parquet/src/file/writer.rs::method::SerializedPageWriter<'_, W>.with_page_encryptor	method	missing	-	auto-generated
-parquet/src/file/writer.rs::method::SerializedPageWriter<'_, W>.write_page	method	missing	-	auto-generated
-parquet/src/file/writer.rs::method::SerializedPageWriter<'a, W>.new	method	missing	-	auto-generated
-parquet/src/file/writer.rs::method::SerializedPageWriter<'a, W>.serialize_page_header	method	missing	-	auto-generated
+parquet/src/file/writer.rs::method::SerializedPageWriter<'_, W>.close	method	ported	src/parquet/file/serialized_writer.cr	SerializedPageWriter#close
+parquet/src/file/writer.rs::method::SerializedPageWriter<'_, W>.page_encryptor_and_sink_mut	method	intentional_divergence	src/parquet/file/serialized_writer.cr	encryption not ported
+parquet/src/file/writer.rs::method::SerializedPageWriter<'_, W>.page_encryptor_mut	method	intentional_divergence	src/parquet/file/serialized_writer.cr	encryption not ported
+parquet/src/file/writer.rs::method::SerializedPageWriter<'_, W>.with_page_encryptor	method	intentional_divergence	src/parquet/file/serialized_writer.cr	encryption not ported
+parquet/src/file/writer.rs::method::SerializedPageWriter<'_, W>.write_page	method	ported	src/parquet/file/serialized_writer.cr	SerializedPageWriter#write_page
+parquet/src/file/writer.rs::method::SerializedPageWriter<'a, W>.new	method	ported	src/parquet/file/serialized_writer.cr	SerializedPageWriter.new
+parquet/src/file/writer.rs::method::SerializedPageWriter<'a, W>.serialize_page_header	method	ported	src/parquet/file/serialized_writer.cr	SerializedPageWriter#serialize_page_header
 parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.append_column	method	missing	-	auto-generated
 parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.append_column_from_pages	method	missing	-	auto-generated
 parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.append_column_from_read	method	missing	-	auto-generated
