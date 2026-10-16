@@ -5,6 +5,7 @@ require "../writer/byte_budget_chunker"
 require "../../file/metadata"
 require "../../file/metadata/column_chunk"
 require "../../file/page_index/column_index"
+require "../../encryption/encrypt"
 
 # Ported from `parquet/src/column/writer/mod.rs` (`ColumnWriter`,
 # `GenericColumnWriter`, `get_column_writer`/`get_typed_column_writer*`)
@@ -603,6 +604,12 @@ module Parquet
               .set_unencoded_byte_array_data_bytes(@column_metrics.variable_length_bytes)
               .set_repetition_level_histogram(@column_metrics.repetition_level_histogram)
               .set_definition_level_histogram(@column_metrics.definition_level_histogram)
+          end
+
+          if encryption = @props.file_encryption_properties
+            builder = builder.set_column_crypto_metadata(
+              Parquet::Encryption.get_column_crypto_metadata(encryption, @descr)
+            )
           end
 
           builder.build

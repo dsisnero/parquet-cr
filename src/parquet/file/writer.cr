@@ -12,6 +12,7 @@ require "./metadata/column_chunk"
 require "./metadata/writer"
 require "./metadata/footer_tail"
 require "./page_index/column_index"
+require "../encryption/encrypt"
 
 # Ported from `parquet/src/file/writer.rs` (`SerializedFileWriter`,
 # `SerializedRowGroupWriter`, `SerializedColumnWriter`, `write_bloom_filters`,
@@ -82,6 +83,7 @@ module Parquet
       @row_group_index : Int32
       @kv_metadatas : Array(Metadata::KeyValue)
       @finished : Bool
+      getter file_encryptor : Encryption::FileEncryptor?
 
       def initialize(buf : IO, schema : Schema::Type, properties : Properties::WriterProperties)
         @buf = TrackedWrite.new(buf)
@@ -94,6 +96,9 @@ module Parquet
         @row_group_index = 0
         @kv_metadatas = [] of Metadata::KeyValue
         @finished = false
+        @file_encryptor = properties.file_encryption_properties.try do |encryption|
+          Encryption::FileEncryptor.new(encryption)
+        end
         self.class.start_file(@buf)
       end
 
@@ -171,6 +176,7 @@ module Parquet
           @props.writer_version.as_num,
           @props.write_path_in_schema,
         )
+        encoder = encoder.with_file_encryptor(@file_encryptor)
 
         if key_value_metadata
           encoder = encoder.with_key_value_metadata(key_value_metadata)

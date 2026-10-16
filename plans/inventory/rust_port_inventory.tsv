@@ -1901,7 +1901,7 @@ parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.has_non_dic
 parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.is_utf8	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
 parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.memory_size	method	intentional_divergence	src/parquet/column/writer/writer.cr	arrow-only
 parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.new	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.set_column_chunk_encryption_properties	method	intentional_divergence	src/parquet/column/writer/writer.cr	encryption not ported
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.set_column_chunk_encryption_properties	method	ported	src/parquet/column/writer/writer.cr	inlined in GenericColumnWriter#build_column_metadata
 parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.set_distinct_count_override	method	intentional_divergence	src/parquet/column/writer/writer.cr	arrow-only
 parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.set_page_size_exemption	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
 parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.should_add_data_page	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
@@ -2915,7 +2915,7 @@ parquet/src/file/properties.rs::method::WriterProperties.dictionary_enabled	meth
 parquet/src/file/properties.rs::method::WriterProperties.dictionary_page_encoding	method	ported	src/parquet/file/properties.cr	WriterProperties/ReaderProperties
 parquet/src/file/properties.rs::method::WriterProperties.dictionary_page_size_limit	method	ported	src/parquet/file/properties.cr	WriterProperties/ReaderProperties
 parquet/src/file/properties.rs::method::WriterProperties.encoding	method	ported	src/parquet/file/properties.cr	WriterProperties/ReaderProperties
-parquet/src/file/properties.rs::method::WriterProperties.file_encryption_properties	method	intentional_divergence	src/parquet/file/properties.cr	encryption not ported
+parquet/src/file/properties.rs::method::WriterProperties.file_encryption_properties	method	ported	src/parquet/file/properties.cr	WriterProperties#file_encryption_properties
 parquet/src/file/properties.rs::method::WriterProperties.into_builder	method	ported	src/parquet/file/properties.cr	WriterProperties/ReaderProperties
 parquet/src/file/properties.rs::method::WriterProperties.key_value_metadata	method	ported	src/parquet/file/properties.cr	WriterProperties/ReaderProperties
 parquet/src/file/properties.rs::method::WriterProperties.max_row_group_bytes	method	ported	src/parquet/file/properties.cr	WriterProperties/ReaderProperties
@@ -2978,7 +2978,7 @@ parquet/src/file/properties.rs::method::WriterPropertiesBuilder.set_write_page_h
 parquet/src/file/properties.rs::method::WriterPropertiesBuilder.set_write_path_in_schema	method	ported	src/parquet/file/properties.cr	WriterProperties/ReaderProperties
 parquet/src/file/properties.rs::method::WriterPropertiesBuilder.set_write_row_group_number_distinct_values	method	ported	src/parquet/file/properties.cr	WriterProperties/ReaderProperties
 parquet/src/file/properties.rs::method::WriterPropertiesBuilder.set_writer_version	method	ported	src/parquet/file/properties.cr	WriterProperties/ReaderProperties
-parquet/src/file/properties.rs::method::WriterPropertiesBuilder.with_file_encryption_properties	method	intentional_divergence	src/parquet/file/properties.cr	encryption not ported
+parquet/src/file/properties.rs::method::WriterPropertiesBuilder.with_file_encryption_properties	method	ported	src/parquet/file/properties.cr	set_file_encryption_properties
 parquet/src/file/properties.rs::method::WriterVersion.as_num	method	ported	src/parquet/file/properties.cr	WriterProperties/ReaderProperties
 parquet/src/file/properties.rs::method::WriterVersion.from_str	method	ported	src/parquet/file/properties.cr	WriterProperties/ReaderProperties
 parquet/src/file/reader.rs::method::Bytes.get_bytes	method	ported	src/parquet/file/chunk_reader.cr	BytesChunkReader#get_bytes
@@ -3070,12 +3070,12 @@ parquet/src/file/writer.rs::method::SerializedFileWriter<W>.append_key_value_met
 parquet/src/file/writer.rs::method::SerializedFileWriter<W>.assert_previous_writer_closed	method	ported	src/parquet/file/writer.cr	SerializedFileWriter
 parquet/src/file/writer.rs::method::SerializedFileWriter<W>.bytes_written	method	ported	src/parquet/file/writer.cr	SerializedFileWriter
 parquet/src/file/writer.rs::method::SerializedFileWriter<W>.close	method	ported	src/parquet/file/writer.cr	SerializedFileWriter
-parquet/src/file/writer.rs::method::SerializedFileWriter<W>.file_encryptor	method	intentional_divergence	-	encryption not ported
+parquet/src/file/writer.rs::method::SerializedFileWriter<W>.file_encryptor	method	ported	src/parquet/file/writer.cr	SerializedFileWriter#file_encryptor getter
 parquet/src/file/writer.rs::method::SerializedFileWriter<W>.finish	method	ported	src/parquet/file/writer.cr	SerializedFileWriter
 parquet/src/file/writer.rs::method::SerializedFileWriter<W>.flush	method	ported	src/parquet/file/writer.cr	SerializedFileWriter
 parquet/src/file/writer.rs::method::SerializedFileWriter<W>.flushed_row_groups	method	ported	src/parquet/file/writer.cr	SerializedFileWriter
 parquet/src/file/writer.rs::method::SerializedFileWriter<W>.fmt	method	intentional_divergence	-	no Debug impl in Crystal
-parquet/src/file/writer.rs::method::SerializedFileWriter<W>.get_file_encryptor	method	intentional_divergence	-	encryption not ported
+parquet/src/file/writer.rs::method::SerializedFileWriter<W>.get_file_encryptor	method	intentional_divergence	src/parquet/file/writer.cr	SerializedFileWriter#file_encryptor (Option getter) replaces get_file_encryptor
 parquet/src/file/writer.rs::method::SerializedFileWriter<W>.inner	method	ported	src/parquet/file/writer.cr	SerializedFileWriter
 parquet/src/file/writer.rs::method::SerializedFileWriter<W>.inner_mut	method	ported	src/parquet/file/writer.cr	SerializedFileWriter
 parquet/src/file/writer.rs::method::SerializedFileWriter<W>.into_inner	method	ported	src/parquet/file/writer.cr	SerializedFileWriter

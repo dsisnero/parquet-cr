@@ -2,6 +2,7 @@ require "../basic"
 require "../compression"
 require "../schema/types"
 require "./metadata"
+require "../encryption/encrypt"
 
 # Ported from `parquet/src/file/properties.rs` (apache/arrow-rs 60.0.0,
 # ef1fa157977633f0ba21aa921f9ef3d5c669235b).
@@ -12,8 +13,8 @@ require "./metadata"
 # per-column `ColumnProperties`/
 # resolution. Divergence: `usize` becomes `Int32`; Rust `panic!`/`assert!` become
 # Crystal exceptions; `Result`-returning `try_build` raises; `WriterVersion`/
-# `EnabledStatistics` `FromStr` errors are raised; encryption properties are not
-# ported (feature-gated upstream).
+# `EnabledStatistics` `FromStr` errors are raised; the file encryption properties
+# are exposed on `WriterProperties` (feature-gated upstream).
 module Parquet
   module File
     module Properties
@@ -332,6 +333,7 @@ module Parquet
         getter write_row_group_number_distinct_values : Bool
         getter content_defined_chunking : CdcOptions?
         getter write_path_in_schema : Bool
+        getter file_encryption_properties : Encryption::FileEncryptionProperties?
         getter offset_index_setting : OffsetIndexSetting
         getter default_column_properties : ColumnProperties
         getter column_properties : Hash(Schema::ColumnPath, ColumnProperties)
@@ -356,6 +358,7 @@ module Parquet
           @write_row_group_number_distinct_values,
           @content_defined_chunking,
           @write_path_in_schema,
+          @file_encryption_properties : Encryption::FileEncryptionProperties? = nil,
         )
         end
 
@@ -537,6 +540,7 @@ module Parquet
           @write_row_group_number_distinct_values = props.write_row_group_number_distinct_values
           @content_defined_chunking = props.content_defined_chunking
           @write_path_in_schema = props.write_path_in_schema
+          @file_encryption_properties = props.file_encryption_properties
           self
         end
 
@@ -560,6 +564,7 @@ module Parquet
           @write_row_group_number_distinct_values = DEFAULT_WRITE_ROW_GROUP_NUMBER_DISTINCT_VALUES
           @content_defined_chunking = nil.as(CdcOptions?)
           @write_path_in_schema = DEFAULT_WRITE_PATH_IN_SCHEMA
+          @file_encryption_properties = nil.as(Encryption::FileEncryptionProperties?)
         end
 
         # Finalizes the configuration and returns immutable writer properties.
@@ -603,6 +608,7 @@ module Parquet
             @write_row_group_number_distinct_values,
             @content_defined_chunking,
             @write_path_in_schema,
+            @file_encryption_properties,
           )
         end
 
@@ -693,6 +699,14 @@ module Parquet
 
         def set_write_path_in_schema(value : Bool) : WriterPropertiesBuilder
           @write_path_in_schema = value
+          self
+        end
+
+        # Sets the file encryption properties (upstream
+        # `with_file_encryption_properties`).
+        # ameba:disable Naming/AccessorMethodName
+        def set_file_encryption_properties(value : Encryption::FileEncryptionProperties?) : WriterPropertiesBuilder
+          @file_encryption_properties = value
           self
         end
 
