@@ -11,6 +11,41 @@ require "./errors"
 # themselves (`compression.rs` `Codec` implementations) are a separate feature
 # (see `plans/parity.md` Phase 1.8).
 module Parquet
+  # Options controlling codec behaviour (`parquet/src/compression.rs`).
+  struct CodecOptions
+    getter backward_compatible_lz4 : Bool
+
+    def initialize(@backward_compatible_lz4 : Bool)
+    end
+
+    def self.default : CodecOptions
+      CodecOptionsBuilder.default.build
+    end
+
+    def_equals @backward_compatible_lz4
+    def_hash @backward_compatible_lz4
+  end
+
+  # Builder for `CodecOptions`.
+  class CodecOptionsBuilder
+    def self.default : CodecOptionsBuilder
+      new
+    end
+
+    def initialize
+      @backward_compatible_lz4 = true
+    end
+
+    def set_backward_compatible_lz4(value : Bool) : CodecOptionsBuilder
+      @backward_compatible_lz4 = value
+      self
+    end
+
+    def build : CodecOptions
+      CodecOptions.new(@backward_compatible_lz4)
+    end
+  end
+
   # Shared compression-level range validation.
   module CompressionUtil
     def self.validate_level(level : Int32, minimum : Int32, maximum : Int32) : Nil

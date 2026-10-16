@@ -44,15 +44,16 @@ little-endian layout.
   `util` bit layer (`BitReader`/`BitWriter`), the RLE/bit-packing hybrid
   (`RleEncoder`/`RleDecoder`), level encoding (`LevelEncoder`), all encodings
   (PLAIN, DELTA_BINARY_PACKED, DELTA_LENGTH_BYTE_ARRAY, DELTA_BYTE_ARRAY,
-  dictionary, byte-stream-split, RLE value, ALP), and the `Encoder`/`Decoder`
-  interfaces + `get_encoder`/`get_decoder` registries are done.
+  dictionary, byte-stream-split, RLE value, ALP), the `Encoder`/`Decoder`
+  interfaces + `get_encoder`/`get_decoder` registries, and the writer/reader
+  properties are done.
 - Next up (take the first unchecked item):
   1. Column reader/writer (`column/`), then serialized/file reader+writer, then
      record API and bloom filter.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 858 `ported`, 108 `intentional_divergence`,
-  1 `skipped`, 2548 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1017 `ported`, 111 `intentional_divergence`,
+  1 `skipped`, 2386 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -214,7 +215,11 @@ Chunk status by area:
 
 - [ ] `ColumnDescriptor`, `ColumnReader`, `ColumnWriter`.
 - [ ] `ColumnReaderImpl`/`ColumnWriterImpl`, page read/write.
-- [ ] Writer properties + reader properties. 6 upstream test modules.
+- [x] Writer properties + reader properties (`src/parquet/file/properties.cr`):
+  `WriterProperties`(+builder), `ReaderProperties`(+builder), `WriterVersion`,
+  `EnabledStatistics`, `BloomFilterPosition`, `BloomFilterProperties`(+builder),
+  `CdcOptions`, `ColumnProperties`/resolution; `CodecOptions` in
+  `compression.cr`. 6+ upstream test modules.
 
 ### 2.3 File
 
@@ -484,6 +489,16 @@ Chunk status by area:
   (upstream `u32`). `CompressionCodec::from(Compression)` is
   `CompressionCodec.from`; `From<CompressionCodec>` is `Compression.from_codec`.
   The compression *codecs* (`Codec` implementations) remain pending (Phase 1.8).
+- `file::properties`: `usize` fields are `Int32`; Rust `panic!`/`assert!` become
+  Crystal exceptions; `BloomFilterPropertiesBuilder#try_build` raises instead of
+  returning `Result`; `WriterVersion`/`EnabledStatistics` `FromStr` errors are
+  raised; `WriterProperties::new` maps to `WriterProperties.default`; upstream
+  `pub(crate)` accessors (`column_override`, `resolve_column_properties`,
+  `default_column_properties`, `column_properties`) are public. Encryption
+  (`with_file_encryption_properties`/`file_encryption_properties`) is not ported.
+  The builder/config types keep upstream `set_*`/non-`?` bool accessor names;
+  `Naming/AccessorMethodName` and `Naming/QueryBoolMethods` are excluded for
+  `file/properties.cr` and `compression.cr` in `.ameba.yml`.
 - `encodings::byte_stream_split`: `ByteStreamSplitEncoder(T)`/`Decoder(T)` and
   `VariableWidthByteStreamSplitEncoder(T)`/`Decoder(T)` with `T.class`; the
   constant `split_streams_const`/`join_streams_const` and `_variable` kernels

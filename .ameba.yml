@@ -6,3 +6,16 @@ Excluded:
   - lib/**/*
   - vendor/**/*
   - spec/**/*
+
+# Faithfully ported upstream builder/config types keep their Rust `set_*`/
+# non-`?` boolean accessor names. These files hold many such methods, so the
+# naming rules are excluded at the file level rather than per method.
+Naming/AccessorMethodName:
+  Excluded:
+    - src/parquet/file/properties.cr
+    - src/parquet/compression.cr
+
+Naming/QueryBoolMethods:
+  Excluded:
+    - src/parquet/file/properties.cr
+    - src/parquet/compression.cr
