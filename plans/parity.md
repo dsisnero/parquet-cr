@@ -67,10 +67,13 @@ little-endian layout.
     `src/parquet/file/metadata/thrift/encryption.cr`: `AesGcmV1`/`AesGcmCtrV1`/
     `EncryptionAlgorithm`/`FileCryptoMetaData`) with round-trip specs; and the
     AAD builders (`src/parquet/encryption/modules.cr`: `ModuleType`,
-    `create_footer_aad`/`create_module_aad`) with `modules_spec.cr`; and the
+    `create_footer_aad`/`create_module_aad`) with `modules_spec.cr`; the
     encryption properties (`src/parquet/encryption/encrypt.cr`:
     `FileEncryptionProperties`/`EncryptionPropertiesBuilder`/`FileEncryptor` and
-    the thrift-encryption helpers) with `encrypt_spec.cr`.
+    the thrift-encryption helpers) with `encrypt_spec.cr`; and the decryption
+    properties (`src/parquet/encryption/decrypt.cr`: `KeyRetriever`,
+    `FileDecryptionProperties`/`DecryptionPropertiesBuilder[WithRetriever]`,
+    `FileDecryptor`, `CryptoContext`, `read_and_decrypt`) with `decrypt_spec.cr`.
   - Phase 1.7: `util/bit_pack.cr` (`BitPack.unpack8/16/32/64`) and `decode_page`
     CRC verification (`file/serialized_reader.cr`).
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
@@ -91,13 +94,13 @@ little-endian layout.
      `spec/parquet/derive_spec.cr` (schema generation, read/write round-trip,
      optional-but-valid, pruned/shuffled).
   4. Phase 3.4 encryption — **3.4a cipher layer**, **3.4b encryption Thrift IDL**,
-     **3.4c AAD builders**, and **3.4d encryption properties**
-     (`src/parquet/encryption/encrypt.cr`: `FileEncryptionProperties` +
-     `EncryptionPropertiesBuilder` + `FileEncryptor` + the thrift-encryption
-     helpers) done. **Next (3.4e):** the decryption properties
-     (`FileDecryptionProperties`/`FileDecryptor`), wiring
-     `crypto_metadata`/`encrypted_column_metadata` into `ColumnChunkMetaData`,
-     and the file-reader/writer integration.
+     **3.4c AAD builders**, **3.4d encryption properties**, and **3.4e decryption
+     properties** (`src/parquet/encryption/decrypt.cr`: `FileDecryptionProperties`/
+     `FileDecryptor`/`CryptoContext`/`KeyRetriever`) done. **Next (3.4f):** wire
+     `crypto_metadata`/`encrypted_column_metadata` into `ColumnChunkMetaData` and
+     the file-reader/writer integration (`encrypt.rs` helpers are ready; the
+     encrypted-footer reader helpers in `file/metadata/thrift/encryption.rs`
+     remain).
   5. Deferred (recorded divergences): async/object-store suffix fetchers, arrow
      interop (`parquet/src/arrow/`), `parquet-variant-compute`/`-json`, and the
      arrow `parquet-rewrite`/`parquet-fromcsv` CLI tools.
@@ -180,10 +183,16 @@ little-endian layout.
     `column_encrypted?`, `get_*_encryptor` → `*_encryptor`). `EncryptionKey` is
     public (upstream private) since it appears in the exposed
     `column_keys_map`/`column_keys`.
-- Last commit: `2189d13 port: parquet encryption AAD builders`; gates green
-  (`make lint`, `make test` -> 774 examples, 0 failures).
-- Progress by counts (ledger): 1677 `ported`, 219 `intentional_divergence`,
-  1 `skipped`, 1618 `missing` (of 3515 rows).
+  - Decryption properties: `Cow<'_, Vec<u8>>`→`Bytes`; `Arc<dyn BlockDecryptor>`/
+    `Arc<dyn KeyRetriever>`→the `BlockDecryptor`/`KeyRetriever` abstract classes;
+    `DecryptionKeys` is a struct with a `Kind`; `FileDecryptionProperties#keys`
+    and `FileDecryptor#decryption_properties`/`#footer_decryptor` are public
+    (upstream private); `uses_key_retriever`→`uses_key_retriever?`; `HeapSize`
+    dropped. `read_and_decrypt` rebuilds the zero-prefixed block the same way.
+- Last commit: `11a7c44 port: parquet encryption properties (encrypt)`; gates
+  green (`make lint`, `make test` -> 784 examples, 0 failures).
+- Progress by counts (ledger): 1714 `ported`, 223 `intentional_divergence`,
+  1 `skipped`, 1577 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -241,9 +250,10 @@ Chunk status by area:
   (`src/parquet/encryption/ciphers.cr`), the encryption Thrift IDL
   (`src/parquet/file/column_crypto_metadata.cr`,
   `src/parquet/file/metadata/thrift/encryption.cr`), the AAD builders
-  (`src/parquet/encryption/modules.cr`), and the encryption properties
-  (`src/parquet/encryption/encrypt.cr`) done; the `WkbType` `ExtensionType`
-  impl, the remaining encryption (decryption properties + file integration),
+  (`src/parquet/encryption/modules.cr`), the encryption properties
+  (`src/parquet/encryption/encrypt.cr`), and the decryption properties
+  (`src/parquet/encryption/decrypt.cr`) done; the `WkbType` `ExtensionType`
+  impl, the remaining encryption (metadata wiring + file integration),
   arrow, and async remain pending.
 
 ## Phase 0 — Project initialization
@@ -616,12 +626,14 @@ Chunk status by area:
   `src/parquet/file/metadata/thrift/encryption.cr`: `AesGcmV1`/`AesGcmCtrV1`/
   `EncryptionAlgorithm`/`FileCryptoMetaData`, with round-trip specs) and the
   AAD builders (`src/parquet/encryption/modules.cr`: `ModuleType`,
-  `create_footer_aad`/`create_module_aad`, `modules_spec.cr`) and the encryption
+  `create_footer_aad`/`create_module_aad`, `modules_spec.cr`), the encryption
   properties (`src/parquet/encryption/encrypt.cr`: `FileEncryptionProperties`/
   `EncryptionPropertiesBuilder`/`FileEncryptor` + thrift-encryption helpers,
-  `encrypt_spec.cr`). Pending: the decryption properties
-  (`FileDecryptionProperties`/`FileDecryptor`), wiring
-  `crypto_metadata`/`encrypted_column_metadata` into `ColumnChunkMetaData`, and
+  `encrypt_spec.cr`), and the decryption properties
+  (`src/parquet/encryption/decrypt.cr`: `KeyRetriever`/`FileDecryptionProperties`/
+  `DecryptionPropertiesBuilder[WithRetriever]`/`FileDecryptor`/`CryptoContext`/
+  `read_and_decrypt`, `decrypt_spec.cr`). Pending: wiring
+  `crypto_metadata`/`encrypted_column_metadata` into `ColumnChunkMetaData` and
   the file-reader/writer integration.
 
 ### 3.5 Arrow interop (deferred)
