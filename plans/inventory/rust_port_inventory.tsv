@@ -2170,13 +2170,13 @@ parquet/src/encodings/decoding.rs::method::PlainDecoder<T>.new	method	ported	src
 parquet/src/encodings/decoding.rs::method::PlainDecoder<T>.set_data	method	ported	src/parquet/encodings/plain.cr	PlainDecoder(T)
 parquet/src/encodings/decoding.rs::method::PlainDecoder<T>.skip	method	ported	src/parquet/encodings/plain.cr	PlainDecoder(T)
 parquet/src/encodings/decoding.rs::method::PlainDecoder<T>.values_left	method	ported	src/parquet/encodings/plain.cr	PlainDecoder(T)
-parquet/src/encodings/decoding.rs::method::RleValueDecoder<T>.default	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::RleValueDecoder<T>.encoding	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::RleValueDecoder<T>.get	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::RleValueDecoder<T>.new	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::RleValueDecoder<T>.set_data	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::RleValueDecoder<T>.skip	method	missing	-	auto-generated
-parquet/src/encodings/decoding.rs::method::RleValueDecoder<T>.values_left	method	missing	-	auto-generated
+parquet/src/encodings/decoding.rs::method::RleValueDecoder<T>.default	method	intentional_divergence	src/parquet/encodings/rle_value.cr	Rust Default; Crystal default initialize
+parquet/src/encodings/decoding.rs::method::RleValueDecoder<T>.encoding	method	ported	src/parquet/encodings/rle_value.cr	RleValueDecoder#encoding
+parquet/src/encodings/decoding.rs::method::RleValueDecoder<T>.get	method	ported	src/parquet/encodings/rle_value.cr	RleValueDecoder#get
+parquet/src/encodings/decoding.rs::method::RleValueDecoder<T>.new	method	ported	src/parquet/encodings/rle_value.cr	RleValueDecoder#new
+parquet/src/encodings/decoding.rs::method::RleValueDecoder<T>.set_data	method	ported	src/parquet/encodings/rle_value.cr	RleValueDecoder#set_data
+parquet/src/encodings/decoding.rs::method::RleValueDecoder<T>.skip	method	ported	src/parquet/encodings/rle_value.cr	RleValueDecoder#skip
+parquet/src/encodings/decoding.rs::method::RleValueDecoder<T>.values_left	method	ported	src/parquet/encodings/rle_value.cr	RleValueDecoder#values_left
 parquet/src/encodings/decoding.rs::method::bool.get_decoder	method	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::method::f32.get_decoder	method	missing	-	auto-generated
 parquet/src/encodings/decoding.rs::method::f64.get_decoder	method	missing	-	auto-generated
@@ -2260,7 +2260,7 @@ parquet/src/encodings/encoding/dict_encoder.rs::method::KeyStorage<T>.get	method
 parquet/src/encodings/encoding/dict_encoder.rs::method::KeyStorage<T>.push	method	ported	src/parquet/encodings/dict.cr	KeyStorage#push
 parquet/src/encodings/encoding/mod.rs::const::DEFAULT_BIT_WRITER_SIZE	const	missing	-	auto-generated
 parquet/src/encodings/encoding/mod.rs::const::DEFAULT_NUM_MINI_BLOCKS	const	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::const::DEFAULT_RLE_BUFFER_LEN	const	missing	-	auto-generated
+parquet/src/encodings/encoding/mod.rs::const::DEFAULT_RLE_BUFFER_LEN	const	intentional_divergence	src/parquet/encodings/rle_value.cr	buffer padding inlined as [0;4]
 parquet/src/encodings/encoding/mod.rs::const::DELTA_BIT_PACK_TYPE_ERROR	const	missing	-	auto-generated
 parquet/src/encodings/encoding/mod.rs::const::MAX_PAGE_HEADER_WRITER_SIZE	const	missing	-	auto-generated
 parquet/src/encodings/encoding/mod.rs::const::TEST_SET_SIZE	const	missing	-	auto-generated
@@ -2298,13 +2298,13 @@ parquet/src/encodings/encoding/mod.rs::method::PlainEncoder<T>.estimated_memory_
 parquet/src/encodings/encoding/mod.rs::method::PlainEncoder<T>.flush_buffer	method	ported	src/parquet/encodings/plain.cr	PlainEncoder(T)
 parquet/src/encodings/encoding/mod.rs::method::PlainEncoder<T>.new	method	ported	src/parquet/encodings/plain.cr	PlainEncoder(T)
 parquet/src/encodings/encoding/mod.rs::method::PlainEncoder<T>.put	method	ported	src/parquet/encodings/plain.cr	PlainEncoder(T) (T.class dispatch)
-parquet/src/encodings/encoding/mod.rs::method::RleValueEncoder<T>.default	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::RleValueEncoder<T>.encoding	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::RleValueEncoder<T>.estimated_data_encoded_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::RleValueEncoder<T>.estimated_memory_size	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::RleValueEncoder<T>.flush_buffer	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::RleValueEncoder<T>.new	method	missing	-	auto-generated
-parquet/src/encodings/encoding/mod.rs::method::RleValueEncoder<T>.put	method	missing	-	auto-generated
+parquet/src/encodings/encoding/mod.rs::method::RleValueEncoder<T>.default	method	intentional_divergence	src/parquet/encodings/rle_value.cr	Rust Default; Crystal default initialize
+parquet/src/encodings/encoding/mod.rs::method::RleValueEncoder<T>.encoding	method	ported	src/parquet/encodings/rle_value.cr	RleValueEncoder#encoding
+parquet/src/encodings/encoding/mod.rs::method::RleValueEncoder<T>.estimated_data_encoded_size	method	ported	src/parquet/encodings/rle_value.cr	RleValueEncoder#estimated_data_encoded_size
+parquet/src/encodings/encoding/mod.rs::method::RleValueEncoder<T>.estimated_memory_size	method	ported	src/parquet/encodings/rle_value.cr	RleValueEncoder#estimated_memory_size
+parquet/src/encodings/encoding/mod.rs::method::RleValueEncoder<T>.flush_buffer	method	ported	src/parquet/encodings/rle_value.cr	RleValueEncoder#flush_buffer
+parquet/src/encodings/encoding/mod.rs::method::RleValueEncoder<T>.new	method	ported	src/parquet/encodings/rle_value.cr	RleValueEncoder#new
+parquet/src/encodings/encoding/mod.rs::method::RleValueEncoder<T>.put	method	ported	src/parquet/encodings/rle_value.cr	RleValueEncoder#put
 parquet/src/encodings/encoding/mod.rs::method::T.test_dict_internal	method	missing	-	auto-generated
 parquet/src/encodings/encoding/mod.rs::method::T.test_internal	method	missing	-	auto-generated
 parquet/src/encodings/encoding/mod.rs::method::f32.get_encoder	method	missing	-	auto-generated

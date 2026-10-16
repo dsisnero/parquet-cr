@@ -48,3 +48,6 @@ alias ByteStreamSplitEncoder = Parquet::Encodings::ByteStreamSplitEncoder
 alias ByteStreamSplitDecoder = Parquet::Encodings::ByteStreamSplitDecoder
 alias VariableWidthByteStreamSplitEncoder = Parquet::Encodings::VariableWidthByteStreamSplitEncoder
 alias VariableWidthByteStreamSplitDecoder = Parquet::Encodings::VariableWidthByteStreamSplitDecoder
+
+alias RleValueEncoder = Parquet::Encodings::RleValueEncoder
+alias RleValueDecoder = Parquet::Encodings::RleValueDecoder
