@@ -2699,37 +2699,37 @@ parquet/src/file/metadata/reader.rs::method::MetadataFetchFn<F>.fetch	method	mis
 parquet/src/file/metadata/reader.rs::method::MetadataSuffixFetchFn<F1, F2>.fetch	method	missing	-	auto-generated
 parquet/src/file/metadata/reader.rs::method::MetadataSuffixFetchFn<F1, F2>.fetch_suffix	method	missing	-	auto-generated
 parquet/src/file/metadata/reader.rs::method::PageIndexPolicy.from	method	ported	src/parquet/file/metadata/reader.cr	PageIndexPolicy.from(Bool)
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.decode_footer_metadata	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.decode_metadata	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataReader.decode_metadata
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.decode_metadata_with_options	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.decode_schema	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.finish	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.get_prefetch_size	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.has_metadata	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.load_and_finish	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.load_metadata	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.load_metadata_via_suffix	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.load_page_index	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.load_page_index_with_remainder	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.load_via_suffix_and_finish	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.metadata_size	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.new	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.new_with_metadata	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.parse_and_finish	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.parse_metadata	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.prepare_push_decoder	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.read_page_indexes	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.read_page_indexes_sized	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.try_load	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.try_load_via_suffix	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.try_parse	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.try_parse_sized	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_column_index_policy	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_decryption_properties	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_metadata_options	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_offset_index_policy	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_page_index_policy	method	missing	-	auto-generated
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_prefetch_hint	method	missing	-	auto-generated
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.decode_footer_metadata	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.decode_metadata	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader.decode_metadata
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.decode_metadata_with_options	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.decode_schema	method	ported	src/parquet/file/metadata/reader.cr	implemented via full metadata decode
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.finish	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.get_prefetch_size	method	intentional_divergence	src/parquet/file/metadata/reader.cr	async MetadataFetch/MetadataSuffixFetch path not ported
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.has_metadata	method	ported	src/parquet/file/metadata/reader.cr	renamed ParquetMetaDataReader#has_metadata?
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.load_and_finish	method	intentional_divergence	src/parquet/file/metadata/reader.cr	async MetadataFetch/MetadataSuffixFetch path not ported
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.load_metadata	method	intentional_divergence	src/parquet/file/metadata/reader.cr	async MetadataFetch/MetadataSuffixFetch path not ported
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.load_metadata_via_suffix	method	intentional_divergence	src/parquet/file/metadata/reader.cr	async MetadataFetch/MetadataSuffixFetch path not ported
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.load_page_index	method	intentional_divergence	src/parquet/file/metadata/reader.cr	async MetadataFetch/MetadataSuffixFetch path not ported
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.load_page_index_with_remainder	method	intentional_divergence	src/parquet/file/metadata/reader.cr	async MetadataFetch/MetadataSuffixFetch path not ported
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.load_via_suffix_and_finish	method	intentional_divergence	src/parquet/file/metadata/reader.cr	async MetadataFetch/MetadataSuffixFetch path not ported
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.metadata_size	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader, returns Int32?
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.new	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.new_with_metadata	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.parse_and_finish	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.parse_metadata	method	ported	src/parquet/file/metadata/reader.cr	public (upstream private)
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.prepare_push_decoder	method	ported	src/parquet/file/metadata/reader.cr	private; encryption branch omitted
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.read_page_indexes	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.read_page_indexes_sized	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.try_load	method	intentional_divergence	src/parquet/file/metadata/reader.cr	async MetadataFetch/MetadataSuffixFetch path not ported
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.try_load_via_suffix	method	intentional_divergence	src/parquet/file/metadata/reader.cr	async MetadataFetch/MetadataSuffixFetch path not ported
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.try_parse	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.try_parse_sized	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_column_index_policy	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_decryption_properties	method	intentional_divergence	src/parquet/file/metadata/reader.cr	encryption feature not ported
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_metadata_options	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_offset_index_policy	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_page_index_policy	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_prefetch_hint	method	intentional_divergence	src/parquet/file/metadata/reader.cr	async MetadataFetch/MetadataSuffixFetch path not ported
 parquet/src/file/metadata/thrift/encryption.rs::method::AesGcmCtrV1.heap_size	method	missing	-	auto-generated
 parquet/src/file/metadata/thrift/encryption.rs::method::AesGcmV1.heap_size	method	missing	-	auto-generated
 parquet/src/file/metadata/thrift/encryption.rs::method::EncryptionAlgorithm.heap_size	method	missing	-	auto-generated

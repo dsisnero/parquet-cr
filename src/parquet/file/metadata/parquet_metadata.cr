@@ -321,15 +321,6 @@ module Parquet
           @buf.write("PAR1".to_slice)
         end
       end
-
-      # Reads `ParquetMetaData` from a thrift-encoded footer.
-      class ParquetMetaDataReader
-        # Decodes `ParquetMetaData` from the thrift-encoded footer bytes
-        # (without the trailing length + magic).
-        def self.decode_metadata(bytes : Bytes) : ParquetMetaData
-          Metadata.parquet_metadata_from_bytes(bytes)
-        end
-      end
     end
   end
 end

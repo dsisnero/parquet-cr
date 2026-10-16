@@ -37,16 +37,17 @@ little-endian layout.
   value/wire layer (errors, thrift protocol, `basic`, `data_type` value types,
   `schema`), the file metadata + statistics + footer round-trip, the offset/
   column index core + decode, the page-index builders, the
-  `ParquetMetaDataBuilder`/`ParquetMetaDataOptions` plumbing, and the
-  sans-IO `ParquetMetaDataPushDecoder` are done.
+  `ParquetMetaDataBuilder`/`ParquetMetaDataOptions` plumbing, the sans-IO
+  `ParquetMetaDataPushDecoder`, and the synchronous `ChunkReader`-driven
+  `ParquetMetaDataReader` are done.
 - Next up (take the first unchecked item):
-  1. Pull-based `ParquetMetaDataReader`/`ParquetMetaDataWriter` fetch/suffix
-     machinery driven by `ChunkReader` (`reader.rs`/`writer.rs`); async/
-     object-store suffix fetches are likely an intentional divergence.
+  1. `ParquetMetaDataWriter`/`ThriftMetadataWriter` (`writer.rs`): footer +
+     column/offset index serialization. Async/object-store suffix fetches are
+     an intentional divergence (recorded).
   2. Encodings (RLE/bit-packing, levels, plain/dictionary/delta/ALP), then
      column reader/writer, then file reader/writer, then record API.
-- Progress by counts (ledger): 516 `ported`, 34 `intentional_divergence`,
-  1 `skipped`, 2964 `missing` (of 3515 rows).
+- Progress by counts (ledger): 535 `ported`, 45 `intentional_divergence`,
+  1 `skipped`, 2934 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -63,9 +64,10 @@ Chunk status by area:
 - Phase 1.7 util: pending (`bit_util` partially needed by column code).
 - Phase 1.8 compression: pending.
 - Phase 2.3 file metadata/statistics/page-index core, column-index decode,
-  page-index builders, the `ParquetMetaData` page-index plumbing, and the
-  sans-IO `ParquetMetaDataPushDecoder` done; pull-based reader/writer fetch
-  machinery, file reader/writer, bloom filter pending.
+  page-index builders, the `ParquetMetaData` page-index plumbing, the sans-IO
+  `ParquetMetaDataPushDecoder`, and the synchronous `ChunkReader`-driven
+  `ParquetMetaDataReader` done; `ParquetMetaDataWriter`/page-index footer
+  serialization, file reader/writer, bloom filter pending.
 - Phases 2.1 encodings, 2.2 column, 2.4 record, 2.5 CLI: pending.
 - Phase 3 (variant/geospatial/derive/encryption/arrow/async): pending.
 
@@ -218,8 +220,11 @@ Chunk status by area:
   `FooterTail` (`footer_tail.cr`), `PageIndexPolicy` (`reader.cr`), `DecodeResult`
   (`src/parquet/decode_result.cr`), and `PushBuffers`
   (`src/parquet/util/push_buffers.cr`).
-- [ ] Pull-based `ParquetMetaDataReader`/`ParquetMetaDataWriter` fetch/suffix IO
-  machinery (`ChunkReader`; async/object-store).
+- [x] `ChunkReader`/`BytesChunkReader`/`FileChunkReader`
+  (`src/parquet/file/chunk_reader.cr`) and the synchronous, `ChunkReader`-driven
+  `ParquetMetaDataReader` (`reader.cr`).
+- [ ] `ParquetMetaDataWriter`/`ThriftMetadataWriter` page-index footer
+  serialization (`writer.rs`); async/object-store suffix fetchers (divergence).
 - [ ] Serialized reader/writer (footer + page headers).
 - [ ] Reader/writer (`file/reader`, `file/writer`).
 - [ ] Bloom filter (`bloom_filter/`).
@@ -379,6 +384,15 @@ Chunk status by area:
   raises as upstream does without the feature. `MetadataParser` threads
   `metadata_options` through but statistics-skipping/schema overrides are not
   applied yet.
+- `ChunkReader`: Rust's `Length`/`ChunkReader` traits are one abstract class
+  (`len`/`get_bytes`/`get_read`); the associated `T: Read` becomes `IO`, and
+  `Bytes`/`File` are wrapped as `BytesChunkReader`/`FileChunkReader`.
+- `ParquetMetaDataReader`: the async `MetadataFetch`/`MetadataSuffixFetch`
+  loaders (`load_*`, `try_load*`, `with_prefetch_hint`, `get_prefetch_size`) and
+  the encryption `with_decryption_properties` are not ported; `has_metadata` →
+  `has_metadata?`, `parse_metadata` is public (upstream private), `metadata_size`
+  returns `Int32?`, and `decode_schema` is implemented via a full metadata
+  decode.
 
 ## Notes
 
