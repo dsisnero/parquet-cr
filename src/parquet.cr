@@ -20,10 +20,12 @@ require "./parquet/file/page_index/column_index"
 require "./parquet/file/page_index/index_reader"
 require "./parquet/file/metadata/page_index"
 require "./parquet/file/chunk_reader"
+require "./parquet/file/tracked_write"
 require "./parquet/file/metadata/footer_tail"
 require "./parquet/file/metadata/reader"
 require "./parquet/file/metadata/parser"
 require "./parquet/file/metadata/push_decoder"
+require "./parquet/file/metadata/writer"
 
 module Parquet
   VERSION = "0.1.0"

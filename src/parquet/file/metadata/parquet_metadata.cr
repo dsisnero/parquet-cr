@@ -297,30 +297,6 @@ module Parquet
         fmd = FileMetaData.new(version, num_rows, created_by, key_value_metadata, descr, column_orders)
         ParquetMetaData.new(fmd, row_groups)
       end
-
-      # Writes `ParquetMetaData` into an IO sink as a Parquet footer.
-      class ParquetMetaDataWriter
-        def initialize(@buf : IO, @metadata : ParquetMetaData)
-          @write_path_in_schema = true
-        end
-
-        def with_write_path_in_schema(val : Bool) : self
-          @write_path_in_schema = val
-          self
-        end
-
-        def finish : Nil
-          meta_io = IO::Memory.new
-          writer = ::Parquet::Thrift::ThriftCompactOutputProtocol.new(meta_io)
-          Metadata.write_file_metadata(
-            @metadata.file_metadata, @metadata.row_groups, writer, @write_path_in_schema
-          )
-          bytes = meta_io.to_slice
-          @buf.write(bytes)
-          @buf.write_bytes(bytes.size.to_u32, IO::ByteFormat::LittleEndian)
-          @buf.write("PAR1".to_slice)
-        end
-      end
     end
   end
 end

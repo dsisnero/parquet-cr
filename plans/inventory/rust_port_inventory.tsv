@@ -2754,36 +2754,36 @@ parquet/src/file/metadata/thrift/mod.rs::method::PageHeader.read_thrift_without_
 parquet/src/file/metadata/thrift/mod.rs::method::RowGroupMetaData.write_thrift	method	missing	-	auto-generated
 parquet/src/file/metadata/thrift/mod.rs::method::crate::geospatial::bounding_box::BoundingBox.write_thrift	method	missing	-	auto-generated
 parquet/src/file/metadata/thrift/mod.rs::method::crate::geospatial::statistics::GeospatialStatistics.write_thrift	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.apply_row_group_encryption	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.encrypt_column_chunk	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.encrypt_row_groups	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.encryption_algorithm_from_encryptor	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.file_crypto_metadata	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.get_file_magic	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.get_plaintext_footer_crypto_metadata	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.with_file_encryptor	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.write_column_index	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.write_file_metadata	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.write_offset_index	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.write_thrift_object	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.write_thrift_object_with_encryption	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::ParquetMetaDataWriter<'a, W>.finish	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::ParquetMetaDataWriter<'a, W>.new	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::ParquetMetaDataWriter<'a, W>.new_with_tracked	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::ParquetMetaDataWriter<'a, W>.with_write_path_in_schema	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.finalize_column_indexes	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.finalize_offset_indexes	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.finish	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.new	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.with_column_indexes	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.with_file_encryptor	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.with_key_value_metadata	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.with_offset_indexes	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.write_column_indexes	method	missing	-	auto-generated
-parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.write_offset_indexes	method	missing	-	auto-generated
-parquet/src/file/mod.rs::const::FOOTER_SIZE	const	missing	-	auto-generated
-parquet/src/file/mod.rs::const::PARQUET_MAGIC	const	missing	-	auto-generated
-parquet/src/file/mod.rs::const::PARQUET_MAGIC_ENCR_FOOTER	const	missing	-	auto-generated
+parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.apply_row_group_encryption	method	intentional_divergence	src/parquet/file/metadata/writer.cr	MetadataObjectWriter (encryption dispatch) not modeled; non-encryption write logic inlined
+parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.encrypt_column_chunk	method	intentional_divergence	src/parquet/file/metadata/writer.cr	MetadataObjectWriter (encryption dispatch) not modeled; non-encryption write logic inlined
+parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.encrypt_row_groups	method	intentional_divergence	src/parquet/file/metadata/writer.cr	MetadataObjectWriter (encryption dispatch) not modeled; non-encryption write logic inlined
+parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.encryption_algorithm_from_encryptor	method	intentional_divergence	src/parquet/file/metadata/writer.cr	MetadataObjectWriter (encryption dispatch) not modeled; non-encryption write logic inlined
+parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.file_crypto_metadata	method	intentional_divergence	src/parquet/file/metadata/writer.cr	MetadataObjectWriter (encryption dispatch) not modeled; non-encryption write logic inlined
+parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.get_file_magic	method	ported	src/parquet/file/tracked_write.cr	Parquet::File.file_magic (encryption magic omitted)
+parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.get_plaintext_footer_crypto_metadata	method	intentional_divergence	src/parquet/file/metadata/writer.cr	MetadataObjectWriter (encryption dispatch) not modeled; non-encryption write logic inlined
+parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.with_file_encryptor	method	intentional_divergence	src/parquet/file/metadata/writer.cr	MetadataObjectWriter (encryption dispatch) not modeled; non-encryption write logic inlined
+parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.write_column_index	method	intentional_divergence	src/parquet/file/metadata/writer.cr	MetadataObjectWriter (encryption dispatch) not modeled; non-encryption write logic inlined
+parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.write_file_metadata	method	intentional_divergence	src/parquet/file/metadata/writer.cr	MetadataObjectWriter (encryption dispatch) not modeled; non-encryption write logic inlined
+parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.write_offset_index	method	intentional_divergence	src/parquet/file/metadata/writer.cr	MetadataObjectWriter (encryption dispatch) not modeled; non-encryption write logic inlined
+parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.write_thrift_object	method	ported	src/parquet/file/metadata/writer.cr	inlined as ThriftMetadataWriter#write_thrift_object
+parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.write_thrift_object_with_encryption	method	intentional_divergence	src/parquet/file/metadata/writer.cr	MetadataObjectWriter (encryption dispatch) not modeled; non-encryption write logic inlined
+parquet/src/file/metadata/writer.rs::method::ParquetMetaDataWriter<'a, W>.finish	method	ported	src/parquet/file/metadata/writer.cr	ParquetMetaDataWriter
+parquet/src/file/metadata/writer.rs::method::ParquetMetaDataWriter<'a, W>.new	method	ported	src/parquet/file/metadata/writer.cr	ParquetMetaDataWriter
+parquet/src/file/metadata/writer.rs::method::ParquetMetaDataWriter<'a, W>.new_with_tracked	method	ported	src/parquet/file/metadata/writer.cr	ParquetMetaDataWriter
+parquet/src/file/metadata/writer.rs::method::ParquetMetaDataWriter<'a, W>.with_write_path_in_schema	method	ported	src/parquet/file/metadata/writer.cr	ParquetMetaDataWriter
+parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.finalize_column_indexes	method	ported	src/parquet/file/metadata/writer.cr	ThriftMetadataWriter (private)
+parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.finalize_offset_indexes	method	ported	src/parquet/file/metadata/writer.cr	ThriftMetadataWriter (private)
+parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.finish	method	ported	src/parquet/file/metadata/writer.cr	ThriftMetadataWriter
+parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.new	method	ported	src/parquet/file/metadata/writer.cr	ThriftMetadataWriter
+parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.with_column_indexes	method	ported	src/parquet/file/metadata/writer.cr	ThriftMetadataWriter
+parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.with_file_encryptor	method	intentional_divergence	src/parquet/file/metadata/writer.cr	encryption feature not ported
+parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.with_key_value_metadata	method	ported	src/parquet/file/metadata/writer.cr	ThriftMetadataWriter
+parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.with_offset_indexes	method	ported	src/parquet/file/metadata/writer.cr	ThriftMetadataWriter
+parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.write_column_indexes	method	ported	src/parquet/file/metadata/writer.cr	ThriftMetadataWriter (private)
+parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.write_offset_indexes	method	ported	src/parquet/file/metadata/writer.cr	ThriftMetadataWriter (private)
+parquet/src/file/mod.rs::const::FOOTER_SIZE	const	ported	src/parquet/file/metadata/footer_tail.cr	Parquet::File::FOOTER_SIZE
+parquet/src/file/mod.rs::const::PARQUET_MAGIC	const	ported	src/parquet/file/metadata/footer_tail.cr	Parquet::File::PARQUET_MAGIC
+parquet/src/file/mod.rs::const::PARQUET_MAGIC_ENCR_FOOTER	const	ported	src/parquet/file/metadata/footer_tail.cr	Parquet::File::PARQUET_MAGIC_ENCRYPTED_FOOTER
 parquet/src/file/page_index/column_index.rs::const::ELEMENT_TYPE	const	intentional_divergence	src/parquet/file/page_index/column_index.cr	Rust associated const ELEMENT_TYPE; Crystal has no associated consts
 parquet/src/file/page_index/column_index.rs::method::ByteArrayColumnIndex.deref	method	ported	src/parquet/file/page_index/column_index.cr	ColumnIndex methods delegated (no Deref)
 parquet/src/file/page_index/column_index.rs::method::ByteArrayColumnIndex.max_value	method	ported	src/parquet/file/page_index/column_index.cr	ByteArrayColumnIndex
@@ -3110,15 +3110,15 @@ parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.next_column_
 parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.set_column_crypto_metadata	method	missing	-	auto-generated
 parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.set_page_writer_encryptor	method	missing	-	auto-generated
 parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.with_file_encryptor	method	missing	-	auto-generated
-parquet/src/file/writer.rs::method::TrackedWrite<W>.bytes_written	method	missing	-	auto-generated
-parquet/src/file/writer.rs::method::TrackedWrite<W>.flush	method	missing	-	auto-generated
-parquet/src/file/writer.rs::method::TrackedWrite<W>.inner	method	missing	-	auto-generated
-parquet/src/file/writer.rs::method::TrackedWrite<W>.inner_mut	method	missing	-	auto-generated
-parquet/src/file/writer.rs::method::TrackedWrite<W>.into_inner	method	missing	-	auto-generated
-parquet/src/file/writer.rs::method::TrackedWrite<W>.new	method	missing	-	auto-generated
-parquet/src/file/writer.rs::method::TrackedWrite<W>.write	method	missing	-	auto-generated
-parquet/src/file/writer.rs::method::TrackedWrite<W>.write_all	method	missing	-	auto-generated
-parquet/src/file/writer.rs::method::TrackedWrite<W>.write_vectored	method	missing	-	auto-generated
+parquet/src/file/writer.rs::method::TrackedWrite<W>.bytes_written	method	ported	src/parquet/file/tracked_write.cr	TrackedWrite
+parquet/src/file/writer.rs::method::TrackedWrite<W>.flush	method	intentional_divergence	src/parquet/file/tracked_write.cr	IO flush via underlying IO; not exposed
+parquet/src/file/writer.rs::method::TrackedWrite<W>.inner	method	intentional_divergence	src/parquet/file/tracked_write.cr	underlying IO not exposed
+parquet/src/file/writer.rs::method::TrackedWrite<W>.inner_mut	method	intentional_divergence	src/parquet/file/tracked_write.cr	underlying IO not exposed
+parquet/src/file/writer.rs::method::TrackedWrite<W>.into_inner	method	intentional_divergence	src/parquet/file/tracked_write.cr	underlying IO not exposed
+parquet/src/file/writer.rs::method::TrackedWrite<W>.new	method	ported	src/parquet/file/tracked_write.cr	TrackedWrite
+parquet/src/file/writer.rs::method::TrackedWrite<W>.write	method	ported	src/parquet/file/tracked_write.cr	TrackedWrite
+parquet/src/file/writer.rs::method::TrackedWrite<W>.write_all	method	intentional_divergence	src/parquet/file/tracked_write.cr	IO#write_all provided by IO
+parquet/src/file/writer.rs::method::TrackedWrite<W>.write_vectored	method	intentional_divergence	src/parquet/file/tracked_write.cr	not ported
 parquet/src/geospatial/accumulator.rs::method::DefaultGeoStatsAccumulatorFactory.new_accumulator	method	missing	-	auto-generated
 parquet/src/geospatial/accumulator.rs::method::ParquetGeoStatsAccumulator.default	method	missing	-	auto-generated
 parquet/src/geospatial/accumulator.rs::method::ParquetGeoStatsAccumulator.finish	method	missing	-	auto-generated
