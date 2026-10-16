@@ -1755,27 +1755,27 @@ parquet/src/column/chunker/cdc.rs::method::ContentDefinedChunker.roll_level	meth
 parquet/src/column/chunker/cdc.rs::method::ContentDefinedChunker.validate_chunks	method	missing	-	auto-generated
 parquet/src/column/chunker/cdc_generated.rs::const::GEARHASH_TABLE	const	missing	-	auto-generated
 parquet/src/column/chunker/cdc_generated.rs::const::NUM_GEARHASH_TABLES	const	missing	-	auto-generated
-parquet/src/column/page.rs::method::CompressedPage.compressed_page	method	missing	-	auto-generated
-parquet/src/column/page.rs::method::CompressedPage.compressed_size	method	missing	-	auto-generated
-parquet/src/column/page.rs::method::CompressedPage.data	method	missing	-	auto-generated
-parquet/src/column/page.rs::method::CompressedPage.encoding	method	missing	-	auto-generated
-parquet/src/column/page.rs::method::CompressedPage.memory_usage	method	missing	-	auto-generated
-parquet/src/column/page.rs::method::CompressedPage.new	method	missing	-	auto-generated
-parquet/src/column/page.rs::method::CompressedPage.num_values	method	missing	-	auto-generated
-parquet/src/column/page.rs::method::CompressedPage.page_type	method	missing	-	auto-generated
-parquet/src/column/page.rs::method::CompressedPage.to_thrift_header	method	missing	-	auto-generated
-parquet/src/column/page.rs::method::CompressedPage.uncompressed_size	method	missing	-	auto-generated
-parquet/src/column/page.rs::method::CompressedPage.with_new_compressed_buffer	method	missing	-	auto-generated
-parquet/src/column/page.rs::method::Page.buffer	method	missing	-	auto-generated
-parquet/src/column/page.rs::method::Page.encoding	method	missing	-	auto-generated
-parquet/src/column/page.rs::method::Page.is_data_page	method	missing	-	auto-generated
-parquet/src/column/page.rs::method::Page.is_dictionary_page	method	missing	-	auto-generated
-parquet/src/column/page.rs::method::Page.num_values	method	missing	-	auto-generated
-parquet/src/column/page.rs::method::Page.page_type	method	missing	-	auto-generated
-parquet/src/column/page.rs::method::Page.statistics	method	missing	-	auto-generated
-parquet/src/column/page.rs::method::PageMetadata.try_from	method	missing	-	auto-generated
-parquet/src/column/page.rs::method::PageWriteSpec.default	method	missing	-	auto-generated
-parquet/src/column/page.rs::method::PageWriteSpec.new	method	missing	-	auto-generated
+parquet/src/column/page.rs::method::CompressedPage.compressed_page	method	ported	src/parquet/column/page.cr	column page
+parquet/src/column/page.rs::method::CompressedPage.compressed_size	method	ported	src/parquet/column/page.cr	column page
+parquet/src/column/page.rs::method::CompressedPage.data	method	ported	src/parquet/column/page.cr	column page
+parquet/src/column/page.rs::method::CompressedPage.encoding	method	ported	src/parquet/column/page.cr	column page
+parquet/src/column/page.rs::method::CompressedPage.memory_usage	method	ported	src/parquet/column/page.cr	column page
+parquet/src/column/page.rs::method::CompressedPage.new	method	ported	src/parquet/column/page.cr	column page
+parquet/src/column/page.rs::method::CompressedPage.num_values	method	ported	src/parquet/column/page.cr	column page
+parquet/src/column/page.rs::method::CompressedPage.page_type	method	ported	src/parquet/column/page.cr	column page
+parquet/src/column/page.rs::method::CompressedPage.to_thrift_header	method	ported	src/parquet/column/page.cr	column page
+parquet/src/column/page.rs::method::CompressedPage.uncompressed_size	method	ported	src/parquet/column/page.cr	column page
+parquet/src/column/page.rs::method::CompressedPage.with_new_compressed_buffer	method	intentional_divergence	src/parquet/column/page.cr	encryption-only
+parquet/src/column/page.rs::method::Page.buffer	method	ported	src/parquet/column/page.cr	column page
+parquet/src/column/page.rs::method::Page.encoding	method	ported	src/parquet/column/page.cr	column page
+parquet/src/column/page.rs::method::Page.is_data_page	method	ported	src/parquet/column/page.cr	column page
+parquet/src/column/page.rs::method::Page.is_dictionary_page	method	ported	src/parquet/column/page.cr	column page
+parquet/src/column/page.rs::method::Page.num_values	method	ported	src/parquet/column/page.cr	column page
+parquet/src/column/page.rs::method::Page.page_type	method	ported	src/parquet/column/page.cr	column page
+parquet/src/column/page.rs::method::Page.statistics	method	ported	src/parquet/column/page.cr	column page
+parquet/src/column/page.rs::method::PageMetadata.try_from	method	ported	src/parquet/column/page.cr	column page
+parquet/src/column/page.rs::method::PageWriteSpec.default	method	ported	src/parquet/column/page.cr	column page
+parquet/src/column/page.rs::method::PageWriteSpec.new	method	ported	src/parquet/column/page.cr	column page
 parquet/src/column/page_encryption.rs::method::PageEncryptor.create_if_column_encrypted	method	missing	-	auto-generated
 parquet/src/column/page_encryption.rs::method::PageEncryptor.encrypt_compressed_page	method	missing	-	auto-generated
 parquet/src/column/page_encryption.rs::method::PageEncryptor.encrypt_page	method	missing	-	auto-generated

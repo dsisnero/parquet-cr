@@ -46,15 +46,16 @@ little-endian layout.
   (PLAIN, DELTA_BINARY_PACKED, DELTA_LENGTH_BYTE_ARRAY, DELTA_BYTE_ARRAY,
   dictionary, byte-stream-split, RLE value, ALP), the `Encoder`/`Decoder`
   interfaces + `get_encoder`/`get_decoder` registries, the writer/reader
-  properties, and the column level/value decoders are done.
+  properties, the column level/value decoders, and the column page
+  types/interfaces are done.
 - Next up (take the first unchecked item):
-  1. Column writer/reader encoders (`column/writer/encoder.rs`), page read/write
-     (`column/page.rs`), then `ColumnReaderImpl`/`ColumnWriterImpl`, then
-     serialized/file reader+writer, then record API and bloom filter.
+  1. Column writer/reader encoders (`column/writer/encoder.rs`), the writer-mod
+     helpers + bloom filter it needs, then `ColumnReaderImpl`/
+     `ColumnWriterImpl`, then serialized/file reader+writer, then record API.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 1038 `ported`, 111 `intentional_divergence`,
-  1 `skipped`, 2365 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1058 `ported`, 112 `intentional_divergence`,
+  1 `skipped`, 2344 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -215,7 +216,10 @@ Chunk status by area:
 ### 2.2 Column
 
 - [ ] `ColumnDescriptor`, `ColumnReader`, `ColumnWriter`.
-- [ ] `ColumnReaderImpl`/`ColumnWriterImpl`, page read/write.
+- [ ] `ColumnReaderImpl`/`ColumnWriterImpl`.
+- [x] Column page types/interfaces (`src/parquet/column/page.cr`): `Page`
+  (`DataPage`/`DataPageV2`/`DictionaryPage`), `CompressedPage`, `PageWriteSpec`,
+  `PageMetadata`, `PageReader`/`PageWriter`.
 - [x] Column level/value decoders (`src/parquet/column/reader/decoder.cr`):
   `ColumnLevelDecoder`/`RepetitionLevelDecoder`/`DefinitionLevelDecoder`/
   `ColumnValueDecoder` abstract classes + `DefinitionLevelDecoderImpl`,
@@ -510,6 +514,13 @@ Chunk status by area:
   `EncodingMask::is_set` → `set?`; the per-encoding decoder bucket array is sized
   `EncodingMask::MAX_ENCODING + 1` (no `Encoding::MAX_DISCRIMINANT`); the value
   decoder decodes into a scratch `Array(T)` and appends (no in-place tail write).
+- `column::page`: Rust's `Page` enum becomes an abstract `Page` class with
+  nested `DataPage`/`DataPageV2`/`DictionaryPage` subclasses;
+  `uncompressed_size` is `Int64` (so the i32-overflow check is reachable),
+  other sizes `Int32`; the `is_*` predicates keep upstream names under ameba
+  disables; the `PageReader` `Iterator` impl and the `PageIterator` trait are
+  not ported; the encryption-only `with_new_compressed_buffer` is not ported.
+  `PageMetadata`'s `TryFrom<&PageHeader>` is `PageMetadata.from_thrift`.
 - `encodings::byte_stream_split`: `ByteStreamSplitEncoder(T)`/`Decoder(T)` and
   `VariableWidthByteStreamSplitEncoder(T)`/`Decoder(T)` with `T.class`; the
   constant `split_streams_const`/`join_streams_const` and `_variable` kernels
