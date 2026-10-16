@@ -431,20 +431,20 @@ parquet-variant/src/decoder.rs::method::OffsetSizeBytes.try_new	method	missing	-
 parquet-variant/src/decoder.rs::method::OffsetSizeBytes.unpack_u32	method	missing	-	auto-generated
 parquet-variant/src/decoder.rs::method::OffsetSizeBytes.unpack_u32_at_offset	method	missing	-	auto-generated
 parquet-variant/src/decoder.rs::method::VariantPrimitiveType.try_from	method	missing	-	auto-generated
-parquet-variant/src/path.rs::method::VariantPath<'_>.from	method	missing	-	auto-generated
-parquet-variant/src/path.rs::method::VariantPath<'a>.deref	method	missing	-	auto-generated
-parquet-variant/src/path.rs::method::VariantPath<'a>.from	method	missing	-	auto-generated
-parquet-variant/src/path.rs::method::VariantPath<'a>.from_iter	method	missing	-	auto-generated
-parquet-variant/src/path.rs::method::VariantPath<'a>.is_empty	method	missing	-	auto-generated
-parquet-variant/src/path.rs::method::VariantPath<'a>.join	method	missing	-	auto-generated
-parquet-variant/src/path.rs::method::VariantPath<'a>.new	method	missing	-	auto-generated
-parquet-variant/src/path.rs::method::VariantPath<'a>.path	method	missing	-	auto-generated
-parquet-variant/src/path.rs::method::VariantPath<'a>.push	method	missing	-	auto-generated
-parquet-variant/src/path.rs::method::VariantPath<'a>.try_from	method	missing	-	auto-generated
-parquet-variant/src/path.rs::method::VariantPathElement<'_>.from	method	missing	-	auto-generated
-parquet-variant/src/path.rs::method::VariantPathElement<'a>.field	method	missing	-	auto-generated
-parquet-variant/src/path.rs::method::VariantPathElement<'a>.from	method	missing	-	auto-generated
-parquet-variant/src/path.rs::method::VariantPathElement<'a>.index	method	missing	-	auto-generated
+parquet-variant/src/path.rs::method::VariantPath<'_>.from	method	ported	src/parquet_variant/path.cr	ParquetVariant::VariantPath
+parquet-variant/src/path.rs::method::VariantPath<'a>.deref	method	intentional_divergence	src/parquet_variant/path.cr	Deref to [VariantPathElement] maps to #[]/#path
+parquet-variant/src/path.rs::method::VariantPath<'a>.from	method	ported	src/parquet_variant/path.cr	ParquetVariant::VariantPath
+parquet-variant/src/path.rs::method::VariantPath<'a>.from_iter	method	ported	src/parquet_variant/path.cr	ParquetVariant::VariantPath
+parquet-variant/src/path.rs::method::VariantPath<'a>.is_empty	method	ported	src/parquet_variant/path.cr	ParquetVariant::VariantPath
+parquet-variant/src/path.rs::method::VariantPath<'a>.join	method	ported	src/parquet_variant/path.cr	ParquetVariant::VariantPath
+parquet-variant/src/path.rs::method::VariantPath<'a>.new	method	ported	src/parquet_variant/path.cr	ParquetVariant::VariantPath
+parquet-variant/src/path.rs::method::VariantPath<'a>.path	method	ported	src/parquet_variant/path.cr	ParquetVariant::VariantPath
+parquet-variant/src/path.rs::method::VariantPath<'a>.push	method	ported	src/parquet_variant/path.cr	ParquetVariant::VariantPath
+parquet-variant/src/path.rs::method::VariantPath<'a>.try_from	method	ported	src/parquet_variant/path.cr	ParquetVariant::VariantPath
+parquet-variant/src/path.rs::method::VariantPathElement<'_>.from	method	ported	src/parquet_variant/path.cr	ParquetVariant::VariantPath
+parquet-variant/src/path.rs::method::VariantPathElement<'a>.field	method	ported	src/parquet_variant/path.cr	ParquetVariant::VariantPath
+parquet-variant/src/path.rs::method::VariantPathElement<'a>.from	method	ported	src/parquet_variant/path.cr	ParquetVariant::VariantPath
+parquet-variant/src/path.rs::method::VariantPathElement<'a>.index	method	ported	src/parquet_variant/path.cr	ParquetVariant::VariantPath
 parquet-variant/src/variant.rs::const::MAX_NESTING_DEPTH	const	missing	-	auto-generated
 parquet-variant/src/variant.rs::const::MAX_SHORT_STRING_BYTES	const	missing	-	auto-generated
 parquet-variant/src/variant.rs::method::&'a str.from	method	missing	-	auto-generated

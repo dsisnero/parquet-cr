@@ -58,15 +58,18 @@ little-endian layout.
   foundation, `parquet-index`, `parquet-read`, `parquet-rowcount`,
   `parquet-show-bloom-filter`, `parquet-layout`, `parquet-schema`, and
   `parquet-concat` are done. **Phase 2 is complete** except the arrow-dependent
-  CLI tools (`parquet-rewrite`/`parquet-fromcsv`).
+  CLI tools (`parquet-rewrite`/`parquet-fromcsv`). Phase 3 has started:
+  `parquet-variant`'s `VariantPath`/`VariantPathElement` + dot/bracket parser
+  (`src/parquet_variant/path.cr`, tests ported).
 - Next up (take the first unchecked item):
-  1. Phase 3: `parquet_derive`-style record reader/writer traits (the
-     `record_reader.rs`/`record_writer.rs` traits, used by `parquet_derive`;
-     Phase 3.3), the variant/geospatial crates, and encryption.
+  1. Phase 3.1: the rest of `parquet-variant` (`Variant`, `VariantBuilder`,
+     metadata, decoder), then `-compute`/`-json`; Phase 3.3 `parquet_derive`
+     (Crystal macros) + the `record_reader.rs`/`record_writer.rs` traits; Phase
+     3.2 geospatial and Phase 3.4 encryption.
   2. Deferred: async/object-store suffix fetchers, encryption, and the arrow
      `parquet-rewrite`/`parquet-fromcsv` are intentional divergences (recorded).
-- Progress by counts (ledger): 1316 `ported`, 180 `intentional_divergence`,
-  1 `skipped`, 2018 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1329 `ported`, 181 `intentional_divergence`,
+  1 `skipped`, 2004 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -105,7 +108,9 @@ Chunk status by area:
   `parquet-read`, `parquet-rowcount`, `parquet-show-bloom-filter`,
   `parquet-layout`, `parquet-schema`, and `parquet-concat` done;
   `parquet-rewrite`/`parquet-fromcsv` need arrow.
-- Phase 3 (variant/geospatial/derive/encryption/arrow/async): pending.
+- Phase 3 (variant/geospatial/derive/encryption/arrow/async): `parquet-variant`'s
+  `VariantPath`/`VariantPathElement` + parser done; the variant encoding/builder/
+  decoder, geospatial, derive, encryption, arrow, and async remain pending.
 
 ## Phase 0 — Project initialization
 
@@ -397,7 +402,10 @@ Chunk status by area:
 
 ### 3.1 Variant crates
 
-- [ ] `parquet-variant` (Variant binary encoding).
+- [~] `parquet-variant` (Variant binary encoding): `VariantPath`/
+  `VariantPathElement` + the dot/bracket parser (`src/parquet_variant/path.cr`,
+  `path_spec.cr`) done; `Variant`, `VariantBuilder`, metadata, decoder, and
+  `utils` pending.
 - [ ] `parquet-variant-compute`.
 - [ ] `parquet-variant-json`.
 
@@ -738,6 +746,14 @@ Chunk status by area:
   (`LogicalType::Integer#value.bit_width`); `has_id` → `has_id?`; the `_Unknown`
   variant is `LogicalType::UnknownField`; `Variant`'s `specification_version` is
   printed with `Some(..)`/`None`.
+- `parquet-variant::path`: lives in `src/parquet_variant/` (`ParquetVariant`
+  module) and is required from `src/parquet-cr.cr`;
+  `arrow_schema::ArrowError::ParseError` is `ParquetVariant::ParseError` (Display
+  `"Parser error: {msg}"`); `Cow` field names are owned `String`s; `usize` index
+  is `Int32`; `VariantPath#deref` to `[VariantPathElement]` maps to `#[]`/`#path`;
+  `join` mutates and returns `self` (upstream consumes); the parser scans bytes
+  (ASCII delimiters never occur inside a UTF-8 sequence) and the unused `utils`
+  helpers (`slice_from_slice` etc.) are not ported yet.
 - `chunk_reader`: `BytesChunkReader#get_read`/`get_bytes` and
   `FileChunkReader#get_bytes` raise the upstream `EOF` messages
   ("Expected to read ... while file has length ..."); `FileChunkReader` reads
