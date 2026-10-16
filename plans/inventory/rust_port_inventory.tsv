@@ -9,42 +9,42 @@ parquet-geospatial/src/bounding.rs::method::GeometryBounder.with_wraparound_hint
 parquet-geospatial/src/bounding.rs::method::GeometryBounder.x	method	missing	-	auto-generated
 parquet-geospatial/src/bounding.rs::method::GeometryBounder.y	method	missing	-	auto-generated
 parquet-geospatial/src/bounding.rs::method::GeometryBounder.z	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::Interval.contains_interval	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::Interval.empty	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::Interval.expand_by	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::Interval.from	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::Interval.full	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::Interval.hi	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::Interval.intersects_interval	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::Interval.intersects_value	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::Interval.is_empty	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::Interval.is_wraparound	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::Interval.lo	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::Interval.merge_interval	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::Interval.merge_value	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::Interval.mid	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::Interval.new	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::Interval.try_from	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::Interval.update_interval	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::Interval.update_value	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::Interval.width	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::WraparoundInterval.contains_interval	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::WraparoundInterval.empty	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::WraparoundInterval.expand_by	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::WraparoundInterval.from	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::WraparoundInterval.full	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::WraparoundInterval.hi	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::WraparoundInterval.intersects_interval	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::WraparoundInterval.intersects_value	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::WraparoundInterval.is_empty	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::WraparoundInterval.is_wraparound	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::WraparoundInterval.lo	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::WraparoundInterval.merge_interval	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::WraparoundInterval.merge_value	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::WraparoundInterval.mid	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::WraparoundInterval.new	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::WraparoundInterval.split	method	missing	-	auto-generated
-parquet-geospatial/src/interval.rs::method::WraparoundInterval.width	method	missing	-	auto-generated
+parquet-geospatial/src/interval.rs::method::Interval.contains_interval	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::Interval.empty	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::Interval.expand_by	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::Interval.from	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::Interval.full	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::Interval.hi	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::Interval.intersects_interval	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::Interval.intersects_value	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::Interval.is_empty	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::Interval.is_wraparound	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::Interval.lo	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::Interval.merge_interval	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::Interval.merge_value	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::Interval.mid	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::Interval.new	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::Interval.try_from	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::Interval.update_interval	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::Interval.update_value	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::Interval.width	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::WraparoundInterval.contains_interval	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::WraparoundInterval.empty	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::WraparoundInterval.expand_by	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::WraparoundInterval.from	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::WraparoundInterval.full	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::WraparoundInterval.hi	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::WraparoundInterval.intersects_interval	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::WraparoundInterval.intersects_value	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::WraparoundInterval.is_empty	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::WraparoundInterval.is_wraparound	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::WraparoundInterval.lo	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::WraparoundInterval.merge_interval	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::WraparoundInterval.merge_value	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::WraparoundInterval.mid	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::WraparoundInterval.new	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::WraparoundInterval.split	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
+parquet-geospatial/src/interval.rs::method::WraparoundInterval.width	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
 parquet-geospatial/src/types.rs::const::NAME	const	intentional_divergence	src/parquet_geospatial/types.cr	ExtensionType const; needs arrow-schema
 parquet-geospatial/src/types.rs::method::Metadata.crs_is_lon_lat	method	ported	src/parquet_geospatial/types.cr	Metadata#crs_is_lon_lat
 parquet-geospatial/src/types.rs::method::Metadata.new	method	ported	src/parquet_geospatial/types.cr	Metadata.new

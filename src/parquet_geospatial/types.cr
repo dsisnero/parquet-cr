@@ -1,5 +1,5 @@
 require "json"
-require "../parquet/errors"
+require "./errors"
 
 # Ported from `parquet-geospatial/src/types.rs` (apache/arrow-rs 60.0.0,
 # ef1fa157977633f0ba21aa921f9ef3d5c669235b).
@@ -11,13 +11,6 @@ require "../parquet/errors"
 # deferred to the Arrow interop chunk; `ArrowError::JsonError` is
 # `ParquetGeospatial::JsonError`.
 module ParquetGeospatial
-  # `ArrowError::JsonError`.
-  class JsonError < ::Parquet::ParquetError
-    def initialize(message : String)
-      super("Json error: #{message}")
-    end
-  end
-
   # A hint at the likely Parquet geospatial logical type.
   enum Hint
     Geometry
