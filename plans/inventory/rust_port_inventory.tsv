@@ -2987,9 +2987,9 @@ parquet/src/file/reader.rs::method::Bytes.len	method	ported	src/parquet/file/chu
 parquet/src/file/reader.rs::method::File.get_bytes	method	ported	src/parquet/file/chunk_reader.cr	FileChunkReader#get_bytes
 parquet/src/file/reader.rs::method::File.get_read	method	ported	src/parquet/file/chunk_reader.cr	FileChunkReader#get_read
 parquet/src/file/reader.rs::method::File.len	method	ported	src/parquet/file/chunk_reader.cr	FileChunkReader#len
-parquet/src/file/reader.rs::method::FilePageIterator.new	method	intentional_divergence	-	PageIterator trait not ported
-parquet/src/file/reader.rs::method::FilePageIterator.next	method	intentional_divergence	-	PageIterator trait not ported
-parquet/src/file/reader.rs::method::FilePageIterator.with_row_groups	method	intentional_divergence	-	PageIterator trait not ported
+parquet/src/file/reader.rs::method::FilePageIterator.new	method	ported	src/parquet/file/reader.cr	FilePageIterator.new
+parquet/src/file/reader.rs::method::FilePageIterator.next	method	ported	src/parquet/file/reader.cr	FilePageIterator#next
+parquet/src/file/reader.rs::method::FilePageIterator.with_row_groups	method	ported	src/parquet/file/reader.cr	FilePageIterator.with_row_groups
 parquet/src/file/serialized_reader.rs::method::ReadOptionsBuilder.build	method	ported	src/parquet/file/reader.cr	ReadOptionsBuilder
 parquet/src/file/serialized_reader.rs::method::ReadOptionsBuilder.new	method	ported	src/parquet/file/reader.cr	ReadOptionsBuilder
 parquet/src/file/serialized_reader.rs::method::ReadOptionsBuilder.with_column_stats_policy	method	ported	src/parquet/file/reader.cr	ReadOptionsBuilder

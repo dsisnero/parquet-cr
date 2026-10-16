@@ -51,16 +51,18 @@ little-endian layout.
   encoder, the column reader/writer impls, the compression `Codec` framework
   (`GZipCodec`), the serialized page reader/writer, and the file-level
   `SerializedFileWriter`/`SerializedFileReader` (with `FileReader`/
-  `RowGroupReader`, `ReadOptions`/`ReadOptionsBuilder`), and the record API
+  `RowGroupReader`, `ReadOptions`/`ReadOptionsBuilder`), the record API
   (`Field`/`Row`/`List`/`Map`, `TripletIter`, `TreeBuilder`/`Reader`/`RowIter`,
-  wired into `get_row_iter`) are done.
+  wired into `get_row_iter`), and `FilePageIterator` + the `PageIterator` trait
+  are done. Phase 2 is complete except the CLI (`2.5`).
 - Next up (take the first unchecked item):
-  1. `FilePageIterator` (needs the `PageIterator` trait), then Phase 3:
-     `parquet_derive`-style record reader/writer, the CLI (`2.5`), and the
-     variant/geospatial crates.
-  2. Deferred: async/object-store suffix fetchers and encryption are intentional
+  1. Phase 2.5 CLI (`bin/`, `cli` feature) with `clap`-equivalent arg parsing.
+  2. Then Phase 3: `parquet_derive`-style record reader/writer traits (the
+     `record_reader.rs`/`record_writer.rs` traits, used by `parquet_derive`;
+     Phase 3.3), the variant/geospatial crates, and encryption.
+  3. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 1302 `ported`, 186 `intentional_divergence`,
+- Progress by counts (ledger): 1305 `ported`, 183 `intentional_divergence`,
   1 `skipped`, 2026 `missing` (of 3515 rows).
 
 Chunk status by area:
@@ -95,7 +97,7 @@ Chunk status by area:
   `column/mod.rs` glue, `chunkers/`, and `page_store` pending.
 - Phase 2.4 record: `api` (`Field`/`Row`/`List`/`Map`), `triplet`
   (`TripletIter`), and `reader` (`TreeBuilder`/`Reader`/`RowIter`) done;
-  `get_row_iter` wired; `FilePageIterator` pending.
+  `get_row_iter` wired; `FilePageIterator` + the `PageIterator` trait done.
 - Phase 2.5 CLI: pending.
 - Phase 3 (variant/geospatial/derive/encryption/arrow/async): pending.
 
@@ -359,7 +361,8 @@ Chunk status by area:
   by `parquet_derive` (Phase 3.3); not tracked in the ledger.
 - [~] 3 upstream test modules ported (the SNAPPY-fixture cases are covered with
   uncompressed fixtures); `parquet/tests` record suites pending.
-- [ ] `FilePageIterator` (`file/reader.rs`, needs the `PageIterator` trait).
+- [x] `FilePageIterator` + the `PageIterator` trait (`src/parquet/file/reader.cr`,
+  `src/parquet/column/page.cr`); `page_iterator_spec.cr` ported.
 
 ### 2.5 CLI
 
@@ -595,9 +598,10 @@ Chunk status by area:
   nested `DataPage`/`DataPageV2`/`DictionaryPage` subclasses;
   `uncompressed_size` is `Int64` (so the i32-overflow check is reachable),
   other sizes `Int32`; the `is_*` predicates keep upstream names under ameba
-  disables; the `PageReader` `Iterator` impl and the `PageIterator` trait are
-  not ported; the encryption-only `with_new_compressed_buffer` is not ported.
-  `PageMetadata`'s `TryFrom<&PageHeader>` is `PageMetadata.from_thrift`.
+  disables; the `PageReader` `Iterator` impl is not ported and the `PageIterator`
+  marker trait is a module including `Iterator(PageReader)`; the encryption-only
+  `with_new_compressed_buffer` is not ported. `PageMetadata`'s
+  `TryFrom<&PageHeader>` is `PageMetadata.from_thrift`.
 - `bloom_filter`: `twox_hash::XxHash64` is replaced by the in-repo
   `Parquet::XxHash64` (exact values, seed 0); `AsBytes` trait-object dispatch is
   a `String` overload plus a generic `as_bytes`; `Block` is a struct over
@@ -661,7 +665,9 @@ Chunk status by area:
   `Arc<R>`/lifetimes are erased. `with_range(start, end)` takes `end_` (Crystal
   reserves `end`) and raises `GeneralError` where upstream panics.
   `get_row_iter` is added by `record/reader.cr` (reopening the abstract classes);
-  `FilePageIterator` (the `PageIterator` trait) is deferred; the
+  `FilePageIterator`'s `Box<dyn Iterator<Item = usize>>` row-group list is an
+  `Iterator(Int32)`, its `Arc<dyn FileReader>` is a `FileReader`, and it includes
+  the `PageIterator` module (`Iterator(Column::PageReader)`); the
   `TryFrom<File>`/path constructors map to `SerializedFileReader.new`, and the
   `IntoIterator`/`try_from` impls are not modelled.
 - `record::api`: Rust's payload-carrying `Field` enum is a sealed class

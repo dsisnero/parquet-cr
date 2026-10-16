@@ -304,6 +304,15 @@ module Parquet
       end
     end
 
+    # An iterator over pages of one specific column in a Parquet file.
+    #
+    # Divergence: Rust's `PageIterator` marker trait
+    # (`Iterator<Item = Result<Box<dyn PageReader>>>`) is a Crystal module that
+    # includes `Iterator(PageReader)`.
+    module PageIterator
+      include Iterator(PageReader)
+    end
+
     # API for writing pages in a column chunk.
     abstract class PageWriter
       # Writes a page into the output stream/sink, returning its write metrics.

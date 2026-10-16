@@ -269,5 +269,45 @@ module Parquet
         @bloom_filters[i]
       end
     end
+
+    # An iterator over the page readers of one column across a file's row
+    # groups.
+    class FilePageIterator
+      include Column::PageIterator
+
+      # Creates a page iterator for all row groups in the file.
+      def self.new(column_index : Int32, file_reader : FileReader) : FilePageIterator
+        num_row_groups = file_reader.metadata.num_row_groups
+        with_row_groups(column_index, (0...num_row_groups).each, file_reader)
+      end
+
+      # Creates a page iterator over the given row group indices.
+      def self.with_row_groups(
+        column_index : Int32,
+        row_group_indices : Iterator(Int32),
+        file_reader : FileReader,
+      ) : FilePageIterator
+        num_columns = file_reader.metadata.file_metadata.schema_descr.num_columns
+        if column_index >= num_columns
+          raise Parquet::IndexOutOfBoundError.new(column_index.to_u64, num_columns.to_u64)
+        end
+
+        new(column_index, row_group_indices, file_reader)
+      end
+
+      def initialize(
+        @column_index : Int32,
+        @row_group_indices : Iterator(Int32),
+        @file_reader : FileReader,
+      )
+      end
+
+      def next : Column::PageReader | Iterator::Stop
+        index = @row_group_indices.next
+        return stop if index.is_a?(Iterator::Stop)
+
+        @file_reader.get_row_group(index).get_column_page_reader(@column_index)
+      end
+    end
   end
 end
