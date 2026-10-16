@@ -115,6 +115,11 @@ revision is recorded per entry.
   `test_row_group_metadata_thrift_conversion{,_empty,_corrupted}` ported to
   `spec/parquet/file/row_group_spec.cr`; moved shared spec helpers into
   `spec/support/parquet_helpers.cr`.
+- `FileMetaData` / `ParquetMetaData` (`src/parquet/file/metadata/parquet_metadata.cr`):
+  the file metadata types plus footer read/write (`FileMetaData` thrift write,
+  `parquet_metadata_from_bytes`, row-group ordinal backfill, and a
+  `ParquetMetaDataWriter`/`ParquetMetaDataReader.decode_metadata` round-trip).
+  Upstream ordinal tests ported to `spec/parquet/file/parquet_metadata_spec.cr`.
 - Harden `Makefile` gates by stripping macOS AppleDouble `._*` sidecars (whose
   names can match crystal's `*_spec.cr` glob on exFAT volumes).
 

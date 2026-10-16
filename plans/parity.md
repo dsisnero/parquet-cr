@@ -181,8 +181,16 @@ little-endian layout.
   `test_row_group_metadata_thrift_conversion`,
   `..._conversion_empty`, and `..._corrupted` ported to
   `spec/parquet/file/row_group_spec.cr`.
-- [ ] `ParquetMetaData`, `FileMetaData`, and thrift read/write
-  (`file/metadata/mod.rs`, `file/metadata/thrift/mod.rs`).
+- [x] `FileMetaData`, `ParquetMetaData`, and footer read/write
+  (`src/parquet/file/metadata/parquet_metadata.cr`): `write_file_metadata`
+  (`FileMetaData` thrift struct), `parquet_metadata_from_bytes`, ordinal
+  backfill, and a `ParquetMetaDataWriter`/`ParquetMetaDataReader.decode_metadata`
+  footer round-trip. Upstream `ordinals_all_present_are_honored`,
+  `ordinals_none_present_are_sequentially_filled`, and
+  `ordinals_mixed_decode_succeeds_untouched` ported to
+  `spec/parquet/file/parquet_metadata_spec.cr`.
+- [ ] `ParquetMetaDataBuilder`, `ParquetMetaDataOptions`, page indexes, and the
+  full `ParquetMetaDataReader`/`Writer` IO machinery (async, suffix fetches).
 - [x] Statistics and value stats (`src/parquet/file/statistics.cr`):
   `Statistics`, `ValueStatistics<T>`, and `from_thrift_page_stats`/
   `page_stats_to_thrift` (thrift `PageStatistics`). Upstream `statistics.rs`
