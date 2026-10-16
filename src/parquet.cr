@@ -58,6 +58,8 @@ require "./parquet/file/reader"
 require "./parquet/record/api"
 require "./parquet/record/triplet"
 require "./parquet/record/reader"
+require "./parquet/bin/cli"
+require "./parquet/bin/parquet_index"
 
 module Parquet
   VERSION = "0.1.0"

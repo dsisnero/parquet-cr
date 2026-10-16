@@ -53,17 +53,21 @@ little-endian layout.
   `SerializedFileWriter`/`SerializedFileReader` (with `FileReader`/
   `RowGroupReader`, `ReadOptions`/`ReadOptionsBuilder`), the record API
   (`Field`/`Row`/`List`/`Map`, `TripletIter`, `TreeBuilder`/`Reader`/`RowIter`,
-  wired into `get_row_iter`), and `FilePageIterator` + the `PageIterator` trait
-  are done. Phase 2 is complete except the CLI (`2.5`).
+  wired into `get_row_iter`), `FilePageIterator` + the `PageIterator` trait, and
+  the CLI foundation (`bin/`, `parquet-index`) are done. Phase 2 is complete
+  except the remaining CLI tools (`2.5`).
 - Next up (take the first unchecked item):
-  1. Phase 2.5 CLI (`bin/`, `cli` feature) with `clap`-equivalent arg parsing.
+  1. Finish the CLI (`2.5`): `parquet-layout` (serde_json output),
+     `parquet-schema` (blocked on the schema printer), `parquet-concat` (blocked
+     on `append_column`), `parquet-read`/`parquet-rowcount`, and
+     `parquet-show-bloom-filter`; `parquet-rewrite`/`parquet-fromcsv` need arrow.
   2. Then Phase 3: `parquet_derive`-style record reader/writer traits (the
      `record_reader.rs`/`record_writer.rs` traits, used by `parquet_derive`;
      Phase 3.3), the variant/geospatial crates, and encryption.
   3. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 1305 `ported`, 183 `intentional_divergence`,
-  1 `skipped`, 2026 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1306 `ported`, 183 `intentional_divergence`,
+  1 `skipped`, 2025 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -98,7 +102,10 @@ Chunk status by area:
 - Phase 2.4 record: `api` (`Field`/`Row`/`List`/`Map`), `triplet`
   (`TripletIter`), and `reader` (`TreeBuilder`/`Reader`/`RowIter`) done;
   `get_row_iter` wired; `FilePageIterator` + the `PageIterator` trait done.
-- Phase 2.5 CLI: pending.
+- Phase 2.5 CLI: `cli` shared helper (`parse_column_path`) and `parquet-index`
+  done; `parquet-layout`/`parquet-schema`/`parquet-concat`/`parquet-read`/
+  `parquet-rowcount`/`parquet-show-bloom-filter` pending; `parquet-rewrite`/
+  `parquet-fromcsv` need arrow.
 - Phase 3 (variant/geospatial/derive/encryption/arrow/async): pending.
 
 ## Phase 0 — Project initialization
@@ -366,7 +373,17 @@ Chunk status by area:
 
 ### 2.5 CLI
 
-- [ ] `parquet` CLI (`bin/`, `cli` feature) with `clap`-equivalent arg parsing.
+- [x] CLI foundation: `src/parquet/bin/cli.cr` (`Cli.parse_column_path`; upstream
+  `cli/mod.rs` tests ported) and the `bin/` entry points; `OptionParser` replaces
+  `clap`.
+- [x] `parquet-index` (`src/parquet/bin/parquet_index.cr`,
+  `bin/parquet-index.cr`); `run` writes to an `IO`; `compute_row_counts`
+  characterized. `parquet_index_spec.cr` ported.
+- [ ] `parquet-layout` (needs serde_json-style pretty output),
+  `parquet-schema` (needs the schema printer), `parquet-concat` (needs
+  `append_column`), `parquet-read`, `parquet-rowcount`,
+  `parquet-show-bloom-filter`.
+- [ ] `parquet-rewrite`/`parquet-fromcsv` — require `arrow`.
 
 ## Phase 3 — Advanced / optional
 
@@ -691,6 +708,14 @@ Chunk status by area:
   `ReaderIter` are `Iterator(Row)` (errors raise); `get_row_iter` is added by
   reopening `FileReader`/`RowGroupReader`. The `record_reader.rs`/
   `record_writer.rs` traits (used by `parquet_derive`) are not ported.
+- `bin`: the CLI tools live under `src/parquet/bin/` (logic, linted/tested) with
+  thin `bin/` executables; `clap` argument parsing is replaced by
+  `OptionParser`. `Cli.parse_column_path` (upstream `cli/mod.rs`) raises
+  `GeneralError` where upstream returns `Result<_, String>`. `parquet-index`'s
+  `Args.run` writes to an `IO` parameter (upstream prints to stdout) and the
+  byte-array max fallback reproduces upstream's `min`-label copy-paste bug for
+  output parity. `parquet-concat`/`parquet-rewrite`/`parquet-fromcsv` (and
+  `parquet-layout`'s serde_json output) are deferred.
 - `chunk_reader`: `BytesChunkReader#get_read`/`get_bytes` and
   `FileChunkReader#get_bytes` raise the upstream `EOF` messages
   ("Expected to read ... while file has length ..."); `FileChunkReader` reads

@@ -1683,7 +1683,7 @@ parquet/src/basic.rs::method::Repetition.from_str	method	ported	src/parquet/basi
 parquet/src/basic.rs::method::SortOrder.fmt	method	ported	src/parquet/basic.cr	Display via SortOrder#to_s (variant name)
 parquet/src/basic.rs::method::SortOrder.is_signed	method	ported	src/parquet/basic.cr	renamed SortOrder#signed?
 parquet/src/basic.rs::method::Type.from_str	method	ported	src/parquet/basic.cr	Enum.parse?-based; BINARY accepted as alias for BYTE_ARRAY
-parquet/src/bin/parquet-concat.rs::method::Args.run	method	missing	-	auto-generated
+parquet/src/bin/parquet-concat.rs::method::Args.run	method	missing	-	needs SerializedRowGroupWriter#append_column (arrow splice path)
 parquet/src/bin/parquet-fromcsv.rs::method::Args.get_delimiter	method	missing	-	auto-generated
 parquet/src/bin/parquet-fromcsv.rs::method::Args.get_escape	method	missing	-	auto-generated
 parquet/src/bin/parquet-fromcsv.rs::method::Args.get_quote	method	missing	-	auto-generated
@@ -1692,9 +1692,9 @@ parquet/src/bin/parquet-fromcsv.rs::method::Args.schema_path	method	missing	-	au
 parquet/src/bin/parquet-fromcsv.rs::method::ParquetFromCsvError.fmt	method	missing	-	auto-generated
 parquet/src/bin/parquet-fromcsv.rs::method::ParquetFromCsvError.from	method	missing	-	auto-generated
 parquet/src/bin/parquet-fromcsv.rs::method::ParquetFromCsvError.with_context	method	missing	-	auto-generated
-parquet/src/bin/parquet-index.rs::method::Args.run	method	missing	-	auto-generated
-parquet/src/bin/parquet-layout.rs::method::Args.run	method	missing	-	auto-generated
-parquet/src/bin/parquet-layout.rs::method::DebugSerialize<T>.serialize	method	missing	-	auto-generated
+parquet/src/bin/parquet-index.rs::method::Args.run	method	ported	src/parquet/bin/parquet_index.cr	ParquetIndex.run_with_reader; clap entry in bin/parquet-index.cr
+parquet/src/bin/parquet-layout.rs::method::Args.run	method	missing	-	serde_json pretty output not ported yet
+parquet/src/bin/parquet-layout.rs::method::DebugSerialize<T>.serialize	method	missing	-	serde Debug-serialize helper not modelled
 parquet/src/bin/parquet-rewrite.rs::method::BloomFilterPosition.from	method	missing	-	auto-generated
 parquet/src/bin/parquet-rewrite.rs::method::EnabledStatistics.from	method	missing	-	auto-generated
 parquet/src/bin/parquet-rewrite.rs::method::Encoding.from	method	missing	-	auto-generated
