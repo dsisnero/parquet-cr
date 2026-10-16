@@ -53,20 +53,23 @@ little-endian layout.
   `SerializedFileWriter`/`SerializedFileReader` (with `FileReader`/
   `RowGroupReader`, `ReadOptions`/`ReadOptionsBuilder`), the record API
   (`Field`/`Row`/`List`/`Map`, `TripletIter`, `TreeBuilder`/`Reader`/`RowIter`,
-  wired into `get_row_iter`), `FilePageIterator` + the `PageIterator` trait, the
-  schema printer, the `append_column` splice path, and the CLI (`bin/`): the
-  foundation, `parquet-index`, `parquet-read`, `parquet-rowcount`,
-  `parquet-show-bloom-filter`, `parquet-layout`, `parquet-schema`, and
-  `parquet-concat` are done. **Phase 2 is complete** except the arrow-dependent
-  CLI tools (`parquet-rewrite`/`parquet-fromcsv`). Phase 3 has started:
+  wired into `get_row_iter`), the `RecordReader(T)`/`RecordWriter(T)` traits,
+  `FilePageIterator` + the `PageIterator` trait, the schema printer, the
+  `append_column` splice path, and the CLI (`bin/`): the foundation,
+  `parquet-index`, `parquet-read`, `parquet-rowcount`, `parquet-show-bloom-filter`,
+  `parquet-layout`, `parquet-schema`, and `parquet-concat` are done. **Phase 2 is
+  complete** except the arrow-dependent CLI tools
+  (`parquet-rewrite`/`parquet-fromcsv`). Phase 3 has started:
   `parquet-variant`'s `VariantPath`/`VariantPathElement` + dot/bracket parser
   (`src/parquet_variant/path.cr`, tests ported).
 - Next up (take the first unchecked item):
   1. Phase 3.1: the rest of `parquet-variant` (`Variant`, `VariantBuilder`,
-     metadata, decoder), then `-compute`/`-json`; Phase 3.3 `parquet_derive`
-     (Crystal macros) + the `record_reader.rs`/`record_writer.rs` traits; Phase
-     3.2 geospatial and Phase 3.4 encryption.
-  2. Deferred: async/object-store suffix fetchers, encryption, and the arrow
+     metadata, decoder, `utils`) — note `VariantMetadata::borrowed_field_id`'s
+     zero-copy fast path cannot be modelled (Crystal `String.new(Bytes)` copies),
+     so it will be documented as an intentional divergence; then `-compute`/`-json`.
+  2. Phase 3.3 `parquet_derive` (Crystal macros); Phase 3.2 geospatial; Phase 3.4
+     encryption.
+  3. Deferred: async/object-store suffix fetchers, encryption, and the arrow
      `parquet-rewrite`/`parquet-fromcsv` are intentional divergences (recorded).
 - Progress by counts (ledger): 1329 `ported`, 181 `intentional_divergence`,
   1 `skipped`, 2004 `missing` (of 3515 rows).
@@ -102,8 +105,9 @@ Chunk status by area:
   truncation helpers, `ColumnReaderImpl`, and `GenericColumnWriter` done;
   `column/mod.rs` glue, `chunkers/`, and `page_store` pending.
 - Phase 2.4 record: `api` (`Field`/`Row`/`List`/`Map`), `triplet`
-  (`TripletIter`), and `reader` (`TreeBuilder`/`Reader`/`RowIter`) done;
-  `get_row_iter` wired; `FilePageIterator` + the `PageIterator` trait done.
+  (`TripletIter`), `reader` (`TreeBuilder`/`Reader`/`RowIter`), and the
+  `RecordReader(T)`/`RecordWriter(T)` traits done; `get_row_iter` wired;
+  `FilePageIterator` + the `PageIterator` trait done.
 - Phase 2.5 CLI: `cli` shared helper (`parse_column_path`), `parquet-index`,
   `parquet-read`, `parquet-rowcount`, `parquet-show-bloom-filter`,
   `parquet-layout`, `parquet-schema`, and `parquet-concat` done;
@@ -371,8 +375,10 @@ Chunk status by area:
   `Primitive/Group/Option/Repeated/KeyValue` subclasses), `ReaderIter`,
   `RowIter`; `get_row_iter` added to `FileReader`/`RowGroupReader`.
   `reader_spec.cr` ported.
-- [ ] Record reader/writer traits (`record_reader.rs`/`record_writer.rs`) — used
-  by `parquet_derive` (Phase 3.3); not tracked in the ledger.
+- [x] Record reader/writer traits (`src/parquet/record/record_reader.cr`,
+  `record_writer.cr`): `RecordReader(T)`/`RecordWriter(T)` abstract classes, used
+  by `parquet_derive` (Phase 3.3); not tracked in the ledger. Characterized in
+  `record_traits_spec.cr`.
 - [~] 3 upstream test modules ported (the SNAPPY-fixture cases are covered with
   uncompressed fixtures); `parquet/tests` record suites pending.
 - [x] `FilePageIterator` + the `PageIterator` trait (`src/parquet/file/reader.cr`,
