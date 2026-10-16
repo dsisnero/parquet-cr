@@ -144,6 +144,23 @@ describe Parquet::File::PageIndex do
     index.max_value(0).should eq(Bytes.new(11, 5_u8))
   end
 
+  it "decodes an offset index" do
+    locations = [
+      PPI::PageLocation.new(0_i64, 10, 0_i64),
+      PPI::PageLocation.new(10_i64, 20, 100_i64),
+    ]
+    index = PPI::OffsetIndexMetaData.new(locations, [0_i64, 100_i64])
+
+    PPI.decode_offset_index(ThriftRoundTrip.encode(index)).should eq(index)
+  end
+
+  it "computes the covering range of two optional ranges" do
+    PPI.acc_range(7_u64...9_u64, 1_u64...3_u64).should eq(1_u64...9_u64)
+    PPI.acc_range(nil, 1_u64...3_u64).should eq(1_u64...3_u64)
+    PPI.acc_range(7_u64...9_u64, nil).should eq(7_u64...9_u64)
+    PPI.acc_range(nil, nil).should be_nil
+  end
+
   it "raises when a non-null page value is too short" do
     thrift = PPI::ThriftColumnIndex.new(
       [false], [Bytes.new(0)], [Bytes.new(0)],

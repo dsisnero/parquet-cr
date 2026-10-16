@@ -2583,31 +2583,31 @@ parquet/src/file/metadata/mod.rs::method::OffsetIndexBuilder.build	method	ported
 parquet/src/file/metadata/mod.rs::method::OffsetIndexBuilder.default	method	intentional_divergence	src/parquet/file/metadata.cr	Rust Default impl; Crystal default initialize
 parquet/src/file/metadata/mod.rs::method::OffsetIndexBuilder.new	method	ported	src/parquet/file/metadata.cr	OffsetIndexBuilder
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.eq	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
-parquet/src/file/metadata/mod.rs::method::ParquetMetaData.file_decryptor	method	missing	-	auto-generated
+parquet/src/file/metadata/mod.rs::method::ParquetMetaData.file_decryptor	method	intentional_divergence	src/parquet/file/metadata/parquet_metadata.cr	encryption feature not ported
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.file_metadata	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
-parquet/src/file/metadata/mod.rs::method::ParquetMetaData.into_builder	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ParquetMetaData.memory_size	method	missing	-	auto-generated
+parquet/src/file/metadata/mod.rs::method::ParquetMetaData.into_builder	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
+parquet/src/file/metadata/mod.rs::method::ParquetMetaData.memory_size	method	intentional_divergence	src/parquet/file/metadata/parquet_metadata.cr	HeapSize (memory.rs) not ported
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.new	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.num_row_groups	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
-parquet/src/file/metadata/mod.rs::method::ParquetMetaData.page_index	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ParquetMetaData.page_index_for_row_group	method	missing	-	auto-generated
+parquet/src/file/metadata/mod.rs::method::ParquetMetaData.page_index	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
+parquet/src/file/metadata/mod.rs::method::ParquetMetaData.page_index_for_row_group	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.row_group	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.row_group_num_rows	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.row_groups	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
-parquet/src/file/metadata/mod.rs::method::ParquetMetaData.set_page_index	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ParquetMetaData.with_file_decryptor	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.add_row_group	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.build	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.from	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.new	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.new_from_metadata	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.page_index	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.row_groups	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.set_file_decryptor	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.set_page_index	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.set_row_groups	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.take_page_index	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.take_row_groups	method	missing	-	auto-generated
+parquet/src/file/metadata/mod.rs::method::ParquetMetaData.set_page_index	method	ported	src/parquet/file/metadata/parquet_metadata.cr	upstream pub(crate); public here
+parquet/src/file/metadata/mod.rs::method::ParquetMetaData.with_file_decryptor	method	intentional_divergence	src/parquet/file/metadata/parquet_metadata.cr	encryption feature not ported
+parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.add_row_group	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataBuilder
+parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.build	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataBuilder
+parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.from	method	intentional_divergence	src/parquet/file/metadata/parquet_metadata.cr	Rust From impl; use ParquetMetaDataBuilder.new_from_metadata
+parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.new	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataBuilder
+parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.new_from_metadata	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataBuilder
+parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.page_index	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataBuilder
+parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.row_groups	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataBuilder
+parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.set_file_decryptor	method	intentional_divergence	src/parquet/file/metadata/parquet_metadata.cr	encryption feature not ported
+parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.set_page_index	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataBuilder
+parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.set_row_groups	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataBuilder
+parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.take_page_index	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataBuilder
+parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.take_row_groups	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::RowGroupMetaData.builder	method	ported	src/parquet/file/metadata/row_group.cr	RowGroupMetaData
 parquet/src/file/metadata/mod.rs::method::RowGroupMetaData.column	method	ported	src/parquet/file/metadata/row_group.cr	RowGroupMetaData
 parquet/src/file/metadata/mod.rs::method::RowGroupMetaData.columns	method	ported	src/parquet/file/metadata/row_group.cr	RowGroupMetaData
@@ -2634,25 +2634,25 @@ parquet/src/file/metadata/mod.rs::method::RowGroupMetaDataBuilder.set_sorting_co
 parquet/src/file/metadata/mod.rs::method::RowGroupMetaDataBuilder.set_total_byte_size	method	ported	src/parquet/file/metadata/row_group.cr	RowGroupMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::RowGroupMetaDataBuilder.take_columns	method	ported	src/parquet/file/metadata/row_group.cr	RowGroupMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::Vec<i64>.from	method	missing	-	auto-generated
-parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.default	method	missing	-	auto-generated
-parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.encoding_stats_as_mask	method	missing	-	auto-generated
-parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.new	method	missing	-	auto-generated
-parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.schema	method	missing	-	auto-generated
-parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.set_column_stats_policy	method	missing	-	auto-generated
-parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.set_encoding_stats_as_mask	method	missing	-	auto-generated
-parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.set_encoding_stats_policy	method	missing	-	auto-generated
-parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.set_schema	method	missing	-	auto-generated
-parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.set_size_stats_policy	method	missing	-	auto-generated
-parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.skip_column_stats	method	missing	-	auto-generated
-parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.skip_encoding_stats	method	missing	-	auto-generated
-parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.skip_size_stats	method	missing	-	auto-generated
-parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.with_column_stats_policy	method	missing	-	auto-generated
-parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.with_encoding_stats_as_mask	method	missing	-	auto-generated
-parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.with_encoding_stats_policy	method	missing	-	auto-generated
-parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.with_schema	method	missing	-	auto-generated
-parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.with_size_stats_policy	method	missing	-	auto-generated
-parquet/src/file/metadata/options.rs::method::ParquetStatisticsPolicy.is_skip	method	missing	-	auto-generated
-parquet/src/file/metadata/options.rs::method::ParquetStatisticsPolicy.skip_except	method	missing	-	auto-generated
+parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.default	method	intentional_divergence	src/parquet/file/metadata/options.cr	Rust Default impl; Crystal default initialize
+parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.encoding_stats_as_mask	method	ported	src/parquet/file/metadata/options.cr	renamed ParquetMetaDataOptions#encoding_stats_as_mask?
+parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.new	method	ported	src/parquet/file/metadata/options.cr	ParquetMetaDataOptions
+parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.schema	method	ported	src/parquet/file/metadata/options.cr	ParquetMetaDataOptions
+parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.set_column_stats_policy	method	ported	src/parquet/file/metadata/options.cr	ParquetMetaDataOptions
+parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.set_encoding_stats_as_mask	method	ported	src/parquet/file/metadata/options.cr	ParquetMetaDataOptions
+parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.set_encoding_stats_policy	method	ported	src/parquet/file/metadata/options.cr	ParquetMetaDataOptions
+parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.set_schema	method	ported	src/parquet/file/metadata/options.cr	ParquetMetaDataOptions
+parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.set_size_stats_policy	method	ported	src/parquet/file/metadata/options.cr	ParquetMetaDataOptions
+parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.skip_column_stats	method	ported	src/parquet/file/metadata/options.cr	ParquetMetaDataOptions
+parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.skip_encoding_stats	method	ported	src/parquet/file/metadata/options.cr	ParquetMetaDataOptions
+parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.skip_size_stats	method	ported	src/parquet/file/metadata/options.cr	ParquetMetaDataOptions
+parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.with_column_stats_policy	method	ported	src/parquet/file/metadata/options.cr	ParquetMetaDataOptions
+parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.with_encoding_stats_as_mask	method	ported	src/parquet/file/metadata/options.cr	ParquetMetaDataOptions
+parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.with_encoding_stats_policy	method	ported	src/parquet/file/metadata/options.cr	ParquetMetaDataOptions
+parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.with_schema	method	ported	src/parquet/file/metadata/options.cr	ParquetMetaDataOptions
+parquet/src/file/metadata/options.rs::method::ParquetMetaDataOptions.with_size_stats_policy	method	ported	src/parquet/file/metadata/options.cr	ParquetMetaDataOptions
+parquet/src/file/metadata/options.rs::method::ParquetStatisticsPolicy.is_skip	method	ported	src/parquet/file/metadata/options.cr	renamed ParquetStatisticsPolicy#skip?
+parquet/src/file/metadata/options.rs::method::ParquetStatisticsPolicy.skip_except	method	ported	src/parquet/file/metadata/options.cr	ParquetStatisticsPolicy.skip_except
 parquet/src/file/metadata/page_index.rs::method::PageIndex.as_any	method	intentional_divergence	src/parquet/file/metadata/page_index.cr	no trait objects in Crystal; downcast unused
 parquet/src/file/metadata/page_index.rs::method::PageIndex.column_index	method	ported	src/parquet/file/metadata/page_index.cr	PageIndex
 parquet/src/file/metadata/page_index.rs::method::PageIndex.column_indexes_raw	method	ported	src/parquet/file/metadata/page_index.cr	PageIndex

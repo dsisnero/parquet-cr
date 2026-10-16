@@ -36,17 +36,17 @@ little-endian layout.
 - Current focus: **Phase 2 — file metadata + page-index integration.** The core
   value/wire layer (errors, thrift protocol, `basic`, `data_type` value types,
   `schema`), the file metadata + statistics + footer round-trip, the offset/
-  column index core + decode, and the page-index builders are done.
+  column index core + decode, the page-index builders, and the
+  `ParquetMetaDataBuilder`/`ParquetMetaDataOptions` plumbing are done.
 - Next up (take the first unchecked item):
-  1. `ParquetMetaDataBuilder`/`ParquetMetaDataOptions` and `ParquetMetaData`'s
-     `page_index` plumbing (`file/metadata/mod.rs`,
-     `file/metadata/parquet_metadata.rs`), then the full reader/writer IO
-     machinery (`decode_offset_index`/`acc_range`, and the
-     `ParquetMetaDataReader`/`Writer` suffix fetches).
+  1. `ParquetMetaDataPushDecoder` and the fetch/suffix machinery of
+     `ParquetMetaDataReader`/`ParquetMetaDataWriter` (channel-driven metadata
+     parsing). The synchronous `decode_offset_index`/`acc_range` are done.
+     Async/object-store suffix fetches are likely an intentional divergence.
   2. Encodings (RLE/bit-packing, levels, plain/dictionary/delta/ALP), then
      column reader/writer, then file reader/writer, then record API.
-- Progress by counts (ledger): 456 `ported`, 19 `intentional_divergence`,
-  1 `skipped`, 3039 `missing` (of 3515 rows).
+- Progress by counts (ledger): 488 `ported`, 25 `intentional_divergence`,
+  1 `skipped`, 3001 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -62,9 +62,9 @@ Chunk status by area:
   headers done; printer + primitive builder pending.
 - Phase 1.7 util: pending (`bit_util` partially needed by column code).
 - Phase 1.8 compression: pending.
-- Phase 2.3 file metadata/statistics/page-index core, column-index decode, and
-  page-index builders done; page-index metadata plumbing, file reader/writer,
-  bloom filter pending.
+- Phase 2.3 file metadata/statistics/page-index core, column-index decode,
+  page-index builders, and the `ParquetMetaData` page-index plumbing done;
+  `ParquetMetaDataPushDecoder`, file reader/writer, bloom filter pending.
 - Phases 2.1 encodings, 2.2 column, 2.4 record, 2.5 CLI: pending.
 - Phase 3 (variant/geospatial/derive/encryption/arrow/async): pending.
 
@@ -206,8 +206,13 @@ Chunk status by area:
   `PageIndex`/`PageIndexBuilder` (`src/parquet/file/metadata/page_index.cr`).
   Tests `test_page_index_builder_partial_population`,
   `..._empty_to_none`, `test_rebuild_page_index` ported.
-- [ ] `ParquetMetaDataBuilder`, `ParquetMetaDataOptions`, and the full
-  `ParquetMetaDataReader`/`Writer` IO machinery (async, suffix fetches).
+- [x] `ParquetMetaDataBuilder`, `ParquetMetaData` page-index plumbing
+  (`page_index`/`page_index_for_row_group`/`into_builder`/`set_page_index`),
+  `ParquetMetaDataOptions`/`ParquetStatisticsPolicy`
+  (`src/parquet/file/metadata/{parquet_metadata,options}.cr`), plus
+  `decode_offset_index`/`acc_range` (`index_reader.cr`).
+- [ ] `ParquetMetaDataPushDecoder` and the full `ParquetMetaDataReader`/`Writer`
+  IO machinery (async, suffix fetches).
 - [ ] Serialized reader/writer (footer + page headers).
 - [ ] Reader/writer (`file/reader`, `file/writer`).
 - [ ] Bloom filter (`bloom_filter/`).
@@ -337,6 +342,21 @@ Chunk status by area:
   `PageIndexBuilder.new_from` (and `PageIndex#into_builder`). `ColumnIndexBuilder`
   `valid` → `valid?`; `set_boundary_order` keeps its upstream name under an
   ameba `AccessorMethodName` disable.
+- `ParquetMetaData`: `page_index` is a plain `PageIndexProvider?` (no
+  `Arc`/`as_any`); equality compares page indexes by value for `PageIndex` and by
+  reference otherwise. `set_page_index` is public (upstream `pub(crate)`).
+  `memory_size` (`HeapSize`) and the encryption `file_decryptor`
+  plumbing are deferred.
+- `ParquetMetaDataBuilder`: holds the fields directly rather than wrapping
+  `ParquetMetaData`; the Rust `From<ParquetMetaData>` impl maps to
+  `new_from_metadata`. `set_row_groups`/`set_page_index` keep upstream names under
+  ameba disables.
+- `ParquetMetaDataOptions`: Rust `with_*(mut self) -> Self` mutates and returns
+  `self`; `encoding_stats_as_mask` → `encoding_stats_as_mask?`;
+  `ParquetStatisticsPolicy::SkipExcept(Arc<HashSet>)` is
+  `SkipExcept(Set(Int32))`, `KeepAll`/`SkipAll` are constants, and `is_skip` →
+  `skip?`. `set_*` keep upstream names under ameba disables; `Default`/`new` map
+  to the default initializer.
 
 ## Notes
 

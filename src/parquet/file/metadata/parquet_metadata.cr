@@ -60,8 +60,13 @@ module Parquet
       class ParquetMetaData
         getter file_metadata : FileMetaData
         getter row_groups : Array(RowGroupMetaData)
+        getter page_index : PageIndexProvider?
 
-        def initialize(@file_metadata : FileMetaData, @row_groups : Array(RowGroupMetaData))
+        def initialize(
+          @file_metadata : FileMetaData,
+          @row_groups : Array(RowGroupMetaData),
+          @page_index : PageIndexProvider? = nil,
+        )
         end
 
         def num_rows : Int64
@@ -80,8 +85,91 @@ module Parquet
           @row_groups[i].num_rows
         end
 
+        # Converts this metadata into a `ParquetMetaDataBuilder`.
+        def into_builder : ParquetMetaDataBuilder
+          ParquetMetaDataBuilder.new_from_metadata(self)
+        end
+
+        # Returns a `RowGroupPageIndex` view for a specific row group.
+        def page_index_for_row_group(row_group_idx : Int32) : RowGroupPageIndex
+          RowGroupPageIndex.new(row_group_idx, @page_index)
+        end
+
+        # Overrides the page index.
+        # ameba:disable Naming/AccessorMethodName
+        def set_page_index(index : PageIndexProvider?) : Nil
+          @page_index = index
+        end
+
+        # Compares file metadata, row groups, and the page index.
+        #
+        # Divergence: the page index compares by value for `PageIndex` and by
+        # reference for other `PageIndexProvider`s (upstream falls back to
+        # `Arc::ptr_eq`).
         def ==(other : ParquetMetaData) : Bool
-          file_metadata == other.file_metadata && row_groups == other.row_groups
+          file_metadata == other.file_metadata &&
+            row_groups == other.row_groups &&
+            page_index == other.page_index
+        end
+      end
+
+      # Builder for creating / manipulating `ParquetMetaData`.
+      #
+      # Divergence: upstream is a tuple struct wrapping `ParquetMetaData`; this
+      # holds the fields directly. `new_from_metadata` mirrors the Rust
+      # `From<ParquetMetaData>` impl.
+      class ParquetMetaDataBuilder
+        getter file_metadata : FileMetaData
+        getter row_groups : Array(RowGroupMetaData)
+        getter page_index : PageIndexProvider?
+
+        def initialize(@file_metadata : FileMetaData)
+          @row_groups = [] of RowGroupMetaData
+          @page_index = nil
+        end
+
+        # Creates a builder from existing metadata.
+        def self.new_from_metadata(metadata : ParquetMetaData) : ParquetMetaDataBuilder
+          new(metadata.file_metadata).set_row_groups(metadata.row_groups).set_page_index(metadata.page_index)
+        end
+
+        # Adds a row group to the metadata.
+        def add_row_group(row_group : RowGroupMetaData) : self
+          @row_groups << row_group
+          self
+        end
+
+        # Sets all the row groups to the specified list.
+        # ameba:disable Naming/AccessorMethodName
+        def set_row_groups(row_groups : Array(RowGroupMetaData)) : self
+          @row_groups = row_groups
+          self
+        end
+
+        # Takes ownership of the row groups, clearing the list.
+        def take_row_groups : Array(RowGroupMetaData)
+          row_groups = @row_groups
+          @row_groups = [] of RowGroupMetaData
+          row_groups
+        end
+
+        # Sets the `PageIndexProvider`.
+        # ameba:disable Naming/AccessorMethodName
+        def set_page_index(page_index : PageIndexProvider?) : self
+          @page_index = page_index
+          self
+        end
+
+        # Takes the current `PageIndexProvider`, replacing it with `nil`.
+        def take_page_index : PageIndexProvider?
+          page_index = @page_index
+          @page_index = nil
+          page_index
+        end
+
+        # Creates a new `ParquetMetaData` from the builder.
+        def build : ParquetMetaData
+          ParquetMetaData.new(@file_metadata, @row_groups, @page_index)
         end
       end
 
