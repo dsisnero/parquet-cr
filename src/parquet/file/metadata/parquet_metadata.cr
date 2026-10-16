@@ -21,6 +21,8 @@ module Parquet
         getter key_value_metadata : Array(KeyValue)?
         getter schema_descr : Parquet::Schema::SchemaDescriptor
         getter column_orders : Array(ColumnOrder)?
+        property encryption_algorithm : EncryptionAlgorithm?
+        property footer_signing_key_metadata : Bytes?
 
         def initialize(
           @version : Int32,
@@ -29,6 +31,8 @@ module Parquet
           @key_value_metadata : Array(KeyValue)?,
           @schema_descr : Parquet::Schema::SchemaDescriptor,
           @column_orders : Array(ColumnOrder)?,
+          @encryption_algorithm : EncryptionAlgorithm? = nil,
+          @footer_signing_key_metadata : Bytes? = nil,
         )
         end
 
@@ -52,7 +56,9 @@ module Parquet
             created_by == other.created_by &&
             key_value_metadata == other.key_value_metadata &&
             schema_descr == other.schema_descr &&
-            column_orders == other.column_orders
+            column_orders == other.column_orders &&
+            encryption_algorithm == other.encryption_algorithm &&
+            footer_signing_key_metadata == other.footer_signing_key_metadata
         end
       end
 
@@ -214,7 +220,13 @@ module Parquet
           last_field_id = ::Parquet::Thrift.write_thrift_field(writer, created_by, 6_i16, last_field_id)
         end
         if column_orders = file_metadata.column_orders
-          ::Parquet::Thrift.write_thrift_field(writer, column_orders, 7_i16, last_field_id)
+          last_field_id = ::Parquet::Thrift.write_thrift_field(writer, column_orders, 7_i16, last_field_id)
+        end
+        if algo = file_metadata.encryption_algorithm
+          last_field_id = ::Parquet::Thrift.write_thrift_field(writer, algo, 8_i16, last_field_id)
+        end
+        if signing = file_metadata.footer_signing_key_metadata
+          ::Parquet::Thrift.write_thrift_field(writer, signing, 9_i16, last_field_id)
         end
 
         writer.write_struct_end
@@ -236,6 +248,8 @@ module Parquet
         created_by = nil.as(String?)
         column_orders = nil.as(Array(ColumnOrder)?)
         schema_descr = nil.as(Parquet::Schema::SchemaDescriptor?)
+        encryption_algorithm = nil.as(EncryptionAlgorithm?)
+        footer_signing_key_metadata = nil.as(Bytes?)
 
         last_field_id = 0_i16
         loop do
@@ -268,6 +282,10 @@ module Parquet
             created_by = prot.read_string
           when 7
             column_orders = ::Parquet::Thrift.read_thrift_vec(prot, ColumnOrder)
+          when 8
+            encryption_algorithm = EncryptionAlgorithm.read_thrift(prot)
+          when 9
+            footer_signing_key_metadata = prot.read_bytes
           else
             prot.skip(field_ident.field_type)
           end
@@ -294,7 +312,10 @@ module Parquet
           end
         end
 
-        fmd = FileMetaData.new(version, num_rows, created_by, key_value_metadata, descr, column_orders)
+        fmd = FileMetaData.new(
+          version, num_rows, created_by, key_value_metadata, descr, column_orders,
+          encryption_algorithm, footer_signing_key_metadata
+        )
         ParquetMetaData.new(fmd, row_groups)
       end
     end

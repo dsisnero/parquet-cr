@@ -54,3 +54,4 @@ Metrics/CyclomaticComplexity:
     - src/parquet_variant/variant/debug.cr
     - src/parquet_variant/builder/state.cr
     - src/parquet/file/metadata/column_chunk.cr
+    - src/parquet/file/metadata/thrift/encryption.cr

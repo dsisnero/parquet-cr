@@ -76,7 +76,8 @@ little-endian layout.
     `FileDecryptor`, `CryptoContext`, `read_and_decrypt`) with `decrypt_spec.cr`;
     and the `ColumnChunkMetaData` crypto wiring
     (`src/parquet/file/metadata/column_chunk.cr`: `column_crypto_metadata`/
-    `encrypted_column_metadata`/`plaintext_footer_mode` + fields 8/9 read/write).
+    `encrypted_column_metadata`/`plaintext_footer_mode` + fields 8/9 read/write,
+    `column_chunk_spec.cr`).
   - Phase 1.7: `util/bit_pack.cr` (`BitPack.unpack8/16/32/64`) and `decode_page`
     CRC verification (`file/serialized_reader.cr`).
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
@@ -98,12 +99,13 @@ little-endian layout.
      optional-but-valid, pruned/shuffled).
   4. Phase 3.4 encryption — **3.4a cipher layer**, **3.4b encryption Thrift IDL**,
      **3.4c AAD builders**, **3.4d encryption properties**, **3.4e decryption
-     properties**, and **3.4f `ColumnChunkMetaData` crypto wiring** (fields 8/9).
-     **Next (3.4g):** the file-reader/writer integration — the encrypted-footer
-     reader helpers (`parquet_metadata_with_encryption`/
-     `row_group_from_encrypted_thrift`/`get_file_decryptor` in
-     `file/metadata/thrift/encryption.rs`), `MetadataObjectWriter` encryption
-     dispatch, and `SerializedFileWriter`/`SerializedRowGroupWriter` wiring.
+     properties**, **3.4f `ColumnChunkMetaData` crypto wiring** (fields 8/9), and
+     **3.4g encrypted-footer reader** (`get_file_decryptor`/
+     `row_group_from_encrypted_thrift`/`parquet_metadata_with_encryption` +
+     `FileMetaData` fields 8/9). **Next (3.4h):** the encryption **writer**
+     integration — `MetadataObjectWriter` encryption dispatch and
+     `SerializedFileWriter`/`SerializedRowGroupWriter` wiring
+     (`SerializedRowGroupWriter.set_column_crypto_metadata`).
   5. Deferred (recorded divergences): async/object-store suffix fetchers, arrow
      interop (`parquet/src/arrow/`), `parquet-variant-compute`/`-json`, and the
      arrow `parquet-rewrite`/`parquet-fromcsv` CLI tools.
@@ -197,10 +199,17 @@ little-endian layout.
     added. Fields 8/9 are read/written, the plaintext `meta_data` (field 3) is
     skipped when `encrypted_column_metadata` is present and `plaintext_footer_mode`
     is false, and the reader returns early on `encrypted_column_metadata`.
-- Last commit: `5f26965 port: parquet encryption properties (decrypt)`; gates
-  green (`make lint`, `make test` -> 786 examples, 0 failures).
-- Progress by counts (ledger): 1717 `ported`, 223 `intentional_divergence`,
-  1 `skipped`, 1574 `missing` (of 3515 rows).
+  - Encrypted-footer reader: the helpers live in
+    `file/metadata/thrift/encryption.cr` (`get_file_decryptor`,
+    `row_group_from_encrypted_thrift`, `parquet_metadata_with_encryption`);
+    `FileMetaData` gains `encryption_algorithm`/`footer_signing_key_metadata`
+    (thrift fields 8/9). `ParquetMetaData` has no `file_decryptor` field
+    (upstream builder sets one); the row-group decryptor is threaded through the
+    call instead. AES_GCM_CTR_V1 raises `NYIError`.
+- Last commit: `de071a3 port: wire ColumnChunkMetaData crypto metadata (thrift fields 8/9)`;
+  gates green (`make lint`, `make test` -> 794 examples, 0 failures).
+- Progress by counts (ledger): 1718 `ported`, 223 `intentional_divergence`,
+  1 `skipped`, 1573 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -260,10 +269,11 @@ Chunk status by area:
   `src/parquet/file/metadata/thrift/encryption.cr`), the AAD builders
   (`src/parquet/encryption/modules.cr`), the encryption properties
   (`src/parquet/encryption/encrypt.cr`), the decryption properties
-  (`src/parquet/encryption/decrypt.cr`), and the `ColumnChunkMetaData` crypto
-  wiring (`src/parquet/file/metadata/column_chunk.cr`) done; the `WkbType`
-  `ExtensionType` impl, the remaining encryption (file-reader/writer
-  integration), arrow, and async remain pending.
+  (`src/parquet/encryption/decrypt.cr`), the `ColumnChunkMetaData` crypto
+  wiring (`src/parquet/file/metadata/column_chunk.cr`), and the encrypted-footer
+  reader (`src/parquet/file/metadata/thrift/encryption.cr`) done; the `WkbType`
+  `ExtensionType` impl, the remaining encryption (writer integration), arrow,
+  and async remain pending.
 
 ## Phase 0 — Project initialization
 
@@ -641,11 +651,15 @@ Chunk status by area:
   `encrypt_spec.cr`), and the decryption properties
   (`src/parquet/encryption/decrypt.cr`: `KeyRetriever`/`FileDecryptionProperties`/
   `DecryptionPropertiesBuilder[WithRetriever]`/`FileDecryptor`/`CryptoContext`/
-  `read_and_decrypt`, `decrypt_spec.cr`), and the `ColumnChunkMetaData` crypto
+  `read_and_decrypt`, `decrypt_spec.cr`), the `ColumnChunkMetaData` crypto
   wiring (`src/parquet/file/metadata/column_chunk.cr`: fields 8/9 +
-  `plaintext_footer_mode`, `column_chunk_spec.cr`). Pending: the file-reader/
-  writer integration (encrypted-footer reader helpers, `MetadataObjectWriter`
-  encryption dispatch, `SerializedFileWriter`/`SerializedRowGroupWriter` wiring).
+  `plaintext_footer_mode`, `column_chunk_spec.cr`), and the encrypted-footer
+  reader (`src/parquet/file/metadata/thrift/encryption.cr`:
+  `get_file_decryptor`/`row_group_from_encrypted_thrift`/
+  `parquet_metadata_with_encryption` + `FileMetaData` fields 8/9,
+  `encryption_reader_spec.cr`). Pending: the encryption **writer** integration
+  (`MetadataObjectWriter` encryption dispatch, `SerializedFileWriter`/
+  `SerializedRowGroupWriter` wiring).
 
 ### 3.5 Arrow interop (deferred)
 

@@ -2562,7 +2562,7 @@ parquet/src/file/metadata/mod.rs::method::FileMetaData.schema_descr	method	porte
 parquet/src/file/metadata/mod.rs::method::FileMetaData.schema_descr_ptr	method	ported	src/parquet/file/metadata/parquet_metadata.cr	FileMetaData
 parquet/src/file/metadata/mod.rs::method::FileMetaData.version	method	ported	src/parquet/file/metadata/parquet_metadata.cr	FileMetaData
 parquet/src/file/metadata/mod.rs::method::FileMetaData.with_encryption_algorithm	method	missing	-	auto-generated
-parquet/src/file/metadata/mod.rs::method::FileMetaData.with_footer_signing_key_metadata	method	missing	-	auto-generated
+parquet/src/file/metadata/mod.rs::method::FileMetaData.with_footer_signing_key_metadata	method	ported	src/parquet/file/metadata/parquet_metadata.cr	FileMetaData#footer_signing_key_metadata property (fields 8/9 wiring)
 parquet/src/file/metadata/mod.rs::method::KeyValue.new	method	ported	src/parquet/file/metadata/column_chunk.cr	KeyValue.new (macro-generated)
 parquet/src/file/metadata/mod.rs::method::LevelHistogram.add	method	ported	src/parquet/file/metadata.cr	LevelHistogram
 parquet/src/file/metadata/mod.rs::method::LevelHistogram.from	method	ported	src/parquet/file/metadata.cr	LevelHistogram
