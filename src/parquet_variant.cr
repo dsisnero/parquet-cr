@@ -1,5 +1,6 @@
 require "./parquet_variant/errors"
 require "./parquet_variant/utils"
+require "./parquet_variant/short_string"
 require "./parquet_variant/decoder"
 require "./parquet_variant/path"
 require "./parquet_variant/variant/metadata"

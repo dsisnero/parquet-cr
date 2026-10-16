@@ -20,4 +20,11 @@ module ParquetVariant
       super("Parser error: #{message}")
     end
   end
+
+  # `ArrowError::CastError`.
+  class CastError < ::Parquet::ParquetError
+    def initialize(message : String)
+      super("Cast error: #{message}")
+    end
+  end
 end
