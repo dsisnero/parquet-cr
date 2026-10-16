@@ -55,8 +55,8 @@ little-endian layout.
      API.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 1173 `ported`, 167 `intentional_divergence`,
-  1 `skipped`, 2174 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1173 `ported`, 168 `intentional_divergence`,
+  1 `skipped`, 2173 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -172,6 +172,8 @@ Chunk status by area:
 - [x] `BitReader`/`BitWriter` + helpers (`src/parquet/util/bit_util.cr`).
 - [x] `Interner`/`Storage` (`src/parquet/util/interner.cr`) used by the
       dictionary encoder.
+- [x] `common_prefix_length` (`src/parquet/util/prefix.cr`) used by
+      DELTA_BYTE_ARRAY; the upstream 32-byte block scan is a scalar scan.
 - [ ] Bit packing (`util/bit_pack.rs`), cursor, page readers (`util/` remaining).
 - [ ] CRC32 checksum helpers.
 

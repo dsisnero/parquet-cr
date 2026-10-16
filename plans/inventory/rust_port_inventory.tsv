@@ -3449,7 +3449,7 @@ parquet/src/util/interner.rs::method::Interner<S>.intern	method	ported	src/parqu
 parquet/src/util/interner.rs::method::Interner<S>.into_inner	method	intentional_divergence	src/parquet/util/interner.cr	arrow-only into_inner not ported
 parquet/src/util/interner.rs::method::Interner<S>.new	method	ported	src/parquet/util/interner.cr	Interner.new
 parquet/src/util/interner.rs::method::Interner<S>.storage	method	ported	src/parquet/util/interner.cr	Interner#storage
-parquet/src/util/prefix.rs::const::BLOCK	const	missing	-	auto-generated
+parquet/src/util/prefix.rs::const::BLOCK	const	intentional_divergence	src/parquet/util/prefix.cr	SIMD block scan not modelled (scalar scan)
 parquet/src/util/push_buffers.rs::method::PushBuffers.buffered_bytes	method	intentional_divergence	src/parquet/util/push_buffers.cr	arrow-feature only; not needed by metadata push decoder
 parquet/src/util/push_buffers.rs::method::PushBuffers.clear_all_ranges	method	ported	src/parquet/util/push_buffers.cr	PushBuffers
 parquet/src/util/push_buffers.rs::method::PushBuffers.clear_ranges	method	intentional_divergence	src/parquet/util/push_buffers.cr	arrow-feature only; not ported
