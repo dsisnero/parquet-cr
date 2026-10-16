@@ -55,6 +55,9 @@ require "./parquet/file/metadata/push_decoder"
 require "./parquet/file/metadata/writer"
 require "./parquet/file/writer"
 require "./parquet/file/reader"
+require "./parquet/record/api"
+require "./parquet/record/triplet"
+require "./parquet/record/reader"
 
 module Parquet
   VERSION = "0.1.0"

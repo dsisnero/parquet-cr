@@ -51,15 +51,17 @@ little-endian layout.
   encoder, the column reader/writer impls, the compression `Codec` framework
   (`GZipCodec`), the serialized page reader/writer, and the file-level
   `SerializedFileWriter`/`SerializedFileReader` (with `FileReader`/
-  `RowGroupReader`, `ReadOptions`/`ReadOptionsBuilder`) are done.
+  `RowGroupReader`, `ReadOptions`/`ReadOptionsBuilder`), and the record API
+  (`Field`/`Row`/`List`/`Map`, `TripletIter`, `TreeBuilder`/`Reader`/`RowIter`,
+  wired into `get_row_iter`) are done.
 - Next up (take the first unchecked item):
-  1. The record API (`record/`): `Triplet`/`Field`/`Record`, `RowIter`/
-     `RowAccessor`, and record reader/writer — needed for the deferred
-     `get_row_iter`/`FilePageIterator`.
+  1. `FilePageIterator` (needs the `PageIterator` trait), then Phase 3:
+     `parquet_derive`-style record reader/writer, the CLI (`2.5`), and the
+     variant/geospatial crates.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 1231 `ported`, 184 `intentional_divergence`,
-  1 `skipped`, 2099 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1302 `ported`, 186 `intentional_divergence`,
+  1 `skipped`, 2026 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -84,14 +86,17 @@ Chunk status by area:
   `ParquetMetaDataReader`, the `ParquetMetaDataWriter`/`ThriftMetadataWriter`,
   the bloom filter (`Sbbf`), the serialized page reader/writer, and the
   file-level `SerializedFileReader`/`SerializedFileWriter` done; the offset-index
-  `Pages` state and the record API (`RowIter`) pending.
+  `Pages` state pending.
 - Phase 2.1 encodings: complete (all codecs, the `Encoder`/`Decoder`
   interfaces, and the `get_encoder`/`get_decoder` registries).
 - Phase 2.2 column: `ColumnDescriptor`, column page types/interfaces, the
   level/value decoders, the writer value encoder, the byte-budget chunker, the
   truncation helpers, `ColumnReaderImpl`, and `GenericColumnWriter` done;
   `column/mod.rs` glue, `chunkers/`, and `page_store` pending.
-- Phases 2.4 record, 2.5 CLI: pending.
+- Phase 2.4 record: `api` (`Field`/`Row`/`List`/`Map`), `triplet`
+  (`TripletIter`), and `reader` (`TreeBuilder`/`Reader`/`RowIter`) done;
+  `get_row_iter` wired; `FilePageIterator` pending.
+- Phase 2.5 CLI: pending.
 - Phase 3 (variant/geospatial/derive/encryption/arrow/async): pending.
 
 ## Phase 0 — Project initialization
@@ -323,9 +328,10 @@ Chunk status by area:
   + `write_bloom_filters`/`OnClose*` (`src/parquet/file/writer.cr`) and
   `FileReader`/`RowGroupReader`/`SerializedFileReader`/`SerializedRowGroupReader`
   + `ReadOptions`/`ReadOptionsBuilder`/`get_midpoint_offset`
-  (`src/parquet/file/reader.cr`); `get_row_iter` (record API), `FilePageIterator`
-  (`PageIterator` trait), and the arrow `append_column*` splice paths are
-  deferred. Writer spec + reader spec ported (`writer_spec.cr`, `reader_spec.cr`).
+  (`src/parquet/file/reader.cr`); `get_row_iter` is wired in `record/reader.cr`
+  (Phase 2.4); `FilePageIterator` (`PageIterator` trait) and the arrow
+  `append_column*` splice paths are deferred. Writer spec + reader spec ported
+  (`writer_spec.cr`, `reader_spec.cr`).
 - [x] Bloom filter (`src/parquet/bloom_filter.cr`): `Sbbf` + `Block`, the
   `BloomFilterHeader` thrift struct, and the header/serialization helpers;
   `Parquet::XxHash64` (`src/parquet/util/xxhash.cr`).
@@ -339,9 +345,21 @@ Chunk status by area:
 
 ### 2.4 Record API
 
-- [ ] `Triplet`, `Field`, `Record` traits.
-- [ ] `RowIter`/`RowAccessor`, record reader/writer (`record/`).
-- [ ] 3 upstream test modules + `parquet/tests` record suites.
+- [x] `record/api.cr`: `Field` (sealed hierarchy), `Row`, `List`, `Map`,
+  `RowAccessor`/`ListAccessor`/`MapAccessor`/`RowFormatter` (modules),
+  `RowColumnIter`, the `convert_*` builders, and the date/time/decimal/float
+  formatting helpers + `to_json_value` (`JSON::Any`). `api_spec.cr` ported.
+- [x] `record/triplet.cr`: `TripletIter` (abstract) + `TypedTripletIter(T)`.
+  `triplet_spec.cr` ported (uncompressed fixtures; SNAPPY cases deferred).
+- [x] `record/reader.cr`: `TreeBuilder`, `Reader` (+
+  `Primitive/Group/Option/Repeated/KeyValue` subclasses), `ReaderIter`,
+  `RowIter`; `get_row_iter` added to `FileReader`/`RowGroupReader`.
+  `reader_spec.cr` ported.
+- [ ] Record reader/writer traits (`record_reader.rs`/`record_writer.rs`) — used
+  by `parquet_derive` (Phase 3.3); not tracked in the ledger.
+- [~] 3 upstream test modules ported (the SNAPPY-fixture cases are covered with
+  uncompressed fixtures); `parquet/tests` record suites pending.
+- [ ] `FilePageIterator` (`file/reader.rs`, needs the `PageIterator` trait).
 
 ### 2.5 CLI
 
@@ -642,10 +660,31 @@ Chunk status by area:
   `SerializedRowGroupReader<R>` are non-generic over `ChunkReader` and their
   `Arc<R>`/lifetimes are erased. `with_range(start, end)` takes `end_` (Crystal
   reserves `end`) and raises `GeneralError` where upstream panics.
-  `get_row_iter` (record `RowIter`) and `FilePageIterator` (the `PageIterator`
-  trait) are deferred to the record chunk; the `TryFrom<File>`/path constructors
-  map to `SerializedFileReader.new`, and the `IntoIterator`/`try_from` impls are
-  not modelled.
+  `get_row_iter` is added by `record/reader.cr` (reopening the abstract classes);
+  `FilePageIterator` (the `PageIterator` trait) is deferred; the
+  `TryFrom<File>`/path constructors map to `SerializedFileReader.new`, and the
+  `IntoIterator`/`try_from` impls are not modelled.
+- `record::api`: Rust's payload-carrying `Field` enum is a sealed class
+  hierarchy (`Field::Int`, `Field::Str`, ...) with `type_name`/`primitive?`
+  (`is_primitive`); the `RowAccessor`/`ListAccessor`/`MapAccessor`/`RowFormatter`
+  traits are modules (`fmt` returns a `String`); `usize` is `Int32`;
+  `serde_json::Value` is `JSON::Any` (integers stored as `Int64`); the `f16`
+  value is carried as the decoded `Float64`; float/date/time/decimal `Display`
+  strings are reproduced with helpers (`rust_display_f32`/`_f64`/`_f16`,
+  `convert_decimal_to_string` via `BigInt`); `Row`/`List`/`Map` constructors are
+  generic over `Field`-subtype tuples/arrays (Crystal tuple invariance);
+  `RowColumnIter` is an `Iterator`.
+- `record::triplet`: the `TripletIter` enum is an abstract class with the generic
+  `TypedTripletIter(T)`; `TypedTripletIter#current_value` (raw `T`) is renamed
+  `typed_value` (it would otherwise clash with `TripletIter#current_value`, which
+  returns a `Field`).
+- `record::reader`: the `Reader` enum is an abstract class with
+  `PrimitiveReader`/`OptionReader`/`GroupReader`/`RepeatedReader`/
+  `KeyValueReader` subclasses; `GroupReader` widens its child array; the
+  `Either` file-reader wrapper is an optional `FileReader`; `RowIter`/
+  `ReaderIter` are `Iterator(Row)` (errors raise); `get_row_iter` is added by
+  reopening `FileReader`/`RowGroupReader`. The `record_reader.rs`/
+  `record_writer.rs` traits (used by `parquet_derive`) are not ported.
 - `chunk_reader`: `BytesChunkReader#get_read`/`get_bytes` and
   `FileChunkReader#get_bytes` raise the upstream `EOF` messages
   ("Expected to read ... while file has length ..."); `FileChunkReader` reads
