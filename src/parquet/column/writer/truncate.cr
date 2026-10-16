@@ -1,4 +1,5 @@
 require "./encoder"
+require "../../file/statistics"
 
 # Ported from `parquet/src/column/writer/mod.rs` truncation helpers
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
@@ -155,6 +156,53 @@ module Parquet
 
         bytes = result.is_a?(Bytes) ? result : Slice.new(result.to_unsafe, result.size).dup
         {bytes, true}
+      end
+
+      # Truncates the min/max values written to a data page header or column
+      # chunk `Statistics` for binary columns.
+      def self.truncate_statistics(
+        descr : Schema::ColumnDescriptor,
+        props : File::Properties::WriterProperties,
+        statistics : Statistics,
+      ) : Statistics
+        backwards_compatible_min_max = descr.sort_order.signed?
+
+        case value = statistics.value
+        when ValueStatistics(ByteArray)
+          min_bytes = value.min_bytes_opt
+          max_bytes = value.max_bytes_opt
+          return statistics if min_bytes.nil? || max_bytes.nil?
+
+          min, did_truncate_min = truncate_min_value(descr, props.statistics_truncate_length, min_bytes)
+          max, did_truncate_max = truncate_max_value(descr, props.statistics_truncate_length, max_bytes)
+          Statistics.new(
+            ValueStatistics(ByteArray).new(
+              ByteArray.new(min),
+              ByteArray.new(max),
+              value.distinct_count,
+              value.null_count_opt,
+              backwards_compatible_min_max,
+            ).with_max_is_exact(!did_truncate_max).with_min_is_exact(!did_truncate_min)
+          )
+        when ValueStatistics(FixedLenByteArray)
+          min_bytes = value.min_bytes_opt
+          max_bytes = value.max_bytes_opt
+          return statistics if min_bytes.nil? || max_bytes.nil? || !can_truncate_value(descr)
+
+          min, did_truncate_min = truncate_min_value(descr, props.statistics_truncate_length, min_bytes)
+          max, did_truncate_max = truncate_max_value(descr, props.statistics_truncate_length, max_bytes)
+          Statistics.new(
+            ValueStatistics(FixedLenByteArray).new(
+              FixedLenByteArray.new(ByteArray.new(min)),
+              FixedLenByteArray.new(ByteArray.new(max)),
+              value.distinct_count,
+              value.null_count_opt,
+              backwards_compatible_min_max,
+            ).with_max_is_exact(!did_truncate_max).with_min_is_exact(!did_truncate_min)
+          )
+        else
+          statistics
+        end
       end
     end
   end

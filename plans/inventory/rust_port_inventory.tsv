@@ -1908,7 +1908,7 @@ parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.should_add_
 parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.should_dict_fallback	method	missing	-	auto-generated
 parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.truncate_max_value	method	ported	src/parquet/column/writer/truncate.cr	Writer.truncate_max_value
 parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.truncate_min_value	method	ported	src/parquet/column/writer/truncate.cr	Writer.truncate_min_value
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.truncate_statistics	method	intentional_divergence	src/parquet/column/writer/truncate.cr	deferred to GenericColumnWriter (needs Statistics mutation)
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.truncate_statistics	method	ported	src/parquet/column/writer/truncate.cr	Writer.truncate_statistics
 parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.update_column_offset_index	method	missing	-	auto-generated
 parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.update_metrics_for_page	method	missing	-	auto-generated
 parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.window_end_for_values	method	missing	-	auto-generated

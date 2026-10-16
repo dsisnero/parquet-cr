@@ -6,6 +6,7 @@ require "../../spec_helper"
 # ef1fa157977633f0ba21aa921f9ef3d5c669235b).
 
 private alias Writer = Parquet::Column::Writer
+private alias WP = Parquet::File::Properties::WriterProperties
 
 private def u8arr(*values : UInt8) : Array(UInt8)
   values.to_a
@@ -145,6 +146,27 @@ describe Parquet::Column::Writer do
     max, truncated = Writer.truncate_max_value(utf8, 8, invalid)
     truncated.should be_true
     max.should eq(as_bytes(u8arr(128_u8, 128, 128, 128, 128, 128, 128, 129)))
+  end
+
+  it "truncates byte-array statistics" do
+    utf8 = make_truncate_desc(PType::BYTE_ARRAY, logical: LogicalType::String.new)
+    props = WP.builder.set_statistics_truncate_length(7).build
+
+    stats = Parquet::Statistics.byte_array(
+      Parquet::ByteArray.new("ééééé"), Parquet::ByteArray.new("ééééé"), nil, 0_u64, true
+    )
+    truncated = Writer.truncate_statistics(utf8, props, stats)
+    truncated.min_bytes_opt.should eq("ééé".to_slice)
+    truncated.max_bytes_opt.should eq("ééê".to_slice)
+    truncated.min_is_exact.should be_false
+    truncated.max_is_exact.should be_false
+  end
+
+  it "leaves non-binary statistics unchanged" do
+    int32 = make_truncate_desc(PType::INT32)
+    props = WP.builder.set_statistics_truncate_length(7).build
+    stats = Parquet::Statistics.int32(1, 2, nil, 0_u64, true)
+    Writer.truncate_statistics(int32, props, stats).should eq(stats)
   end
 end
 

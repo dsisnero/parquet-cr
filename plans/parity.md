@@ -55,7 +55,7 @@ little-endian layout.
      reader+writer, then record API.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 1146 `ported`, 164 `intentional_divergence`,
+- Progress by counts (ledger): 1147 `ported`, 163 `intentional_divergence`,
   1 `skipped`, 2204 `missing` (of 3515 rows).
 
 Chunk status by area:
@@ -224,7 +224,8 @@ Chunk status by area:
 - [x] Column writer statistics-truncation helpers
   (`src/parquet/column/writer/truncate.cr`): `truncate_utf8`/
   `truncate_and_increment_utf8`/`increment_utf8`/`increment`,
-  `can_truncate_value`/`is_utf8`/`truncate_min_value`/`truncate_max_value`.
+  `can_truncate_value`/`is_utf8`/`truncate_min_value`/`truncate_max_value`/
+  `truncate_statistics`.
 - [x] Column writer data holders (`src/parquet/column/writer.cr`):
   `ColumnCloseResult`, `PageMetrics`, `ColumnMetrics(T)`, `LevelDataRef`.
 - [x] Column writer byte-budget chunker
@@ -576,9 +577,9 @@ Chunk status by area:
 - `column::writer::truncate`: the statistics-truncation helpers (`truncate_utf8`,
   `truncate_and_increment_utf8`, `increment_utf8`, `increment`) and
   `can_truncate_value`/`is_utf8`/`truncate_min_value`/`truncate_max_value` are
-  `Parquet::Column::Writer` module methods   (upstream: free functions +
-  `GenericColumnWriter` methods); `GenericColumnWriter::truncate_statistics`
-  (which mutates `Statistics`) is deferred with the writer.
+  `Parquet::Column::Writer` module methods (upstream: free functions +
+  `GenericColumnWriter` methods), including `truncate_statistics` (which rebuilds
+  the `Statistics` value).
 - `compression::codecs`: the `Codec` trait (mutating `Vec<u8>` buffers) becomes
   an abstract class appending to `Array(UInt8)`; only the GZIP codec is ported
   (Crystal stdlib `Compress::Gzip`). Snappy/LZO/Brotli/LZ4/Zstd need Crystal
