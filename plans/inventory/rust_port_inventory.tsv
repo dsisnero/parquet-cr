@@ -1838,25 +1838,25 @@ parquet/src/column/reader/decoder.rs::method::RepetitionLevelDecoderImpl.skip_re
 parquet/src/column/writer/byte_budget_chunker.rs::method::ByteBudgetChunker.byte_budget_sub_batch	method	missing	-	auto-generated
 parquet/src/column/writer/byte_budget_chunker.rs::method::ByteBudgetChunker.new	method	missing	-	auto-generated
 parquet/src/column/writer/byte_budget_chunker.rs::method::ByteBudgetChunker.pick_sub_batch	method	missing	-	auto-generated
-parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.compresses_against_previous_value	method	missing	-	auto-generated
-parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.count_values_within_byte_budget	method	missing	-	auto-generated
-parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.count_values_within_byte_budget_gather	method	missing	-	auto-generated
-parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.estimated_data_page_size	method	missing	-	auto-generated
-parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.estimated_dict_page_size	method	missing	-	auto-generated
-parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.estimated_memory_size	method	missing	-	auto-generated
-parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.flush_bloom_filter	method	missing	-	auto-generated
-parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.flush_data_page	method	missing	-	auto-generated
-parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.flush_dict_page	method	missing	-	auto-generated
-parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.flush_geospatial_statistics	method	missing	-	auto-generated
-parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.has_dictionary	method	missing	-	auto-generated
-parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.is_floating_point_column	method	missing	-	auto-generated
-parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.num_values	method	missing	-	auto-generated
-parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.try_new	method	missing	-	auto-generated
-parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.write	method	missing	-	auto-generated
-parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.write_gather	method	missing	-	auto-generated
-parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.write_slice	method	missing	-	auto-generated
-parquet/src/column/writer/encoder.rs::method::[T].len	method	missing	-	auto-generated
-parquet/src/column/writer/encoder.rs::method::dyn arrow_array::Array.len	method	missing	-	auto-generated
+parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.compresses_against_previous_value	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
+parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.count_values_within_byte_budget	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
+parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.count_values_within_byte_budget_gather	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
+parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.estimated_data_page_size	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
+parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.estimated_dict_page_size	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
+parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.estimated_memory_size	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
+parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.flush_bloom_filter	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
+parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.flush_data_page	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
+parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.flush_dict_page	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
+parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.flush_geospatial_statistics	method	intentional_divergence	src/parquet/column/writer/encoder.cr	geospatial not ported (returns nil)
+parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.has_dictionary	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
+parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.is_floating_point_column	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
+parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.num_values	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
+parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.try_new	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
+parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.write	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
+parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.write_gather	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
+parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.write_slice	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
+parquet/src/column/writer/encoder.rs::method::[T].len	method	intentional_divergence	src/parquet/column/writer/encoder.cr	ColumnValues -> Array(T)
+parquet/src/column/writer/encoder.rs::method::dyn arrow_array::Array.len	method	intentional_divergence	src/parquet/column/writer/encoder.cr	arrow not ported
 parquet/src/column/writer/mod.rs::const::EXPECTED_MAX	const	missing	-	auto-generated
 parquet/src/column/writer/mod.rs::const::EXPECTED_MIN	const	missing	-	auto-generated
 parquet/src/column/writer/mod.rs::const::PSEUDO_DECIMAL_BYTES	const	missing	-	auto-generated

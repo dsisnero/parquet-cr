@@ -47,16 +47,16 @@ little-endian layout.
   dictionary, byte-stream-split, RLE value, ALP), the `Encoder`/`Decoder`
   interfaces + `get_encoder`/`get_decoder` registries, the writer/reader
   properties, the column level/value decoders, the column page
-  types/interfaces, and the bloom filter (`Sbbf`) are done.
+  types/interfaces, the bloom filter (`Sbbf`), and the column writer value
+  encoder are done.
 - Next up (take the first unchecked item):
-  1. Column writer/reader encoders (`column/writer/encoder.rs`) + the
-     writer-mod helpers (`fallback_encoding`, `has_dictionary_support`,
-     `compare_greater`, `is_nan`, `update_min/max`), then `ColumnReaderImpl`/
-     `ColumnWriterImpl`, then serialized/file reader+writer, then record API.
+  1. `ColumnReaderImpl`/`ColumnWriterImpl` (`column/reader.rs`,
+     `column/writer/mod.rs`), then serialized/file reader+writer, then record
+     API.
   2. Deferred: async/object-store suffix fetchers and encryption are intentional
      divergences (recorded).
-- Progress by counts (ledger): 1087 `ported`, 118 `intentional_divergence`,
-  1 `skipped`, 2309 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1103 `ported`, 121 `intentional_divergence`,
+  1 `skipped`, 2290 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -218,6 +218,11 @@ Chunk status by area:
 
 - [ ] `ColumnDescriptor`, `ColumnReader`, `ColumnWriter`.
 - [ ] `ColumnReaderImpl`/`ColumnWriterImpl`.
+- [x] Column writer value encoder + statistics/encoding helpers
+  (`src/parquet/column/writer/encoder.cr`): `ColumnValueEncoder`(+Impl(T)),
+  `DictionaryPage`, `DataPageValues(T)`, `get_min_max`/`update_min`/`update_max`/
+  `is_nan`/`compare_greater*`, `fallback_encoding`, `has_dictionary_support`,
+  `create_bloom_filter`, byte-budget counting.
 - [x] Column page types/interfaces (`src/parquet/column/page.cr`): `Page`
   (`DataPage`/`DataPageV2`/`DictionaryPage`), `CompressedPage`, `PageWriteSpec`,
   `PageMetadata`, `PageReader`/`PageWriter`.
@@ -533,6 +538,14 @@ Chunk status by area:
   `estimated_memory_size` uses the block count; internal helpers
   (`Block.mask`, `Sbbf#hash_to_block_index`/`insert_hash`/`fold_n`/`blocks`)
   are exposed for the upstream white-box tests.
+- `column::writer::encoder`: the `ColumnValueEncoder` trait (associated `T`/
+  `Values`) is an abstract `ColumnValueEncoder(T)` class; `ColumnValues` is
+  `Array(T)`; `usize` is `Int32`; `f16`/float `total_cmp` are hand-rolled IEEE
+  total-order keys; `is_nan`/`compare_greater` dispatch on `T.class`; the
+  statistics/encoding helpers (`get_min_max`, `update_min`/`update_max`,
+  `fallback_encoding`, `has_dictionary_support`, `create_bloom_filter`,
+  byte-budget counting) live on the `Column::Writer` module; geospatial
+  accumulators are not ported (`flush_geospatial_statistics` returns `nil`).
 - `encodings::byte_stream_split`: `ByteStreamSplitEncoder(T)`/`Decoder(T)` and
   `VariableWidthByteStreamSplitEncoder(T)`/`Decoder(T)` with `T.class`; the
   constant `split_streams_const`/`join_streams_const` and `_variable` kernels
