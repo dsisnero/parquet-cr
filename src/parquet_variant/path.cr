@@ -1,4 +1,4 @@
-require "../parquet/errors"
+require "./errors"
 
 # Ported from `parquet-variant/src/path.rs` and the `parse_path` helpers in
 # `parquet-variant/src/utils.rs` (apache/arrow-rs 60.0.0,
@@ -11,13 +11,6 @@ require "../parquet/errors"
 # and returns `self` (upstream consumes); parsing scans bytes (ASCII delimiters
 # never appear inside a UTF-8 multi-byte sequence).
 module ParquetVariant
-  # Upstream `arrow_schema::ArrowError::ParseError`.
-  class ParseError < ::Parquet::ParquetError
-    def initialize(message : String)
-      super("Parser error: #{message}")
-    end
-  end
-
   # Element of a `VariantPath`: a field name or a list index.
   struct VariantPathElement
     enum Kind

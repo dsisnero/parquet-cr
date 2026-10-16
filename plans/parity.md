@@ -60,19 +60,19 @@ little-endian layout.
   `parquet-layout`, `parquet-schema`, and `parquet-concat` are done. **Phase 2 is
   complete** except the arrow-dependent CLI tools
   (`parquet-rewrite`/`parquet-fromcsv`). Phase 3 has started:
-  `parquet-variant`'s `VariantPath`/`VariantPathElement` + dot/bracket parser
-  (`src/parquet_variant/path.cr`, tests ported).
+  `parquet-variant`'s `VariantPath`/`VariantPathElement` + dot/bracket parser,
+  the `utils` helpers, `OffsetSizeBytes`/`map_bytes_to_offsets`, and
+  `VariantMetadata` (`src/parquet_variant/`, tests ported).
 - Next up (take the first unchecked item):
   1. Phase 3.1: the rest of `parquet-variant` (`Variant`, `VariantBuilder`,
-     metadata, decoder, `utils`) — note `VariantMetadata::borrowed_field_id`'s
-     zero-copy fast path cannot be modelled (Crystal `String.new(Bytes)` copies),
-     so it will be documented as an intentional divergence; then `-compute`/`-json`.
+     `VariantObject`/`VariantList`/`VariantDecimal`, the decoder); then
+     `-compute`/`-json`.
   2. Phase 3.3 `parquet_derive` (Crystal macros); Phase 3.2 geospatial; Phase 3.4
      encryption.
   3. Deferred: async/object-store suffix fetchers, encryption, and the arrow
      `parquet-rewrite`/`parquet-fromcsv` are intentional divergences (recorded).
-- Progress by counts (ledger): 1329 `ported`, 181 `intentional_divergence`,
-  1 `skipped`, 2004 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1356 `ported`, 182 `intentional_divergence`,
+  1 `skipped`, 1976 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -113,8 +113,10 @@ Chunk status by area:
   `parquet-layout`, `parquet-schema`, and `parquet-concat` done;
   `parquet-rewrite`/`parquet-fromcsv` need arrow.
 - Phase 3 (variant/geospatial/derive/encryption/arrow/async): `parquet-variant`'s
-  `VariantPath`/`VariantPathElement` + parser done; the variant encoding/builder/
-  decoder, geospatial, derive, encryption, arrow, and async remain pending.
+  `VariantPath`/`VariantPathElement` + parser, the `utils` helpers,
+  `OffsetSizeBytes`/`map_bytes_to_offsets`, and `VariantMetadata` done; the
+  variant encoding/`Variant`/builder/decoder, geospatial, derive, encryption,
+  arrow, and async remain pending.
 
 ## Phase 0 — Project initialization
 
@@ -410,8 +412,13 @@ Chunk status by area:
 
 - [~] `parquet-variant` (Variant binary encoding): `VariantPath`/
   `VariantPathElement` + the dot/bracket parser (`src/parquet_variant/path.cr`,
-  `path_spec.cr`) done; `Variant`, `VariantBuilder`, metadata, decoder, and
-  `utils` pending.
+  `path_spec.cr`), the `utils` byte-slicing helpers
+  (`src/parquet_variant/utils.cr`), `OffsetSizeBytes`/`map_bytes_to_offsets`
+  (`src/parquet_variant/decoder.cr`), and `VariantMetadata`
+  (`src/parquet_variant/variant/metadata.cr`, `metadata_spec.cr`) done;
+  `Variant`, `VariantBuilder`, the rest of the decoder, and `VariantObject`/
+  `VariantList`/`VariantDecimal` pending. `VariantMetadata#borrowed_field_id`'s
+  zero-copy fast path is an intentional divergence (Crystal copies substrings).
 - [ ] `parquet-variant-compute`.
 - [ ] `parquet-variant-json`.
 
@@ -758,8 +765,19 @@ Chunk status by area:
   `"Parser error: {msg}"`); `Cow` field names are owned `String`s; `usize` index
   is `Int32`; `VariantPath#deref` to `[VariantPathElement]` maps to `#[]`/`#path`;
   `join` mutates and returns `self` (upstream consumes); the parser scans bytes
-  (ASCII delimiters never occur inside a UTF-8 sequence) and the unused `utils`
-  helpers (`slice_from_slice` etc.) are not ported yet.
+  (ASCII delimiters never occur inside a UTF-8 sequence).
+- `parquet-variant::utils`/`decoder`/`metadata`: `utils` helpers are
+  `ParquetVariant::Utils` module methods over `Bytes` (no `SliceIndex` generic;
+  `array_from_slice` returns a `Bytes` slice); because Crystal's
+  `String.new(Bytes)`/`String#byte_slice?` do **not** validate UTF-8,
+  `string_from_slice`/`slice_value` check `valid_encoding?` explicitly;
+  `OffsetSizeBytes` is an enum with `unpack_u32*` methods; `VariantMetadata` is a
+  class (mutable `bytes`) with `is_sorted`→`sorted?`, `is_empty`→`empty?`,
+  `is_fully_validated`→`fully_validated?`, `get` raising instead of `Result`, and
+  `iter_try == iter`. `VariantMetadata#borrowed_field_id`'s zero-copy fast path
+  cannot be modelled (Crystal copies substrings), so it always returns `nil` and
+  `get_entry` always uses the name search (an intentional divergence; behavior is
+  still correct, just slower).
 - `chunk_reader`: `BytesChunkReader#get_read`/`get_bytes` and
   `FileChunkReader#get_bytes` raise the upstream `EOF` messages
   ("Expected to read ... while file has length ..."); `FileChunkReader` reads

@@ -24,6 +24,7 @@ Naming/QueryBoolMethods:
     - src/parquet/compression.cr
     - src/parquet/file/reader.cr
     - src/parquet/record/api.cr
+    - src/parquet_variant/variant/metadata.cr
 
 # The column writer is a large, direct port; its upstream `not_nil!`-equivalent
 # unwraps and cyclic control flow are kept as-is. The serialized file/row-group
