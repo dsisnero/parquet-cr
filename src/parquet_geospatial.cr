@@ -1,3 +1,6 @@
 require "./parquet_geospatial/errors"
 require "./parquet_geospatial/types"
 require "./parquet_geospatial/interval"
+require "./parquet_geospatial/wkb"
+require "./parquet_geospatial/bounding"
+require "./parquet_geospatial/testing"

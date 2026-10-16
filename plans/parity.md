@@ -52,7 +52,9 @@ little-endian layout.
     and `ListBuilder` (`builder/list_builder.cr`).
   - `parquet-geospatial` (`src/parquet_geospatial/`): `Hint`/`Edges`/`Metadata`
     + the metadata side of `WkbType` (`types.cr`); `Interval`/`WraparoundInterval`
-    (`interval.cr`).
+    (`interval.cr`); the `GeometryBounder` (`bounding.cr`) with a minimal
+    `WkbReader` + geometry model (`wkb.cr`); and the `Testing` WKB helpers
+    (`testing.cr`).
   - Phase 1.7: `util/bit_pack.cr` (`BitPack.unpack8/16/32/64`) and `decode_page`
     CRC verification (`file/serialized_reader.cr`).
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
@@ -63,10 +65,12 @@ little-endian layout.
      `variant/debug.cr`, `builder/{state,variant_builder,object_builder,list_builder}.cr`
      + specs. All `parquet-variant` core tests are ported (including the exact
      `Debug`/`HexString`/`InvalidVariant` formatting test).
-  2. Phase 3.2 `parquet-geospatial` `bounding.rs` (`GeoBounder`) — **blocked**:
-     depends on the `geo-traits`/`wkb` crates. Either port a minimal WKB reader
-     or record an intentional divergence.
-  3. Phase 3.3 `parquet_derive` (Crystal macros) + `parquet_derive_test`.
+  2. ~~Phase 3.2 `parquet-geospatial` `bounding.rs` (`GeometryBounder`).~~
+     **complete** — ported a minimal WKB reader + geometry model
+     (`src/parquet_geospatial/wkb.cr`), the `GeometryBounder`
+     (`src/parquet_geospatial/bounding.cr`), and the `Testing` WKB helpers
+     (`src/parquet_geospatial/testing.cr`) + all upstream `bounding.rs` tests.
+  3. Phase 3.3 `parquet_derive` (Crystal macros) + `parquet_derive_test` (**next**).
   4. Phase 3.4 encryption — **blocked**: `ring` AEAD; Crystal's
      `OpenSSL::Cipher` exposes no GCM `aad=` setter, so full AES-GCM (which
      Parquet encryption needs) is unavailable without a crypto shard. Either
@@ -111,11 +115,19 @@ little-endian layout.
     `from_time`). `VariantBuilderExt`/`ObjectFieldBuilder` (used by
     `parquet-variant-compute`) are not ported. The Rust `Debug` impls are
     `Variant#debug_string(pretty)`/`Variant#debug_to` (`variant/debug.cr`).
-- Last commit: `4e0ea76 port: parquet-variant value layer read side
-  (Variant/VariantObject/VariantList)`; gates green (`make lint`, `make test` ->
-  730 examples, 0 failures).
-- Progress by counts (ledger): 1613 `ported`, 201 `intentional_divergence`,
-  1 `skipped`, 1700 `missing` (of 3515 rows).
+  - Geospatial bounding: upstream operates on `geo-traits` and parses WKB with
+    the `wkb` crate; Crystal has neither, so `wkb.cr` provides a minimal
+    `WkbReader` + owned `WkbGeometry` model (ISO 2D/Z/M/ZM types only) and
+    `update_wkb` raises `InvalidArgumentError` on malformed input (upstream
+    `ExternalError`). `update_geometry` is public so tests feed the model
+    directly (upstream tests use the `wkt` crate); the `Testing` WKB helpers are
+    ported. Inventory has no rows for `testing.rs`/`wkb` helpers (not in the
+    generated ledger).
+- Last commit: `5dd438b docs: record parquet-variant value-layer/builder
+  divergences`; gates green (`make lint`, `make test` -> 740 examples, 0
+  failures).
+- Progress by counts (ledger): 1623 `ported`, 201 `intentional_divergence`,
+  1 `skipped`, 1690 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -164,9 +176,10 @@ Chunk status by area:
   layer read side (`Variant`/`VariantObject`/`VariantList` + `Debug`) and the
   value builder (`ValueBuilder`/`VariantBuilder`/`ObjectBuilder`/`ListBuilder`)
   done (core crate complete);
-  `parquet-geospatial`'s `Hint`/`Edges`/`Metadata` + `WkbType` metadata and
-  `Interval`/`WraparoundInterval` done; geospatial bounding, derive, encryption,
-  arrow, and async remain pending.
+  `parquet-geospatial`'s `Hint`/`Edges`/`Metadata` + `WkbType` metadata,
+  `Interval`/`WraparoundInterval`, and `GeometryBounder` (+ minimal `WkbReader`/
+  `WkbGeometry` model and `Testing` helpers) done; the `WkbType` `ExtensionType`
+  impl, derive, encryption, arrow, and async remain pending.
 
 ## Phase 0 — Project initialization
 
@@ -505,11 +518,15 @@ Chunk status by area:
 
 - [~] GeoParquet GEOMETRY/GEOGRAPHY logical types + bounding statistics:
   `Hint`/`Edges`/`Metadata` + the metadata side of `WkbType`
-  (`src/parquet_geospatial/types.cr`, `types_spec.cr`) and
+  (`src/parquet_geospatial/types.cr`, `types_spec.cr`),
   `IntervalTrait`/`Interval`/`WraparoundInterval`
-  (`src/parquet_geospatial/interval.cr`, `interval_spec.cr`) done; `bounding.rs`
-  (`GeoBounder`, needs `geo-traits`/`wkb`) and the `ExtensionType` impl
-  (arrow-schema `Field`/`DataType`) pending.
+  (`src/parquet_geospatial/interval.cr`, `interval_spec.cr`), `GeometryBounder`
+  (`src/parquet_geospatial/bounding.cr`, `bounding_spec.cr`) with a minimal
+  `WkbReader`/`WkbGeometry` model (`src/parquet_geospatial/wkb.cr`) and the
+  `Testing` WKB helpers (`src/parquet_geospatial/testing.cr`, `testing_spec.cr`)
+  done; the `WkbType` `ExtensionType` impl (arrow-schema `Field`/`DataType`)
+  pending. Divergence: upstream `bounding.rs` uses `geo-traits`/`wkb`; the local
+  reader supports only the ISO 2D/Z/M/ZM type codes.
 
 ### 3.3 Derive macros
 
@@ -555,6 +572,14 @@ Chunk status by area:
   `parquet-variant-compute`) are not ported; the builders expose the equivalent
   inherent methods, so `append_null` maps to `append_value(Variant.from_nil)`.
   The `try_*` builder methods raise instead of returning `Result`.
+- Geospatial bounding: upstream `bounding.rs` traverses `geo-traits` geometries
+  and parses WKB with the `wkb` crate. Crystal has neither, so
+  `parquet_geospatial/wkb.cr` provides a minimal `WkbReader` + owned
+  `WkbGeometry` model (ISO 2D/Z/M/ZM types only) and `GeometryBounder` operates
+  on that model. `update_wkb` raises `InvalidArgumentError` on malformed input
+  (upstream `ArrowError::ExternalError`); `update_geometry` is public so tests
+  can feed the model directly (upstream tests build geometries from WKT via the
+  `wkt` crate).
 - Thrift traits: `ReadThrift`, `WriteThrift`, and `WriteThriftField` are Rust
   traits with an associated `ELEMENT_TYPE` constant. Crystal has no associated
   constants, so value dispatch lives on `ThriftCompactOutputProtocol` /

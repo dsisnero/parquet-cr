@@ -1,14 +1,14 @@
 # source_id	kind	status	crystal_refs	notes
-parquet-geospatial/src/bounding.rs::method::GeometryBounder.empty	method	missing	-	auto-generated
-parquet-geospatial/src/bounding.rs::method::GeometryBounder.geometry_types	method	missing	-	auto-generated
-parquet-geospatial/src/bounding.rs::method::GeometryBounder.m	method	missing	-	auto-generated
-parquet-geospatial/src/bounding.rs::method::GeometryBounder.update_geometry	method	missing	-	auto-generated
-parquet-geospatial/src/bounding.rs::method::GeometryBounder.update_wkb	method	missing	-	auto-generated
-parquet-geospatial/src/bounding.rs::method::GeometryBounder.update_x	method	missing	-	auto-generated
-parquet-geospatial/src/bounding.rs::method::GeometryBounder.with_wraparound_hint	method	missing	-	auto-generated
-parquet-geospatial/src/bounding.rs::method::GeometryBounder.x	method	missing	-	auto-generated
-parquet-geospatial/src/bounding.rs::method::GeometryBounder.y	method	missing	-	auto-generated
-parquet-geospatial/src/bounding.rs::method::GeometryBounder.z	method	missing	-	auto-generated
+parquet-geospatial/src/bounding.rs::method::GeometryBounder.empty	method	ported	src/parquet_geospatial/bounding.cr	GeometryBounder.empty
+parquet-geospatial/src/bounding.rs::method::GeometryBounder.geometry_types	method	ported	src/parquet_geospatial/bounding.cr	GeometryBounder#geometry_types (sorted unique)
+parquet-geospatial/src/bounding.rs::method::GeometryBounder.m	method	ported	src/parquet_geospatial/bounding.cr	GeometryBounder#m
+parquet-geospatial/src/bounding.rs::method::GeometryBounder.update_geometry	method	ported	src/parquet_geospatial/bounding.cr	GeometryBounder#update_geometry (public divergence)
+parquet-geospatial/src/bounding.rs::method::GeometryBounder.update_wkb	method	ported	src/parquet_geospatial/bounding.cr	GeometryBounder#update_wkb (WkbReader; raises InvalidArgumentError)
+parquet-geospatial/src/bounding.rs::method::GeometryBounder.update_x	method	ported	src/parquet_geospatial/bounding.cr	GeometryBounder#update_x
+parquet-geospatial/src/bounding.rs::method::GeometryBounder.with_wraparound_hint	method	ported	src/parquet_geospatial/bounding.cr	GeometryBounder#with_wraparound_hint
+parquet-geospatial/src/bounding.rs::method::GeometryBounder.x	method	ported	src/parquet_geospatial/bounding.cr	GeometryBounder#x (WraparoundInterval)
+parquet-geospatial/src/bounding.rs::method::GeometryBounder.y	method	ported	src/parquet_geospatial/bounding.cr	GeometryBounder#y
+parquet-geospatial/src/bounding.rs::method::GeometryBounder.z	method	ported	src/parquet_geospatial/bounding.cr	GeometryBounder#z
 parquet-geospatial/src/interval.rs::method::Interval.contains_interval	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
 parquet-geospatial/src/interval.rs::method::Interval.empty	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
 parquet-geospatial/src/interval.rs::method::Interval.expand_by	method	ported	src/parquet_geospatial/interval.cr	ParquetGeospatial interval
