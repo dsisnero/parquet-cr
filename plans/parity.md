@@ -33,7 +33,7 @@ little-endian layout.
 - Plan layout: single file. If it grows too large, split into
   `plans/parity/<area>.md`, link each here, and mark each split file
   complete/in-progress plus the file being worked on next.
-- Current focus: **Phase 2 — file metadata + page-index integration.** The core
+- Current focus: **Phase 2 — encodings, columns, files.** The core
   value/wire layer (errors, thrift protocol, `basic`, `Compression`, `data_type`
   value types, `schema`), the file metadata + statistics + footer round-trip, the offset/
   column index core + decode, the page-index builders, the
@@ -70,16 +70,24 @@ Chunk status by area:
 - Phase 1.5 data type: value types done; `DataType` trait + `make_type!` pending.
 - Phase 1.6 schema: `types`, descriptors, parser, thrift conversion, page
   headers done; printer + primitive builder pending.
-- Phase 1.7 util: pending (`bit_util` partially needed by column code).
-- Phase 1.8 compression: pending.
+- Phase 1.7 util: `BitReader`/`BitWriter`, `Interner`/`Storage`, `PushBuffers`,
+  and `common_prefix_length` done; bit packing (`bit_pack.rs`), cursor/page
+  readers, and CRC32 pending.
+- Phase 1.8 compression: `Codec` framework + `GZipCodec` done;
+  snappy/lzo/brotli/lz4/zstd pending (need Crystal shards).
 - Phase 2.3 file metadata/statistics/page-index core, column-index decode,
   page-index builders, the `ParquetMetaData` page-index plumbing, the sans-IO
   `ParquetMetaDataPushDecoder`, the synchronous `ChunkReader`-driven
-  `ParquetMetaDataReader`, and the `ParquetMetaDataWriter`/`ThriftMetadataWriter`
-  done; serialized/file reader+writer, bloom filter pending.
-- Phase 2.1 encodings: all encodings, the `Encoder`/`Decoder` interfaces, and
-  the `get_encoder`/`get_decoder` registries done.
-- Phases 2.2 column, 2.4 record, 2.5 CLI: pending.
+  `ParquetMetaDataReader`, the `ParquetMetaDataWriter`/`ThriftMetadataWriter`,
+  the bloom filter (`Sbbf`), and the serialized page reader/writer done;
+  `SerializedFileReader`/`SerializedFileWriter` pending.
+- Phase 2.1 encodings: complete (all codecs, the `Encoder`/`Decoder`
+  interfaces, and the `get_encoder`/`get_decoder` registries).
+- Phase 2.2 column: `ColumnDescriptor`, column page types/interfaces, the
+  level/value decoders, the writer value encoder, the byte-budget chunker, the
+  truncation helpers, `ColumnReaderImpl`, and `GenericColumnWriter` done;
+  `column/mod.rs` glue, `chunkers/`, and `page_store` pending.
+- Phases 2.4 record, 2.5 CLI: pending.
 - Phase 3 (variant/geospatial/derive/encryption/arrow/async): pending.
 
 ## Phase 0 — Project initialization
