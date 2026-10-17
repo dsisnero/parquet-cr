@@ -8,6 +8,11 @@ crystal: '>= 1.22.0'
 
 license: MIT
 
+dependencies:
+  snappy:
+    github: naqvis/snappy
+    version: ~> 0.2.0
+
 development_dependencies:
   ameba:
     github: crystal-ameba/ameba

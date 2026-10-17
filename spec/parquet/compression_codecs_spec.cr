@@ -140,6 +140,40 @@ describe Parquet::CompressionCodecs do
     end
   end
 
+  # Characterization: the `naqvis/snappy` shard's `encode` raises `IndexError`
+  # for empty input, so the codec emits the canonical empty block itself (a lone
+  # zero-length preamble).
+  it "round-trips empty input" do
+    options = CodecOptionsBuilder.default.build
+    codec = CC.create_codec(Comp::SNAPPY, options).not_nil!
+
+    compressed = [] of UInt8
+    codec.compress(Bytes.empty, compressed)
+    compressed.should eq([0x00_u8])
+
+    decompressed = [] of UInt8
+    codec.decompress(slice_of(compressed), decompressed, nil).should eq(0)
+    decompressed.should be_empty
+
+    decompressed.clear
+    codec.decompress(slice_of(compressed), decompressed, 0).should eq(0)
+    decompressed.should be_empty
+  end
+
+  # Upstream `snap::raw::Decoder` requires the destination length to equal the
+  # length recorded in the preamble.
+  it "rejects a mismatched decompressed size" do
+    options = CodecOptionsBuilder.default.build
+    codec = CC.create_codec(Comp::SNAPPY, options).not_nil!
+
+    compressed = [] of UInt8
+    codec.compress("hello".to_slice, compressed)
+
+    expect_raises(Parquet::ParquetError, "Recorded length") do
+      codec.decompress(slice_of(compressed), [] of UInt8, 6)
+    end
+  end
+
   it "returns no codec for uncompressed" do
     options = CodecOptionsBuilder.default.build
     CC.create_codec(Comp::UNCOMPRESSED, options).should be_nil

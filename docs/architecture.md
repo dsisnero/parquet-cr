@@ -35,3 +35,17 @@ The port preserves the upstream dependency direction:
 5. `record` and `arrow` are the highest-level APIs.
 
 Do not introduce a dependency that reverses this direction.
+
+## Dependencies
+
+Run `make install` (`shards install`) before building.
+
+| Shard            | Scope   | Purpose                                   |
+| ---------------- | ------- | ----------------------------------------- |
+| `naqvis/snappy`  | runtime | SNAPPY codec (pure Crystal, raw/block)    |
+| `ameba`          | dev     | `make lint` static analysis               |
+
+Everything else (GZIP via `compress/gzip`, Thrift, protobuf-free metadata, crypto
+via OpenSSL) comes from the Crystal standard library. Prefer a maintained,
+active shard over new in-tree code for third-party formats; record the decision
+in `plans/parity.md` when adding a runtime dependency.
