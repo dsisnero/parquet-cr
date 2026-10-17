@@ -35,8 +35,9 @@ little-endian layout.
   complete/in-progress plus the file being worked on next.
 - Current focus: **Phase 3 — advanced/optional.** **Phase 2 is complete** except
   the arrow-dependent CLI tools (`parquet-rewrite`/`parquet-fromcsv`).
-  **Encryption is complete**; the next actionable feature is **item 5 / Phase
-  3.7 (core geospatial module)**. Done in Phase 3 so far:
+  **Encryption is complete** and **Phase 3.7 (core geospatial module) is
+  complete**; the next actionable feature is **item 6 / Phase 2.2 content-defined
+  chunker**. Done in Phase 3 so far:
   - `parquet-variant` (`src/parquet_variant/`): `VariantPath`/
     `VariantPathElement` + dot/bracket parser (`path.cr`); `utils` helpers
     (`utils.cr`); `OffsetSizeBytes`/`map_bytes_to_offsets`, `VariantBasicType`/
@@ -95,6 +96,16 @@ little-endian layout.
     + encrypted header/data handling, `spec/parquet/file/page_decryption_spec.cr`).
   - Phase 1.7: `util/bit_pack.cr` (`BitPack.unpack8/16/32/64`) and `decode_page`
     CRC verification (`file/serialized_reader.cr`).
+  - Core geospatial (`src/parquet/geospatial/`): `BoundingBox`
+    (`bounding_box.cr`), `GeospatialStatistics` (`statistics.cr`), and the
+    accumulator layer (`accumulator.cr`: `GeoStatsAccumulator`/
+    `GeoStatsAccumulatorFactory`, `DefaultGeoStatsAccumulatorFactory`,
+    `VoidGeoStatsAccumulator`, `ParquetGeoStatsAccumulator`,
+    `try_new_geo_stats_accumulator`, `init_geo_stats_accumulator_factory`), plus
+    the `GeospatialStatistics`/`BoundingBox` thrift structs + conversion helpers
+    and field 17 wiring in `ColumnChunkMetaData`/`build_column_metadata`
+    (`column/writer/{encoder,writer}.cr`) and `file/writer.cr`; specs:
+    `spec/parquet/geospatial/{bounding_box,accumulator,geo_statistics}_spec.cr`.
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -118,27 +129,31 @@ little-endian layout.
      API, reader metadata decryption, page-data encryption on write, and
      page-data decryption on read via `CryptoContext`. `AES_GCM_CTR_V1` raises
      `NYIError`, matching upstream 60.0.0 (not a porting gap).
-  5. Phase 3.7 core geospatial module (`parquet/src/geospatial/`; distinct from
-     the `parquet-geospatial` crate done in 3.2). Port `bounding_box.rs`
-     (`BoundingBox` x/y[/z/m] min/max + `new`/`with_*range`/`is_*_valid`
-     accessors), `statistics.rs` (`GeospatialStatistics`), `accumulator.rs`
-     (`GeoStatsAccumulator`/`GeoStatsAccumulatorFactory`, the global factory
-     cell + `init_geo_stats_accumulator_factory`/`try_new_geo_stats_accumulator`,
+  5. ~~Phase 3.7 core geospatial module (`parquet/src/geospatial/`).~~
+     **complete** — `bounding_box.cr` (`BoundingBox` x/y[/z/m]),
+     `statistics.cr` (`GeospatialStatistics`), and `accumulator.cr`
+     (`GeoStatsAccumulator`/`GeoStatsAccumulatorFactory`, the module-level global
+     factory + `init_geo_stats_accumulator_factory`/`try_new_geo_stats_accumulator`,
      `VoidGeoStatsAccumulator`, `ParquetGeoStatsAccumulator` built on
-     `ParquetGeospatial::Bounding::GeometryBounder`), and `mod.rs` into
-     `src/parquet/geospatial/`. Wire it in: add `geo_statistics` to
-     `ColumnChunkMetaData` (+ builder `set_geo_statistics`), implement the
-     currently-`Nil` `flush_geospatial_statistics` in
-     `column/writer/encoder.cr` via `try_new_geo_stats_accumulator`, and set the
-     finished stats in `GenericColumnWriter#build_column_metadata`
-     (`column/writer/writer.cr`). Port the upstream unit tests (bounding_box +
-     accumulator) and add a write/read spec asserting the bbox on a GEOMETRY
-     column. Anchors: `vendor/arrow-rs/parquet/src/geospatial/*.rs`,
-     `src/parquet_geospatial/{bounding,interval,wkb}.cr` (reuse),
-     `src/parquet/file/metadata/column_chunk.cr`,
-     `src/parquet/column/writer/{encoder,writer}.cr`. `HeapSize` impls are
-     dropped (intentional divergence).
-  6. Deferred (recorded divergences): async/object-store suffix fetchers, arrow
+     `ParquetGeospatial::GeometryBounder`). Wired through
+     `ColumnChunkMetaData#geo_statistics` (+ builder `set_geo_statistics` and
+     thrift field 17), `ColumnValueEncoderImpl#flush_geospatial_statistics`,
+     `GenericColumnWriter#build_column_metadata`, and
+     `SerializedFileWriter#finish_appended_column`. Geometry/Geography columns now
+     skip min/max statistics (undefined sort order), matching upstream. Tests:
+     `spec/parquet/geospatial/{bounding_box,accumulator,geo_statistics}_spec.cr`.
+  6. Phase 2.2 content-defined chunker (`column/chunker/cdc.rs` +
+     `cdc_generated.rs`, ~3k lines including the generated gear-hash table).
+     Port `ContentDefinedChunker` (`new`/`calculate`/`calculate_mask`/
+     `need_new_chunk`/`roll`/`roll_fixed`/`roll_level`/`get_arrow_chunks`/
+     `validate_chunks`), the `CDC_*`/`*_LENGTH` constants, and the
+     `GEARHASH_TABLE`/`NUM_GEARHASH_TABLES` generated constants; port the upstream
+     unit tests. `get_arrow_chunks`/the chunk iterator surface that returns arrow
+     arrays is deferred with the arrow layer — port the byte-slice core first and
+     record the divergence. Anchors:
+     `vendor/arrow-rs/parquet/src/column/chunker/{cdc,cdc_generated}.rs`,
+     `src/parquet/column/writer/byte_budget_chunker.cr` (nearest local precedent).
+  7. Deferred (recorded divergences): async/object-store suffix fetchers, arrow
      interop (`parquet/src/arrow/`), `parquet-variant-compute`/`-json`, and the
      arrow `parquet-rewrite`/`parquet-fromcsv` CLI tools.
 - Remaining `missing` ledger rows are dominated by deferred areas (arrow,
@@ -146,7 +161,7 @@ little-endian layout.
   divergence), auto-generated `data_type` trait impls (`as_any`/`set_data`/
   `skip`), the `RowIter` record API, and the content-defined chunker
   (`column/chunker/cdc.rs` ~3k lines incl. generated gear-hash table) — the
-  chunker is the largest remaining non-deferred feature after 3.7.
+  chunker is the largest remaining non-deferred feature.
 - **Scoping notes / gotchas (found while porting; avoids re-derivation):**
   - Crystal `String.new(Bytes)`/`String#byte_slice?` do **not** validate UTF-8
     and **copy** substrings, so the variant crate's zero-copy APIs
@@ -192,6 +207,40 @@ little-endian layout.
     directly (upstream tests use the `wkt` crate); the `Testing` WKB helpers are
     ported. Inventory has no rows for `testing.rs`/`wkb` helpers (not in the
     generated ledger).
+  - Core geospatial (`parquet/src/geospatial/`): `BoundingBox` is a value
+    `struct` with scalar `xmin`/`xmax`/`ymin`/`ymax`/`zmin`/... getters (Rust
+    `(f64, f64)` tuples), whose `with_*range` builders mutate and return `self`
+    (Rust consumes `mut self`); `is_z_valid`/`is_m_valid` keep the upstream names
+    (they carry line-level `ameba:disable Naming/PredicateName`).
+    `GeospatialStatistics` is a class (`Option<Box<..>>` → plain reference).
+    The `OnceLock<Arc<dyn GeoStatsAccumulatorFactory>>` global is a module class
+    variable: it is lazily initialized by `try_new_geo_stats_accumulator`
+    (`OnceLock::get_or_init`), `init_geo_stats_accumulator_factory` raises
+    `GeneralError` once set, and it is not thread-safe (divergence).
+    `ParquetGeoStatsAccumulator#update_wkb` catches
+    `ParquetGeospatial::InvalidArgumentError` (upstream checks
+    `Result::is_err`); `is_valid` keeps the upstream trait name and
+    `src/parquet/geospatial/accumulator.cr` is excluded from
+    `Naming/PredicateName` in `.ameba.yml`. The domain types and the thrift
+    structs are separate (`Parquet::Geospatial::BoundingBox` vs
+    `Parquet::File::Metadata::BoundingBox`), converted by
+    `convert_geo_stats`/`convert_bounding_box` (read) and
+    `geo_stats_to_thrift`/`bounding_box_to_thrift` (write), which stand in for the
+    upstream `WriteThrift` impls on the domain types; empty
+    `geospatial_types` lists are filtered to `nil` on read (upstream
+    `filter(|v| !v.is_empty())`). Encoder wiring: when a geo accumulator exists
+    the encoder skips min/max/nan stats entirely (Geometry/Geography have
+    undefined sort order) but still updates `variable_length_bytes` and the
+    bloom filter; `SerializedFileWriter#finish_appended_column` re-attaches
+    `geo_statistics` when copying column metadata.
+  - Thrift doubles (found while porting 3.7): `ThriftSliceInputProtocol#
+    read_double`, `ThriftReadInputProtocol#read_double`, and
+    `ThriftCompactOutputProtocol#write_double` had never been instantiated and
+    called non-existent `Slice#read_bytes`/`#write_bytes`; they now go through
+    `IO::Memory`. `serialize_column_meta_data` also did not advance
+    `last_field_id` after the `SizeStatistics` field (field 16), which produced a
+    wrong delta for the next field; it now assigns the return value like
+    upstream.
   - Derive macros: Rust's `#[derive(ParquetRecordWriter/Reader)]` (proc macros
     over `syn`) become `include Parquet::Derive::Record` (a Crystal macro using
     `@type.instance_vars` inside method bodies via `{% verbatim %}` +
@@ -296,10 +345,10 @@ little-endian layout.
     with `set_data_page_row_count_limit(1)` and corrupted-page failure by
     flipping the chunk's last ciphertext byte.
 - Last commit: `fe71bb0 port: decrypt parquet data pages`; gates green
-  (`make lint`, `make test` -> 814 examples, 0 failures). Next feature: item 5
-  (Phase 3.7 core geospatial module).
-- Progress by counts (ledger): 1750 `ported`, 199 `intentional_divergence`,
-  1 `skipped`, 1565 `missing` (of 3515 rows).
+  (`make lint`, `make test` -> 822 examples, 0 failures). Next feature: item 6
+  (Phase 2.2 content-defined chunker).
+- Progress by counts (ledger): 1781 `ported`, 200 `intentional_divergence`,
+  1 `skipped`, 1533 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -366,8 +415,9 @@ Chunk status by area:
   the public writer API (`WriterProperties`/column writer/`SerializedFileWriter`),
   and reader metadata decryption (`ParquetMetaDataReader`/`SerializedFileReader`),
   and page-data encryption/decryption (`PageEncryptor`; `CryptoContext` wired
-  through `SerializedPageReader`) done; the `WkbType` `ExtensionType` impl,
-  the core `parquet/src/geospatial` module (next), arrow, and async remain
+  through `SerializedPageReader`) done; the core `parquet/src/geospatial`
+  module (`BoundingBox`, `GeospatialStatistics`, the accumulator + writer
+  wiring) done; the `WkbType` `ExtensionType` impl, arrow, and async remain
   pending.
 
 ## Phase 0 — Project initialization
@@ -768,17 +818,39 @@ Chunk status by area:
   context/header/data handling, `spec/parquet/file/page_decryption_spec.cr`).
   `AES_GCM_CTR_V1` is NYI upstream as well.
 
-### 3.7 Core geospatial module (next)
+### 3.7 Core geospatial module
 
-- [ ] `parquet/src/geospatial/` — port `bounding_box.rs` (`BoundingBox`),
-      `statistics.rs` (`GeospatialStatistics`), `accumulator.rs`
-      (`GeoStatsAccumulator` + factory + `ParquetGeoStatsAccumulator`) and
-      `mod.rs`, then wire geospatial statistics through the column writer
-      (`ColumnChunkMetaData#geo_statistics`, encoder
-      `flush_geospatial_statistics`, `build_column_metadata`). This is distinct
-      from the completed `parquet-geospatial` crate (3.2) and reuses its
-      `GeometryBounder`/`Interval`/WKB model. See Next up #5 for the file/test
-      checklist. Intentional divergence: drop the `HeapSize` impls.
+- [x] `parquet/src/geospatial/` — `bounding_box.cr` (`BoundingBox` x/y[/z/m]
+      min/max + `new`/`with_*range`/`is_*_valid` accessors), `statistics.cr`
+      (`GeospatialStatistics`), `accumulator.cr`
+      (`GeoStatsAccumulator`/`GeoStatsAccumulatorFactory`,
+      `init_geo_stats_accumulator_factory`/`try_new_geo_stats_accumulator` with a
+      module-level global factory, `DefaultGeoStatsAccumulatorFactory`,
+      `VoidGeoStatsAccumulator`, `ParquetGeoStatsAccumulator` built on
+      `ParquetGeospatial::GeometryBounder`), and `mod.rs`
+      (`src/parquet/geospatial.cr`). Wired through
+      `ColumnChunkMetaData#geo_statistics` (+ builder `set_geo_statistics`, thrift
+      field 17 via the new `BoundingBox`/`GeospatialStatistics` thrift structs and
+      `convert_geo_stats`/`convert_bounding_box`/`geo_stats_to_thrift`/
+      `bounding_box_to_thrift`), `ColumnValueEncoderImpl`'s
+      `geo_stats_accumulator` + `flush_geospatial_statistics` (geospatial columns
+      skip min/max; `update_geo_stats_accumulator` feeds `AsBytes` values),
+      `GenericColumnWriter#build_column_metadata`, and
+      `SerializedFileWriter#finish_appended_column`. Tests:
+      `spec/parquet/geospatial/bounding_box_spec.cr` (upstream
+      `test_bounding_box`), `accumulator_spec.cr` (upstream
+      `test_void_accumulator`, `test_default_accumulator_geospatial_factory`,
+      `test_geometry_accumulator`), and `geo_statistics_spec.cr` (write/read bbox +
+      geometry types on a GEOMETRY column, Z/M round-trip, and non-geospatial
+      columns unaffected). This is distinct from the completed `parquet-geospatial`
+      crate (3.2) and reuses its `GeometryBounder`/`Interval`/WKB model.
+      Intentional divergence: the `HeapSize` impls are dropped; the accumulator's
+      `is_valid` keeps the upstream name.
+      Bugs fixed along the way (upstream already correct): the thrift
+      double read/write helpers used non-existent `Slice#read_bytes`/
+      `#write_bytes` (never instantiated before), and
+      `serialize_column_meta_data` did not advance `last_field_id` after the
+      `SizeStatistics` field (mismatched delta once field 17 followed).
 
 ### 3.5 Arrow interop (deferred)
 
@@ -823,6 +895,22 @@ Chunk status by area:
   (upstream `ArrowError::ExternalError`); `update_geometry` is public so tests
   can feed the model directly (upstream tests build geometries from WKT via the
   `wkt` crate).
+- Core geospatial statistics: `BoundingBox` is a value `struct` exposing scalar
+  `xmin`/`xmax`/`ymin`/`ymax`/`zmin`/`zmax`/`mmin`/`mmax` getters instead of Rust
+  `(f64, f64)` range tuples, and its `with_*range` builders mutate and return
+  `self` (Rust consumes `mut self`). `GeospatialStatistics` is a class
+  (`Option<Box<_>>` → plain reference). The
+  `OnceLock<Arc<dyn GeoStatsAccumulatorFactory>>` global accumulator factory is a
+  module class variable (lazily initialized on first
+  `try_new_geo_stats_accumulator`, and `init_geo_stats_accumulator_factory`
+  raises `GeneralError` once set; not thread-safe). The accumulators are abstract
+  classes, `update_wkb` catches `ParquetGeospatial::InvalidArgumentError`
+  (upstream checks `Result::is_err`), `is_valid`/`is_z_valid`/`is_m_valid` keep
+  their upstream names, and the `HeapSize` impls are dropped. The domain types are
+  separate from the thrift structs, converted by
+  `convert_geo_stats`/`convert_bounding_box` (read) and
+  `geo_stats_to_thrift`/`bounding_box_to_thrift` (write) in place of the upstream
+  `WriteThrift` impls on the domain types.
 - Derive macros: `parquet_derive`'s proc macros (`#[derive(ParquetRecordWriter)]`
   / `ParquetRecordReader`) are replaced by `include Parquet::Derive::Record`.
   Rust impls `RecordWriter for &[T]` and `RecordReader for Vec<T>`; Crystal

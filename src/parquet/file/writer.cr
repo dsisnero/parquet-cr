@@ -405,6 +405,9 @@ module Parquet
         if statistics = metadata.statistics
           builder = builder.set_statistics(statistics)
         end
+        if geo_statistics = metadata.geo_statistics
+          builder = builder.set_geo_statistics(geo_statistics)
+        end
         if page_encoding_stats = metadata.page_encoding_stats
           builder = builder.set_page_encoding_stats(page_encoding_stats.dup)
         end

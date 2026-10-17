@@ -5,6 +5,7 @@ require "../../encodings/dict"
 require "../../file/properties"
 require "../../bloom_filter"
 require "../../schema/types"
+require "../../geospatial"
 
 # Ported from `parquet/src/column/writer/encoder.rs` and the statistics/encoding
 # helper functions from `parquet/src/column/writer/mod.rs`
@@ -18,8 +19,9 @@ require "../../schema/types"
 # types) is an abstract `ColumnValueEncoder(T)` class; `ColumnValues` is
 # `Array(T)`; `usize` becomes `Int32`; `f16`/float `total_cmp` are hand-rolled
 # IEEE total-order keys; `is_nan`/`compare_greater` dispatch on `T.class`;
-# geospatial accumulators are not ported (always `nil`); Rust `panic!`/`assert!`
-# become Crystal exceptions.
+# `update_geo_stats_accumulator` is a private generic helper over `Array(T)`
+# using `AsBytes` (upstream iterates `&T::T`); Rust `panic!`/`assert!` become
+# Crystal exceptions.
 module Parquet
   module Column
     module Writer
@@ -352,7 +354,7 @@ module Parquet
         abstract def flush_dict_page : DictionaryPage?
         abstract def flush_data_page : DataPageValues(T)
         abstract def flush_bloom_filter : BloomFilter::Sbbf?
-        abstract def flush_geospatial_statistics : Nil
+        abstract def flush_geospatial_statistics : Geospatial::GeospatialStatistics?
 
         # Returns `true` if the encoder compresses each value against the
         # previous one within the page.
@@ -375,6 +377,7 @@ module Parquet
           encoding = column_props.encoding || Writer.fallback_encoding(physical, props)
           encoder = Encodings.get_encoder(T, encoding, descr)
           bloom_filter, bloom_filter_target_fpp = Writer.create_bloom_filter(column_props)
+          geo_stats_accumulator = Geospatial.try_new_geo_stats_accumulator(descr)
 
           new(
             encoder,
@@ -383,6 +386,7 @@ module Parquet
             column_props.statistics_enabled,
             bloom_filter,
             bloom_filter_target_fpp,
+            geo_stats_accumulator,
           )
         end
 
@@ -393,6 +397,7 @@ module Parquet
           @statistics_enabled : File::Properties::EnabledStatistics,
           @bloom_filter : BloomFilter::Sbbf?,
           @bloom_filter_target_fpp : Float64,
+          @geo_stats_accumulator : Geospatial::GeoStatsAccumulator?,
         )
           @num_values = 0
           @min_value = nil.as(T?)
@@ -503,14 +508,18 @@ module Parquet
           result
         end
 
-        def flush_geospatial_statistics : Nil
-          nil
+        def flush_geospatial_statistics : Geospatial::GeospatialStatistics?
+          @geo_stats_accumulator.try(&.finish)
         end
 
         private def write_slice(slice : Array(T)) : Nil
           if @statistics_enabled != File::Properties::EnabledStatistics::None &&
              @descr.converted_type != ConvertedType::INTERVAL
-            if min_max = Writer.get_min_max(@descr.get_basic_info, slice)
+            # INTERVAL, Geometry, and Geography have undefined sort order, so
+            # don't write min/max statistics for them.
+            if accumulator = @geo_stats_accumulator
+              update_geo_stats_accumulator(accumulator, slice)
+            elsif min_max = Writer.get_min_max(@descr.get_basic_info, slice)
               min, max, nan_count = min_max
               @min_value = Writer.update_min(@descr, min, @min_value)
               @max_value = Writer.update_max(@descr, max, @max_value)
@@ -532,6 +541,17 @@ module Parquet
             end
             @encoder.put(slice)
           end
+        end
+
+        # Feeds one slice of WKB-encoded values to the accumulator.
+        private def update_geo_stats_accumulator(
+          accumulator : Geospatial::GeoStatsAccumulator,
+          slice : Array(T),
+        ) : Nil
+          return unless accumulator.is_valid
+
+          slice.each { |value| accumulator.update_wkb(value.as_bytes) }
+          nil
         end
 
         private def floating_point_column? : Bool

@@ -451,7 +451,7 @@ module Parquet
 
         slice = @buf[0, 8]
         @buf = @buf[8..]
-        slice.read_bytes(Float64, IO::ByteFormat::LittleEndian)
+        IO::Memory.new(slice).read_bytes(Float64, IO::ByteFormat::LittleEndian)
       end
 
       def remaining_bytes : Int32?
@@ -495,7 +495,7 @@ module Parquet
       def read_double : Float64
         buf = Bytes.new(8)
         read_fully(buf)
-        buf.read_bytes(Float64, IO::ByteFormat::LittleEndian)
+        IO::Memory.new(buf).read_bytes(Float64, IO::ByteFormat::LittleEndian)
       end
 
       private def read_fully(buf : Bytes) : Nil
@@ -621,7 +621,7 @@ module Parquet
 
       def write_double(val : Float64) : Nil
         buf = Bytes.new(8)
-        buf.write_bytes(val, IO::ByteFormat::LittleEndian)
+        IO::Memory.new(buf).write_bytes(val, IO::ByteFormat::LittleEndian)
         @writer.write(buf)
       end
     end

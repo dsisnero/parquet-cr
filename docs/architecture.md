@@ -19,6 +19,8 @@ Upstream `parquet/src` maps to Crystal as follows:
 | `column/`            | `src/parquet/column/`       | Column reader/writer and descriptors    |
 | `file/`              | `src/parquet/file/`         | File metadata, reader, writer           |
 | `record/`            | `src/parquet/record/`       | Record (row) reader and writer API      |
+| `geospatial/`        | `src/parquet/geospatial/`   | Geospatial statistics (bbox/accumulator) |
+| `parquet-geospatial/` (crate) | `src/parquet_geospatial/` | WKB reader, intervals, geometry bounder |
 | `arrow/`             | `src/parquet/arrow/`        | Arrow interoperability                  |
 | `parquet_thrift.rs`  | `src/parquet/format/`       | Thrift-encoded Parquet metadata structs |
 

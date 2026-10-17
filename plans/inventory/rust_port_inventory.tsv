@@ -1847,7 +1847,7 @@ parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.estimate
 parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.flush_bloom_filter	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
 parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.flush_data_page	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
 parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.flush_dict_page	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
-parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.flush_geospatial_statistics	method	intentional_divergence	src/parquet/column/writer/encoder.cr	geospatial not ported (returns nil)
+parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.flush_geospatial_statistics	method	ported	src/parquet/column/writer/encoder.cr	ColumnValueEncoderImpl#flush_geospatial_statistics
 parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.has_dictionary	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
 parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.is_floating_point_column	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
 parquet/src/column/writer/encoder.rs::method::ColumnValueEncoderImpl<T>.num_values	method	ported	src/parquet/column/writer/encoder.cr	column writer encoder
@@ -2497,7 +2497,7 @@ parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.encodings	method	p
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.encodings_mask	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.file_offset	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.file_path	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
-parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.geo_statistics	method	missing	-	auto-generated
+parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.geo_statistics	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData#geo_statistics
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.index_page_offset	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.into_builder	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.num_values	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
@@ -2529,7 +2529,7 @@ parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_encodin
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_encodings_mask	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_encrypted_column_metadata	method	ported	src/parquet/file/metadata/column_chunk.cr	set_encrypted_column_metadata (+ plaintext_footer_mode)
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_file_path	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
-parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_geo_statistics	method	missing	-	auto-generated
+parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_geo_statistics	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder#set_geo_statistics
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_index_page_offset	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_num_values	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_offset_index_length	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
@@ -2752,8 +2752,8 @@ parquet/src/file/metadata/thrift/mod.rs::method::DataPageHeaderV2.read_thrift_wi
 parquet/src/file/metadata/thrift/mod.rs::method::FileMeta<'_>.write_thrift	method	missing	-	auto-generated
 parquet/src/file/metadata/thrift/mod.rs::method::PageHeader.read_thrift_without_stats	method	ported	src/parquet/format.cr	Parquet::Format.read_page_header_without_stats
 parquet/src/file/metadata/thrift/mod.rs::method::RowGroupMetaData.write_thrift	method	missing	-	auto-generated
-parquet/src/file/metadata/thrift/mod.rs::method::crate::geospatial::bounding_box::BoundingBox.write_thrift	method	missing	-	auto-generated
-parquet/src/file/metadata/thrift/mod.rs::method::crate::geospatial::statistics::GeospatialStatistics.write_thrift	method	missing	-	auto-generated
+parquet/src/file/metadata/thrift/mod.rs::method::crate::geospatial::bounding_box::BoundingBox.write_thrift	method	ported	src/parquet/file/metadata/column_chunk.cr	Metadata.bounding_box_to_thrift + thrift BoundingBox.write_thrift
+parquet/src/file/metadata/thrift/mod.rs::method::crate::geospatial::statistics::GeospatialStatistics.write_thrift	method	ported	src/parquet/file/metadata/column_chunk.cr	Metadata.geo_stats_to_thrift + thrift GeospatialStatistics.write_thrift
 parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.apply_row_group_encryption	method	ported	src/parquet/file/metadata/writer.cr	in-place; returns nil unencrypted copy (divergence)
 parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.encrypt_column_chunk	method	ported	src/parquet/file/metadata/writer.cr	MetadataObjectWriter.encrypt_column_chunk
 parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.encrypt_row_groups	method	ported	src/parquet/file/metadata/writer.cr	MetadataObjectWriter.encrypt_row_groups
@@ -3119,34 +3119,34 @@ parquet/src/file/writer.rs::method::TrackedWrite<W>.new	method	ported	src/parque
 parquet/src/file/writer.rs::method::TrackedWrite<W>.write	method	ported	src/parquet/file/tracked_write.cr	TrackedWrite
 parquet/src/file/writer.rs::method::TrackedWrite<W>.write_all	method	intentional_divergence	src/parquet/file/tracked_write.cr	IO#write_all provided by IO
 parquet/src/file/writer.rs::method::TrackedWrite<W>.write_vectored	method	intentional_divergence	src/parquet/file/tracked_write.cr	not ported
-parquet/src/geospatial/accumulator.rs::method::DefaultGeoStatsAccumulatorFactory.new_accumulator	method	missing	-	auto-generated
-parquet/src/geospatial/accumulator.rs::method::ParquetGeoStatsAccumulator.default	method	missing	-	auto-generated
-parquet/src/geospatial/accumulator.rs::method::ParquetGeoStatsAccumulator.finish	method	missing	-	auto-generated
-parquet/src/geospatial/accumulator.rs::method::ParquetGeoStatsAccumulator.is_valid	method	missing	-	auto-generated
-parquet/src/geospatial/accumulator.rs::method::ParquetGeoStatsAccumulator.update_wkb	method	missing	-	auto-generated
-parquet/src/geospatial/accumulator.rs::method::VoidGeoStatsAccumulator.finish	method	missing	-	auto-generated
-parquet/src/geospatial/accumulator.rs::method::VoidGeoStatsAccumulator.is_valid	method	missing	-	auto-generated
-parquet/src/geospatial/accumulator.rs::method::VoidGeoStatsAccumulator.update_wkb	method	missing	-	auto-generated
-parquet/src/geospatial/bounding_box.rs::method::BoundingBox.get_mmax	method	missing	-	auto-generated
-parquet/src/geospatial/bounding_box.rs::method::BoundingBox.get_mmin	method	missing	-	auto-generated
-parquet/src/geospatial/bounding_box.rs::method::BoundingBox.get_xmax	method	missing	-	auto-generated
-parquet/src/geospatial/bounding_box.rs::method::BoundingBox.get_xmin	method	missing	-	auto-generated
-parquet/src/geospatial/bounding_box.rs::method::BoundingBox.get_ymax	method	missing	-	auto-generated
-parquet/src/geospatial/bounding_box.rs::method::BoundingBox.get_ymin	method	missing	-	auto-generated
-parquet/src/geospatial/bounding_box.rs::method::BoundingBox.get_zmax	method	missing	-	auto-generated
-parquet/src/geospatial/bounding_box.rs::method::BoundingBox.get_zmin	method	missing	-	auto-generated
-parquet/src/geospatial/bounding_box.rs::method::BoundingBox.heap_size	method	missing	-	auto-generated
-parquet/src/geospatial/bounding_box.rs::method::BoundingBox.is_m_valid	method	missing	-	auto-generated
-parquet/src/geospatial/bounding_box.rs::method::BoundingBox.is_z_valid	method	missing	-	auto-generated
-parquet/src/geospatial/bounding_box.rs::method::BoundingBox.new	method	missing	-	auto-generated
-parquet/src/geospatial/bounding_box.rs::method::BoundingBox.with_mrange	method	missing	-	auto-generated
-parquet/src/geospatial/bounding_box.rs::method::BoundingBox.with_xrange	method	missing	-	auto-generated
-parquet/src/geospatial/bounding_box.rs::method::BoundingBox.with_yrange	method	missing	-	auto-generated
-parquet/src/geospatial/bounding_box.rs::method::BoundingBox.with_zrange	method	missing	-	auto-generated
-parquet/src/geospatial/statistics.rs::method::GeospatialStatistics.bounding_box	method	missing	-	auto-generated
-parquet/src/geospatial/statistics.rs::method::GeospatialStatistics.geospatial_types	method	missing	-	auto-generated
-parquet/src/geospatial/statistics.rs::method::GeospatialStatistics.heap_size	method	missing	-	auto-generated
-parquet/src/geospatial/statistics.rs::method::GeospatialStatistics.new	method	missing	-	auto-generated
+parquet/src/geospatial/accumulator.rs::method::DefaultGeoStatsAccumulatorFactory.new_accumulator	method	ported	src/parquet/geospatial/accumulator.cr	DefaultGeoStatsAccumulatorFactory#new_accumulator
+parquet/src/geospatial/accumulator.rs::method::ParquetGeoStatsAccumulator.default	method	ported	src/parquet/geospatial/accumulator.cr	ParquetGeoStatsAccumulator#initialize (Rust Default)
+parquet/src/geospatial/accumulator.rs::method::ParquetGeoStatsAccumulator.finish	method	ported	src/parquet/geospatial/accumulator.cr	ParquetGeoStatsAccumulator#finish
+parquet/src/geospatial/accumulator.rs::method::ParquetGeoStatsAccumulator.is_valid	method	ported	src/parquet/geospatial/accumulator.cr	ParquetGeoStatsAccumulator#is_valid (upstream name)
+parquet/src/geospatial/accumulator.rs::method::ParquetGeoStatsAccumulator.update_wkb	method	ported	src/parquet/geospatial/accumulator.cr	ParquetGeoStatsAccumulator#update_wkb (catches InvalidArgumentError)
+parquet/src/geospatial/accumulator.rs::method::VoidGeoStatsAccumulator.finish	method	ported	src/parquet/geospatial/accumulator.cr	VoidGeoStatsAccumulator#finish
+parquet/src/geospatial/accumulator.rs::method::VoidGeoStatsAccumulator.is_valid	method	ported	src/parquet/geospatial/accumulator.cr	VoidGeoStatsAccumulator#is_valid
+parquet/src/geospatial/accumulator.rs::method::VoidGeoStatsAccumulator.update_wkb	method	ported	src/parquet/geospatial/accumulator.cr	VoidGeoStatsAccumulator#update_wkb
+parquet/src/geospatial/bounding_box.rs::method::BoundingBox.get_mmax	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox#mmax
+parquet/src/geospatial/bounding_box.rs::method::BoundingBox.get_mmin	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox#mmin
+parquet/src/geospatial/bounding_box.rs::method::BoundingBox.get_xmax	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox#xmax
+parquet/src/geospatial/bounding_box.rs::method::BoundingBox.get_xmin	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox#xmin
+parquet/src/geospatial/bounding_box.rs::method::BoundingBox.get_ymax	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox#ymax
+parquet/src/geospatial/bounding_box.rs::method::BoundingBox.get_ymin	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox#ymin
+parquet/src/geospatial/bounding_box.rs::method::BoundingBox.get_zmax	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox#zmax
+parquet/src/geospatial/bounding_box.rs::method::BoundingBox.get_zmin	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox#zmin
+parquet/src/geospatial/bounding_box.rs::method::BoundingBox.heap_size	method	intentional_divergence	src/parquet/geospatial/bounding_box.cr	HeapSize not ported
+parquet/src/geospatial/bounding_box.rs::method::BoundingBox.is_m_valid	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox#is_m_valid (upstream name)
+parquet/src/geospatial/bounding_box.rs::method::BoundingBox.is_z_valid	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox#is_z_valid (upstream name)
+parquet/src/geospatial/bounding_box.rs::method::BoundingBox.new	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox.new
+parquet/src/geospatial/bounding_box.rs::method::BoundingBox.with_mrange	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox#with_mrange (mutates, returns self)
+parquet/src/geospatial/bounding_box.rs::method::BoundingBox.with_xrange	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox#with_xrange (mutates, returns self)
+parquet/src/geospatial/bounding_box.rs::method::BoundingBox.with_yrange	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox#with_yrange (mutates, returns self)
+parquet/src/geospatial/bounding_box.rs::method::BoundingBox.with_zrange	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox#with_zrange (mutates, returns self)
+parquet/src/geospatial/statistics.rs::method::GeospatialStatistics.bounding_box	method	ported	src/parquet/geospatial/statistics.cr	GeospatialStatistics#bounding_box
+parquet/src/geospatial/statistics.rs::method::GeospatialStatistics.geospatial_types	method	ported	src/parquet/geospatial/statistics.cr	GeospatialStatistics#geospatial_types
+parquet/src/geospatial/statistics.rs::method::GeospatialStatistics.heap_size	method	intentional_divergence	src/parquet/geospatial/statistics.cr	HeapSize not ported
+parquet/src/geospatial/statistics.rs::method::GeospatialStatistics.new	method	ported	src/parquet/geospatial/statistics.cr	GeospatialStatistics.new
 parquet/src/parquet_thrift.rs::const::DEFAULT_SKIP_DEPTH	const	ported	src/parquet/thrift.cr	inlined as 64 in ThriftCompactInputProtocol#skip
 parquet/src/parquet_thrift.rs::const::ELEMENT_TYPE	const	intentional_divergence	src/parquet/thrift.cr	Rust associated const ELEMENT_TYPE; replaced by Thrift.element_type_of
 parquet/src/parquet_thrift.rs::method::&'a [u8].read_thrift	method	ported	src/parquet/thrift.cr	protocol-centric dispatch; ReadThrift/WriteThrift traits mapped to overloads

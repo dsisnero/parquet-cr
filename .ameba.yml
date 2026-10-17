@@ -28,12 +28,16 @@ Naming/QueryBoolMethods:
     - src/parquet/file/metadata/column_chunk.cr
 
 # The variant value types keep the upstream `is_fully_validated` accessor name
-# (with a Crystal-idiomatic `fully_validated?` alias alongside it).
+# (with a Crystal-idiomatic `fully_validated?` alias alongside it). The core
+# geospatial accumulator keeps the upstream `GeoStatsAccumulator` trait method
+# name `is_valid` (the ported `BoundingBox` predicates mark their own lines and
+# do not need this exclusion).
 Naming/PredicateName:
   Excluded:
     - src/parquet_variant/variant.cr
     - src/parquet_variant/variant/object.cr
     - src/parquet_variant/variant/list.cr
+    - src/parquet/geospatial/accumulator.cr
 
 # The column writer is a large, direct port; its upstream `not_nil!`-equivalent
 # unwraps and cyclic control flow are kept as-is. The serialized file/row-group

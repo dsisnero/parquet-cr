@@ -1,16 +1,25 @@
 require "../metadata"
 require "../column_crypto_metadata"
+require "../../geospatial"
 
 # Ported from `parquet/src/file/metadata/mod.rs` and
 # `parquet/src/file/metadata/thrift/mod.rs` (apache/arrow-rs 60.0.0,
 # ef1fa157977633f0ba21aa921f9ef3d5c669235b).
 #
-# Ports `KeyValue`, `PageEncodingStats`, `SortingColumn`, `SizeStatistics`, and
+# Ports `KeyValue`, `PageEncodingStats`, `SortingColumn`, `SizeStatistics`,
+# `BoundingBox`/`GeospatialStatistics` (thrift + conversion), and
 # `ColumnChunkMetaData` (+ builder and thrift conversion). `RowGroupMetaData`,
 # `ParquetMetaData`, and `FileMetaData` follow (see `plans/parity.md`).
+#
+# Divergences: the domain `Parquet::Geospatial::BoundingBox`/
+# `GeospatialStatistics` are kept distinct from the thrift structs defined here
+# (upstream writes impls next to the wire structs) and are converted with
+# `convert_bounding_box`/`convert_geo_stats` (matching upstream
+# `convert_bounding_box`/`convert_geo_stats`); `HeapSize` is not ported.
 module Parquet
   module File
     module Metadata
+      alias Int32List = Array(Int32)
       alias Int64List = Array(Int64)
 
       # A key-value pair for `FileMetaData`.
@@ -38,6 +47,61 @@ module Parquet
         optional 1, unencoded_byte_array_data_bytes, Int64
         optional 2, repetition_level_histogram, Int64List
         optional 3, definition_level_histogram, Int64List
+      end
+
+      # Mirrors thrift `BoundingBox`.
+      define_thrift_struct(BoundingBox) do
+        required 1, xmin, Float64
+        required 2, xmax, Float64
+        required 3, ymin, Float64
+        required 4, ymax, Float64
+        optional 5, zmin, Float64
+        optional 6, zmax, Float64
+        optional 7, mmin, Float64
+        optional 8, mmax, Float64
+      end
+
+      # Mirrors thrift `GeospatialStatistics`.
+      define_thrift_struct(GeospatialStatistics) do
+        optional 1, bbox, BoundingBox
+        optional 2, geospatial_types, Int32List
+      end
+
+      # Converts a thrift `GeospatialStatistics` into the domain type.
+      def self.convert_geo_stats(stats : GeospatialStatistics) : ::Parquet::Geospatial::GeospatialStatistics
+        bbox = stats.bbox.try { |value| convert_bounding_box(value) }
+        geospatial_types = stats.geospatial_types
+        geospatial_types = nil if geospatial_types.try(&.empty?)
+        ::Parquet::Geospatial::GeospatialStatistics.new(bbox, geospatial_types)
+      end
+
+      # Converts a thrift `BoundingBox` into the domain type.
+      #
+      # A missing zmin/zmax (or mmin/mmax) pair leaves that dimension unset
+      # instead of raising, matching upstream.
+      def self.convert_bounding_box(bb : BoundingBox) : ::Parquet::Geospatial::BoundingBox
+        out = ::Parquet::Geospatial::BoundingBox.new(bb.xmin, bb.xmax, bb.ymin, bb.ymax)
+
+        if (zmin = bb.zmin) && (zmax = bb.zmax)
+          out = out.with_zrange(zmin, zmax)
+        end
+
+        if (mmin = bb.mmin) && (mmax = bb.mmax)
+          out = out.with_mrange(mmin, mmax)
+        end
+
+        out
+      end
+
+      # Converts a domain `BoundingBox` into the thrift struct.
+      def self.bounding_box_to_thrift(bb : ::Parquet::Geospatial::BoundingBox) : BoundingBox
+        BoundingBox.new(bb.xmin, bb.xmax, bb.ymin, bb.ymax, bb.zmin, bb.zmax, bb.mmin, bb.mmax)
+      end
+
+      # Converts domain `GeospatialStatistics` into the thrift struct.
+      def self.geo_stats_to_thrift(stats : ::Parquet::Geospatial::GeospatialStatistics) : GeospatialStatistics
+        bbox = stats.bounding_box.try { |value| bounding_box_to_thrift(value) }
+        GeospatialStatistics.new(bbox, stats.geospatial_types)
       end
 
       # Internal representation of page encoding stats: either the full array or
@@ -90,6 +154,7 @@ module Parquet
         # When true, the footer is plaintext; affects serialization when
         # `encrypted_column_metadata` is present (write-only).
         property plaintext_footer_mode : Bool
+        property geo_statistics : ::Parquet::Geospatial::GeospatialStatistics?
 
         def initialize(@column_descr : Parquet::Schema::ColumnDescriptor)
           @encodings = EncodingMask.try_new(0)
@@ -116,6 +181,7 @@ module Parquet
           @column_crypto_metadata = nil
           @encrypted_column_metadata = nil
           @plaintext_footer_mode = false
+          @geo_statistics = nil
         end
 
         # The encryption metadata for this column chunk, if any.
@@ -218,7 +284,8 @@ module Parquet
             definition_level_histogram == other.definition_level_histogram &&
             column_crypto_metadata == other.column_crypto_metadata &&
             encrypted_column_metadata == other.encrypted_column_metadata &&
-            plaintext_footer_mode == other.plaintext_footer_mode
+            plaintext_footer_mode == other.plaintext_footer_mode &&
+            geo_statistics == other.geo_statistics
         end
 
         def self.thrift_element_type : ::Parquet::Thrift::ElementType
@@ -438,6 +505,12 @@ module Parquet
           self
         end
 
+        # ameba:disable Naming/AccessorMethodName
+        def set_geo_statistics(value : ::Parquet::Geospatial::GeospatialStatistics) : self
+          @meta.geo_statistics = value
+          self
+        end
+
         def build : ColumnChunkMetaData
           @meta
         end
@@ -543,6 +616,8 @@ module Parquet
               size_stats.repetition_level_histogram.try { |hist| LevelHistogram.from(hist) }
             column.definition_level_histogram =
               size_stats.definition_level_histogram.try { |hist| LevelHistogram.from(hist) }
+          when 17
+            column.geo_statistics = convert_geo_stats(GeospatialStatistics.read_thrift(prot))
           else
             prot.skip(field_ident.field_type)
           end
@@ -642,7 +717,11 @@ module Parquet
             column_chunk.repetition_level_histogram.try(&.into_inner),
             column_chunk.definition_level_histogram.try(&.into_inner),
           )
-          ::Parquet::Thrift.write_thrift_field(prot, size_stats, 16_i16, last_field_id)
+          last_field_id = ::Parquet::Thrift.write_thrift_field(prot, size_stats, 16_i16, last_field_id)
+        end
+
+        if geo_stats = column_chunk.geo_statistics
+          ::Parquet::Thrift.write_thrift_field(prot, geo_stats_to_thrift(geo_stats), 17_i16, last_field_id)
         end
 
         prot.write_struct_end

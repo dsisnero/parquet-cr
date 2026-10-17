@@ -604,6 +604,10 @@ module Parquet
               .set_unencoded_byte_array_data_bytes(@column_metrics.variable_length_bytes)
               .set_repetition_level_histogram(@column_metrics.repetition_level_histogram)
               .set_definition_level_histogram(@column_metrics.definition_level_histogram)
+
+            if geo_stats = @encoder.flush_geospatial_statistics
+              builder = builder.set_geo_statistics(geo_stats)
+            end
           end
 
           if encryption = @props.file_encryption_properties
