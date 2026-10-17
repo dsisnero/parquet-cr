@@ -175,6 +175,28 @@ module Parquet
         @compressed_page.buffer
       end
 
+      # Returns a copy of this page with a new compressed buffer (used by page
+      # encryption).
+      def with_new_compressed_buffer(buf : Bytes) : CompressedPage
+        page =
+          case p = @compressed_page
+          when Page::DataPage
+            Page::DataPage.new(
+              buf, p.num_values, p.encoding, p.def_level_encoding, p.rep_level_encoding, p.statistics
+            )
+          when Page::DataPageV2
+            Page::DataPageV2.new(
+              buf, p.num_values, p.encoding, p.num_nulls, p.num_rows,
+              p.def_levels_byte_len, p.rep_levels_byte_len, p.is_compressed, p.statistics
+            )
+          when Page::DictionaryPage
+            Page::DictionaryPage.new(buf, p.num_values, p.encoding, p.is_sorted)
+          else
+            raise general_err!("Unsupported page type for re-buffering")
+          end
+        CompressedPage.new(page, @uncompressed_size)
+      end
+
       # Returns the number of heap bytes this page currently holds.
       def memory_usage : Int32
         @compressed_page.buffer.size

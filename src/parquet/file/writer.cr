@@ -126,7 +126,7 @@ module Parquet
           nil
         end
 
-        SerializedRowGroupWriter.new(@descr, @props, @buf, ordinal, on_close)
+        SerializedRowGroupWriter.new(@descr, @props, @buf, ordinal, on_close, @file_encryptor)
       end
 
       # Returns metadata for any flushed row groups.
@@ -270,6 +270,7 @@ module Parquet
         @buf : TrackedWrite,
         @row_group_index : Int32,
         @on_close : OnCloseRowGroup?,
+        @file_encryptor : Encryption::FileEncryptor? = nil,
       )
         @total_rows_written = nil
         @total_bytes_written = 0_u64
@@ -317,10 +318,16 @@ module Parquet
       def next_column : SerializedColumnWriter?
         assert_previous_writer_closed
 
+        column_index = @column_index
         descr = next_column_desc
         return nil if descr.nil?
 
         page_writer = SerializedPageWriter.new(@buf)
+        if page_encryptor = Column::PageEncryptor.create_if_column_encrypted(
+             @file_encryptor, @row_group_index, column_index, descr.path.string
+           )
+          page_writer = page_writer.with_page_encryptor(page_encryptor)
+        end
         column_writer = Column::Writer.get_column_writer(descr, @props, page_writer)
         SerializedColumnWriter.new(column_writer, build_on_close)
       end

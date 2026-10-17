@@ -1765,7 +1765,7 @@ parquet/src/column/page.rs::method::CompressedPage.num_values	method	ported	src/
 parquet/src/column/page.rs::method::CompressedPage.page_type	method	ported	src/parquet/column/page.cr	column page
 parquet/src/column/page.rs::method::CompressedPage.to_thrift_header	method	ported	src/parquet/column/page.cr	column page
 parquet/src/column/page.rs::method::CompressedPage.uncompressed_size	method	ported	src/parquet/column/page.cr	column page
-parquet/src/column/page.rs::method::CompressedPage.with_new_compressed_buffer	method	intentional_divergence	src/parquet/column/page.cr	encryption-only
+parquet/src/column/page.rs::method::CompressedPage.with_new_compressed_buffer	method	ported	src/parquet/column/page.cr	CompressedPage#with_new_compressed_buffer
 parquet/src/column/page.rs::method::Page.buffer	method	ported	src/parquet/column/page.cr	column page
 parquet/src/column/page.rs::method::Page.encoding	method	ported	src/parquet/column/page.cr	column page
 parquet/src/column/page.rs::method::Page.is_data_page	method	ported	src/parquet/column/page.cr	column page
@@ -1776,14 +1776,14 @@ parquet/src/column/page.rs::method::Page.statistics	method	ported	src/parquet/co
 parquet/src/column/page.rs::method::PageMetadata.try_from	method	ported	src/parquet/column/page.cr	column page
 parquet/src/column/page.rs::method::PageWriteSpec.default	method	ported	src/parquet/column/page.cr	column page
 parquet/src/column/page.rs::method::PageWriteSpec.new	method	ported	src/parquet/column/page.cr	column page
-parquet/src/column/page_encryption.rs::method::PageEncryptor.create_if_column_encrypted	method	missing	-	auto-generated
-parquet/src/column/page_encryption.rs::method::PageEncryptor.encrypt_compressed_page	method	missing	-	auto-generated
-parquet/src/column/page_encryption.rs::method::PageEncryptor.encrypt_page	method	missing	-	auto-generated
-parquet/src/column/page_encryption.rs::method::PageEncryptor.encrypt_page_header	method	missing	-	auto-generated
-parquet/src/column/page_encryption.rs::method::PageEncryptor.increment_page	method	missing	-	auto-generated
-parquet/src/column/page_encryption_disabled.rs::method::PageEncryptor.encrypt_compressed_page	method	missing	-	auto-generated
-parquet/src/column/page_encryption_disabled.rs::method::PageEncryptor.encrypt_page_header	method	missing	-	auto-generated
-parquet/src/column/page_encryption_disabled.rs::method::PageEncryptor.increment_page	method	missing	-	auto-generated
+parquet/src/column/page_encryption.rs::method::PageEncryptor.create_if_column_encrypted	method	ported	src/parquet/column/page_encryption.cr	PageEncryptor.create_if_column_encrypted
+parquet/src/column/page_encryption.rs::method::PageEncryptor.encrypt_compressed_page	method	ported	src/parquet/column/page_encryption.cr	PageEncryptor#encrypt_compressed_page
+parquet/src/column/page_encryption.rs::method::PageEncryptor.encrypt_page	method	ported	src/parquet/column/page_encryption.cr	inlined in PageEncryptor#encrypt_compressed_page
+parquet/src/column/page_encryption.rs::method::PageEncryptor.encrypt_page_header	method	ported	src/parquet/column/page_encryption.cr	PageEncryptor#encrypt_page_header
+parquet/src/column/page_encryption.rs::method::PageEncryptor.increment_page	method	ported	src/parquet/column/page_encryption.cr	PageEncryptor#increment_page
+parquet/src/column/page_encryption_disabled.rs::method::PageEncryptor.encrypt_compressed_page	method	intentional_divergence	src/parquet/column/page_encryption.cr	no separate disabled stub; a nil PageEncryptor is used when the column is unencrypted
+parquet/src/column/page_encryption_disabled.rs::method::PageEncryptor.encrypt_page_header	method	intentional_divergence	src/parquet/column/page_encryption.cr	no separate disabled stub; a nil PageEncryptor is used when the column is unencrypted
+parquet/src/column/page_encryption_disabled.rs::method::PageEncryptor.increment_page	method	intentional_divergence	src/parquet/column/page_encryption.cr	no separate disabled stub; a nil PageEncryptor is used when the column is unencrypted
 parquet/src/column/page_store.rs::method::InMemoryPageStore.memory_size	method	missing	-	auto-generated
 parquet/src/column/page_store.rs::method::InMemoryPageStore.put	method	missing	-	auto-generated
 parquet/src/column/page_store.rs::method::InMemoryPageStore.take	method	missing	-	auto-generated
@@ -3090,7 +3090,7 @@ parquet/src/file/writer.rs::method::SerializedFileWriter<W>.write_metadata	metho
 parquet/src/file/writer.rs::method::SerializedPageWriter<'_, W>.close	method	ported	src/parquet/file/serialized_writer.cr	SerializedPageWriter#close
 parquet/src/file/writer.rs::method::SerializedPageWriter<'_, W>.page_encryptor_and_sink_mut	method	intentional_divergence	src/parquet/file/serialized_writer.cr	encryption not ported
 parquet/src/file/writer.rs::method::SerializedPageWriter<'_, W>.page_encryptor_mut	method	intentional_divergence	src/parquet/file/serialized_writer.cr	encryption not ported
-parquet/src/file/writer.rs::method::SerializedPageWriter<'_, W>.with_page_encryptor	method	intentional_divergence	src/parquet/file/serialized_writer.cr	encryption not ported
+parquet/src/file/writer.rs::method::SerializedPageWriter<'_, W>.with_page_encryptor	method	ported	src/parquet/file/serialized_writer.cr	SerializedPageWriter#with_page_encryptor
 parquet/src/file/writer.rs::method::SerializedPageWriter<'_, W>.write_page	method	ported	src/parquet/file/serialized_writer.cr	SerializedPageWriter#write_page
 parquet/src/file/writer.rs::method::SerializedPageWriter<'a, W>.new	method	ported	src/parquet/file/serialized_writer.cr	SerializedPageWriter.new
 parquet/src/file/writer.rs::method::SerializedPageWriter<'a, W>.serialize_page_header	method	ported	src/parquet/file/serialized_writer.cr	SerializedPageWriter#serialize_page_header
