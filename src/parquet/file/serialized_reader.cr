@@ -135,18 +135,65 @@ module Parquet
     end
 
     # A serialized implementation of `PageReader` for a column chunk.
+    #
+    # Yields either the sequential offset-stream pages (`Values`) or the pages
+    # named by the column chunk's offset index (`Pages`), mirroring upstream
+    # `SerializedPageReaderState`.
     class SerializedPageReader(R) < Column::PageReader
+      include Iterator(Column::Page)
+
+      # Reader state (upstream `SerializedPageReaderState`).
+      abstract class State
+      end
+
+      # Walks the column chunk's page headers sequentially.
+      class Values < State
+        # The current byte offset in the reader.
+        property offset : UInt64
+        # The number of bytes left in the column chunk.
+        property remaining_bytes : UInt64
+        # A page header that was already read by `peek_next_page`.
+        property next_page_header : Format::PageHeader?
+        # The index of the next data page within this column chunk.
+        property page_index : Int32
+        # Whether the next page is expected to be a dictionary page.
+        # ameba:disable Naming/QueryBoolMethods
+        property require_dictionary : Bool
+
+        def initialize(@offset : UInt64, @remaining_bytes : UInt64, @page_index : Int32, @require_dictionary : Bool)
+          @next_page_header = nil
+        end
+      end
+
+      # Consumes the column chunk's offset-index `PageLocation` queue.
+      class Pages < State
+        # Remaining page locations.
+        getter page_locations : Deque(Metadata::PageLocation)
+        # The synthesized dictionary page location, if the chunk has one.
+        property dictionary_page : Metadata::PageLocation?
+        # The total number of rows in this column chunk.
+        getter total_rows : Int32
+        # The index of the next data page within this column chunk.
+        property page_index : Int32
+
+        def initialize(
+          @page_locations : Deque(Metadata::PageLocation),
+          @dictionary_page : Metadata::PageLocation?,
+          @total_rows : Int32,
+          @page_index : Int32,
+        )
+        end
+      end
+
+      @state : State
+
       def initialize(
         @reader : R,
         @decompressor : CompressionCodecs::Codec?,
         @physical_type : Parquet::Type,
-        @offset : UInt64,
-        @remaining_bytes : UInt64,
-        @require_dictionary : Bool,
+        @state : State,
         @read_stats : Bool,
       )
-        @next_page_header = nil.as(Format::PageHeader?)
-        @page_index = 0
         @crypto_context = nil.as(Encryption::CryptoContext?)
       end
 
@@ -170,6 +217,9 @@ module Parquet
       end
 
       # Creates a reader for a column chunk.
+      #
+      # When `page_locations` (the chunk's offset index) is given, pages are read
+      # by location instead of walking the offset stream.
       def self.new_for_column(
         reader : R,
         meta : Metadata::ColumnChunkMetaData,
@@ -177,100 +227,234 @@ module Parquet
         page_locations : Array(Metadata::PageLocation)?,
         props : Properties::ReaderProperties,
       ) : SerializedPageReader(R) forall R
-        raise nyi_err!("SerializedPageReader with page locations is not supported") unless page_locations.nil?
-
-        _ = total_rows
         decompressor = CompressionCodecs.create_codec(Compression.from_codec(meta.compression), props.codec_options)
         start = (meta.dictionary_page_offset || meta.data_page_offset).to_u64
         length = meta.total_compressed_size.to_u64
-        new(reader, decompressor, meta.column_type, start, length, !meta.dictionary_page_offset.nil?, props.read_page_stats)
+
+        state =
+          if locations = page_locations
+            # If the offset of the first page doesn't match the start of the
+            # column chunk then the preceding space must contain a dictionary
+            # page.
+            dictionary_page =
+              if first = locations.first?
+                unless first.offset.to_u64 == start
+                  Metadata::PageLocation.new(start.to_i64, (first.offset.to_u64 - start).to_i32, 0_i64)
+                end
+              end
+
+            Pages.new(Deque(Metadata::PageLocation).new(locations), dictionary_page, total_rows, 0)
+          else
+            Values.new(start, length, 0, !meta.dictionary_page_offset.nil?)
+          end
+
+        new(reader, decompressor, meta.column_type, state, props.read_page_stats)
       end
 
       # ameba:disable Naming/AccessorMethodName
       def get_next_page : Column::Page?
-        loop do
-          return nil if @remaining_bytes == 0
+        case state = @state
+        when Values
+          loop do
+            return nil if state.remaining_bytes == 0
 
-          read = @reader.get_read(@offset)
-          header =
-            if buffered = @next_page_header
-              @next_page_header = nil
-              buffered
+            read = @reader.get_read(state.offset)
+            header =
+              if buffered = state.next_page_header
+                state.next_page_header = nil
+                buffered
+              else
+                header_len, parsed = read_page_header_len(read, state.page_index, state.require_dictionary)
+                verify_page_header_len(header_len, state.remaining_bytes)
+                state.offset += header_len.to_u64
+                state.remaining_bytes -= header_len.to_u64
+                parsed
+              end
+
+            verify_page_size(header.compressed_page_size, header.uncompressed_page_size, state.remaining_bytes)
+
+            data_len = header.compressed_page_size
+            data_start = state.offset
+            state.offset += data_len.to_u64
+            state.remaining_bytes -= data_len.to_u64
+
+            next if header.type == PageType::INDEX_PAGE
+
+            buffer = @reader.get_bytes(data_start, data_len)
+            buffer = decrypt_page_data(buffer, state.page_index, state.require_dictionary)
+            page = File.decode_page(header, buffer, @physical_type, @decompressor)
+            if page.is_data_page?
+              state.page_index += 1
+            elsif page.is_dictionary_page?
+              state.require_dictionary = false
+            end
+            return page
+          end
+        when Pages
+          front, is_dictionary_page =
+            if dictionary = state.dictionary_page
+              state.dictionary_page = nil
+              {dictionary, true}
             else
-              header_len, parsed = read_page_header_len(read, @page_index, @require_dictionary)
-              verify_page_header_len(header_len, @remaining_bytes)
-              @offset += header_len.to_u64
-              @remaining_bytes -= header_len.to_u64
-              parsed
+              case location = state.page_locations.shift?
+              when Nil
+                return nil
+              else
+                {location, false}
+              end
             end
 
-          verify_page_size(header.compressed_page_size, header.uncompressed_page_size, @remaining_bytes)
+          buffer = @reader.get_bytes(front.offset.to_u64, front.compressed_page_size)
+          header_len, header = read_page_header_len_from_bytes(buffer, state.page_index, is_dictionary_page)
+          buffer = buffer[header_len, buffer.size - header_len]
+          buffer = decrypt_page_data(buffer, state.page_index, is_dictionary_page)
 
-          data_len = header.compressed_page_size
-          data_start = @offset
-          @offset += data_len.to_u64
-          @remaining_bytes -= data_len.to_u64
+          state.page_index += 1 unless is_dictionary_page
 
-          next if header.type == PageType::INDEX_PAGE
-
-          buffer = @reader.get_bytes(data_start, data_len)
-          buffer = decrypt_page_data(buffer, @page_index, @require_dictionary)
-          page = File.decode_page(header, buffer, @physical_type, @decompressor)
-          if page.is_data_page?
-            @page_index += 1
-          elsif page.is_dictionary_page?
-            @require_dictionary = false
-          end
-          return page
+          File.decode_page(header, buffer, @physical_type, @decompressor)
+        else
+          raise general_err!("unknown serialized page reader state")
         end
       end
 
+      # Upstream `impl Iterator for SerializedPageReader` (`Item =
+      # Result<Page>`). Crystal's iterator protocol uses `Iterator::Stop`
+      # instead of `Option`, and errors raise.
+      def next : Column::Page | Iterator::Stop
+        get_next_page || Iterator::Stop::INSTANCE
+      end
+
       def peek_next_page : Column::PageMetadata?
-        loop do
-          return nil if @remaining_bytes == 0
+        case state = @state
+        when Values
+          loop do
+            return nil if state.remaining_bytes == 0
 
-          if buffered = @next_page_header
-            metadata = Column::PageMetadata.from_thrift(buffered)
-            return metadata
+            if buffered = state.next_page_header
+              return Column::PageMetadata.from_thrift(buffered)
+            end
+
+            read = @reader.get_read(state.offset)
+            header_len, header = read_page_header_len(read, state.page_index, state.require_dictionary)
+            verify_page_header_len(header_len, state.remaining_bytes)
+            state.offset += header_len.to_u64
+            state.remaining_bytes -= header_len.to_u64
+
+            next if header.type == PageType::INDEX_PAGE
+
+            state.next_page_header = header
+            return Column::PageMetadata.from_thrift(header)
+          end
+        when Pages
+          if state.dictionary_page
+            return Column::PageMetadata.new(nil, nil, true)
           end
 
-          read = @reader.get_read(@offset)
-          header_len, header = read_page_header_len(read, @page_index, @require_dictionary)
-          verify_page_header_len(header_len, @remaining_bytes)
-          @offset += header_len.to_u64
-          @remaining_bytes -= header_len.to_u64
-
-          if header.type == PageType::INDEX_PAGE
-            next
+          if front = state.page_locations.first?
+            next_rows =
+              if state.page_locations.size > 1
+                state.page_locations[1].first_row_index
+              else
+                state.total_rows.to_i64
+              end
+            return Column::PageMetadata.new((next_rows - front.first_row_index).to_i32, nil, false)
           end
 
-          @next_page_header = header
-          return Column::PageMetadata.from_thrift(header)
+          nil
+        else
+          raise general_err!("unknown serialized page reader state")
         end
       end
 
       def skip_next_page : Nil
-        if buffered = @next_page_header
-          verify_page_size(buffered.compressed_page_size, buffered.uncompressed_page_size, @remaining_bytes)
-          data_page_size = buffered.compressed_page_size.to_u64
-          @offset += data_page_size
-          @remaining_bytes -= data_page_size
-          @next_page_header = nil
-        else
-          read = @reader.get_read(@offset)
-          header_len, header = read_page_header_len(read, @page_index, @require_dictionary)
-          verify_page_header_len(header_len, @remaining_bytes)
-          verify_page_size(header.compressed_page_size, header.uncompressed_page_size, @remaining_bytes)
-          data_page_size = header.compressed_page_size.to_u64
-          @offset += header_len.to_u64 + data_page_size
-          @remaining_bytes -= header_len.to_u64 + data_page_size
-        end
+        case state = @state
+        when Values
+          if buffered = state.next_page_header
+            verify_page_size(buffered.compressed_page_size, buffered.uncompressed_page_size, state.remaining_bytes)
+            data_page_size = buffered.compressed_page_size.to_u64
+            state.offset += data_page_size
+            state.remaining_bytes -= data_page_size
+            state.next_page_header = nil
+          else
+            read = @reader.get_read(state.offset)
+            header_len, header = read_page_header_len(read, state.page_index, state.require_dictionary)
+            verify_page_header_len(header_len, state.remaining_bytes)
+            verify_page_size(header.compressed_page_size, header.uncompressed_page_size, state.remaining_bytes)
+            data_page_size = header.compressed_page_size.to_u64
+            state.offset += header_len.to_u64 + data_page_size
+            state.remaining_bytes -= header_len.to_u64 + data_page_size
+          end
 
-        if @require_dictionary
-          @require_dictionary = false
+          if state.require_dictionary
+            state.require_dictionary = false
+          else
+            state.page_index += 1
+          end
+        when Pages
+          if state.dictionary_page
+            state.dictionary_page = nil
+          elsif state.page_locations.shift?
+            state.page_index += 1
+          end
         else
-          @page_index += 1
+          raise general_err!("unknown serialized page reader state")
         end
+        nil
+      end
+
+      # Upstream: the offset-index state always starts at a record boundary; the
+      # offset-stream state inspects the next page's metadata.
+      def at_record_boundary : Bool
+        case @state
+        when Pages
+          true
+        else
+          super
+        end
+      end
+
+      # Returns the offset of the next page, if any.
+      #
+      # Upstream only compiles this for tests (`#[cfg(test)]`); the port exposes
+      # it so a caller can tell whether the next page was already read.
+      def peek_next_page_offset : UInt64?
+        case state = @state
+        when Values
+          loop do
+            return nil if state.remaining_bytes == 0
+
+            if header = state.next_page_header
+              return state.offset if page_metadata?(header)
+
+              # For an unknown page type (e.g., INDEX_PAGE), skip and read next.
+              state.next_page_header = nil
+              next
+            end
+
+            read = @reader.get_read(state.offset)
+            header_len, header = read_page_header_len(read, state.page_index, state.require_dictionary)
+            state.offset += header_len.to_u64
+            state.remaining_bytes -= header_len.to_u64
+
+            next unless page_metadata?(header)
+
+            state.next_page_header = header
+            return state.offset
+          end
+        when Pages
+          if page = state.dictionary_page
+            page.offset.to_u64
+          elsif page = state.page_locations.first?
+            page.offset.to_u64
+          end
+        else
+          raise general_err!("unknown serialized page reader state")
+        end
+      end
+
+      private def page_metadata?(header : Format::PageHeader) : Column::PageMetadata?
+        Column::PageMetadata.from_thrift(header)
+      rescue Parquet::ParquetError
         nil
       end
 
@@ -282,6 +466,16 @@ module Parquet
         counting = CountingIO.new(input)
         header = read_page_header(counting, page_index, dictionary_page)
         {counting.count, header}
+      end
+
+      private def read_page_header_len_from_bytes(
+        buffer : Bytes,
+        page_index : Int32,
+        dictionary_page : Bool,
+      ) : Tuple(Int32, Format::PageHeader)
+        input = IO::Memory.new(buffer)
+        header = read_page_header(input, page_index, dictionary_page)
+        {input.pos.to_i32, header}
       end
 
       private def read_page_header(

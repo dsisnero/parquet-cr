@@ -3004,7 +3004,7 @@ parquet/src/file/serialized_reader.rs::method::ReadOptionsBuilder.with_size_stat
 parquet/src/file/serialized_reader.rs::method::SerializedFileReader<File>.into_iter	method	intentional_divergence	-	record API (RowIter) deferred to Phase 2.4
 parquet/src/file/serialized_reader.rs::method::SerializedFileReader<File>.try_from	method	intentional_divergence	src/parquet/file/reader.cr	File/path constructors map to SerializedFileReader.new
 parquet/src/file/serialized_reader.rs::method::SerializedFileReader<R>.get_row_group	method	ported	src/parquet/file/reader.cr	SerializedFileReader
-parquet/src/file/serialized_reader.rs::method::SerializedFileReader<R>.get_row_iter	method	missing	-	record API (RowIter) deferred to Phase 2.4
+parquet/src/file/serialized_reader.rs::method::SerializedFileReader<R>.get_row_iter	method	ported	src/parquet/record/reader.cr	reopened on FileReader (Phase 2.4)
 parquet/src/file/serialized_reader.rs::method::SerializedFileReader<R>.metadata	method	ported	src/parquet/file/reader.cr	SerializedFileReader
 parquet/src/file/serialized_reader.rs::method::SerializedFileReader<R>.new	method	ported	src/parquet/file/reader.cr	SerializedFileReader
 parquet/src/file/serialized_reader.rs::method::SerializedFileReader<R>.new_with_options	method	ported	src/parquet/file/reader.cr	SerializedFileReader
@@ -3014,18 +3014,18 @@ parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.at_record
 parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.get_next_page	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#get_next_page
 parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.new	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader.new_for_column
 parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.new_with_properties	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader.new_for_column
-parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.next	method	intentional_divergence	src/parquet/file/serialized_reader.cr	Iterator impl not modelled
+parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.next	method	ported	src/parquet/file/serialized_reader.cr	Iterator(Column::Page); Iterator::Stop replaces Result<Page>, errors raise
 parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.peek_next_page	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#peek_next_page
-parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.peek_next_page_offset	method	intentional_divergence	src/parquet/file/serialized_reader.cr	not ported
+parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.peek_next_page_offset	method	intentional_divergence	src/parquet/file/serialized_reader.cr	test-only upstream (#[cfg(test)]); public here for the Pages state
 parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.read_page_header_len	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#read_page_header_len
-parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.read_page_header_len_from_bytes	method	intentional_divergence	src/parquet/file/serialized_reader.cr	Pages state not ported
+parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.read_page_header_len_from_bytes	method	ported	src/parquet/file/serialized_reader.cr	private instance method (IO::Memory position instead of Cursor)
 parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.skip_next_page	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#skip_next_page
 parquet/src/file/serialized_reader.rs::method::SerializedPageReaderContext.decrypt_page_data	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#decrypt_page_data
 parquet/src/file/serialized_reader.rs::method::SerializedPageReaderContext.page_crypto_context	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#page_crypto_context
 parquet/src/file/serialized_reader.rs::method::SerializedPageReaderContext.read_page_header	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#read_page_header
 parquet/src/file/serialized_reader.rs::method::SerializedRowGroupReader<'_, R>.get_column_bloom_filter	method	ported	src/parquet/file/reader.cr	SerializedRowGroupReader
 parquet/src/file/serialized_reader.rs::method::SerializedRowGroupReader<'_, R>.get_column_page_reader	method	ported	src/parquet/file/reader.cr	SerializedRowGroupReader; also attaches crypto context (upstream only in arrow reader)
-parquet/src/file/serialized_reader.rs::method::SerializedRowGroupReader<'_, R>.get_row_iter	method	missing	-	record API (RowIter) deferred to Phase 2.4
+parquet/src/file/serialized_reader.rs::method::SerializedRowGroupReader<'_, R>.get_row_iter	method	ported	src/parquet/record/reader.cr	reopened on RowGroupReader (Phase 2.4)
 parquet/src/file/serialized_reader.rs::method::SerializedRowGroupReader<'_, R>.metadata	method	ported	src/parquet/file/reader.cr	SerializedRowGroupReader
 parquet/src/file/serialized_reader.rs::method::SerializedRowGroupReader<'_, R>.num_columns	method	ported	src/parquet/file/reader.cr	SerializedRowGroupReader
 parquet/src/file/serialized_reader.rs::method::SerializedRowGroupReader<'a, R>.new	method	ported	src/parquet/file/reader.cr	SerializedRowGroupReader

@@ -33,12 +33,14 @@ little-endian layout.
 - Plan layout: single file. If it grows too large, split into
   `plans/parity/<area>.md`, link each here, and mark each split file
   complete/in-progress plus the file being worked on next.
-- Current focus: **Phase 1.8 compression is complete** — every codec arrow-rs
-  implements at 60.0.0 is ported (SNAPPY, GZIP, BROTLI, ZSTD, LZ4, LZ4_RAW,
-  LZ4_HADOOP); LZO is `nyi_err!` upstream as well. **Phase 2.2
+- Current focus: **the offset-index-driven `SerializedPageReader` state is
+  complete**, which closes the last actionable item on this roadmap. Phase 1.8
+  compression (all codecs arrow-rs implements at 60.0.0), Phase 2.2
   content-defined chunker, Phase 3 (except arrow/async), Phase 3.7 core
-  geospatial, and encryption are complete**; the next actionable feature is
-  **item 10 / the offset-index-driven `SerializedPageReader` state**. Done so
+  geospatial, and encryption are complete. What remains is either **blocked**
+  (arrow interop → `../arrow-cr`, async/object_store) or **deferred**
+  (`parquet-variant-compute`/`-json`, the arrow-only CLIs and
+  `column/page_store.rs`); see "Next up" item 11 for the candidate list. Done so
   far:
   - `parquet-variant` (`src/parquet_variant/`): `VariantPath`/
     `VariantPathElement` + dot/bracket parser (`path.cr`); `utils` helpers
@@ -157,6 +159,20 @@ little-endian layout.
     `test_read_float32_float64_byte_stream_split` and `test_alp_extended`, plus
     the `large_string_map.brotli.parquet` metadata/value-column case). Writer and
     page roundtrips now cover `ZSTD` and `BROTLI`.
+  - Offset-index page reader (item 10): `SerializedPageReader` now carries an
+    upstream-style state (`SerializedPageReader::State` with `Values` and
+    `Pages` subclasses). `Pages` consumes the column chunk's `PageLocation`
+    queue, synthesizes the dictionary page from the un-indexed chunk prefix,
+    derives `PageMetadata#num_rows` from the `first_row_index` deltas, skips
+    locations in `skip_next_page`, always reports a record boundary, and
+    `new_for_column` accepts `page_locations` (previously `NYIError`) — wired
+    through `ReadOptionsBuilder#with_page_index`.
+    `peek_next_page_offset` (upstream test-only) is public here, and
+    `SerializedPageReader` now implements `Iterator(Column::Page)`. Specs:
+    `spec/parquet/file/serialized_reader_pages_spec.cr` (page-for-page
+    equivalence with the offset-stream state on `alltypes_tiny_pages.parquet`,
+    dictionary-page handling, row counts, offset peeking in both states, skips,
+    record boundaries, the iterator, and an end-to-end row-iterator comparison).
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -253,21 +269,31 @@ little-endian layout.
      `vendor/arrow-rs/parquet/src/compression.rs` (`brotli_codec`,
      `zstd_codec`, `BROTLI_DEFAULT_BUFFER_SIZE`/`BROTLI_DEFAULT_LG_WINDOW_SIZE`),
      `src/parquet/compression_codecs.cr`, `src/parquet/compression.cr`.
-  10. The offset-index-driven `SerializedPageReader` state (upstream
-      `SerializedPageReaderState::Pages`: a `PageLocation` queue plus an optional
-      dictionary location, `peek_next_page_offset`, and the `Iterator` impl), so a
-      reader can consume `page_locations` instead of walking the offset stream.
-      Anchors: `vendor/arrow-rs/parquet/src/file/serialized_reader.rs`
+  10. ~~The offset-index-driven `SerializedPageReader` state.~~ **complete** —
+      `SerializedPageReader::State` (`Values`/`Pages`) ports upstream
+      `SerializedPageReaderState`; `Pages` consumes the chunk's `PageLocation`
+      queue (with the synthesized dictionary location), and
+      `peek_next_page_offset` plus the `Iterator(Column::Page)` impl are
+      available. Reading through page locations is enabled by
+      `ReadOptionsBuilder#with_page_index`. Tests:
+      `spec/parquet/file/serialized_reader_pages_spec.cr`. Anchors:
+      `vendor/arrow-rs/parquet/src/file/serialized_reader.rs`
       (`SerializedPageReaderState`), `src/parquet/file/serialized_reader.cr`,
-      `src/parquet/file/page_index/index_reader.cr`.
-  11. Deferred (recorded divergences): async/object-store suffix fetchers, arrow
-     interop (`parquet/src/arrow/`), `parquet-variant-compute`/`-json`, the
-     `column/page_store.rs` module (only consumed by the arrow writer), and the
-     arrow `parquet-rewrite`/`parquet-fromcsv` CLI tools.
+      `src/parquet/file/reader.cr`.
+  11. Deferred / blocked (recorded divergences and candidates):
+     - **Blocked on the separate `../arrow-cr` port**: `parquet/src/arrow/`, the
+       `column/page_store.rs` module (only consumed by the arrow writer), the
+       `parquet-rewrite`/`parquet-fromcsv` CLIs, and `parquet-variant-compute`.
+     - **Blocked by design**: `async_reader`/`async_writer`/`object_store`
+       suffix fetchers (Rust tokio/futures; the fiber mapping decision has to be
+       recorded first).
+     - **Actionable without arrow** (pick one next): `parquet-variant-json`
+       (`serde_json` → `JSON::Any`, no arrow dependency), and the `column/mod.rs`
+       glue that Phase 2.2 still lists as pending.
 - Remaining `missing` ledger rows are dominated by deferred areas (arrow,
   variant-compute, benches/examples), `HeapSize`/`memory_size` (intentional
-  divergence), auto-generated `data_type` trait impls (`as_any`/`set_data`/
-  `skip`), and `Serialized*Reader#get_row_iter` (`RowIter`).
+  divergence), and auto-generated `data_type` trait impls (`as_any`/`set_data`/
+  `skip`).
 - **Scoping notes / gotchas (found while porting; avoids re-derivation):**
   - Crystal `String.new(Bytes)`/`String#byte_slice?` do **not** validate UTF-8
     and **copy** substrings, so the variant crate's zero-copy APIs
@@ -516,11 +542,13 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: zstd and brotli codecs`; gates green
-  (`make lint`, `make test` -> 870 examples, 0 failures). Next feature: item 10
-  (offset-index-driven `SerializedPageReader` state).
-- Progress by counts (ledger): 1812 `ported`, 183 `intentional_divergence`,
-  11 `skipped`, 1509 `missing` (of 3515 rows).
+- Last commit: `port: offset-index page reader state`; gates green
+  (`make lint`, `make test` -> 879 examples, 0 failures). The roadmap's
+  actionable queue is empty; pick the next feature from "Next up" item 11
+  (`parquet-variant-json` or the `column/mod.rs` glue) or unblock arrow work via
+  `../arrow-cr`.
+- Progress by counts (ledger): 1816 `ported`, 181 `intentional_divergence`,
+  11 `skipped`, 1507 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -551,9 +579,9 @@ Chunk status by area:
   page-index builders, the `ParquetMetaData` page-index plumbing, the sans-IO
   `ParquetMetaDataPushDecoder`, the synchronous `ChunkReader`-driven
   `ParquetMetaDataReader`, the `ParquetMetaDataWriter`/`ThriftMetadataWriter`,
-  the bloom filter (`Sbbf`), the serialized page reader/writer, and the
-  file-level `SerializedFileReader`/`SerializedFileWriter` done; the offset-index
-  `Pages` state pending.
+  the bloom filter (`Sbbf`), the serialized page reader/writer (offset-stream
+  and offset-index states), and the file-level
+  `SerializedFileReader`/`SerializedFileWriter` done.
 - Phase 2.1 encodings: complete (all codecs, the `Encoder`/`Decoder`
   interfaces, and the `get_encoder`/`get_decoder` registries).
 - Phase 2.2 column: `ColumnDescriptor`, column page types/interfaces, the
@@ -866,10 +894,11 @@ Chunk status by area:
 - [x] `ParquetMetaDataWriter`/`ThriftMetadataWriter` page-index footer
   serialization (`src/parquet/file/metadata/writer.cr`) and `TrackedWrite`/
   `file_magic` (`src/parquet/file/tracked_write.cr`).
-- [~] Serialized page reader/writer: `SerializedPageWriter` + `SerializedPageReader`
-  (offset-stream state) + `decode_page` done
-  (`src/parquet/file/serialized_{writer,reader}.cr`); the offset-index `Pages`
-  state, `peek_next_page_offset`, and the `Iterator` impl are pending.
+- [x] Serialized page reader/writer: `SerializedPageWriter` + `SerializedPageReader`
+  (both the offset-stream `Values` and the offset-index `Pages` state) +
+  `decode_page` done (`src/parquet/file/serialized_{writer,reader}.cr`);
+  `peek_next_page_offset` and the `Iterator(Column::Page)` impl are ported
+  (`spec/parquet/file/serialized_reader_pages_spec.cr`).
 - [x] `SerializedFileWriter`/`SerializedRowGroupWriter`/`SerializedColumnWriter`
   + `write_bloom_filters`/`OnClose*` (`src/parquet/file/writer.cr`) and
   `FileReader`/`RowGroupReader`/`SerializedFileReader`/`SerializedRowGroupReader`
@@ -1446,12 +1475,24 @@ Chunk status by area:
   implementation — `create_codec` raises `NYIError` for it, exactly as upstream
   does. `create_codec` is `Parquet::CompressionCodecs.create_codec`.
 - `file::serialized_reader`/`serialized_writer`: `SerializedPageWriter`'s
-  `W: Write` becomes the concrete `TrackedWrite`; page encryption is not ported;
-  `SerializedPageReader`'s offset-index `Pages` state, `Iterator` impl, and
-  `peek_next_page_offset` are not ported (only the offset-stream `Values` state);
-  CRC verification is always performed (`decode_page`); the reader constructor is
+  `W: Write` becomes the concrete `TrackedWrite`; page encryption is not ported
+  here (see the `PageEncryptor` note); CRC verification is always performed
+  (`decode_page`); the reader constructor is
   `SerializedPageReader.new_for_column`. `decode_page` is a `Parquet::File`
-  module method.
+  module method. The reader state is a sealed class hierarchy
+  (`SerializedPageReader::State` with `Values`/`Pages`) instead of the Rust
+  enum, `usize` counters are `Int32` (`total_rows`, `page_index`) or `UInt64`
+  (`offset`, `remaining_bytes`), and the `PageLocation` queue is a `Deque`. The
+  `Iterator` impl yields `Column::Page` and signals exhaustion with
+  `Iterator::Stop` (Rust: `Item = Result<Page>`); errors raise.
+  `peek_next_page_offset` is `#[cfg(test)]`-only upstream and public here.
+  `read_page_header_len_from_bytes` is a private instance method that measures
+  the header with `IO::Memory#pos`. Reading through page locations is switched on
+  by `ReadOptionsBuilder#with_page_index` (upstream's core reader always passes
+  `None`; only its arrow layer enables the index). Known limitation (matches
+  upstream): the page indexes of *encrypted* columns are written encrypted but
+  neither port nor upstream decrypts them in the metadata reader, so
+  `with_page_index` on an encrypted file fails while decoding the index.
 - `file::writer`: `SerializedFileWriter<W: Write>` is a single
   `SerializedFileWriter` over an `IO` (via `TrackedWrite`); `TrackedWrite` now
   exposes `inner`/`inner_mut`/`into_inner`/`flush` (all over the erased `IO`).
