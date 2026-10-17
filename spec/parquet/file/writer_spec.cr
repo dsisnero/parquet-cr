@@ -236,6 +236,16 @@ describe Parquet::File::SerializedFileWriter do
     )
   end
 
+  # Characterization: ZSTD and BROTLI are wired through `create_codec` as well.
+  it "round-trips row groups compressed with zstd and brotli" do
+    roundtrip_i32(IO::Memory.new, [[1, 2, 3, 4, 5]], PComp.zstd)
+    roundtrip_i32(
+      IO::Memory.new,
+      [[1, 2, 3, 4, 5], [1, 2, 3], [1], [1, 2, 3, 4, 5, 6]],
+      PComp.brotli
+    )
+  end
+
   # Upstream `test_column_offset_index_file`.
   it "writes column and offset indexes" do
     io = IO::Memory.new

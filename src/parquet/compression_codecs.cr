@@ -1,21 +1,25 @@
 require "compress/gzip"
 require "snappy"
 require "flint"
+require "zinc"
+require "brotli"
 require "./basic"
 require "./errors"
 require "./lz4"
 
 # Ported from `parquet/src/compression.rs` (`Codec`, `create_codec`, `SnappyCodec`,
-# `GZipCodec`, `LZ4Codec`, `LZ4RawCodec`, `LZ4HadoopCodec`)
+# `GZipCodec`, `LZ4Codec`, `LZ4RawCodec`, `LZ4HadoopCodec`, `BrotliCodec`,
+# `ZSTDCodec`)
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
 #
-# Ports the `Codec` framework, the SNAPPY codec, the GZIP codec (Crystal stdlib
-# `Compress::Gzip`), and the three LZ4 codecs. SNAPPY uses the `naqvis/snappy`
-# shard, a pure-Crystal implementation of the snappy raw/block format (upstream
-# uses the `snap` crate). LZ4 blocks come from the `paddor/flint` shard (upstream
-# uses `lz4_flex::block`); the LZ4 *frame* container and the Hadoop framing live
-# in `Parquet::Lz4` and `LZ4HadoopCodec`. The brotli/lzo/zstd codecs are still
-# not ported — `create_codec` raises for them (see `plans/parity.md` Phase 1.8).
+# Ports the `Codec` framework and every codec upstream implements at 60.0.0.
+# SNAPPY uses the `naqvis/snappy` shard, LZ4 blocks the `paddor/flint` shard,
+# ZSTD the `paddor/zinc` shard, and BROTLI the `OrelSokolov/brotli` shard (all
+# pure Crystal; upstream uses `snap`, `lz4_flex`, `zstd`, and `brotli`); the LZ4
+# *frame* container and the Hadoop framing live in `Parquet::Lz4` and
+# `LZ4HadoopCodec`, and GZIP uses the Crystal stdlib. LZO is not implemented —
+# upstream's `create_codec` returns `nyi_err!` for it as well (see
+# `plans/parity.md` Phase 1.8).
 #
 # Divergences: the Rust `Codec` trait (mutating `Vec<u8>` buffers) becomes an
 # abstract class appending to `Array(UInt8)`; `snap::Error` maps to
@@ -295,6 +299,76 @@ module Parquet
       end
     end
 
+    # BROTLI codec (via the `OrelSokolov/brotli` shard, replacing upstream's
+    # `brotli` crate).
+    class BrotliCodec < Codec
+      # Upstream `BROTLI_DEFAULT_LG_WINDOW_SIZE` (recommended between 20-22).
+      LG_WINDOW_SIZE = 22
+
+      def initialize(@level : BrotliLevel)
+      end
+
+      def compress(input : Bytes, output : Array(UInt8)) : Nil
+        encoder = Brotli::Enc::Encoder.new(quality: @level.compression_level, lgwin: LG_WINDOW_SIZE)
+        output.concat(encoder.encode(input))
+        nil
+      rescue error : ParquetError
+        raise error
+      rescue error
+        raise ExternalError.new(error)
+      end
+
+      def decompress(input : Bytes, output : Array(UInt8), uncompress_size : Int32?) : Int32
+        # The brotli stream is self-terminating; upstream only uses
+        # `uncompress_size` as the decoder's internal buffer size hint.
+        _ = uncompress_size
+
+        # `Brotli::Decoder` accumulates into its own output buffer and does not
+        # reset it, so a fresh decoder is required per call (upstream's
+        # `brotli::Decompressor::new` also creates one per call).
+        decompressed = Brotli::Decoder.new.decode(input)
+        output.concat(decompressed)
+        decompressed.size
+      rescue error : Brotli::DecodeError
+        raise ExternalError.new(error)
+      end
+    end
+
+    # ZSTD codec (via the `paddor/zinc` shard, replacing upstream's `zstd` crate).
+    class ZSTDCodec < Codec
+      # `zinc` implements levels -8..4 (raw-fast, Fast, and DFast strategies).
+      # Upstream's libzstd accepts the full validated -131072..=22 range and
+      # clamps internally; the port clamps to the levels `zinc` supports, which
+      # changes the compression ratio for |level| > 4 but not the format.
+      MINIMUM_LEVEL = -8
+      MAXIMUM_LEVEL =  4
+
+      def initialize(level : ZstdLevel)
+        clamped = level.compression_level.clamp(MINIMUM_LEVEL, MAXIMUM_LEVEL)
+        @codec = Zinc::FrameCodec.new(level: clamped)
+      end
+
+      def compress(input : Bytes, output : Array(UInt8)) : Nil
+        output.concat(@codec.compress(input))
+        nil
+      rescue error : Zinc::Error
+        raise ExternalError.new(error)
+      end
+
+      def decompress(input : Bytes, output : Array(UInt8), uncompress_size : Int32?) : Int32
+        # Upstream only uses `uncompress_size` (then the frame content size,
+        # then `input.len() * 4`) to pre-reserve the output buffer; the decoded
+        # length always comes from the frame itself.
+        _ = uncompress_size
+
+        decompressed = @codec.decompress(input)
+        output.concat(decompressed)
+        decompressed.size
+      rescue error : Zinc::Error
+        raise ExternalError.new(error)
+      end
+    end
+
     # Returns the codec for `compression`, or `nil` for `UNCOMPRESSED`.
     def self.create_codec(compression : Compression, options : CodecOptions) : Codec?
       case compression.kind
@@ -308,8 +382,13 @@ module Parquet
         LZ4HadoopCodec.new(options.backward_compatible_lz4)
       when Compression::Kind::LZ4_RAW
         LZ4RawCodec.new
+      when Compression::Kind::BROTLI
+        BrotliCodec.new(BrotliLevel.try_new(compression.level || BrotliLevel.default.compression_level))
+      when Compression::Kind::ZSTD
+        ZSTDCodec.new(ZstdLevel.try_new(compression.level || ZstdLevel.default.compression_level))
       else
-        raise general_err!("The codec type #{compression} is not supported yet")
+        # LZO has no implementation in arrow-rs 60.0.0 either.
+        raise nyi_err!("The codec type #{compression} is not supported yet")
       end
     end
   end

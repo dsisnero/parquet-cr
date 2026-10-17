@@ -40,11 +40,13 @@ Do not introduce a dependency that reverses this direction.
 
 Run `make install` (`shards install`) before building.
 
-| Shard            | Scope   | Purpose                                            |
-| ---------------- | ------- | -------------------------------------------------- |
-| `naqvis/snappy`  | runtime | SNAPPY codec (pure Crystal, raw/block)             |
-| `paddor/flint`   | runtime | LZ4 raw block codec (pure Crystal; frames in-tree) |
-| `ameba`          | dev     | `make lint` static analysis                        |
+| Shard                | Scope   | Purpose                                            |
+| -------------------- | ------- | -------------------------------------------------- |
+| `naqvis/snappy`      | runtime | SNAPPY codec (pure Crystal, raw/block)             |
+| `paddor/flint`       | runtime | LZ4 raw block codec (pure Crystal; frames in-tree) |
+| `paddor/zinc`        | runtime | ZSTD codec (pure Crystal, RFC 8878 frames)         |
+| `OrelSokolov/brotli` | runtime | BROTLI codec (pure Crystal, RFC 7932)              |
+| `ameba`              | dev     | `make lint` static analysis                        |
 
 Everything else (GZIP via `compress/gzip`, the LZ4 frame container, Thrift,
 protobuf-free metadata, crypto via OpenSSL) comes from the Crystal standard

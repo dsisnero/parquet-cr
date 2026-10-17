@@ -33,10 +33,13 @@ little-endian layout.
 - Plan layout: single file. If it grows too large, split into
   `plans/parity/<area>.md`, link each here, and mark each split file
   complete/in-progress plus the file being worked on next.
-- Current focus: **Phase 1.8a SNAPPY and Phase 1.8b LZ4 are complete**; **Phase
-  2.2 content-defined chunker, Phase 3 (except arrow/async), Phase 3.7 core
+- Current focus: **Phase 1.8 compression is complete** — every codec arrow-rs
+  implements at 60.0.0 is ported (SNAPPY, GZIP, BROTLI, ZSTD, LZ4, LZ4_RAW,
+  LZ4_HADOOP); LZO is `nyi_err!` upstream as well. **Phase 2.2
+  content-defined chunker, Phase 3 (except arrow/async), Phase 3.7 core
   geospatial, and encryption are complete**; the next actionable feature is
-  **item 9 / Phase 1.8c Zstd (and Brotli/LZO)**. Done so far:
+  **item 10 / the offset-index-driven `SerializedPageReader` state**. Done so
+  far:
   - `parquet-variant` (`src/parquet_variant/`): `VariantPath`/
     `VariantPathElement` + dot/bracket parser (`path.cr`); `utils` helpers
     (`utils.cr`); `OffsetSizeBytes`/`map_bytes_to_offsets`, `VariantBasicType`/
@@ -141,6 +144,19 @@ little-endian layout.
     `spec/parquet/file/lz4_fixture_spec.cr` (all five `lz4`/`hadoop_lz4`
     fixtures, incl. the `non_hadoop` raw-block fallback and strict-mode
     rejection). Writer/page roundtrips now cover `LZ4` and `LZ4_RAW`.
+  - ZSTD and BROTLI codecs (Phase 1.8c): `ZSTDCodec` wraps the `paddor/zinc`
+    shard (`~> 0.2.1`, pure Crystal RFC 8878 frames; `Zinc::FrameCodec`) and
+    `BrotliCodec` wraps the `OrelSokolov/brotli` shard (`~> 0.3.0`, pure Crystal
+    RFC 7932; one-shot quality 0..11, `lgwin` 22). Both are wired into
+    `create_codec`; LZO now raises `NYIError` like upstream
+    (`nyi_err!("The codec type {} is not supported yet")`). Specs:
+    `spec/parquet/compression_codecs_spec.cr` (upstream `test_codec_brotli` and
+    `test_codec_zstd` level sweeps, reference-encoder golden streams, corrupt
+    input, empty input, level clamping, LZO) and
+    `spec/parquet/file/zstd_brotli_fixture_spec.cr` (upstream
+    `test_read_float32_float64_byte_stream_split` and `test_alp_extended`, plus
+    the `large_string_map.brotli.parquet` metadata/value-column case). Writer and
+    page roundtrips now cover `ZSTD` and `BROTLI`.
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -221,13 +237,22 @@ little-endian layout.
      `lz4_hadoop_codec`, `LZ4_BUFFER_SIZE`/`PREFIX_LEN`/`SIZE_U32`),
      `src/parquet/compression_codecs.cr`, `src/parquet/lz4.cr`,
      `src/parquet/compression.cr`.
-  9. Phase 1.8c Zstd/Brotli (and LZO if anything exists) behind `create_codec`:
-     `didactic-drunk/zstd.cr` (bindings, last push 2024-05) is the zstd candidate;
-     `naqvis/brotli.cr` is stale (2021-03), so brotli needs a maintained shard or
-     an in-tree/native decision. Fixtures:
-     `alp_extended.zstd.parquet`/`byte_stream_split.zstd.parquet`/
-     `large_string_map.brotli.parquet`. Record the dependency decision here
-     before adding another runtime dependency.
+  9. ~~Phase 1.8c Zstd/Brotli behind `create_codec`.~~ **complete** — `ZSTDCodec`
+     uses the `paddor/zinc` shard (`~> 0.2.1`, pure Crystal RFC 8878: frame
+     encoder levels -8..4 and a full frame decoder, no libzstd) and
+     `BrotliCodec` uses `OrelSokolov/brotli` (`~> 0.3.0`, pure Crystal RFC 7932
+     decoder + encoder, quality 0..11); both are wired into `create_codec` and
+     `create_codec` now raises `NYIError` for LZO exactly like upstream (which
+     has no LZO implementation at 60.0.0). Upstream `test_codec_brotli` and
+     `test_codec_zstd` are ported (full level sweeps, with and without
+     `uncompress_size`); the previously pending fixtures now run
+     (`byte_stream_split.zstd.parquet`, `alp_extended.zstd.parquet`,
+     `large_string_map.brotli.parquet`). Divergence: `zinc` implements levels
+     -8..4, so `ZSTDCodec` clamps the validated `ZstdLevel` into that range
+     (ratio only; upstream's libzstd also clamps internally). Anchors:
+     `vendor/arrow-rs/parquet/src/compression.rs` (`brotli_codec`,
+     `zstd_codec`, `BROTLI_DEFAULT_BUFFER_SIZE`/`BROTLI_DEFAULT_LG_WINDOW_SIZE`),
+     `src/parquet/compression_codecs.cr`, `src/parquet/compression.cr`.
   10. The offset-index-driven `SerializedPageReader` state (upstream
       `SerializedPageReaderState::Pages`: a `PageLocation` queue plus an optional
       dictionary location, `peek_next_page_offset`, and the `Iterator` impl), so a
@@ -265,12 +290,12 @@ little-endian layout.
   - Compression: SNAPPY uses the `naqvis/snappy` shard (`~> 0.2.0`, pure Crystal,
     MIT; the repo's first runtime dependency) for the raw/block format, kept
     behind `CompressionCodecs::SnappyCodec` so `create_codec`/tests are
-    shard-agnostic. The `find-crystal-shards` review of the rest: `naqvis/lz4.cr`
-    (last push 2023-07) and `naqvis/brotli.cr` (2021-03) are stale and naqvis has
-    no zstd, so brotli/lzo/zstd stay pending per the "active shard" rule
-    (`didactic-drunk/zstd.cr`, last push 2024-05, is the zstd candidate). LZ4
-    found a newer active option (`paddor/flint`, first pushed 2026-08) — see
-    below.
+    shard-agnostic. The `find-crystal-shards` review of the rest: the old
+    `naqvis/lz4.cr` (last push 2023-07), `naqvis/brotli.cr` (2021-03), and
+    `didactic-drunk/zstd.cr` (2024-05) options are stale or lib bindings, and
+    the newer pure-Crystal shards won for all three: `paddor/flint` (LZ4
+    blocks), `paddor/zinc` (ZSTD), `OrelSokolov/brotli` (BROTLI) — see the
+    dedicated notes below. LZO has no shard and no upstream implementation.
     Shard quirk: `Compress::Snappy.encode` raises `IndexError` on empty input, so
     `SnappyCodec#compress` emits the canonical empty block (`0x00`) itself.
     Malformed input raises `ExternalError` wrapping `Compress::Snappy::SnappyError`
@@ -297,6 +322,23 @@ little-endian layout.
     concatenated frames — decode with ours), and upstream
     `parquet-read` reading files **written** by this port with `LZ4`/`LZ4_RAW`
     (multi-row-group INT64 and dictionary-encoded string pages).
+  - ZSTD/BROTLI: `paddor/zinc` (`~> 0.2.1`; pure Crystal RFC 8878 frames,
+    decoder + Fast/DFast encoder levels -8..4) and `OrelSokolov/brotli`
+    (`~> 0.3.0`; pure Crystal RFC 7932 decoder + encoder, quality 0..11,
+    `lgwin` 10..22) are both active and have their own test suites (zinc: 156
+    minitest cases incl. `zstd`-CLI cross-verification; brotli: 56 specs plus
+    differential runs against the reference C decoder). `ZSTDCodec` clamps
+    levels to -8..4 (see the divergence note); zinc's `FrameCodec` writes
+    standard frames (magic `0xFD2FB528`, content size), and brotli streams are
+    self-terminating. `Brotli::Decoder#decode` copies the input into a padded
+    buffer internally, so pages sliced out of a larger buffer are safe, but the
+    decoder never resets its output buffer — create a new one per call. Verified
+    three ways: the reference `zstd`/`brotli` CLIs decode this port's output
+    (`zstd -d`, `brotli -d`, including the 1-byte empty brotli stream), this
+    port decodes CLI output (`zstd -1`/`-19`, `brotli -q 1`/`-q 11`, incl.
+    multi-block 300 KiB inputs and empty input), and upstream `parquet-read`
+    (built with `--features cli,brotli,zstd`) reads files written here with
+    `ZSTD`/`BROTLI` (multi-row-group INT64 and dictionary-encoded string pages).
   - Enum-with-payload Rust types are modelled either as a sealed class hierarchy
     (`Variant`, `Field`, `Page`, `Type`, `LogicalType`) or a struct with a
     `Kind` + payload (`Compression`, `DecodeResult`, `ColumnOrder`); pick per
@@ -474,11 +516,11 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: lz4 codec`; gates green
-  (`make lint`, `make test` -> 859 examples, 0 failures). Next feature: item 9
-  (Phase 1.8c Zstd/Brotli behind `create_codec`).
-- Progress by counts (ledger): 1805 `ported`, 189 `intentional_divergence`,
-  10 `skipped`, 1511 `missing` (of 3515 rows).
+- Last commit: `port: zstd and brotli codecs`; gates green
+  (`make lint`, `make test` -> 870 examples, 0 failures). Next feature: item 10
+  (offset-index-driven `SerializedPageReader` state).
+- Progress by counts (ledger): 1812 `ported`, 183 `intentional_divergence`,
+  11 `skipped`, 1509 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -499,10 +541,12 @@ Chunk status by area:
 - Phase 1.7 util: `BitReader`/`BitWriter`, `Interner`/`Storage`, `PushBuffers`,
   `common_prefix_length`, bit packing (`BitPack.unpack*`), and `decode_page` CRC
   verification done (no `util/cursor.rs` at 60.0.0).
-- Phase 1.8 compression: `Codec` framework, `GZipCodec`, `SnappyCodec`, and the
-  three LZ4 codecs (`LZ4RawCodec` via the `paddor/flint` shard, `LZ4HadoopCodec`
-  with the upstream fallback chain, and the in-tree frame container `LZ4Codec`)
-  done; lzo/brotli/zstd pending (need Crystal shards or native libraries).
+- Phase 1.8 compression: complete — `Codec` framework, `GZipCodec`,
+  `SnappyCodec`, `ZSTDCodec` (`paddor/zinc`), `BrotliCodec`
+  (`OrelSokolov/brotli`), and the three LZ4 codecs (`LZ4RawCodec` via the
+  `paddor/flint` shard, `LZ4HadoopCodec` with the upstream fallback chain, and
+  the in-tree frame container `LZ4Codec`). LZO raises `NYIError`, as upstream
+  does (no LZO implementation at 60.0.0).
 - Phase 2.3 file metadata/statistics/page-index core, column-index decode,
   page-index builders, the `ParquetMetaData` page-index plumbing, the sans-IO
   `ParquetMetaDataPushDecoder`, the synchronous `ChunkReader`-driven
@@ -662,9 +706,10 @@ Chunk status by area:
 
 ### 1.8 Compression
 
-- [~] Codec dispatch + uncompressed/snappy/gzip/lzo/brotli/lz4/zstd paths:
-  `Codec` framework + `create_codec` + `GZipCodec` + `SnappyCodec` + the three
-  LZ4 codecs done (`src/parquet/compression_codecs.cr`); lzo/brotli/zstd pending.
+- [x] Codec dispatch + uncompressed/snappy/gzip/brotli/lz4/zstd paths:
+  `Codec` framework + `create_codec` + every codec upstream implements at
+  60.0.0 (`src/parquet/compression_codecs.cr`); LZO raises `NYIError`, matching
+  upstream's `nyi_err!` for it.
 - [x] SNAPPY (`SnappyCodec`): delegates to the `naqvis/snappy` shard (pure
   Crystal, MIT, `~> 0.2.0`; raw/block format) and, when `uncompress_size` is
   given, enforces the exact recorded length like `snap::raw::Decoder`. Upstream
@@ -682,11 +727,21 @@ Chunk status by area:
   Hadoop prefix, both fallbacks, and the five real fixtures
   (`spec/parquet/file/lz4_fixture_spec.cr`); writer/page roundtrips cover
   `LZ4` and `LZ4_RAW`.
-- [ ] Select Crystal shards via `find-crystal-shards` for the remaining codecs
-  (zstd → `didactic-drunk/zstd.cr`; brotli → `naqvis/brotli.cr` is stale, so a
-  maintained shard or native binding is needed; lzo has no active shard);
-  document any codec that must be an intentional divergence (`create_codec`
-  raises for lzo/brotli/zstd).
+- [x] ZSTD / BROTLI (`ZSTDCodec`/`BrotliCodec`): `paddor/zinc` (pure Crystal
+  RFC 8878 frames, levels -8..4) and `OrelSokolov/brotli` (pure Crystal RFC
+  7932, quality 0..11, `lgwin` 22) replace upstream's `zstd`/`brotli` crates.
+  Both ignore `uncompress_size` (their streams are self-describing), like
+  upstream which only uses it as a buffer hint. Upstream `test_codec_zstd`/
+  `test_codec_brotli` level sweeps ported, plus reference-encoder golden
+  streams, corrupt/empty input, level clamping, and the
+  `byte_stream_split.zstd`/`alp_extended.zstd`/`large_string_map.brotli`
+  fixtures (`spec/parquet/file/zstd_brotli_fixture_spec.cr`).
+- [x] Shard selection (`find-crystal-shards`): `naqvis/snappy` (SNAPPY),
+  `paddor/flint` (LZ4 blocks), `paddor/zinc` (ZSTD), `OrelSokolov/brotli`
+  (BROTLI) are all active pure-Crystal implementations; LZO has no active shard
+  and no upstream implementation, so `create_codec` raises `NYIError` for it
+  (an upstream parity point, not a porting gap). The LZ4 frame container needed
+  in-tree code (`src/parquet/lz4.cr`) because no shard covers frames.
 
 ## Phase 2 — Encodings, columns, files
 
@@ -1110,6 +1165,24 @@ Chunk status by area:
   through an `io::Result`; raw blocks are decompressed into an exactly sized
   `Bytes` and then appended. `XxHash32` (frame checksums) is in-tree next to the
   existing `XxHash64` and matches the reference vectors.
+- ZSTD/BROTLI codecs: upstream uses the `zstd` (libzstd bindings) and `brotli`
+  crates. The port uses the `paddor/zinc` shard (pure Crystal, ISC, `~> 0.2.1`,
+  RFC 8878 frames) and the `OrelSokolov/brotli` shard (pure Crystal, MIT,
+  `~> 0.3.0`, RFC 7932). Divergences: `zinc` implements compression levels
+  -8..4 (raw-fast/Fast/DFast), so `ZSTDCodec` clamps the (upstream-validated)
+  `ZstdLevel` into that range — frames stay standard, only the ratio differs
+  from libzstd at |level| > 4 (upstream's libzstd clamps internally too);
+  `BrotliCodec` is one-shot (`BROTLI_DEFAULT_BUFFER_SIZE` is `skipped` in the
+  ledger) with `lgwin = 22` (`BrotliCodec::LG_WINDOW_SIZE`), and a fresh
+  `Brotli::Decoder` is created per call because the shard's decoder accumulates
+  into an output buffer it never resets; both codecs ignore `uncompress_size`
+  (self-describing streams), matching upstream's use of it as a buffer hint;
+  `Zinc::Error`/`Brotli::DecodeError` map to `ExternalError` (upstream
+  `zstd`/`brotli` IO errors → `ParquetError::External`), so decode error
+  *messages* come from the shards. `ZSTDCodec`/`BrotliCodec` reuse one codec
+  instance per `create_codec` call (per column writer/reader), as upstream does,
+  and `uncompress_size` is only a hint (zinc's bounded `max_output_size:` mode
+  exists but is not used, mirroring upstream's reserve-only use of the size).
 - Derive macros: `parquet_derive`'s proc macros (`#[derive(ParquetRecordWriter)]`
   / `ParquetRecordReader`) are replaced by `include Parquet::Derive::Record`.
   Rust impls `RecordWriter for &[T]` and `RecordReader for Vec<T>`; Crystal
@@ -1367,10 +1440,11 @@ Chunk status by area:
   the `Statistics` value).
 - `compression::codecs`: the `Codec` trait (mutating `Vec<u8>` buffers) becomes
   an abstract class appending to `Array(UInt8)`; the GZIP codec uses the Crystal
-  stdlib (`Compress::Gzip`), SNAPPY the `naqvis/snappy` shard, and the LZ4 block
-  codec the `paddor/flint` shard (the LZ4 frame container is in-tree). LZO,
-  Brotli, and Zstd still need Crystal shards — `create_codec` raises for them.
-  `create_codec` is `Parquet::CompressionCodecs.create_codec`.
+  stdlib (`Compress::Gzip`), SNAPPY the `naqvis/snappy` shard, the LZ4 block
+  codec the `paddor/flint` shard (the LZ4 frame container is in-tree), ZSTD the
+  `paddor/zinc` shard, and BROTLI the `OrelSokolov/brotli` shard. LZO has no
+  implementation — `create_codec` raises `NYIError` for it, exactly as upstream
+  does. `create_codec` is `Parquet::CompressionCodecs.create_codec`.
 - `file::serialized_reader`/`serialized_writer`: `SerializedPageWriter`'s
   `W: Write` becomes the concrete `TrackedWrite`; page encryption is not ported;
   `SerializedPageReader`'s offset-index `Pages` state, `Iterator` impl, and

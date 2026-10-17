@@ -135,6 +135,7 @@ describe Parquet::File::SerializedPageWriter do
 
     test_page_roundtrip(pages, Comp::SNAPPY, PType::INT32)
     test_page_roundtrip(pages, Comp::LZ4_RAW, PType::INT32)
+    test_page_roundtrip(pages, Comp.zstd, PType::INT32)
     test_page_roundtrip(pages, Comp::UNCOMPRESSED, PType::INT32)
   end
 
@@ -148,6 +149,7 @@ describe Parquet::File::SerializedPageWriter do
 
     test_page_roundtrip(pages, Comp::SNAPPY, PType::INT32)
     test_page_roundtrip(pages, Comp::LZ4, PType::INT32)
+    test_page_roundtrip(pages, Comp.brotli, PType::INT32)
     test_page_roundtrip(pages, Comp::UNCOMPRESSED, PType::INT32)
   end
 end

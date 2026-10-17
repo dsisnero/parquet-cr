@@ -18,7 +18,8 @@ upstream, upstream wins unless a divergence is explicitly documented in
 
 ```bash
 git submodule update --init --recursive
-make install   # shards install (runtime deps: naqvis/snappy, paddor/flint; dev: ameba)
+make install   # shards install (runtime deps: naqvis/snappy, paddor/flint,
+               # paddor/zinc, OrelSokolov/brotli; dev: ameba)
 ```
 
 The submodule is shallow and pinned. Do not move the pin without regenerating

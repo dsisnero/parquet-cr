@@ -1931,16 +1931,16 @@ parquet/src/column/writer/mod.rs::method::PageMetrics.with_definition_level_hist
 parquet/src/column/writer/mod.rs::method::PageMetrics.with_repetition_level_histogram	method	ported	src/parquet/column/writer.cr	writer data holders
 parquet/src/column/writer/mod.rs::method::TestPageWriter.close	method	missing	-	auto-generated
 parquet/src/column/writer/mod.rs::method::TestPageWriter.write_page	method	missing	-	auto-generated
-parquet/src/compression.rs::const::BROTLI_DEFAULT_BUFFER_SIZE	const	missing	-	auto-generated
-parquet/src/compression.rs::const::BROTLI_DEFAULT_LG_WINDOW_SIZE	const	missing	-	auto-generated
+parquet/src/compression.rs::const::BROTLI_DEFAULT_BUFFER_SIZE	const	skipped	-	shard encoder/decoder are one-shot (no streaming buffer size)
+parquet/src/compression.rs::const::BROTLI_DEFAULT_LG_WINDOW_SIZE	const	ported	src/parquet/compression_codecs.cr	BrotliCodec::LG_WINDOW_SIZE
 parquet/src/compression.rs::const::LZ4_BUFFER_SIZE	const	skipped	-	frame encoder is not streaming; one frame with 1 MiB blocks
 parquet/src/compression.rs::const::MAXIMUM_LEVEL	const	ported	src/parquet/compression.cr	per-level MAXIMUM_LEVEL
 parquet/src/compression.rs::const::MINIMUM_LEVEL	const	ported	src/parquet/compression.cr	per-level MINIMUM_LEVEL
 parquet/src/compression.rs::const::PREFIX_LEN	const	ported	src/parquet/compression_codecs.cr	LZ4HadoopCodec::PREFIX_LEN
 parquet/src/compression.rs::const::SIZE_U32	const	ported	src/parquet/compression_codecs.cr	LZ4HadoopCodec::SIZE_U32
-parquet/src/compression.rs::method::BrotliCodec.compress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
-parquet/src/compression.rs::method::BrotliCodec.decompress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
-parquet/src/compression.rs::method::BrotliCodec.new	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
+parquet/src/compression.rs::method::BrotliCodec.compress	method	ported	src/parquet/compression_codecs.cr	BrotliCodec#compress (OrelSokolov/brotli shard, one-shot encode q=level)
+parquet/src/compression.rs::method::BrotliCodec.decompress	method	ported	src/parquet/compression_codecs.cr	BrotliCodec#decompress (fresh Brotli::Decoder per call)
+parquet/src/compression.rs::method::BrotliCodec.new	method	ported	src/parquet/compression_codecs.cr	BrotliCodec#initialize
 parquet/src/compression.rs::method::BrotliLevel.compression_level	method	ported	src/parquet/compression.cr	BrotliLevel#compression_level
 parquet/src/compression.rs::method::BrotliLevel.default	method	ported	src/parquet/compression.cr	BrotliLevel#default
 parquet/src/compression.rs::method::BrotliLevel.try_new	method	ported	src/parquet/compression.cr	BrotliLevel#try_new
@@ -1966,9 +1966,9 @@ parquet/src/compression.rs::method::LZ4RawCodec.new	method	ported	src/parquet/co
 parquet/src/compression.rs::method::SnappyCodec.compress	method	ported	src/parquet/compression_codecs.cr	SnappyCodec#compress (naqvis/snappy shard; emits empty block for empty input)
 parquet/src/compression.rs::method::SnappyCodec.decompress	method	ported	src/parquet/compression_codecs.cr	SnappyCodec#decompress (naqvis/snappy; enforces recorded length, ExternalError on corrupt input)
 parquet/src/compression.rs::method::SnappyCodec.new	method	ported	src/parquet/compression_codecs.cr	SnappyCodec#initialize
-parquet/src/compression.rs::method::ZSTDCodec.compress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
-parquet/src/compression.rs::method::ZSTDCodec.decompress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
-parquet/src/compression.rs::method::ZSTDCodec.new	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
+parquet/src/compression.rs::method::ZSTDCodec.compress	method	ported	src/parquet/compression_codecs.cr	ZSTDCodec#compress (paddor/zinc FrameCodec; level clamped to -8..4)
+parquet/src/compression.rs::method::ZSTDCodec.decompress	method	ported	src/parquet/compression_codecs.cr	ZSTDCodec#decompress (zinc frame decoder, length from the frame)
+parquet/src/compression.rs::method::ZSTDCodec.new	method	ported	src/parquet/compression_codecs.cr	ZSTDCodec#initialize (clamped level)
 parquet/src/compression.rs::method::ZstdLevel.compression_level	method	ported	src/parquet/compression.cr	ZstdLevel#compression_level
 parquet/src/compression.rs::method::ZstdLevel.default	method	ported	src/parquet/compression.cr	ZstdLevel#default
 parquet/src/compression.rs::method::ZstdLevel.try_new	method	ported	src/parquet/compression.cr	ZstdLevel#try_new

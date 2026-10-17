@@ -1,12 +1,14 @@
 require "../spec_helper"
 
 # Ported from `parquet/src/compression.rs` test module (`test_codec_snappy`,
-# `test_codec_gzip`, `test_codec_lz4`, `test_codec_lz4_raw` + `test_roundtrip`)
+# `test_codec_gzip`, `test_codec_brotli`, `test_codec_zstd`, `test_codec_lz4`,
+# `test_codec_lz4_raw` + `test_roundtrip`)
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
 #
-# SNAPPY, GZIP, and the three LZ4 codecs are ported. The remaining codecs
-# (brotli/lzo/zstd) still raise from `create_codec` and are intentional
-# divergences (see `plans/parity.md` Phase 1.8).
+# SNAPPY, GZIP, BROTLI, ZSTD, and the three LZ4 codecs are ported. Only LZO
+# remains unsupported — exactly as upstream, where `create_codec` returns
+# `nyi_err!("The codec type {} is not supported yet")` for it (see
+# `plans/parity.md` Phase 1.8).
 
 private alias CC = Parquet::CompressionCodecs
 private alias Comp = Parquet::Compression
@@ -345,15 +347,134 @@ describe Parquet::CompressionCodecs do
     decompressed.should be_empty
   end
 
+  # Upstream `test_codec_brotli`.
+  it "round-trips brotli for every level" do
+    (Parquet::BrotliLevel::MINIMUM_LEVEL..Parquet::BrotliLevel::MAXIMUM_LEVEL).each do |level|
+      Parquet::BrotliLevel.try_new(level)
+      test_codec_with_size(Comp.brotli(level))
+      test_codec_without_size(Comp.brotli(level))
+    end
+  end
+
+  # Upstream `test_codec_zstd`: the minimum level plus -100..=MAXIMUM_LEVEL.
+  it "round-trips zstd for every level" do
+    ([Parquet::ZstdLevel::MINIMUM_LEVEL] + (-100..Parquet::ZstdLevel::MAXIMUM_LEVEL).to_a).each do |level|
+      Parquet::ZstdLevel.try_new(level)
+      test_codec_with_size(Comp.zstd(level))
+      test_codec_without_size(Comp.zstd(level))
+    end
+  end
+
+  # Golden streams produced by the reference implementations (`zstd -1` and
+  # `brotli -q 5` for "hello hello hello hello"), pinning the decoders against
+  # the wire formats rather than against this port's encoders.
+  it "decodes zstd and brotli streams written by the reference encoders" do
+    expected = "hello hello hello hello".to_slice
+
+    zstd = CC.create_codec(Comp.zstd(1), CodecOptionsBuilder.default.build).not_nil!
+    zstd_frame = Bytes[
+      0x28, 0xb5, 0x2f, 0xfd, 0x24, 0x17, 0x65, 0x00, 0x00, 0x30, 0x68, 0x65, 0x6c,
+      0x6c, 0x6f, 0x20, 0x01, 0x00, 0x99, 0x4b, 0x11, 0x17, 0x5e, 0xae, 0x0d,
+    ]
+    decompressed = [] of UInt8
+    zstd.decompress(zstd_frame, decompressed, expected.size).should eq(expected.size)
+    slice_of(decompressed).should eq(expected)
+    decompressed.clear
+    zstd.decompress(zstd_frame, decompressed, nil).should eq(expected.size)
+    slice_of(decompressed).should eq(expected)
+
+    brotli = CC.create_codec(Comp.brotli(5), CodecOptionsBuilder.default.build).not_nil!
+    brotli_stream = Bytes[0xa1, 0xb0, 0x00, 0x00, 0x20, 0x01, 0x52, 0x83, 0x28, 0x53, 0x87, 0xe7, 0xf4, 0x01]
+    decompressed.clear
+    brotli.decompress(brotli_stream, decompressed, expected.size).should eq(expected.size)
+    slice_of(decompressed).should eq(expected)
+    decompressed.clear
+    brotli.decompress(brotli_stream, decompressed, nil).should eq(expected.size)
+    slice_of(decompressed).should eq(expected)
+  end
+
+  # Characterization: compression actually shrinks repetitive data and the
+  # zstd output is a standard frame (magic `0xFD2FB528`, little-endian).
+  it "compresses repetitive data with zstd and brotli" do
+    data = ("abcdefgh" * 1024).to_slice
+    options = CodecOptionsBuilder.default.build
+
+    zstd = CC.create_codec(Comp.zstd(1), options).not_nil!
+    compressed = [] of UInt8
+    zstd.compress(data, compressed)
+    compressed.size.should be < data.size
+    compressed[0, 4].should eq([0x28_u8, 0xb5_u8, 0x2f_u8, 0xfd_u8])
+    decompressed = [] of UInt8
+    zstd.decompress(slice_of(compressed), decompressed, data.size).should eq(data.size)
+    slice_of(decompressed).should eq(data)
+
+    brotli = CC.create_codec(Comp.brotli(1), options).not_nil!
+    compressed.clear
+    brotli.compress(data, compressed)
+    compressed.size.should be < data.size
+    decompressed.clear
+    brotli.decompress(slice_of(compressed), decompressed, nil).should eq(data.size)
+    slice_of(decompressed).should eq(data)
+  end
+
+  # Divergence: `zinc` implements levels -8..4, so `ZSTDCodec` clamps the
+  # validated `ZstdLevel` into that range (upstream's libzstd clamps internally
+  # as well). Levels above 4 therefore produce the same frame as level 4.
+  it "clamps zstd levels outside the shard's range" do
+    data = ("clamped " * 100).to_slice
+    options = CodecOptionsBuilder.default.build
+
+    outputs = [4, 9, 22].map do |level|
+      compressed = [] of UInt8
+      CC.create_codec(Comp.zstd(level), options).not_nil!.compress(data, compressed)
+      compressed
+    end
+
+    outputs[1].should eq(outputs[0])
+    outputs[2].should eq(outputs[0])
+  end
+
+  it "rejects corrupt zstd and brotli streams" do
+    options = CodecOptionsBuilder.default.build
+
+    zstd = CC.create_codec(Comp.zstd(1), options).not_nil!
+    expect_raises(Parquet::ParquetError) do
+      zstd.decompress(Bytes[0x28, 0xb5, 0x2f, 0xfd, 0x00, 0x01, 0x02], [] of UInt8, 5)
+    end
+
+    brotli = CC.create_codec(Comp.brotli(1), options).not_nil!
+    expect_raises(Parquet::ParquetError) do
+      brotli.decompress(Bytes[0xff, 0xff, 0xff, 0xff], [] of UInt8, 5)
+    end
+  end
+
+  # Characterization: both shards emit a valid (CLI-decodable) stream for empty
+  # input, which the writer needs for empty pages.
+  it "round-trips empty zstd and brotli input" do
+    options = CodecOptionsBuilder.default.build
+
+    [Comp.zstd(1), Comp.brotli(1)].each do |compression|
+      codec = CC.create_codec(compression, options).not_nil!
+      compressed = [] of UInt8
+      codec.compress(Bytes.empty, compressed)
+      compressed.should_not be_empty
+
+      decompressed = [] of UInt8
+      codec.decompress(slice_of(compressed), decompressed, 0).should eq(0)
+      decompressed.should be_empty
+    end
+  end
+
+  # Upstream `create_codec` returns `nyi_err!` for LZO; there is no LZO
+  # implementation in arrow-rs at 60.0.0 either.
+  it "rejects lzo, which upstream also does not implement" do
+    expect_raises(Parquet::NYIError, "The codec type LZO is not supported yet") do
+      CC.create_codec(Comp::LZO, CodecOptionsBuilder.default.build)
+    end
+  end
+
   it "returns no codec for uncompressed" do
     options = CodecOptionsBuilder.default.build
     CC.create_codec(Comp::UNCOMPRESSED, options).should be_nil
-  end
-
-  it "rejects unsupported codecs" do
-    options = CodecOptionsBuilder.default.build
-    expect_raises(Parquet::ParquetError, "is not supported yet") do
-      CC.create_codec(Comp.zstd, options)
-    end
   end
 end
