@@ -46,6 +46,7 @@ Run `make install` (`shards install`) before building.
 | `paddor/flint`       | runtime | LZ4 raw block codec (pure Crystal; frames in-tree) |
 | `paddor/zinc`        | runtime | ZSTD codec (pure Crystal, RFC 8878 frames)         |
 | `OrelSokolov/brotli` | runtime | BROTLI codec (pure Crystal, RFC 7932)              |
+| `arrow-cr` (path)    | runtime | Arrow interop (`parquet/src/arrow/` port)          |
 | `ameba`              | dev     | `make lint` static analysis                        |
 
 Everything else (GZIP via `compress/gzip`, the LZ4 frame container, Thrift,

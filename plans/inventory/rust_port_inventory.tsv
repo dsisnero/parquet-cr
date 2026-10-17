@@ -1612,15 +1612,15 @@ parquet/src/arrow/schema/complex.rs::method::Visitor.visit_primitive	method	miss
 parquet/src/arrow/schema/complex.rs::method::Visitor.visit_struct	method	missing	-	auto-generated
 parquet/src/arrow/schema/complex.rs::method::VisitorContext.levels	method	missing	-	auto-generated
 parquet/src/arrow/schema/complex.rs::method::arrow_schema::Field.with_field_id	method	missing	-	auto-generated
-parquet/src/arrow/schema/mod.rs::const::PARQUET_KEY_FIELD_NAME	const	missing	-	auto-generated
-parquet/src/arrow/schema/mod.rs::const::PARQUET_LIST_ELEMENT_NAME	const	missing	-	auto-generated
-parquet/src/arrow/schema/mod.rs::const::PARQUET_MAP_STRUCT_NAME	const	missing	-	auto-generated
-parquet/src/arrow/schema/mod.rs::const::PARQUET_VALUE_FIELD_NAME	const	missing	-	auto-generated
-parquet/src/arrow/schema/mod.rs::method::ArrowSchemaConverter<'_>.default	method	missing	-	auto-generated
-parquet/src/arrow/schema/mod.rs::method::ArrowSchemaConverter<'a>.convert	method	missing	-	auto-generated
-parquet/src/arrow/schema/mod.rs::method::ArrowSchemaConverter<'a>.new	method	missing	-	auto-generated
-parquet/src/arrow/schema/mod.rs::method::ArrowSchemaConverter<'a>.schema_root	method	missing	-	auto-generated
-parquet/src/arrow/schema/mod.rs::method::ArrowSchemaConverter<'a>.with_coerce_types	method	missing	-	auto-generated
+parquet/src/arrow/schema/mod.rs::const::PARQUET_KEY_FIELD_NAME	const	ported	src/parquet/arrow/schema.cr	Parquet::Arrow::PARQUET_KEY_FIELD_NAME
+parquet/src/arrow/schema/mod.rs::const::PARQUET_LIST_ELEMENT_NAME	const	ported	src/parquet/arrow/schema.cr	Parquet::Arrow::PARQUET_LIST_ELEMENT_NAME
+parquet/src/arrow/schema/mod.rs::const::PARQUET_MAP_STRUCT_NAME	const	ported	src/parquet/arrow/schema.cr	Parquet::Arrow::PARQUET_MAP_STRUCT_NAME
+parquet/src/arrow/schema/mod.rs::const::PARQUET_VALUE_FIELD_NAME	const	ported	src/parquet/arrow/schema.cr	Parquet::Arrow::PARQUET_VALUE_FIELD_NAME
+parquet/src/arrow/schema/mod.rs::method::ArrowSchemaConverter<'_>.default	method	ported	src/parquet/arrow/schema.cr	ArrowSchemaConverter#initialize defaults
+parquet/src/arrow/schema/mod.rs::method::ArrowSchemaConverter<'a>.convert	method	ported	src/parquet/arrow/schema.cr	ArrowSchemaConverter#convert
+parquet/src/arrow/schema/mod.rs::method::ArrowSchemaConverter<'a>.new	method	ported	src/parquet/arrow/schema.cr	ArrowSchemaConverter#initialize
+parquet/src/arrow/schema/mod.rs::method::ArrowSchemaConverter<'a>.schema_root	method	ported	src/parquet/arrow/schema.cr	ArrowSchemaConverter#schema_root (mutates and returns self)
+parquet/src/arrow/schema/mod.rs::method::ArrowSchemaConverter<'a>.with_coerce_types	method	ported	src/parquet/arrow/schema.cr	ArrowSchemaConverter#with_coerce_types (mutates and returns self)
 parquet/src/arrow/schema/virtual_type.rs::const::NAME	const	missing	-	auto-generated
 parquet/src/arrow/schema/virtual_type.rs::method::RowGroupIndex.deserialize_metadata	method	missing	-	auto-generated
 parquet/src/arrow/schema/virtual_type.rs::method::RowGroupIndex.metadata	method	missing	-	auto-generated

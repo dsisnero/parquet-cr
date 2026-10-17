@@ -710,6 +710,11 @@ module Parquet
         end
       end
 
+      # Upstream derives `PartialEq` for `SchemaDescriptor`.
+      def ==(other : SchemaDescriptor) : Bool
+        schema == other.schema && leaves == other.leaves && leaf_to_base == other.leaf_to_base
+      end
+
       # Returns the `ColumnDescriptor` for a field position.
       def column(i : Int32) : ColumnDescriptor
         unless 0 <= i < @leaves.size

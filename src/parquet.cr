@@ -79,6 +79,7 @@ require "./parquet/bin/parquet_show_bloom_filter"
 require "./parquet/bin/parquet_layout"
 require "./parquet/bin/parquet_schema"
 require "./parquet/bin/parquet_concat"
+require "./parquet/arrow/schema"
 
 module Parquet
   VERSION = "0.1.0"

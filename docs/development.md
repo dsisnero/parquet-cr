@@ -18,8 +18,10 @@ upstream, upstream wins unless a divergence is explicitly documented in
 
 ```bash
 git submodule update --init --recursive
+# Arrow interop depends on the sibling checkout at ../arrow-cr
 make install   # shards install (runtime deps: naqvis/snappy, paddor/flint,
-               # paddor/zinc, OrelSokolov/brotli; dev: ameba)
+               # paddor/zinc, OrelSokolov/brotli, and the sibling ../arrow-cr
+               # checkout via `path:`; dev: ameba)
 ```
 
 The submodule is shallow and pinned. Do not move the pin without regenerating
