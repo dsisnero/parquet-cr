@@ -33,11 +33,10 @@ little-endian layout.
 - Plan layout: single file. If it grows too large, split into
   `plans/parity/<area>.md`, link each here, and mark each split file
   complete/in-progress plus the file being worked on next.
-- Current focus: **Phase 3 — advanced/optional.** **Phase 2 is complete** except
-  the arrow-dependent CLI tools (`parquet-rewrite`/`parquet-fromcsv`).
-  **Encryption is complete** and **Phase 3.7 (core geospatial module) is
-  complete**; the next actionable feature is **item 6 / Phase 2.2 content-defined
-  chunker**. Done in Phase 3 so far:
+- Current focus: **Phase 2.2 content-defined chunker is complete** and **Phase 3
+  is complete except arrow/async**, **Phase 3.7 (core geospatial module) is
+  complete**, and **encryption is complete**; the next actionable feature is
+  **item 7 / Phase 1.8 remaining compression codecs**. Done so far:
   - `parquet-variant` (`src/parquet_variant/`): `VariantPath`/
     `VariantPathElement` + dot/bracket parser (`path.cr`); `utils` helpers
     (`utils.cr`); `OffsetSizeBytes`/`map_bytes_to_offsets`, `VariantBasicType`/
@@ -106,6 +105,12 @@ little-endian layout.
     and field 17 wiring in `ColumnChunkMetaData`/`build_column_metadata`
     (`column/writer/{encoder,writer}.cr`) and `file/writer.cr`; specs:
     `spec/parquet/geospatial/{bounding_box,accumulator,geo_statistics}_spec.cr`.
+  - Content-defined chunker (Phase 2.2): `src/parquet/column/chunker.cr`
+    (`CdcChunk`) and `src/parquet/column/chunker/{cdc,cdc_generated}.cr`
+    (`ContentDefinedChunker`: `calculate_mask`, `roll`/`roll_fixed`/`roll_level`,
+    `need_new_chunk`, `calculate` for the flat/nullable/nested paths,
+    `validate_chunks`, plus the verbatim 8x256 `GEARHASH_TABLE`); spec
+    `spec/parquet/column/chunker_cdc_spec.cr`.
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -142,26 +147,44 @@ little-endian layout.
      `SerializedFileWriter#finish_appended_column`. Geometry/Geography columns now
      skip min/max statistics (undefined sort order), matching upstream. Tests:
      `spec/parquet/geospatial/{bounding_box,accumulator,geo_statistics}_spec.cr`.
-  6. Phase 2.2 content-defined chunker (`column/chunker/cdc.rs` +
-     `cdc_generated.rs`, ~3k lines including the generated gear-hash table).
-     Port `ContentDefinedChunker` (`new`/`calculate`/`calculate_mask`/
-     `need_new_chunk`/`roll`/`roll_fixed`/`roll_level`/`get_arrow_chunks`/
-     `validate_chunks`), the `CDC_*`/`*_LENGTH` constants, and the
-     `GEARHASH_TABLE`/`NUM_GEARHASH_TABLES` generated constants; port the upstream
-     unit tests. `get_arrow_chunks`/the chunk iterator surface that returns arrow
-     arrays is deferred with the arrow layer — port the byte-slice core first and
-     record the divergence. Anchors:
-     `vendor/arrow-rs/parquet/src/column/chunker/{cdc,cdc_generated}.rs`,
-     `src/parquet/column/writer/byte_budget_chunker.cr` (nearest local precedent).
-  7. Deferred (recorded divergences): async/object-store suffix fetchers, arrow
-     interop (`parquet/src/arrow/`), `parquet-variant-compute`/`-json`, and the
+  6. ~~Phase 2.2 content-defined chunker (`column/chunker/cdc.rs` +
+     `cdc_generated.rs`).~~ **complete** — `src/parquet/column/chunker.cr`
+     (`CdcChunk`) + `chunker/cdc_generated.cr` (verbatim 8x256 `GEARHASH_TABLE`,
+     `NUM_GEARHASH_TABLES`) + `chunker/cdc.cr` (`ContentDefinedChunker#initialize`
+     (upstream `Result` → raises), `.calculate_mask`, `#roll`/`#roll_fixed`/
+     `#roll_level`, `#need_new_chunk`, `#calculate` for the flat/nullable/nested
+     paths, `#validate_chunks` under the non-release build). Tests:
+     `spec/parquet/column/chunker_cdc_spec.cr` — all seven upstream unit tests
+     (`test_calculate_mask_*`, `test_non_nested_non_null_single_chunk`,
+     `test_max_chunk_size_forces_boundary`, `test_deterministic_chunks`,
+     `test_nullable_non_nested`) plus a nested-path characterization (top-level
+     boundaries + leaf-vs-value offsets). Cross-checked against an independent
+     transliteration of the Rust algorithm (identical chunk boundaries for the
+     flat/nullable/nested cases). `get_arrow_chunks` and the `arrow_tests`
+     roundtrip module are deferred with the arrow layer; the chunker is only
+     consumed by the arrow writer upstream, so no writer wiring was needed.
+  7. Phase 1.8 remaining compression codecs (`snappy`/`brotli`/`lz4`/`zstd`, and
+     LZO if a shard exists) behind `create_codec`, using the `find-crystal-shards`
+     decision workflow; document any codec that must stay an intentional
+     divergence. This is the largest remaining non-deferred gap and unblocks
+     real-world (snappy/zstd) files. Anchors:
+     `vendor/arrow-rs/parquet/src/compression.rs`,
+     `src/parquet/compression_codecs.cr`, `src/parquet/compression.cr`.
+  8. The offset-index-driven `SerializedPageReader` state (upstream
+     `SerializedPageReaderState::Pages`: a `PageLocation` queue plus an optional
+     dictionary location, `peek_next_page_offset`, and the `Iterator` impl), so a
+     reader can consume `page_locations` instead of walking the offset stream.
+     Anchors: `vendor/arrow-rs/parquet/src/file/serialized_reader.rs`
+     (`SerializedPageReaderState`), `src/parquet/file/serialized_reader.cr`,
+     `src/parquet/file/page_index/index_reader.cr`.
+  9. Deferred (recorded divergences): async/object-store suffix fetchers, arrow
+     interop (`parquet/src/arrow/`), `parquet-variant-compute`/`-json`, the
+     `column/page_store.rs` module (only consumed by the arrow writer), and the
      arrow `parquet-rewrite`/`parquet-fromcsv` CLI tools.
 - Remaining `missing` ledger rows are dominated by deferred areas (arrow,
   variant-compute, benches/examples), `HeapSize`/`memory_size` (intentional
   divergence), auto-generated `data_type` trait impls (`as_any`/`set_data`/
-  `skip`), the `RowIter` record API, and the content-defined chunker
-  (`column/chunker/cdc.rs` ~3k lines incl. generated gear-hash table) — the
-  chunker is the largest remaining non-deferred feature.
+  `skip`), and `Serialized*Reader#get_row_iter` (`RowIter`).
 - **Scoping notes / gotchas (found while porting; avoids re-derivation):**
   - Crystal `String.new(Bytes)`/`String#byte_slice?` do **not** validate UTF-8
     and **copy** substrings, so the variant crate's zero-copy APIs
@@ -344,11 +367,27 @@ little-endian layout.
     Tests: `spec/parquet/file/page_decryption_spec.cr`; force multiple pages
     with `set_data_page_row_count_limit(1)` and corrupted-page failure by
     flipping the chunk's last ciphertext byte.
-- Last commit: `fe71bb0 port: decrypt parquet data pages`; gates green
-  (`make lint`, `make test` -> 822 examples, 0 failures). Next feature: item 6
-  (Phase 2.2 content-defined chunker).
-- Progress by counts (ledger): 1781 `ported`, 200 `intentional_divergence`,
-  1 `skipped`, 1533 `missing` (of 3515 rows).
+  - Content-defined chunking (Phase 2.2): `cdc_generated.cr` is a literal
+    transcription of the upstream `[[u64; 256]; 8]` gear-hash table (parsed from
+    `cdc_generated.rs`, verified value-for-value), so chunk boundaries match
+    upstream byte-for-byte. Divergences: `ContentDefinedChunker.new` raises
+    `GeneralError` (upstream `Result`); `roll_fixed::<N>(&[u8; N])` is
+    `roll_fixed(bytes : Bytes)` sharing `roll`'s loop (no const-generic array
+    width — behavior identical); `usize` offsets are `Int32`; the
+    `FnMut(&mut Self, usize)` callback is a block receiving the chunker and the
+    value offset; `debug_assertions` → `{% unless flag?(:release) %}` around
+    `validate_chunks`; Rust `assert!`/`expect` → `GeneralError`. `roll`/
+    `roll_fixed`/`roll_level`/`need_new_chunk`/`validate_chunks` are public
+    because the `calculate` block drives them (upstream keeps them private but its
+    child test module can reach them). `get_arrow_chunks` and the `arrow_tests`
+    roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
+    `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
+    ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
+- Last commit: `2f22a20 port: core geospatial statistics module`; gates green
+  (`make lint`, `make test` -> 829 examples, 0 failures). Next feature: item 7
+  (Phase 1.8 remaining compression codecs).
+- Progress by counts (ledger): 1791 `ported`, 201 `intentional_divergence`,
+  9 `skipped`, 1514 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -382,8 +421,10 @@ Chunk status by area:
   interfaces, and the `get_encoder`/`get_decoder` registries).
 - Phase 2.2 column: `ColumnDescriptor`, column page types/interfaces, the
   level/value decoders, the writer value encoder, the byte-budget chunker, the
-  truncation helpers, `ColumnReaderImpl`, and `GenericColumnWriter` done;
-  `column/mod.rs` glue, `chunkers/`, and `page_store` pending.
+  truncation helpers, `ColumnReaderImpl`, `GenericColumnWriter`, and the
+  content-defined chunker (`src/parquet/column/chunker/`) done;
+  `column/mod.rs` glue pending and `page_store` deferred (only the arrow writer
+  consumes it).
 - Phase 2.4 record: `api` (`Field`/`Row`/`List`/`Map`), `triplet`
   (`TripletIter`), `reader` (`TreeBuilder`/`Reader`/`RowIter`), and the
   `RecordReader(T)`/`RecordWriter(T)` traits done; `get_row_iter` wired;
@@ -586,6 +627,13 @@ Chunk status by area:
 - [x] Column writer byte-budget chunker
   (`src/parquet/column/writer/byte_budget_chunker.cr`): `ByteBudgetChunker` +
   `SubBatchStrategy`.
+- [x] Content-defined chunker (`src/parquet/column/chunker.cr`,
+  `src/parquet/column/chunker/{cdc,cdc_generated}.cr`): `CdcChunk`,
+  `ContentDefinedChunker` (`calculate_mask`, `roll`/`roll_fixed`/`roll_level`,
+  `need_new_chunk`, `calculate` for flat/nullable/nested data,
+  `validate_chunks`) and the upstream gear-hash table; all seven upstream unit
+  tests + a nested-path characterization (`spec/parquet/column/chunker_cdc_spec.cr`).
+  `get_arrow_chunks`/`arrow_tests` are deferred with the arrow writer.
 - [x] `ColumnReaderImpl` (`src/parquet/column/reader.cr`): `get_column_reader`/
   `get_typed_column_reader`, `ColumnReaderImpl(T)` (read_records/skip_records/
   has_next/read_new_page/parse_v1_level).
@@ -911,6 +959,14 @@ Chunk status by area:
   `convert_geo_stats`/`convert_bounding_box` (read) and
   `geo_stats_to_thrift`/`bounding_box_to_thrift` (write) in place of the upstream
   `WriteThrift` impls on the domain types.
+- Content-defined chunking: `ContentDefinedChunker.new` raises `GeneralError`
+  (upstream returns `Result<Self>`), `roll_fixed` takes `Bytes` instead of a
+  const-generic `&[u8; N]` (same byte loop), `usize` offsets are `Int32`, the
+  `FnMut(&mut Self, usize)` callback is a block receiving the chunker, chunk
+  validation runs under `{% unless flag?(:release) %}` (upstream
+  `debug_assertions`), and assertions raise `GeneralError`. `get_arrow_chunks`
+  and the `arrow_tests` roundtrip module are deferred with the arrow layer; the
+  gear-hash table is transcribed verbatim from `cdc_generated.rs`.
 - Derive macros: `parquet_derive`'s proc macros (`#[derive(ParquetRecordWriter)]`
   / `ParquetRecordReader`) are replaced by `include Parquet::Derive::Record`.
   Rust impls `RecordWriter for &[T]` and `RecordReader for Vec<T>`; Crystal

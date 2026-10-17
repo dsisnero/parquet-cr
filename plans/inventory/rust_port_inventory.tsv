@@ -1736,25 +1736,25 @@ parquet/src/bloom_filter/mod.rs::method::Sbbf.num_folds_for_target_fpp	method	po
 parquet/src/bloom_filter/mod.rs::method::Sbbf.read_from_column_chunk	method	ported	src/parquet/bloom_filter.cr	bloom filter
 parquet/src/bloom_filter/mod.rs::method::Sbbf.write	method	ported	src/parquet/bloom_filter.cr	bloom filter
 parquet/src/bloom_filter/mod.rs::method::Sbbf.write_bitset	method	ported	src/parquet/bloom_filter.cr	bloom filter
-parquet/src/column/chunker/cdc.rs::const::CDC_EDIT_SIZE	const	missing	-	auto-generated
-parquet/src/column/chunker/cdc.rs::const::CDC_MAX_CHUNK_SIZE	const	missing	-	auto-generated
-parquet/src/column/chunker/cdc.rs::const::CDC_MIN_CHUNK_SIZE	const	missing	-	auto-generated
-parquet/src/column/chunker/cdc.rs::const::CDC_PART_SIZE	const	missing	-	auto-generated
-parquet/src/column/chunker/cdc.rs::const::CDC_ROW_GROUP_LENGTH	const	missing	-	auto-generated
-parquet/src/column/chunker/cdc.rs::const::EDIT_LENGTH	const	missing	-	auto-generated
-parquet/src/column/chunker/cdc.rs::const::PART_LENGTH	const	missing	-	auto-generated
-parquet/src/column/chunker/cdc.rs::const::ROW_GROUP_LENGTH	const	missing	-	auto-generated
-parquet/src/column/chunker/cdc.rs::method::ContentDefinedChunker.calculate	method	missing	-	auto-generated
-parquet/src/column/chunker/cdc.rs::method::ContentDefinedChunker.calculate_mask	method	missing	-	auto-generated
-parquet/src/column/chunker/cdc.rs::method::ContentDefinedChunker.get_arrow_chunks	method	missing	-	auto-generated
-parquet/src/column/chunker/cdc.rs::method::ContentDefinedChunker.need_new_chunk	method	missing	-	auto-generated
-parquet/src/column/chunker/cdc.rs::method::ContentDefinedChunker.new	method	missing	-	auto-generated
-parquet/src/column/chunker/cdc.rs::method::ContentDefinedChunker.roll	method	missing	-	auto-generated
-parquet/src/column/chunker/cdc.rs::method::ContentDefinedChunker.roll_fixed	method	missing	-	auto-generated
-parquet/src/column/chunker/cdc.rs::method::ContentDefinedChunker.roll_level	method	missing	-	auto-generated
-parquet/src/column/chunker/cdc.rs::method::ContentDefinedChunker.validate_chunks	method	missing	-	auto-generated
-parquet/src/column/chunker/cdc_generated.rs::const::GEARHASH_TABLE	const	missing	-	auto-generated
-parquet/src/column/chunker/cdc_generated.rs::const::NUM_GEARHASH_TABLES	const	missing	-	auto-generated
+parquet/src/column/chunker/cdc.rs::const::CDC_EDIT_SIZE	const	skipped	-	test-only constant in the deferred arrow_tests module
+parquet/src/column/chunker/cdc.rs::const::CDC_MAX_CHUNK_SIZE	const	skipped	-	test-only constant in the deferred arrow_tests module
+parquet/src/column/chunker/cdc.rs::const::CDC_MIN_CHUNK_SIZE	const	skipped	-	test-only constant in the deferred arrow_tests module
+parquet/src/column/chunker/cdc.rs::const::CDC_PART_SIZE	const	skipped	-	test-only constant in the deferred arrow_tests module
+parquet/src/column/chunker/cdc.rs::const::CDC_ROW_GROUP_LENGTH	const	skipped	-	test-only constant in the deferred arrow_tests module
+parquet/src/column/chunker/cdc.rs::const::EDIT_LENGTH	const	skipped	-	test-only constant in the deferred arrow_tests module
+parquet/src/column/chunker/cdc.rs::const::PART_LENGTH	const	skipped	-	test-only constant in the deferred arrow_tests module
+parquet/src/column/chunker/cdc.rs::const::ROW_GROUP_LENGTH	const	skipped	-	test-only constant in the deferred arrow_tests module
+parquet/src/column/chunker/cdc.rs::method::ContentDefinedChunker.calculate	method	ported	src/parquet/column/chunker/cdc.cr	ContentDefinedChunker#calculate (block + Int32 offsets)
+parquet/src/column/chunker/cdc.rs::method::ContentDefinedChunker.calculate_mask	method	ported	src/parquet/column/chunker/cdc.cr	ContentDefinedChunker.calculate_mask (raises GeneralError)
+parquet/src/column/chunker/cdc.rs::method::ContentDefinedChunker.get_arrow_chunks	method	intentional_divergence	-	arrow not ported; deferred with arrow interop
+parquet/src/column/chunker/cdc.rs::method::ContentDefinedChunker.need_new_chunk	method	ported	src/parquet/column/chunker/cdc.cr	ContentDefinedChunker#need_new_chunk
+parquet/src/column/chunker/cdc.rs::method::ContentDefinedChunker.new	method	ported	src/parquet/column/chunker/cdc.cr	ContentDefinedChunker#initialize (upstream Result -> raises)
+parquet/src/column/chunker/cdc.rs::method::ContentDefinedChunker.roll	method	ported	src/parquet/column/chunker/cdc.cr	ContentDefinedChunker#roll
+parquet/src/column/chunker/cdc.rs::method::ContentDefinedChunker.roll_fixed	method	ported	src/parquet/column/chunker/cdc.cr	ContentDefinedChunker#roll_fixed (shares roll's loop; no const-generic N)
+parquet/src/column/chunker/cdc.rs::method::ContentDefinedChunker.roll_level	method	ported	src/parquet/column/chunker/cdc.cr	ContentDefinedChunker#roll_level
+parquet/src/column/chunker/cdc.rs::method::ContentDefinedChunker.validate_chunks	method	ported	src/parquet/column/chunker/cdc.cr	ContentDefinedChunker#validate_chunks (non-release builds)
+parquet/src/column/chunker/cdc_generated.rs::const::GEARHASH_TABLE	const	ported	src/parquet/column/chunker/cdc_generated.cr	GEARHASH_TABLE (verbatim transcription of the Rust table)
+parquet/src/column/chunker/cdc_generated.rs::const::NUM_GEARHASH_TABLES	const	ported	src/parquet/column/chunker/cdc_generated.cr	NUM_GEARHASH_TABLES
 parquet/src/column/page.rs::method::CompressedPage.compressed_page	method	ported	src/parquet/column/page.cr	column page
 parquet/src/column/page.rs::method::CompressedPage.compressed_size	method	ported	src/parquet/column/page.cr	column page
 parquet/src/column/page.rs::method::CompressedPage.data	method	ported	src/parquet/column/page.cr	column page
