@@ -10,6 +10,7 @@ require "./metadata"
 require "./metadata/row_group"
 require "./metadata/parquet_metadata"
 require "./metadata/page_index"
+require "../encryption/decrypt"
 require "./metadata/reader"
 
 # Ported from `parquet/src/file/reader.rs` and
@@ -69,12 +70,14 @@ module Parquet
       getter enable_page_index : Bool
       getter props : Properties::ReaderProperties
       getter metadata_options : Metadata::ParquetMetaDataOptions
+      getter file_decryption_properties : ::Parquet::Encryption::FileDecryptionProperties?
 
       def initialize(
         @predicates : Array(ReadGroupPredicate),
         @enable_page_index : Bool,
         @props : Properties::ReaderProperties,
         @metadata_options : Metadata::ParquetMetaDataOptions,
+        @file_decryption_properties : ::Parquet::Encryption::FileDecryptionProperties? = nil,
       )
       end
     end
@@ -86,6 +89,7 @@ module Parquet
         @enable_page_index = false
         @props = nil.as(Properties::ReaderProperties?)
         @metadata_options = Metadata::ParquetMetaDataOptions.new
+        @file_decryption_properties = nil.as(::Parquet::Encryption::FileDecryptionProperties?)
       end
 
       # Adds a predicate on row group metadata to the reading option.
@@ -116,6 +120,14 @@ module Parquet
       # Sets the `ReaderProperties` configuration.
       def with_reader_properties(properties : Properties::ReaderProperties) : self
         @props = properties
+        self
+      end
+
+      # Sets the properties used to decrypt an encrypted footer / column metadata.
+      def with_file_decryption_properties(
+        properties : ::Parquet::Encryption::FileDecryptionProperties?,
+      ) : self
+        @file_decryption_properties = properties
         self
       end
 
@@ -152,7 +164,7 @@ module Parquet
       # Seals the builder and returns the read options.
       def build : ReadOptions
         props = @props || Properties::ReaderProperties.builder.build
-        ReadOptions.new(@predicates, @enable_page_index, props, @metadata_options)
+        ReadOptions.new(@predicates, @enable_page_index, props, @metadata_options, @file_decryption_properties)
       end
     end
 
@@ -189,6 +201,7 @@ module Parquet
       def self.new_with_options(chunk_reader : ChunkReader, options : ReadOptions) : SerializedFileReader
         metadata_builder = Metadata::ParquetMetaDataReader.new
           .with_metadata_options(options.metadata_options)
+          .with_file_decryption_properties(options.file_decryption_properties)
           .parse_and_finish(chunk_reader)
           .into_builder
 
@@ -209,6 +222,7 @@ module Parquet
         if options.enable_page_index
           reader = Metadata::ParquetMetaDataReader.new_with_metadata(metadata)
             .with_page_index_policy(Metadata::PageIndexPolicy::Required)
+            .with_file_decryption_properties(options.file_decryption_properties)
           reader.read_page_indexes(chunk_reader)
           metadata = reader.finish
         end

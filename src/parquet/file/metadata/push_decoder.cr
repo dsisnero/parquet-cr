@@ -3,9 +3,11 @@
 #
 # Ports the sans-IO `ParquetMetaDataPushDecoder` state machine and
 # `range_for_page_index` (the latter lives in `Metadata`; see `parser.cr`).
-# Divergences: encryption support (`with_file_decryption_properties`) is not
-# ported, and the `try_new_with_*` constructors set state via protected setters
-# rather than the Rust state-replacement idiom.
+# Divergences: `with_file_decryption_properties` routes the footer decode
+# through `parquet_metadata_with_encryption`; the `try_new_with_*` constructors
+# set state via protected setters rather than the Rust state-replacement idiom.
+require "./thrift/encryption"
+
 module Parquet
   module File
     module Metadata
@@ -29,6 +31,8 @@ module Parquet
         @offset_index_policy : PageIndexPolicy
         @buffers : Util::PushBuffers
         @metadata_parser : MetadataParser
+        @metadata_options : ParquetMetaDataOptions?
+        @file_decryption_properties : ::Parquet::Encryption::FileDecryptionProperties?
 
         # Creates a decoder for a file of the given length.
         def self.try_new(file_len : UInt64) : ParquetMetaDataPushDecoder
@@ -65,6 +69,8 @@ module Parquet
           @offset_index_policy = PageIndexPolicy::Optional
           @buffers = Util::PushBuffers.new(file_len)
           @metadata_parser = MetadataParser.new
+          @metadata_options = nil
+          @file_decryption_properties = nil
         end
 
         protected setter state : State
@@ -92,7 +98,16 @@ module Parquet
 
         # Sets the options used when decoding the metadata.
         def with_metadata_options(options : ParquetMetaDataOptions?) : self
+          @metadata_options = options
           @metadata_parser = @metadata_parser.with_metadata_options(options)
+          self
+        end
+
+        # Sets the properties used to decrypt an encrypted footer / column metadata.
+        def with_file_decryption_properties(
+          properties : ::Parquet::Encryption::FileDecryptionProperties?,
+        ) : self
+          @file_decryption_properties = properties
           self
         end
 
@@ -136,9 +151,14 @@ module Parquet
               unless @buffers.has_range?(metadata_range)
                 return Parquet::DecodeResult(ParquetMetaData).needs_data([metadata_range])
               end
-              @metadata = @metadata_parser.decode_metadata(
-                get_bytes(metadata_range), footer_tail.encrypted_footer?
-              )
+              @metadata =
+                if properties = @file_decryption_properties
+                  Metadata.parquet_metadata_with_encryption(
+                    properties, footer_tail.encrypted_footer?, get_bytes(metadata_range), @metadata_options
+                  )
+                else
+                  @metadata_parser.decode_metadata(get_bytes(metadata_range), footer_tail.encrypted_footer?)
+                end
               @state = State::ReadingPageIndex
             when State::ReadingPageIndex
               metadata = @metadata.as(ParquetMetaData)

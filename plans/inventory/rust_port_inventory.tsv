@@ -2680,7 +2680,7 @@ parquet/src/file/metadata/page_index.rs::method::RowGroupPageIndex.offset_index	
 parquet/src/file/metadata/page_index.rs::method::RowGroupPageIndex.page_locations	method	ported	src/parquet/file/metadata/page_index.cr	RowGroupPageIndex
 parquet/src/file/metadata/parser.rs::method::MetadataParser.decode_metadata	method	ported	src/parquet/file/metadata/parser.cr	MetadataParser
 parquet/src/file/metadata/parser.rs::method::MetadataParser.new	method	ported	src/parquet/file/metadata/parser.cr	MetadataParser
-parquet/src/file/metadata/parser.rs::method::MetadataParser.with_file_decryption_properties	method	intentional_divergence	src/parquet/file/metadata/parser.cr	encryption feature not ported
+parquet/src/file/metadata/parser.rs::method::MetadataParser.with_file_decryption_properties	method	intentional_divergence	src/parquet/file/metadata/push_decoder.cr	handled by ParquetMetaDataPushDecoder/ParquetMetaDataReader rather than MetadataParser
 parquet/src/file/metadata/parser.rs::method::MetadataParser.with_metadata_options	method	ported	src/parquet/file/metadata/parser.cr	MetadataParser
 parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.clear_all_ranges	method	ported	src/parquet/file/metadata/push_decoder.cr	ParquetMetaDataPushDecoder
 parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.get_bytes	method	ported	src/parquet/file/metadata/push_decoder.cr	ParquetMetaDataPushDecoder (private)
@@ -2691,7 +2691,7 @@ parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.tr
 parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.try_new_with_footer_tail	method	ported	src/parquet/file/metadata/push_decoder.cr	upstream pub(crate); public here
 parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.try_new_with_metadata	method	ported	src/parquet/file/metadata/push_decoder.cr	upstream pub(crate); public here
 parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.with_column_index_policy	method	ported	src/parquet/file/metadata/push_decoder.cr	ParquetMetaDataPushDecoder
-parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.with_file_decryption_properties	method	intentional_divergence	src/parquet/file/metadata/push_decoder.cr	encryption feature not ported
+parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.with_file_decryption_properties	method	ported	src/parquet/file/metadata/push_decoder.cr	routes footer decode through parquet_metadata_with_encryption
 parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.with_metadata_options	method	ported	src/parquet/file/metadata/push_decoder.cr	ParquetMetaDataPushDecoder
 parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.with_offset_index_policy	method	ported	src/parquet/file/metadata/push_decoder.cr	ParquetMetaDataPushDecoder
 parquet/src/file/metadata/push_decoder.rs::method::ParquetMetaDataPushDecoder.with_page_index_policy	method	ported	src/parquet/file/metadata/push_decoder.cr	ParquetMetaDataPushDecoder
@@ -2725,7 +2725,7 @@ parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.try_load_via_
 parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.try_parse	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
 parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.try_parse_sized	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
 parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_column_index_policy	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
-parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_decryption_properties	method	intentional_divergence	src/parquet/file/metadata/reader.cr	encryption feature not ported
+parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_decryption_properties	method	ported	src/parquet/file/metadata/reader.cr	with_file_decryption_properties
 parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_metadata_options	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
 parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_offset_index_policy	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
 parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_page_index_policy	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader

@@ -5,9 +5,12 @@
 # `ParquetMetaDataReader` (`parse_and_finish`/`try_parse`/`try_parse_sized`/
 # `read_page_indexes`/`read_page_indexes_sized`/`parse_metadata`/
 # `decode_footer_metadata`). Divergences: the async `MetadataFetch`/
-# `MetadataSuffixFetch` loaders (`load_*`/`try_load*`/`with_prefetch_hint`) and
-# the `encryption` path (`with_decryption_properties`) are not ported;
-# `parse_metadata` is public (upstream private) for tests.
+# `MetadataSuffixFetch` loaders (`load_*`/`try_load*`/`with_prefetch_hint`) are
+# not ported; `with_file_decryption_properties` routes the footer decode through
+# `parquet_metadata_with_encryption`; `parse_metadata` is public (upstream
+# private) for tests.
+require "./thrift/encryption"
+
 module Parquet
   module File
     module Metadata
@@ -36,6 +39,7 @@ module Parquet
         @offset_index : PageIndexPolicy
         @metadata_options : ParquetMetaDataOptions?
         @metadata_size : Int32?
+        @file_decryption_properties : ::Parquet::Encryption::FileDecryptionProperties?
 
         def initialize
           @metadata = nil
@@ -43,6 +47,7 @@ module Parquet
           @offset_index = PageIndexPolicy::Skip
           @metadata_options = nil
           @metadata_size = nil
+          @file_decryption_properties = nil
         end
 
         # Creates a reader populated with `metadata` obtained via other means.
@@ -76,6 +81,14 @@ module Parquet
         # Sets the options to use when decoding.
         def with_metadata_options(options : ParquetMetaDataOptions?) : self
           @metadata_options = options
+          self
+        end
+
+        # Sets the properties used to decrypt an encrypted footer / column metadata.
+        def with_file_decryption_properties(
+          properties : ::Parquet::Encryption::FileDecryptionProperties?,
+        ) : self
+          @file_decryption_properties = properties
           self
         end
 
@@ -245,7 +258,7 @@ module Parquet
         end
 
         private def prepare_push_decoder(push_decoder : ParquetMetaDataPushDecoder) : ParquetMetaDataPushDecoder
-          push_decoder
+          push_decoder.with_file_decryption_properties(@file_decryption_properties)
         end
 
         # Determines the combined range of bytes needed to read the page
