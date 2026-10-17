@@ -254,7 +254,7 @@ module Parquet
 
       def ==(other : FileDecryptionProperties) : Bool
         @keys == other.keys && @aad_prefix == other.aad_prefix &&
-          @footer_signature_verification == other.footer_signature_verification
+          @footer_signature_verification == other.check_plaintext_footer_integrity
       end
 
       # Avoids leaking keys in logs (upstream's custom `Debug` impl).

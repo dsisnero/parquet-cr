@@ -86,10 +86,12 @@ little-endian layout.
     `spec/parquet/file/writer_encryption_spec.cr`); and the reader metadata
     decryption path (`ParquetMetaDataReader`/`ParquetMetaDataPushDecoder`
     `with_file_decryption_properties`, `SerializedFileReader` read options,
-    `spec/parquet/file/reader_encryption_spec.cr`); and page-data encryption on
+    `spec/parquet/file/reader_encryption_spec.cr`); page-data encryption on
     write (`src/parquet/column/page_encryption.cr`: `PageEncryptor`,
     `CompressedPage#with_new_compressed_buffer`, `SerializedPageWriter` wiring,
-    `spec/parquet/column/page_encryption_spec.cr`).
+    `spec/parquet/column/page_encryption_spec.cr`); and page-data decryption on
+    read (`ParquetMetaData#file_decryptor`, `SerializedPageReader#add_crypto_context`
+    + encrypted header/data handling, `spec/parquet/file/page_decryption_spec.cr`).
   - Phase 1.7: `util/bit_pack.cr` (`BitPack.unpack8/16/32/64`) and `decode_page`
     CRC verification (`file/serialized_reader.cr`).
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
@@ -109,13 +111,12 @@ little-endian layout.
      `src/parquet/derive.cr` (`Parquet::Derive::Record` macro + `Codec(T)`) and
      `spec/parquet/derive_spec.cr` (schema generation, read/write round-trip,
      optional-but-valid, pruned/shuffled).
-  4. Phase 3.4 encryption — **3.4a–3.4j done** (cipher layer, Thrift IDL, AAD
-     builders, properties, `ColumnChunkMetaData` crypto wiring, encrypted-footer
-     reader, encryption-aware metadata writer, public writer API, reader metadata
-     decryption), plus **3.4k page-data encryption on write** (`PageEncryptor` +
-     `SerializedPageWriter`/`SerializedRowGroupWriter` wiring). **Next (3.4l):**
-     page-data decryption on read (`CryptoContext` wiring in
-     `SerializedPageReader`, which needs a `file_decryptor` on `ParquetMetaData`).
+  4. Phase 3.4 encryption — **3.4a–3.4l complete** (cipher layer, Thrift IDL,
+     AAD builders, properties, `ColumnChunkMetaData` crypto wiring,
+     encrypted-footer reader, encryption-aware metadata writer, public writer
+     API, reader metadata decryption, page-data encryption on write, and
+     page-data decryption on read via `CryptoContext`). Remaining encryption
+     gap: AES_GCM_CTR_V1 raises `NYIError`.
   5. Deferred (recorded divergences): async/object-store suffix fetchers, arrow
      interop (`parquet/src/arrow/`), `parquet-variant-compute`/`-json`, and the
      arrow `parquet-rewrite`/`parquet-fromcsv` CLI tools.
@@ -213,9 +214,9 @@ little-endian layout.
     `file/metadata/thrift/encryption.cr` (`get_file_decryptor`,
     `row_group_from_encrypted_thrift`, `parquet_metadata_with_encryption`);
     `FileMetaData` gains `encryption_algorithm`/`footer_signing_key_metadata`
-    (thrift fields 8/9). `ParquetMetaData` has no `file_decryptor` field
-    (upstream builder sets one); the row-group decryptor is threaded through the
-    call instead. AES_GCM_CTR_V1 raises `NYIError`.
+    (thrift fields 8/9). `ParquetMetaData` gains a `file_decryptor` field,
+    `with_file_decryptor`, and `ParquetMetaDataBuilder#set_file_decryptor`
+    (included in `==`, as upstream). AES_GCM_CTR_V1 raises `NYIError`.
   - Encryption writer: `MetadataObjectWriter` ports the encrypted/signed-plaintext
     footer, row-group/column-chunk encryption, page-index encryption, and the
     `PARE`/`PAR1` magic; `ThriftMetadataWriter`/`ParquetMetaDataWriter` take a
@@ -246,9 +247,18 @@ little-endian layout.
     the ciphertext; `SerializedPageWriter`/`SerializedRowGroupWriter` create an
     encryptor only for encrypted columns. The upstream no-encryption
     `page_encryption_disabled.rs` stub is not needed (a nil encryptor is used).
-- Last commit: `1b8abc9 port: reader metadata decryption`; gates green
-  (`make lint`, `make test` -> 808 examples, 0 failures).
-- Progress by counts (ledger): 1743 `ported`, 206 `intentional_divergence`,
+  - Page decryption on read: `SerializedPageReader#add_crypto_context` builds a
+    `CryptoContext` from `ParquetMetaData#file_decryptor` + the column's
+    `crypto_metadata`; `read_page_header`/`decrypt_page_data` decrypt the
+    (length-prefixed) page header and page payload before thrift/decode, with
+    DataPage/DictionaryPage AADs and the advancing page ordinal. Divergence:
+    upstream attaches the context only in the arrow reader; here
+    `SerializedRowGroupReader#get_column_page_reader` (which now carries the row
+    group index + full `ParquetMetaData`) also attaches it, so encrypted files
+    are readable without an arrow layer.
+- Last commit: `c5056f3 port: page encryption on write`; gates green
+  (`make lint`, `make test` -> 814 examples, 0 failures).
+- Progress by counts (ledger): 1750 `ported`, 199 `intentional_divergence`,
   1 `skipped`, 1565 `missing` (of 3515 rows).
 
 Chunk status by area:
@@ -315,9 +325,9 @@ Chunk status by area:
   encryption-aware metadata writer (`src/parquet/file/metadata/writer.cr`), and
   the public writer API (`WriterProperties`/column writer/`SerializedFileWriter`),
   and reader metadata decryption (`ParquetMetaDataReader`/`SerializedFileReader`),
-  and page-data encryption on write (`PageEncryptor`) done; the `WkbType`
-  `ExtensionType` impl, the remaining encryption (page-data decryption on read),
-  arrow, and async remain pending.
+  and page-data encryption/decryption (`PageEncryptor`; `CryptoContext` wired
+  through `SerializedPageReader`) done; the `WkbType` `ExtensionType` impl, the
+  AES_GCM_CTR_V1 cipher, arrow, and async remain pending.
 
 ## Phase 0 — Project initialization
 
@@ -712,9 +722,10 @@ Chunk status by area:
   `spec/parquet/file/reader_encryption_spec.cr`), and page-data encryption on
   write (`src/parquet/column/page_encryption.cr`: `PageEncryptor` +
   `SerializedPageWriter`/`SerializedRowGroupWriter` wiring,
-  `spec/parquet/column/page_encryption_spec.cr`). Pending: page-data decryption
-  on read (`CryptoContext` in `SerializedPageReader`, which first needs a
-  `file_decryptor` on `ParquetMetaData`).
+  `spec/parquet/column/page_encryption_spec.cr`), and page-data decryption on
+  read (`ParquetMetaData#file_decryptor` + `SerializedPageReader` page crypto
+  context/header/data handling, `spec/parquet/file/page_decryption_spec.cr`).
+  Remaining encryption gap: AES_GCM_CTR_V1.
 
 ### 3.5 Arrow interop (deferred)
 
@@ -861,8 +872,9 @@ Chunk status by area:
 - `ParquetMetaData`: `page_index` is a plain `PageIndexProvider?` (no
   `Arc`/`as_any`); equality compares page indexes by value for `PageIndex` and by
   reference otherwise. `set_page_index` is public (upstream `pub(crate)`).
-  `memory_size` (`HeapSize`) and the encryption `file_decryptor`
-  plumbing are deferred.
+  `file_decryptor` is a plain `FileDecryptor?` (compared by value, as upstream)
+  set via `with_file_decryptor`/`ParquetMetaDataBuilder#set_file_decryptor`;
+  `memory_size` (`HeapSize`) is deferred.
 - `ParquetMetaDataBuilder`: holds the fields directly rather than wrapping
   `ParquetMetaData`; the Rust `From<ParquetMetaData>` impl maps to
   `new_from_metadata`. `set_row_groups`/`set_page_index` keep upstream names under

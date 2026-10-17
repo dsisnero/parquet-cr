@@ -1,5 +1,6 @@
 require "./row_group"
 require "../../schema/thrift"
+require "../../encryption/decrypt"
 
 # Ported from `parquet/src/file/metadata/mod.rs`,
 # `parquet/src/file/metadata/thrift/mod.rs`,
@@ -8,8 +9,9 @@ require "../../schema/thrift"
 # ef1fa157977633f0ba21aa921f9ef3d5c669235b).
 #
 # Ports `FileMetaData`, `ParquetMetaData`, and the footer metadata write/read
-# (`ParquetMetaDataWriter`/`ParquetMetaDataReader.decode_metadata`). Page
-# indexes, encryption, and options are not yet ported (see `plans/parity.md`).
+# (`ParquetMetaDataWriter`/`ParquetMetaDataReader.decode_metadata`). Page index
+# options live in `metadata_options.cr`; encryption metadata lives in
+# `thrift/encryption.cr`.
 module Parquet
   module File
     module Metadata
@@ -67,11 +69,13 @@ module Parquet
         getter file_metadata : FileMetaData
         getter row_groups : Array(RowGroupMetaData)
         getter page_index : PageIndexProvider?
+        getter file_decryptor : Encryption::FileDecryptor?
 
         def initialize(
           @file_metadata : FileMetaData,
           @row_groups : Array(RowGroupMetaData),
           @page_index : PageIndexProvider? = nil,
+          @file_decryptor : Encryption::FileDecryptor? = nil,
         )
         end
 
@@ -107,7 +111,13 @@ module Parquet
           @page_index = index
         end
 
-        # Compares file metadata, row groups, and the page index.
+        # Sets the `FileDecryptor` used to decrypt data pages.
+        def with_file_decryptor(file_decryptor : Encryption::FileDecryptor?) : Nil
+          @file_decryptor = file_decryptor
+        end
+
+        # Compares file metadata, row groups, the page index, and the file
+        # decryptor.
         #
         # Divergence: the page index compares by value for `PageIndex` and by
         # reference for other `PageIndexProvider`s (upstream falls back to
@@ -115,7 +125,8 @@ module Parquet
         def ==(other : ParquetMetaData) : Bool
           file_metadata == other.file_metadata &&
             row_groups == other.row_groups &&
-            page_index == other.page_index
+            page_index == other.page_index &&
+            file_decryptor == other.file_decryptor
         end
       end
 
@@ -128,15 +139,20 @@ module Parquet
         getter file_metadata : FileMetaData
         getter row_groups : Array(RowGroupMetaData)
         getter page_index : PageIndexProvider?
+        getter file_decryptor : Encryption::FileDecryptor?
 
         def initialize(@file_metadata : FileMetaData)
           @row_groups = [] of RowGroupMetaData
           @page_index = nil
+          @file_decryptor = nil
         end
 
         # Creates a builder from existing metadata.
         def self.new_from_metadata(metadata : ParquetMetaData) : ParquetMetaDataBuilder
-          new(metadata.file_metadata).set_row_groups(metadata.row_groups).set_page_index(metadata.page_index)
+          new(metadata.file_metadata)
+            .set_row_groups(metadata.row_groups)
+            .set_page_index(metadata.page_index)
+            .set_file_decryptor(metadata.file_decryptor)
         end
 
         # Adds a row group to the metadata.
@@ -173,9 +189,16 @@ module Parquet
           page_index
         end
 
+        # Sets the `FileDecryptor` used to decrypt data pages.
+        # ameba:disable Naming/AccessorMethodName
+        def set_file_decryptor(file_decryptor : Encryption::FileDecryptor?) : self
+          @file_decryptor = file_decryptor
+          self
+        end
+
         # Creates a new `ParquetMetaData` from the builder.
         def build : ParquetMetaData
-          ParquetMetaData.new(@file_metadata, @row_groups, @page_index)
+          ParquetMetaData.new(@file_metadata, @row_groups, @page_index, @file_decryptor)
         end
       end
 

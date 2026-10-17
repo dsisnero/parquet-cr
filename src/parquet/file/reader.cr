@@ -237,7 +237,7 @@ module Parquet
       def get_row_group(i : Int32) : RowGroupReader
         row_group_metadata = @metadata.row_group(i)
         page_index = @metadata.page_index_for_row_group(i)
-        SerializedRowGroupReader.new(@chunk_reader, row_group_metadata, page_index, @props)
+        SerializedRowGroupReader.new(@chunk_reader, row_group_metadata, page_index, @props, i, @metadata)
       end
     end
 
@@ -250,6 +250,8 @@ module Parquet
         @metadata : Metadata::RowGroupMetaData,
         @page_index : Metadata::RowGroupPageIndex,
         @props : Properties::ReaderProperties,
+        @rg_idx : Int32,
+        @parquet_metadata : Metadata::ParquetMetaData,
       )
         @bloom_filters =
           if @props.read_bloom_filter
@@ -276,7 +278,7 @@ module Parquet
           @metadata.num_rows.to_i32,
           page_locations,
           @props,
-        )
+        ).add_crypto_context(@rg_idx, i, @parquet_metadata, col)
       end
 
       def get_column_bloom_filter(i : Int32) : BloomFilter::Sbbf?

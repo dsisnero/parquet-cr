@@ -2583,7 +2583,7 @@ parquet/src/file/metadata/mod.rs::method::OffsetIndexBuilder.build	method	ported
 parquet/src/file/metadata/mod.rs::method::OffsetIndexBuilder.default	method	intentional_divergence	src/parquet/file/metadata.cr	Rust Default impl; Crystal default initialize
 parquet/src/file/metadata/mod.rs::method::OffsetIndexBuilder.new	method	ported	src/parquet/file/metadata.cr	OffsetIndexBuilder
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.eq	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
-parquet/src/file/metadata/mod.rs::method::ParquetMetaData.file_decryptor	method	intentional_divergence	src/parquet/file/metadata/parquet_metadata.cr	encryption feature not ported
+parquet/src/file/metadata/mod.rs::method::ParquetMetaData.file_decryptor	method	ported	src/parquet/file/metadata/parquet_metadata.cr	getter (FileDecryptor?)
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.file_metadata	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.into_builder	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.memory_size	method	intentional_divergence	src/parquet/file/metadata/parquet_metadata.cr	HeapSize (memory.rs) not ported
@@ -2595,7 +2595,7 @@ parquet/src/file/metadata/mod.rs::method::ParquetMetaData.row_group	method	porte
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.row_group_num_rows	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.row_groups	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.set_page_index	method	ported	src/parquet/file/metadata/parquet_metadata.cr	upstream pub(crate); public here
-parquet/src/file/metadata/mod.rs::method::ParquetMetaData.with_file_decryptor	method	intentional_divergence	src/parquet/file/metadata/parquet_metadata.cr	encryption feature not ported
+parquet/src/file/metadata/mod.rs::method::ParquetMetaData.with_file_decryptor	method	ported	src/parquet/file/metadata/parquet_metadata.cr	upstream pub(crate); public here
 parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.add_row_group	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.build	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.from	method	intentional_divergence	src/parquet/file/metadata/parquet_metadata.cr	Rust From impl; use ParquetMetaDataBuilder.new_from_metadata
@@ -2603,7 +2603,7 @@ parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.new	method	port
 parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.new_from_metadata	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.page_index	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.row_groups	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataBuilder
-parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.set_file_decryptor	method	intentional_divergence	src/parquet/file/metadata/parquet_metadata.cr	encryption feature not ported
+parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.set_file_decryptor	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.set_page_index	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.set_row_groups	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.take_page_index	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataBuilder
@@ -3009,7 +3009,7 @@ parquet/src/file/serialized_reader.rs::method::SerializedFileReader<R>.metadata	
 parquet/src/file/serialized_reader.rs::method::SerializedFileReader<R>.new	method	ported	src/parquet/file/reader.cr	SerializedFileReader
 parquet/src/file/serialized_reader.rs::method::SerializedFileReader<R>.new_with_options	method	ported	src/parquet/file/reader.cr	SerializedFileReader
 parquet/src/file/serialized_reader.rs::method::SerializedFileReader<R>.num_row_groups	method	ported	src/parquet/file/reader.cr	SerializedFileReader
-parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.add_crypto_context	method	intentional_divergence	src/parquet/file/serialized_reader.cr	encryption not ported
+parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.add_crypto_context	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#add_crypto_context
 parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.at_record_boundary	method	ported	src/parquet/file/serialized_reader.cr	inherited PageReader default
 parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.get_next_page	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#get_next_page
 parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.new	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader.new_for_column
@@ -3020,11 +3020,11 @@ parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.peek_next
 parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.read_page_header_len	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#read_page_header_len
 parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.read_page_header_len_from_bytes	method	intentional_divergence	src/parquet/file/serialized_reader.cr	Pages state not ported
 parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.skip_next_page	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#skip_next_page
-parquet/src/file/serialized_reader.rs::method::SerializedPageReaderContext.decrypt_page_data	method	intentional_divergence	src/parquet/file/serialized_reader.cr	encryption not ported
-parquet/src/file/serialized_reader.rs::method::SerializedPageReaderContext.page_crypto_context	method	intentional_divergence	src/parquet/file/serialized_reader.cr	encryption not ported
-parquet/src/file/serialized_reader.rs::method::SerializedPageReaderContext.read_page_header	method	intentional_divergence	src/parquet/file/serialized_reader.cr	inlined into read_page_header_len
+parquet/src/file/serialized_reader.rs::method::SerializedPageReaderContext.decrypt_page_data	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#decrypt_page_data
+parquet/src/file/serialized_reader.rs::method::SerializedPageReaderContext.page_crypto_context	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#page_crypto_context
+parquet/src/file/serialized_reader.rs::method::SerializedPageReaderContext.read_page_header	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#read_page_header
 parquet/src/file/serialized_reader.rs::method::SerializedRowGroupReader<'_, R>.get_column_bloom_filter	method	ported	src/parquet/file/reader.cr	SerializedRowGroupReader
-parquet/src/file/serialized_reader.rs::method::SerializedRowGroupReader<'_, R>.get_column_page_reader	method	ported	src/parquet/file/reader.cr	SerializedRowGroupReader
+parquet/src/file/serialized_reader.rs::method::SerializedRowGroupReader<'_, R>.get_column_page_reader	method	ported	src/parquet/file/reader.cr	SerializedRowGroupReader; also attaches crypto context (upstream only in arrow reader)
 parquet/src/file/serialized_reader.rs::method::SerializedRowGroupReader<'_, R>.get_row_iter	method	missing	-	record API (RowIter) deferred to Phase 2.4
 parquet/src/file/serialized_reader.rs::method::SerializedRowGroupReader<'_, R>.metadata	method	ported	src/parquet/file/reader.cr	SerializedRowGroupReader
 parquet/src/file/serialized_reader.rs::method::SerializedRowGroupReader<'_, R>.num_columns	method	ported	src/parquet/file/reader.cr	SerializedRowGroupReader

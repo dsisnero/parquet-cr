@@ -310,6 +310,7 @@ module Parquet
 
         ParquetMetaDataBuilder.new(file_metadata)
           .set_row_groups(decrypted_row_groups)
+          .set_file_decryptor(file_decryptor)
           .build
       end
     end

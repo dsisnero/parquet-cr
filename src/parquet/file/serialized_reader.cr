@@ -9,15 +9,18 @@ require "./properties"
 require "./statistics"
 require "./chunk_reader"
 require "../column/page"
+require "../encryption/decrypt"
 
 # Ported from `parquet/src/file/serialized_reader.rs` (`decode_page` and
 # `SerializedPageReader`) (apache/arrow-rs 60.0.0,
 # ef1fa157977633f0ba21aa921f9ef3d5c669235b).
 #
 # Ports the serialized page reader (the offset-stream state) and `decode_page`.
-# Divergence: the offset-index-driven `Pages` state and page encryption are not
-# ported; `R: ChunkReader` is a concrete generic parameter. The `crc`-feature
-# page-checksum verification is always performed (Crystal has no feature flags).
+# Divergence: the offset-index-driven `Pages` state is not ported; `R:
+# ChunkReader` is a concrete generic parameter. The `crc`-feature page-checksum
+# verification is always performed (Crystal has no feature flags). Page
+# decryption is also wired through the core `SerializedRowGroupReader` (upstream
+# only attaches the crypto context in the arrow reader).
 module Parquet
   module File
     # Decodes a `Page` from the provided `buffer`.
@@ -141,6 +144,26 @@ module Parquet
       )
         @next_page_header = nil.as(Format::PageHeader?)
         @page_index = 0
+        @crypto_context = nil.as(Encryption::CryptoContext?)
+      end
+
+      # Adds the crypto context needed to decrypt this column's pages.
+      def add_crypto_context(
+        rg_idx : Int32,
+        column_idx : Int32,
+        parquet_meta_data : Metadata::ParquetMetaData,
+        column_chunk_metadata : Metadata::ColumnChunkMetaData,
+      ) : self
+        file_decryptor = parquet_meta_data.file_decryptor
+        return self unless file_decryptor
+
+        crypto_metadata = column_chunk_metadata.crypto_metadata
+        return self unless crypto_metadata
+
+        @crypto_context = Encryption::CryptoContext.for_column(
+          file_decryptor, crypto_metadata, rg_idx, column_idx
+        )
+        self
       end
 
       # Creates a reader for a column chunk.
@@ -171,7 +194,7 @@ module Parquet
               @next_page_header = nil
               buffered
             else
-              header_len, parsed = read_page_header_len(read)
+              header_len, parsed = read_page_header_len(read, @page_index, @require_dictionary)
               verify_page_header_len(header_len, @remaining_bytes)
               @offset += header_len.to_u64
               @remaining_bytes -= header_len.to_u64
@@ -188,6 +211,7 @@ module Parquet
           next if header.type == PageType::INDEX_PAGE
 
           buffer = @reader.get_bytes(data_start, data_len)
+          buffer = decrypt_page_data(buffer, @page_index, @require_dictionary)
           page = File.decode_page(header, buffer, @physical_type, @decompressor)
           if page.is_data_page?
             @page_index += 1
@@ -208,7 +232,7 @@ module Parquet
           end
 
           read = @reader.get_read(@offset)
-          header_len, header = read_page_header_len(read)
+          header_len, header = read_page_header_len(read, @page_index, @require_dictionary)
           verify_page_header_len(header_len, @remaining_bytes)
           @offset += header_len.to_u64
           @remaining_bytes -= header_len.to_u64
@@ -231,7 +255,7 @@ module Parquet
           @next_page_header = nil
         else
           read = @reader.get_read(@offset)
-          header_len, header = read_page_header_len(read)
+          header_len, header = read_page_header_len(read, @page_index, @require_dictionary)
           verify_page_header_len(header_len, @remaining_bytes)
           verify_page_size(header.compressed_page_size, header.uncompressed_page_size, @remaining_bytes)
           data_page_size = header.compressed_page_size.to_u64
@@ -247,16 +271,65 @@ module Parquet
         nil
       end
 
-      private def read_page_header_len(input : IO) : Tuple(Int32, Format::PageHeader)
+      private def read_page_header_len(
+        input : IO,
+        page_index : Int32,
+        dictionary_page : Bool,
+      ) : Tuple(Int32, Format::PageHeader)
         counting = CountingIO.new(input)
-        protocol = Thrift::ThriftReadInputProtocol.new(counting)
-        header =
+        header = read_page_header(counting, page_index, dictionary_page)
+        {counting.count, header}
+      end
+
+      private def read_page_header(
+        input : IO,
+        page_index : Int32,
+        dictionary_page : Bool,
+      ) : Format::PageHeader
+        if context = page_crypto_context(page_index, dictionary_page)
+          buffer =
+            begin
+              Encryption.read_and_decrypt(
+                context.data_decryptor, input, context.create_page_header_aad
+              )
+            rescue
+              raise general_err!(
+                "Error decrypting page header for column #{context.column_ordinal}, " \
+                "decryption key may be wrong"
+              )
+            end
+          protocol = Thrift::ThriftSliceInputProtocol.new(buffer)
           if @read_stats
             Format::PageHeader.read_thrift(protocol)
           else
             Format.read_page_header_without_stats(protocol)
           end
-        {counting.count, header}
+        else
+          protocol = Thrift::ThriftReadInputProtocol.new(input)
+          if @read_stats
+            Format::PageHeader.read_thrift(protocol)
+          else
+            Format.read_page_header_without_stats(protocol)
+          end
+        end
+      end
+
+      private def decrypt_page_data(
+        buffer : Bytes,
+        page_index : Int32,
+        dictionary_page : Bool,
+      ) : Bytes
+        return buffer unless context = page_crypto_context(page_index, dictionary_page)
+        context.data_decryptor.decrypt(buffer, context.create_page_aad)
+      end
+
+      private def page_crypto_context(
+        page_index : Int32,
+        dictionary_page : Bool,
+      ) : Encryption::CryptoContext?
+        context = @crypto_context
+        return nil unless context
+        dictionary_page ? context.for_dictionary_page : context.with_page_ordinal(page_index)
       end
 
       private def verify_page_header_len(header_len : Int32, remaining_bytes : UInt64) : Nil
