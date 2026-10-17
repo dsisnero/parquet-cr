@@ -44,6 +44,61 @@ describe Parquet::File::BytesChunkReader do
 end
 
 describe Parquet::File::SerializedFileReader do
+  # Upstream `test_file_reader_datapage_v2` (a SNAPPY-compressed fixture with
+  # dictionary + compressed data page v2).
+  it "reads metadata and pages from a compressed data page v2 file" do
+    reader = FReader.new(BytesCR.new(ParquetTestHelpers.fixture_bytes("datapage_v2.snappy.parquet")))
+
+    metadata = reader.metadata
+    metadata.num_row_groups.should eq(1)
+
+    file_metadata = metadata.file_metadata
+    file_metadata.created_by.should eq(
+      "parquet-mr version 1.8.1 (build 4aba4dae7bb0d4edbcf7923ae1339f28fd3f7fcf)"
+    )
+    file_metadata.key_value_metadata.should_not be_nil
+    file_metadata.key_value_metadata.not_nil!.size.should eq(1)
+    file_metadata.num_rows.should eq(5)
+    file_metadata.version.should eq(1)
+    file_metadata.column_orders.should be_nil
+
+    row_group_metadata = metadata.row_group(0)
+    row_group_metadata.num_columns.times do |i|
+      file_metadata.column_order(i).should eq(COrder::UNDEFINED)
+    end
+
+    row_group_reader = reader.get_row_group(0)
+    row_group_reader.num_columns.should eq(row_group_metadata.num_columns)
+    row_group_reader.metadata.total_byte_size.should eq(row_group_metadata.total_byte_size)
+
+    page_reader_0 = row_group_reader.get_column_page_reader(0)
+    page_count = 0
+    while page = page_reader_0.get_next_page
+      case page
+      when Page::DictionaryPage
+        page.buf.size.should eq(7)
+        page.num_values.should eq(1)
+        page.encoding.should eq(Enc::PLAIN)
+        page.is_sorted.should be_false
+      when Page::DataPageV2
+        page.buf.size.should eq(4)
+        page.num_values.should eq(5)
+        page.encoding.should eq(Enc::RLE_DICTIONARY)
+        page.num_nulls.should eq(1)
+        page.num_rows.should eq(5)
+        page.def_levels_byte_len.should eq(2)
+        page.rep_levels_byte_len.should eq(0)
+        page.is_compressed.should be_true
+        # Page stats are no longer read.
+        page.statistics.should be_nil
+      else
+        fail "unexpected page type #{page.page_type}"
+      end
+      page_count += 1
+    end
+    page_count.should eq(2)
+  end
+
   # Upstream `test_file_reader`.
   it "reads metadata and pages from a file" do
     reader = FReader.new(BytesCR.new(alltypes_plain))

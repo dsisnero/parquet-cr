@@ -3,10 +3,12 @@ require "../../spec_helper"
 # Ported from `parquet/src/record/reader.rs` test module
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
 #
-# Divergence: SNAPPY-compressed fixtures (`nulls.snappy.parquet`,
-# `nested_maps.snappy.parquet`, `nested_lists.snappy.parquet`) are not readable
-# (SNAPPY codec needs a Crystal shard); the projection cases here use the
-# uncompressed `nonnullable.impala.parquet` schema instead.
+# The SNAPPY codec is ported, so `test_file_reader_rows_nulls`
+# (`nulls.snappy.parquet`) runs against the real fixture. The remaining
+# SNAPPY-fixture tests that pass a schema override
+# (`nested_lists.snappy.parquet`, `nested_maps.snappy.parquet`) are still
+# unported; the projection cases here use the uncompressed
+# `nonnullable.impala.parquet` schema instead.
 
 private alias FReader = Parquet::File::SerializedFileReader
 private alias BytesCR = Parquet::File::BytesChunkReader
@@ -49,6 +51,15 @@ private def test_file_reader_rows(file_name : String, schema : Parquet::Schema::
 end
 
 describe Parquet::Record::RowIter do
+  # Upstream `test_file_reader_rows_nulls` (a SNAPPY-compressed fixture).
+  it "reads rows of nulls" do
+    rows = test_file_reader_rows("nulls.snappy.parquet", nil)
+    expected = Array.new(8) do
+      row([f("b_struct", group_of([f("b_c_int", Field::Null.new)]))])
+    end
+    rows.should eq(expected)
+  end
+
   # Upstream `test_file_reader_rows_nonnullable`.
   it "reads non-nullable rows" do
     rows = test_file_reader_rows("nonnullable.impala.parquet", nil)

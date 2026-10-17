@@ -4,8 +4,6 @@ require "../../spec_helper"
 # `test_page_writer_dict_pages`, `test_page_roundtrip`, `assert_page`) and
 # `parquet/src/file/serialized_reader.rs`
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
-#
-# The SNAPPY round-trip is adapted to GZIP (snappy needs a Crystal shard).
 
 private alias Page = Parquet::Column::Page
 private alias CompressedPage = Parquet::Column::CompressedPage
@@ -135,7 +133,7 @@ describe Parquet::File::SerializedPageWriter do
       Page::DataPageV2.new(Bytes.new(128, 4_u8), 10_u32, Enc::DELTA_BINARY_PACKED, 2_u32, 12_u32, 24_u32, 32_u32, false, Stats.int32(1, 3, nil, 7_u64, true)),
     ] of Page
 
-    test_page_roundtrip(pages, Comp.gzip, PType::INT32)
+    test_page_roundtrip(pages, Comp::SNAPPY, PType::INT32)
     test_page_roundtrip(pages, Comp::UNCOMPRESSED, PType::INT32)
   end
 
@@ -147,7 +145,7 @@ describe Parquet::File::SerializedPageWriter do
       Page::DataPageV2.new(Bytes.new(128, 4_u8), 10_u32, Enc::DELTA_BINARY_PACKED, 2_u32, 12_u32, 24_u32, 32_u32, false, nil),
     ] of Page
 
-    test_page_roundtrip(pages, Comp.gzip, PType::INT32)
+    test_page_roundtrip(pages, Comp::SNAPPY, PType::INT32)
     test_page_roundtrip(pages, Comp::UNCOMPRESSED, PType::INT32)
   end
 end

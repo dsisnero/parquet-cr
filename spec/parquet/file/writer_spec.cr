@@ -6,8 +6,7 @@ require "../../spec_helper"
 # The upstream `test_roundtrip`/`test_file_roundtrip`/`test_bytes_roundtrip`
 # helpers read values back with the record API (`RowIter`); that is deferred to
 # the record chunk, so the value read-back here uses the already-ported
-# `ColumnReader` + `read_records`. The SNAPPY round-trips use GZIP (snappy needs
-# a Crystal shard).
+# `ColumnReader` + `read_records`.
 
 private alias FWriter = Parquet::File::SerializedFileWriter
 private alias FReader = Parquet::File::SerializedFileReader
@@ -212,17 +211,17 @@ describe Parquet::File::SerializedFileWriter do
     )
   end
 
-  # Upstream `test_bytes_writer_single_row_group_compressed` (snappy -> gzip).
+  # Upstream `test_bytes_writer_single_row_group_compressed`.
   it "round-trips a single compressed row group" do
-    roundtrip_i32(IO::Memory.new, [[1, 2, 3, 4, 5]], PComp.gzip)
+    roundtrip_i32(IO::Memory.new, [[1, 2, 3, 4, 5]], PComp::SNAPPY)
   end
 
-  # Upstream `test_bytes_writer_multiple_row_groups_compressed` (snappy -> gzip).
+  # Upstream `test_bytes_writer_multiple_row_groups_compressed`.
   it "round-trips multiple compressed row groups" do
     roundtrip_i32(
       IO::Memory.new,
       [[1, 2, 3, 4, 5], [1, 2, 3], [1], [1, 2, 3, 4, 5, 6]],
-      PComp.gzip
+      PComp::SNAPPY
     )
   end
 

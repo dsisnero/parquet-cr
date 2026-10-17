@@ -33,10 +33,10 @@ little-endian layout.
 - Plan layout: single file. If it grows too large, split into
   `plans/parity/<area>.md`, link each here, and mark each split file
   complete/in-progress plus the file being worked on next.
-- Current focus: **Phase 2.2 content-defined chunker is complete** and **Phase 3
-  is complete except arrow/async**, **Phase 3.7 (core geospatial module) is
-  complete**, and **encryption is complete**; the next actionable feature is
-  **item 7 / Phase 1.8 remaining compression codecs**. Done so far:
+- Current focus: **Phase 1.8a SNAPPY is complete**; **Phase 2.2
+  content-defined chunker, Phase 3 (except arrow/async), Phase 3.7 core
+  geospatial, and encryption are complete**; the next actionable feature is
+  **item 8 / Phase 1.8b LZ4 (raw + Hadoop framing)**. Done so far:
   - `parquet-variant` (`src/parquet_variant/`): `VariantPath`/
     `VariantPathElement` + dot/bracket parser (`path.cr`); `utils` helpers
     (`utils.cr`); `OffsetSizeBytes`/`map_bytes_to_offsets`, `VariantBasicType`/
@@ -111,6 +111,15 @@ little-endian layout.
     `need_new_chunk`, `calculate` for the flat/nullable/nested paths,
     `validate_chunks`, plus the verbatim 8x256 `GEARHASH_TABLE`); spec
     `spec/parquet/column/chunker_cdc_spec.cr`.
+  - SNAPPY codec (Phase 1.8a): `CompressionCodecs::Snappy` (raw/block format
+    encoder + decoder) and `SnappyCodec`, wired into `create_codec`
+    (`src/parquet/compression_codecs.cr`); specs
+    `spec/parquet/compression_codecs_spec.cr` (roundtrips, golden wire-format
+    streams, corrupt input, repetitive data), plus the newly enabled real-fixture
+    tests `test_file_reader_rows_nulls` (`nulls.snappy.parquet`) and
+    `test_file_reader_datapage_v2` (`datapage_v2.snappy.parquet`, compressed
+    data page v2) and the SNAPPY writer/page roundtrips that previously used
+    GZIP.
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -163,21 +172,43 @@ little-endian layout.
      flat/nullable/nested cases). `get_arrow_chunks` and the `arrow_tests`
      roundtrip module are deferred with the arrow layer; the chunker is only
      consumed by the arrow writer upstream, so no writer wiring was needed.
-  7. Phase 1.8 remaining compression codecs (`snappy`/`brotli`/`lz4`/`zstd`, and
-     LZO if a shard exists) behind `create_codec`, using the `find-crystal-shards`
-     decision workflow; document any codec that must stay an intentional
-     divergence. This is the largest remaining non-deferred gap and unblocks
-     real-world (snappy/zstd) files. Anchors:
-     `vendor/arrow-rs/parquet/src/compression.rs`,
+  7. ~~Phase 1.8a SNAPPY codec.~~ **complete** — `CompressionCodecs::Snappy`
+     (raw/block format compressor + decompressor: ULEB128 preamble, literals,
+     1/2/4-byte-offset copies, `uncompress_size`-optional append) and
+     `SnappyCodec`, wired into `create_codec`; `spec/parquet/compression_codecs_spec.cr`
+     ports `test_codec_snappy` and adds golden wire-format vectors, a corrupt-input
+     test, and a repetitive-data (copy path) test. The erstwhile GZIP substitutes
+     are back to upstream's SNAPPY in `spec/parquet/file/{writer,serialized_page}_spec.cr`,
+     and the real fixtures now run: `test_file_reader_rows_nulls`
+     (`nulls.snappy.parquet`) and `test_file_reader_datapage_v2`
+     (`datapage_v2.snappy.parquet`). Compressor output was cross-checked with an
+     independent format-spec decoder (incl. 60/61/256/61 KiB/16 MiB+ literals);
+     throughput ~11 ms per 4 MiB compressible / ~17 ms decompress.
+  8. Phase 1.8b LZ4 behind `create_codec`: `LZ4_RAW` (block format, pure Crystal —
+     reuse the snappy-style match finder), `LZ4` (upstream maps it to `LZ4_RAW`
+     unless `CodecOptions#backward_compatible_lz4`, in which case
+     `LZ4_HADOOP` = 8-byte big-endian `(uncompressed_size, compressed_size)`
+     prefix + raw block, with the raw-block fallback on decode). Port upstream
+     `test_codec_lz4` and `test_codec_lz4_raw`, then enable the fixtures
+     `lz4_raw_compressed{,_larger}.parquet`, `hadoop_lz4_compressed{,_larger}.parquet`,
+     and `non_hadoop_lz4_compressed.parquet` (the fallback case). Anchors:
+     `vendor/arrow-rs/parquet/src/compression.rs` (`lz4_raw_codec`,
+     `lz4_hadoop_codec`, `LZ4_BUFFER_SIZE`/`PREFIX_LEN`/`SIZE_U32`),
      `src/parquet/compression_codecs.cr`, `src/parquet/compression.cr`.
-  8. The offset-index-driven `SerializedPageReader` state (upstream
-     `SerializedPageReaderState::Pages`: a `PageLocation` queue plus an optional
-     dictionary location, `peek_next_page_offset`, and the `Iterator` impl), so a
-     reader can consume `page_locations` instead of walking the offset stream.
-     Anchors: `vendor/arrow-rs/parquet/src/file/serialized_reader.rs`
-     (`SerializedPageReaderState`), `src/parquet/file/serialized_reader.cr`,
-     `src/parquet/file/page_index/index_reader.cr`.
-  9. Deferred (recorded divergences): async/object-store suffix fetchers, arrow
+  9. Phase 1.8c Zstd/Brotli (and LZO if anything exists) behind `create_codec`
+     via shards/native libraries (`didactic-drunk/zstd.cr`,
+     `pkg-config`-linked brotli), with fixtures
+     `alp_extended.zstd.parquet`/`byte_stream_split.zstd.parquet`/
+     `large_string_map.brotli.parquet`. Record the dependency decision in this
+     plan before adding the first runtime dependency.
+  10. The offset-index-driven `SerializedPageReader` state (upstream
+      `SerializedPageReaderState::Pages`: a `PageLocation` queue plus an optional
+      dictionary location, `peek_next_page_offset`, and the `Iterator` impl), so a
+      reader can consume `page_locations` instead of walking the offset stream.
+      Anchors: `vendor/arrow-rs/parquet/src/file/serialized_reader.rs`
+      (`SerializedPageReaderState`), `src/parquet/file/serialized_reader.cr`,
+      `src/parquet/file/page_index/index_reader.cr`.
+  11. Deferred (recorded divergences): async/object-store suffix fetchers, arrow
      interop (`parquet/src/arrow/`), `parquet-variant-compute`/`-json`, the
      `column/page_store.rs` module (only consumed by the arrow writer), and the
      arrow `parquet-rewrite`/`parquet-fromcsv` CLI tools.
@@ -204,8 +235,16 @@ little-endian layout.
     `Naming/PredicateName` rule is excluded for the variant value files.
   - Crystal has no cargo feature flags: feature-gated code (e.g. the `crc` page
     checksum, `json`) is always on.
-  - SNAPPY/LZO/Brotli/LZ4/Zstd codecs need Crystal shards; fixture-based tests
-    that would use `.snappy.parquet` are exercised with uncompressed fixtures.
+  - Compression: SNAPPY is implemented in-tree (`CompressionCodecs::Snappy`, raw/
+    block format) rather than via a shard — the `find-crystal-shards` review
+    found `naqvis/snappy` (pure Crystal, MIT, block+stream), but the port keeps
+    zero runtime dependencies and needs the optional-`uncompress_size` append
+    API (`snap::raw::Decoder`'s behavior). Output was verified against real
+    Google-snappy fixtures (`*.snappy.parquet`) and an independent decoder;
+    malformed input raises `ExternalError` wrapping `SnappyError` (upstream
+    `snap::Error` → `ParquetError::External`). LZO/Brotli/LZ4/Zstd still need
+    shards or native libraries (`naqvis/lz4.cr`, `didactic-drunk/zstd.cr`,
+    system brotli), so fixture-based tests using those files remain unported.
   - Enum-with-payload Rust types are modelled either as a sealed class hierarchy
     (`Variant`, `Field`, `Page`, `Type`, `LogicalType`) or a struct with a
     `Kind` + payload (`Compression`, `DecodeResult`, `ColumnOrder`); pick per
@@ -383,10 +422,10 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `2f22a20 port: core geospatial statistics module`; gates green
-  (`make lint`, `make test` -> 829 examples, 0 failures). Next feature: item 7
-  (Phase 1.8 remaining compression codecs).
-- Progress by counts (ledger): 1791 `ported`, 201 `intentional_divergence`,
+- Last commit: `a58c3f8 port: content-defined chunker`; gates green
+  (`make lint`, `make test` -> 836 examples, 0 failures). Next feature: item 8
+  (Phase 1.8b LZ4 raw + Hadoop framing).
+- Progress by counts (ledger): 1794 `ported`, 198 `intentional_divergence`,
   9 `skipped`, 1514 `missing` (of 3515 rows).
 
 Chunk status by area:
@@ -408,8 +447,9 @@ Chunk status by area:
 - Phase 1.7 util: `BitReader`/`BitWriter`, `Interner`/`Storage`, `PushBuffers`,
   `common_prefix_length`, bit packing (`BitPack.unpack*`), and `decode_page` CRC
   verification done (no `util/cursor.rs` at 60.0.0).
-- Phase 1.8 compression: `Codec` framework + `GZipCodec` done;
-  snappy/lzo/brotli/lz4/zstd pending (need Crystal shards).
+- Phase 1.8 compression: `Codec` framework, `GZipCodec`, and `SnappyCodec`
+  (in-tree raw snappy) done; lzo/brotli/lz4/zstd pending (need Crystal shards or
+  native libraries).
 - Phase 2.3 file metadata/statistics/page-index core, column-index decode,
   page-index builders, the `ParquetMetaData` page-index plumbing, the sans-IO
   `ParquetMetaDataPushDecoder`, the synchronous `ChunkReader`-driven
@@ -570,11 +610,19 @@ Chunk status by area:
 ### 1.8 Compression
 
 - [~] Codec dispatch + uncompressed/snappy/gzip/lzo/brotli/lz4/zstd paths:
-  `Codec` framework + `create_codec` + `GZipCodec` done
-  (`src/parquet/compression_codecs.cr`); snappy/lzo/brotli/lz4/zstd pending.
-- [ ] Select Crystal shards via `find-crystal-shards`; document any codec that
-  must be an intentional divergence (snappy/lzo/brotli/lz4/zstd are currently
-  intentional divergences — `create_codec` raises).
+  `Codec` framework + `create_codec` + `GZipCodec` + `SnappyCodec` done
+  (`src/parquet/compression_codecs.cr`); lzo/brotli/lz4/zstd pending.
+- [x] SNAPPY (`CompressionCodecs::Snappy`): in-tree raw/block format encoder +
+  decoder (ULEB128 preamble, literals, 1/2/4-byte-offset copies, overlapping
+  copy semantics, optional `uncompress_size`), wire-compatible with `snap`/
+  Google snappy. Upstream `test_codec_snappy` ported plus golden wire-format
+  vectors, corrupt-input handling, and real fixtures (`nulls.snappy.parquet`,
+  `datapage_v2.snappy.parquet`); the SNAPPY writer/page roundtrips no longer
+  substitute GZIP.
+- [ ] Select Crystal shards via `find-crystal-shards` for the remaining codecs
+  (lz4 → `naqvis/lz4.cr` bindings, zstd → `didactic-drunk/zstd.cr`, brotli →
+  system lib); document any codec that must be an intentional divergence
+  (`create_codec` raises for lzo/brotli/lz4/zstd).
 
 ## Phase 2 — Encodings, columns, files
 
@@ -967,6 +1015,17 @@ Chunk status by area:
   `debug_assertions`), and assertions raise `GeneralError`. `get_arrow_chunks`
   and the `arrow_tests` roundtrip module are deferred with the arrow layer; the
   gear-hash table is transcribed verbatim from `cdc_generated.rs`.
+- Snappy codec: upstream depends on the `snap` crate (`SnappyCodec` holds a
+  `snap::raw::{Encoder, Decoder}`); the port implements the same raw/block wire
+  format in-tree (`CompressionCodecs::Snappy`), so no runtime dependency is
+  added. `decompress` always parses the ULEB128 preamble and, when
+  `uncompress_size` is given, requires it to match (upstream `Decoder::decompress`
+  requires the destination slice to match); malformed input raises
+  `ExternalError` wrapping `SnappyError` (upstream `snap::Error` →
+  `ParquetError::External`). The match finder is a simple single-pass hash table
+  with a 4-byte minimum match and 16-bit offsets (no skip heuristic), so output
+  is valid snappy but not byte-identical to `snap`; `max_compress_len` is
+  unnecessary because the codec appends directly to the output buffer.
 - Derive macros: `parquet_derive`'s proc macros (`#[derive(ParquetRecordWriter)]`
   / `ParquetRecordReader`) are replaced by `include Parquet::Derive::Record`.
   Rust impls `RecordWriter for &[T]` and `RecordReader for Vec<T>`; Crystal

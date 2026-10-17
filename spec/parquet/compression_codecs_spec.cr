@@ -1,10 +1,12 @@
 require "../spec_helper"
 
-# Ported from `parquet/src/compression.rs` test module (`test_codec_gzip` +
-# `test_roundtrip`) (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
+# Ported from `parquet/src/compression.rs` test module (`test_codec_snappy`,
+# `test_codec_gzip` + `test_roundtrip`)
+# (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
 #
-# Only the GZIP codec is ported (Crystal stdlib `Compress::Gzip`); the other
-# codecs need shards and are intentional divergences (see `plans/parity.md`).
+# SNAPPY and GZIP are ported. The remaining codecs (brotli/lz4/lzo/zstd) still
+# raise from `create_codec` and are intentional divergences (see
+# `plans/parity.md` Phase 1.8).
 
 private alias CC = Parquet::CompressionCodecs
 private alias Comp = Parquet::Compression
@@ -63,12 +65,78 @@ private def test_codec_without_size(c : Comp)
 end
 
 describe Parquet::CompressionCodecs do
+  # Upstream `test_codec_snappy`.
+  it "round-trips snappy with and without an expected size" do
+    test_codec_with_size(Comp::SNAPPY)
+    test_codec_without_size(Comp::SNAPPY)
+  end
+
   # Upstream `test_codec_gzip`.
   it "round-trips gzip for every level" do
     (0..9).each do |level|
       Parquet::GzipLevel.try_new(level)
       test_codec_with_size(Comp.gzip(level))
       test_codec_without_size(Comp.gzip(level))
+    end
+  end
+
+  # Characterization: random bytes never match, so the upstream roundtrip above
+  # only exercises literal runs. Repetitive input exercises the copy/match path
+  # and must actually shrink.
+  it "compresses repetitive data with snappy" do
+    data = ("abcdefgh" * 1024).to_slice
+    options = CodecOptionsBuilder.default.set_backward_compatible_lz4(false).build
+    codec = CC.create_codec(Comp::SNAPPY, options).not_nil!
+
+    compressed = [] of UInt8
+    codec.compress(data, compressed)
+    compressed.size.should be < data.size
+
+    decompressed = [] of UInt8
+    size = codec.decompress(slice_of(compressed), decompressed, data.size)
+    size.should eq(data.size)
+    slice_of(decompressed).should eq(data)
+  end
+
+  # Golden streams derived from the snappy raw format spec (not from this
+  # port's encoder), pinning the decoder against the wire format:
+  # - `[0x05, 0x10, "hello"]`: uncompressed length 5, one 5-byte literal.
+  # - `[0x0b, 0x10, "abcde", 0x16, 0x05, 0x00]`: length 11, a 5-byte literal
+  #   then a copy of 6 bytes from offset 5 (yielding "abcdeabcdea").
+  it "decodes snappy wire-format streams" do
+    options = CodecOptionsBuilder.default.build
+    codec = CC.create_codec(Comp::SNAPPY, options).not_nil!
+
+    literal = Bytes[0x05, 0x10, 0x68, 0x65, 0x6c, 0x6c, 0x6f]
+    decompressed = [] of UInt8
+    codec.decompress(literal, decompressed, nil).should eq(5)
+    slice_of(decompressed).should eq("hello".to_slice)
+
+    with_copy = Bytes[
+      0x0b, 0x10, 0x61, 0x62, 0x63, 0x64, 0x65, 0x16, 0x05, 0x00,
+    ]
+    decompressed.clear
+    codec.decompress(with_copy, decompressed, nil).should eq(11)
+    slice_of(decompressed).should eq("abcdeabcdea".to_slice)
+
+    # An empty snappy stream is a single zero-length preamble.
+    decompressed.clear
+    codec.decompress(Bytes[0x00], decompressed, nil).should eq(0)
+    decompressed.should be_empty
+  end
+
+  it "rejects corrupt snappy streams" do
+    options = CodecOptionsBuilder.default.build
+    codec = CC.create_codec(Comp::SNAPPY, options).not_nil!
+
+    # Literal length larger than the remaining input.
+    expect_raises(Parquet::ParquetError) do
+      codec.decompress(Bytes[0x0a, 0x24, 0x61, 0x62], [] of UInt8, nil)
+    end
+
+    # Copy offset pointing before the start of the output.
+    expect_raises(Parquet::ParquetError) do
+      codec.decompress(Bytes[0x04, 0x0e, 0x61, 0x62], [] of UInt8, nil)
     end
   end
 
@@ -80,7 +148,7 @@ describe Parquet::CompressionCodecs do
   it "rejects unsupported codecs" do
     options = CodecOptionsBuilder.default.build
     expect_raises(Parquet::ParquetError, "is not supported yet") do
-      CC.create_codec(Comp::SNAPPY, options)
+      CC.create_codec(Comp.zstd, options)
     end
   end
 end

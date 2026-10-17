@@ -1963,9 +1963,9 @@ parquet/src/compression.rs::method::LZ4HadoopCodec.new	method	intentional_diverg
 parquet/src/compression.rs::method::LZ4RawCodec.compress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
 parquet/src/compression.rs::method::LZ4RawCodec.decompress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
 parquet/src/compression.rs::method::LZ4RawCodec.new	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
-parquet/src/compression.rs::method::SnappyCodec.compress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
-parquet/src/compression.rs::method::SnappyCodec.decompress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
-parquet/src/compression.rs::method::SnappyCodec.new	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
+parquet/src/compression.rs::method::SnappyCodec.compress	method	ported	src/parquet/compression_codecs.cr	SnappyCodec#compress (in-tree raw snappy in CompressionCodecs::Snappy)
+parquet/src/compression.rs::method::SnappyCodec.decompress	method	ported	src/parquet/compression_codecs.cr	SnappyCodec#decompress (optional uncompress_size; ExternalError on corrupt input)
+parquet/src/compression.rs::method::SnappyCodec.new	method	ported	src/parquet/compression_codecs.cr	SnappyCodec#initialize
 parquet/src/compression.rs::method::ZSTDCodec.compress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
 parquet/src/compression.rs::method::ZSTDCodec.decompress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
 parquet/src/compression.rs::method::ZSTDCodec.new	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
