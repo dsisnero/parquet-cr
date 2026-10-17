@@ -33,10 +33,10 @@ little-endian layout.
 - Plan layout: single file. If it grows too large, split into
   `plans/parity/<area>.md`, link each here, and mark each split file
   complete/in-progress plus the file being worked on next.
-- Current focus: **Phase 1.8a SNAPPY is complete**; **Phase 2.2
-  content-defined chunker, Phase 3 (except arrow/async), Phase 3.7 core
+- Current focus: **Phase 1.8a SNAPPY and Phase 1.8b LZ4 are complete**; **Phase
+  2.2 content-defined chunker, Phase 3 (except arrow/async), Phase 3.7 core
   geospatial, and encryption are complete**; the next actionable feature is
-  **item 8 / Phase 1.8b LZ4 (raw + Hadoop framing)**. Done so far:
+  **item 9 / Phase 1.8c Zstd (and Brotli/LZO)**. Done so far:
   - `parquet-variant` (`src/parquet_variant/`): `VariantPath`/
     `VariantPathElement` + dot/bracket parser (`path.cr`); `utils` helpers
     (`utils.cr`); `OffsetSizeBytes`/`map_bytes_to_offsets`, `VariantBasicType`/
@@ -94,7 +94,11 @@ little-endian layout.
     read (`ParquetMetaData#file_decryptor`, `SerializedPageReader#add_crypto_context`
     + encrypted header/data handling, `spec/parquet/file/page_decryption_spec.cr`).
   - Phase 1.7: `util/bit_pack.cr` (`BitPack.unpack8/16/32/64`) and `decode_page`
-    CRC verification (`file/serialized_reader.cr`).
+    CRC verification (`file/serialized_reader.cr`). The thrift `crc` field is a
+    signed `i32`, so `decode_page` compares it as `u32` with a wrapping
+    conversion (`to_u32!`) exactly like upstream's `expected_crc as u32`; a
+    checked conversion raised `OverflowError` on real files whose checksum has
+    the high bit set (`hadoop_lz4_compressed_larger.parquet`).
   - Core geospatial (`src/parquet/geospatial/`): `BoundingBox`
     (`bounding_box.cr`), `GeospatialStatistics` (`statistics.cr`), and the
     accumulator layer (`accumulator.cr`: `GeoStatsAccumulator`/
@@ -121,6 +125,22 @@ little-endian layout.
     `test_file_reader_datapage_v2` (`datapage_v2.snappy.parquet`, compressed
     data page v2) and the SNAPPY writer/page roundtrips that previously used
     GZIP.
+  - LZ4 codecs (Phase 1.8b): `LZ4RawCodec` (raw/block format via the
+    `paddor/flint` shard, `Flint::BlockCodec#compress_raw`/`#decompress_raw_into`),
+    `LZ4HadoopCodec` (8-byte big-endian `(uncompressed_size,
+    compressed_size)` prefix + raw block, with the upstream decode fallback
+    chain), and `LZ4Codec`; the frame container lives in
+    `src/parquet/lz4.cr` (magic/descriptor/blocks/skippable frames + XXH32
+    header and content checksums). All three are wired into `create_codec`
+    (`LZ4` → Hadoop codec honouring `CodecOptions#backward_compatible_lz4`,
+    `LZ4_RAW` → raw codec). `XxHash32` was added to
+    `src/parquet/util/xxhash.cr`. Specs:
+    `spec/parquet/compression_codecs_spec.cr` (upstream `test_codec_lz4`/
+    `test_codec_lz4_raw`, Hadoop prefix, golden block vectors, empty input,
+    corrupt input/size mismatch, raw + frame fallbacks, frame roundtrips) and
+    `spec/parquet/file/lz4_fixture_spec.cr` (all five `lz4`/`hadoop_lz4`
+    fixtures, incl. the `non_hadoop` raw-block fallback and strict-mode
+    rejection). Writer/page roundtrips now cover `LZ4` and `LZ4_RAW`.
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -185,20 +205,22 @@ little-endian layout.
      `test_file_reader_datapage_v2` (`datapage_v2.snappy.parquet`). Shard output
      was cross-checked with an independent format-spec decoder (incl. empty,
      60/61/256/61 KiB/16 MiB+ literals) and decodes the Google-snappy fixtures.
-  8. Phase 1.8b LZ4 behind `create_codec`: `LZ4_RAW` (block format) and `LZ4`
-     (upstream maps it to `LZ4_RAW` unless `CodecOptions#backward_compatible_lz4`,
-     in which case `LZ4_HADOOP` = 8-byte big-endian
-     `(uncompressed_size, compressed_size)` prefix + raw block, with a raw-block
-     fallback on decode). Shard status: `naqvis/lz4.cr` (bindings) is stale
-     (last push 2023-07) and only documents the frame format, so it is not
-     "active"; implement the block codec in-tree (reuse the snappy-style match
-     finder) unless a maintained shard appears. Port upstream `test_codec_lz4`
-     and `test_codec_lz4_raw`, then enable `lz4_raw_compressed{,_larger}.parquet`,
-     `hadoop_lz4_compressed{,_larger}.parquet`, and
-     `non_hadoop_lz4_compressed.parquet` (the fallback case). Anchors:
+  8. ~~Phase 1.8b LZ4 behind `create_codec`.~~ **complete** — `LZ4_RAW`
+     (`LZ4RawCodec`) uses the `paddor/flint` shard (`~> 0.1.1`, MIT, pure
+     Crystal block codec; `compress_raw`/`decompress_raw_into`), and `LZ4`
+     (`LZ4HadoopCodec`) writes the 8-byte big-endian `(uncompressed_size,
+     compressed_size)` prefix plus a raw block. Decoding honours
+     `CodecOptions#backward_compatible_lz4` with upstream's exact fallback chain:
+     Hadoop framing → LZ4 *frame* format (`LZ4Codec`, in-tree container) → raw
+     block. `LZ4Codec` (upstream `experimental`) is always available since
+     Crystal has no feature flags. Upstream's `test_codec_lz4` and
+     `test_codec_lz4_raw` are ported, and all five fixtures now read
+     (`lz4_raw_compressed{,_larger}`, `hadoop_lz4_compressed{,_larger}`,
+     `non_hadoop_lz4_compressed`). Anchors:
      `vendor/arrow-rs/parquet/src/compression.rs` (`lz4_raw_codec`,
      `lz4_hadoop_codec`, `LZ4_BUFFER_SIZE`/`PREFIX_LEN`/`SIZE_U32`),
-     `src/parquet/compression_codecs.cr`, `src/parquet/compression.cr`.
+     `src/parquet/compression_codecs.cr`, `src/parquet/lz4.cr`,
+     `src/parquet/compression.cr`.
   9. Phase 1.8c Zstd/Brotli (and LZO if anything exists) behind `create_codec`:
      `didactic-drunk/zstd.cr` (bindings, last push 2024-05) is the zstd candidate;
      `naqvis/brotli.cr` is stale (2021-03), so brotli needs a maintained shard or
@@ -245,13 +267,36 @@ little-endian layout.
     behind `CompressionCodecs::SnappyCodec` so `create_codec`/tests are
     shard-agnostic. The `find-crystal-shards` review of the rest: `naqvis/lz4.cr`
     (last push 2023-07) and `naqvis/brotli.cr` (2021-03) are stale and naqvis has
-    no zstd, so those codecs stay pending per the "active shard" rule
-    (`didactic-drunk/zstd.cr`, last push 2024-05, is the zstd candidate).
+    no zstd, so brotli/lzo/zstd stay pending per the "active shard" rule
+    (`didactic-drunk/zstd.cr`, last push 2024-05, is the zstd candidate). LZ4
+    found a newer active option (`paddor/flint`, first pushed 2026-08) — see
+    below.
     Shard quirk: `Compress::Snappy.encode` raises `IndexError` on empty input, so
     `SnappyCodec#compress` emits the canonical empty block (`0x00`) itself.
     Malformed input raises `ExternalError` wrapping `Compress::Snappy::SnappyError`
     (upstream `snap::Error` → `ParquetError::External`). Verified against real
     Google-snappy fixtures and an independent format-spec decoder.
+  - LZ4: blocks come from the `paddor/flint` shard (`~> 0.1.1`, pure Crystal,
+    MIT; `Flint::BlockCodec#compress_raw`/`#decompress_raw_into`) behind
+    `LZ4RawCodec`. No active shard implements the LZ4 *frame* container
+    (`naqvis/lz4.cr` is a stale `liblz4` binding), so frames are implemented
+    in-tree in `src/parquet/lz4.cr` (magic, descriptor, block framing, skippable
+    frames, XXH32 header/content checksums; `XxHash32` lives in
+    `util/xxhash.cr`). Details: `flint` emits a zero-length block for empty
+    input, so `LZ4RawCodec#compress` writes the canonical single-token empty
+    block (`0x00`); flint errors (`Flint::Error`) map to `ExternalError`
+    (upstream `lz4_flex` errors → `ParquetError::External`); `LZ4Codec` emits one
+    frame with 1 MiB independent blocks instead of streaming 4 KiB chunks
+    (`LZ4_BUFFER_SIZE` is skipped in the ledger) — still a valid frame, just a
+    different block layout. `LZ4HadoopCodec` ports the `TryDecompressHadoop`
+    loop verbatim, including its quirk of only continuing to another frame while
+    the remaining input is longer than the frame just decoded. Verified three
+    ways: the five real fixtures (incl. the `non_hadoop` raw-block fallback),
+    byte-level interop with the `lz4` CLI (our frames decode with liblz4 and
+    liblz4 frames — content checksums, 64 KiB blocks, incompressible blocks,
+    concatenated frames — decode with ours), and upstream
+    `parquet-read` reading files **written** by this port with `LZ4`/`LZ4_RAW`
+    (multi-row-group INT64 and dictionary-encoded string pages).
   - Enum-with-payload Rust types are modelled either as a sealed class hierarchy
     (`Variant`, `Field`, `Page`, `Type`, `LogicalType`) or a struct with a
     `Kind` + payload (`Compression`, `DecodeResult`, `ColumnOrder`); pick per
@@ -429,11 +474,11 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `5347794 port: snappy codec`; gates green
-  (`make lint`, `make test` -> 838 examples, 0 failures). Next feature: item 8
-  (Phase 1.8b LZ4 raw + Hadoop framing).
-- Progress by counts (ledger): 1794 `ported`, 198 `intentional_divergence`,
-  9 `skipped`, 1514 `missing` (of 3515 rows).
+- Last commit: `port: lz4 codec`; gates green
+  (`make lint`, `make test` -> 859 examples, 0 failures). Next feature: item 9
+  (Phase 1.8c Zstd/Brotli behind `create_codec`).
+- Progress by counts (ledger): 1805 `ported`, 189 `intentional_divergence`,
+  10 `skipped`, 1511 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -454,9 +499,10 @@ Chunk status by area:
 - Phase 1.7 util: `BitReader`/`BitWriter`, `Interner`/`Storage`, `PushBuffers`,
   `common_prefix_length`, bit packing (`BitPack.unpack*`), and `decode_page` CRC
   verification done (no `util/cursor.rs` at 60.0.0).
-- Phase 1.8 compression: `Codec` framework, `GZipCodec`, and `SnappyCodec`
-  (in-tree raw snappy) done; lzo/brotli/lz4/zstd pending (need Crystal shards or
-  native libraries).
+- Phase 1.8 compression: `Codec` framework, `GZipCodec`, `SnappyCodec`, and the
+  three LZ4 codecs (`LZ4RawCodec` via the `paddor/flint` shard, `LZ4HadoopCodec`
+  with the upstream fallback chain, and the in-tree frame container `LZ4Codec`)
+  done; lzo/brotli/zstd pending (need Crystal shards or native libraries).
 - Phase 2.3 file metadata/statistics/page-index core, column-index decode,
   page-index builders, the `ParquetMetaData` page-index plumbing, the sans-IO
   `ParquetMetaDataPushDecoder`, the synchronous `ChunkReader`-driven
@@ -617,8 +663,8 @@ Chunk status by area:
 ### 1.8 Compression
 
 - [~] Codec dispatch + uncompressed/snappy/gzip/lzo/brotli/lz4/zstd paths:
-  `Codec` framework + `create_codec` + `GZipCodec` + `SnappyCodec` done
-  (`src/parquet/compression_codecs.cr`); lzo/brotli/lz4/zstd pending.
+  `Codec` framework + `create_codec` + `GZipCodec` + `SnappyCodec` + the three
+  LZ4 codecs done (`src/parquet/compression_codecs.cr`); lzo/brotli/zstd pending.
 - [x] SNAPPY (`SnappyCodec`): delegates to the `naqvis/snappy` shard (pure
   Crystal, MIT, `~> 0.2.0`; raw/block format) and, when `uncompress_size` is
   given, enforces the exact recorded length like `snap::raw::Decoder`. Upstream
@@ -626,12 +672,21 @@ Chunk status by area:
   size-mismatch cases, corrupt-input handling, and real fixtures
   (`nulls.snappy.parquet`, `datapage_v2.snappy.parquet`); the SNAPPY writer/page
   roundtrips no longer substitute GZIP.
+- [x] LZ4 (`LZ4RawCodec`/`LZ4HadoopCodec`/`LZ4Codec`): raw blocks via the
+  `paddor/flint` shard; Hadoop framing (`PREFIX_LEN`/`SIZE_U32`, big-endian
+  sizes) with upstream's decode fallback chain (frame → raw) gated on
+  `CodecOptions#backward_compatible_lz4`; the LZ4 frame container (magic,
+  descriptor, independent 1 MiB blocks, skippable frames, XXH32 header/content
+  checksums) lives in `src/parquet/lz4.cr`. Upstream `test_codec_lz4`/
+  `test_codec_lz4_raw` ported, plus golden block vectors, corrupt input, the
+  Hadoop prefix, both fallbacks, and the five real fixtures
+  (`spec/parquet/file/lz4_fixture_spec.cr`); writer/page roundtrips cover
+  `LZ4` and `LZ4_RAW`.
 - [ ] Select Crystal shards via `find-crystal-shards` for the remaining codecs
-  (lz4 → `naqvis/lz4.cr` is stale and documents only the frame format, so LZ4
-  needs an in-tree block codec; zstd → `didactic-drunk/zstd.cr`; brotli →
-  `naqvis/brotli.cr` is stale, so a maintained shard or native binding is
-  needed); document any codec that must be an intentional divergence
-  (`create_codec` raises for lzo/brotli/lz4/zstd).
+  (zstd → `didactic-drunk/zstd.cr`; brotli → `naqvis/brotli.cr` is stale, so a
+  maintained shard or native binding is needed; lzo has no active shard);
+  document any codec that must be an intentional divergence (`create_codec`
+  raises for lzo/brotli/zstd).
 
 ## Phase 2 — Encodings, columns, files
 
@@ -1037,6 +1092,24 @@ Chunk status by area:
   buffer. The shard was probed for roundtrip correctness across sizes 1..300,
   literal boundaries (60/61/255/256/65535/65536), long-distance matches, and
   mixed runs; its output decodes with an independent format-spec decoder.
+- LZ4 codecs: upstream uses the `lz4_flex` crate for both the raw block format
+  and the frame container. The port uses the `paddor/flint` shard (pure Crystal,
+  MIT, `~> 0.1.1`) for blocks (`LZ4RawCodec` holds a `Flint::BlockCodec`;
+  `Flint::BlockCodec#compress_raw`/`#decompress_raw_into`) and implements the
+  frame container in-tree (`src/parquet/lz4.cr`, `Parquet::Lz4`), since no
+  active Crystal shard covers frames. Divergences: flint emits a zero-length
+  block for empty input, so `LZ4RawCodec#compress` writes the canonical
+  single-token empty block (`0x00`); `Flint::Error` maps to `ExternalError`
+  (upstream `lz4_flex` errors → `ParquetError::External`), so decode error
+  *messages* come from flint instead of `lz4_flex`; `LZ4RawCodec#decompress`
+  does not leave reserved zeros in the output buffer when decompression fails
+  (upstream resizes before decoding); `LZ4Codec` (upstream `experimental`)
+  emits a single frame with 1 MiB independent blocks rather than streaming 4 KiB
+  chunks (`LZ4_BUFFER_SIZE` is `skipped` in the ledger); `try_decompress_hadoop`
+  is a private instance method that returns a `Bytes` view instead of writing
+  through an `io::Result`; raw blocks are decompressed into an exactly sized
+  `Bytes` and then appended. `XxHash32` (frame checksums) is in-tree next to the
+  existing `XxHash64` and matches the reference vectors.
 - Derive macros: `parquet_derive`'s proc macros (`#[derive(ParquetRecordWriter)]`
   / `ParquetRecordReader`) are replaced by `include Parquet::Derive::Record`.
   Rust impls `RecordWriter for &[T]` and `RecordReader for Vec<T>`; Crystal
@@ -1293,10 +1366,11 @@ Chunk status by area:
   `GenericColumnWriter` methods), including `truncate_statistics` (which rebuilds
   the `Statistics` value).
 - `compression::codecs`: the `Codec` trait (mutating `Vec<u8>` buffers) becomes
-  an abstract class appending to `Array(UInt8)`; only the GZIP codec is ported
-  (Crystal stdlib `Compress::Gzip`). Snappy/LZO/Brotli/LZ4/Zstd need Crystal
-  shards and are intentional divergences — `create_codec` raises for them.
-   `create_codec` is `Parquet::CompressionCodecs.create_codec`.
+  an abstract class appending to `Array(UInt8)`; the GZIP codec uses the Crystal
+  stdlib (`Compress::Gzip`), SNAPPY the `naqvis/snappy` shard, and the LZ4 block
+  codec the `paddor/flint` shard (the LZ4 frame container is in-tree). LZO,
+  Brotli, and Zstd still need Crystal shards — `create_codec` raises for them.
+  `create_codec` is `Parquet::CompressionCodecs.create_codec`.
 - `file::serialized_reader`/`serialized_writer`: `SerializedPageWriter`'s
   `W: Write` becomes the concrete `TrackedWrite`; page encryption is not ported;
   `SerializedPageReader`'s offset-index `Pages` state, `Iterator` impl, and
@@ -1496,6 +1570,13 @@ Chunk status by area:
 
 - Upstream test oracle: `cargo test -p parquet` from `vendor/arrow-rs`
   (Rust 1.99 toolchain available locally).
+- Codec write-path interop: build the upstream CLI once with the needed codecs
+  (`cargo build -p parquet --features cli,lz4,snap --bin parquet-read`), then
+  `/tmp/parquet-read <file>` reads files this port wrote (used to validate the
+  LZ4/LZ4_RAW writer: multi-row-group INT64 and dictionary-encoded string
+  pages). Delete `vendor/arrow-rs/target` afterwards — the multi-GB target tree
+  triggers Spotlight (`spotlightknowledged`/`fskitd`) on the external volume,
+  which starves spec runs (minutes of blocked I/O).
 - Golden fixtures: `vendor/arrow-rs/parquet-testing/data`.
 - Parity scripts must be run from the `crystal_forge` skill:
   `/Users/dominic/.agents/skills/crystal_forge/skills/cross-language-crystal-parity`.

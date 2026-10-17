@@ -12,6 +12,9 @@ dependencies:
   snappy:
     github: naqvis/snappy
     version: ~> 0.2.0
+  flint:
+    github: paddor/flint
+    version: ~> 0.1.1
 
 development_dependencies:
   ameba:

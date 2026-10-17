@@ -32,7 +32,10 @@ module Parquet
       decompressor : CompressionCodecs::Codec?,
     ) : Column::Page
       if expected_crc = page_header.crc
-        if Digest::CRC32.checksum(buffer) != expected_crc.to_u32
+        # Upstream compares `crc::checksum(buffer) != expected_crc as u32`: the
+        # thrift field is a signed `i32`, so the conversion truncates rather
+        # than raising on negative checksums (which occur for real files).
+        if Digest::CRC32.checksum(buffer) != expected_crc.to_u32!
           raise general_err!("Page CRC checksum mismatch")
         end
       end

@@ -1933,11 +1933,11 @@ parquet/src/column/writer/mod.rs::method::TestPageWriter.close	method	missing	-	
 parquet/src/column/writer/mod.rs::method::TestPageWriter.write_page	method	missing	-	auto-generated
 parquet/src/compression.rs::const::BROTLI_DEFAULT_BUFFER_SIZE	const	missing	-	auto-generated
 parquet/src/compression.rs::const::BROTLI_DEFAULT_LG_WINDOW_SIZE	const	missing	-	auto-generated
-parquet/src/compression.rs::const::LZ4_BUFFER_SIZE	const	missing	-	auto-generated
+parquet/src/compression.rs::const::LZ4_BUFFER_SIZE	const	skipped	-	frame encoder is not streaming; one frame with 1 MiB blocks
 parquet/src/compression.rs::const::MAXIMUM_LEVEL	const	ported	src/parquet/compression.cr	per-level MAXIMUM_LEVEL
 parquet/src/compression.rs::const::MINIMUM_LEVEL	const	ported	src/parquet/compression.cr	per-level MINIMUM_LEVEL
-parquet/src/compression.rs::const::PREFIX_LEN	const	missing	-	auto-generated
-parquet/src/compression.rs::const::SIZE_U32	const	missing	-	auto-generated
+parquet/src/compression.rs::const::PREFIX_LEN	const	ported	src/parquet/compression_codecs.cr	LZ4HadoopCodec::PREFIX_LEN
+parquet/src/compression.rs::const::SIZE_U32	const	ported	src/parquet/compression_codecs.cr	LZ4HadoopCodec::SIZE_U32
 parquet/src/compression.rs::method::BrotliCodec.compress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
 parquet/src/compression.rs::method::BrotliCodec.decompress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
 parquet/src/compression.rs::method::BrotliCodec.new	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
@@ -1954,15 +1954,15 @@ parquet/src/compression.rs::method::GZipCodec.new	method	ported	src/parquet/comp
 parquet/src/compression.rs::method::GzipLevel.compression_level	method	ported	src/parquet/compression.cr	GzipLevel#compression_level
 parquet/src/compression.rs::method::GzipLevel.default	method	ported	src/parquet/compression.cr	GzipLevel#default
 parquet/src/compression.rs::method::GzipLevel.try_new	method	ported	src/parquet/compression.cr	GzipLevel#try_new
-parquet/src/compression.rs::method::LZ4Codec.compress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
-parquet/src/compression.rs::method::LZ4Codec.decompress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
-parquet/src/compression.rs::method::LZ4Codec.new	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
-parquet/src/compression.rs::method::LZ4HadoopCodec.compress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
-parquet/src/compression.rs::method::LZ4HadoopCodec.decompress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
-parquet/src/compression.rs::method::LZ4HadoopCodec.new	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
-parquet/src/compression.rs::method::LZ4RawCodec.compress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
-parquet/src/compression.rs::method::LZ4RawCodec.decompress	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
-parquet/src/compression.rs::method::LZ4RawCodec.new	method	intentional_divergence	src/parquet/compression_codecs.cr	codec needs a Crystal shard (Phase 1.8)
+parquet/src/compression.rs::method::LZ4Codec.compress	method	ported	src/parquet/compression_codecs.cr	LZ4Codec#compress (frame container in src/parquet/lz4.cr)
+parquet/src/compression.rs::method::LZ4Codec.decompress	method	ported	src/parquet/compression_codecs.cr	LZ4Codec#decompress (frame container in src/parquet/lz4.cr; ignores uncompress_size)
+parquet/src/compression.rs::method::LZ4Codec.new	method	ported	src/parquet/compression_codecs.cr	LZ4Codec#initialize
+parquet/src/compression.rs::method::LZ4HadoopCodec.compress	method	ported	src/parquet/compression_codecs.cr	LZ4HadoopCodec#compress (big-endian sizes prefix + LZ4_RAW block)
+parquet/src/compression.rs::method::LZ4HadoopCodec.decompress	method	ported	src/parquet/compression_codecs.cr	LZ4HadoopCodec#decompress (try_decompress_hadoop + frame/raw fallback)
+parquet/src/compression.rs::method::LZ4HadoopCodec.new	method	ported	src/parquet/compression_codecs.cr	LZ4HadoopCodec#initialize (backward_compatible_lz4)
+parquet/src/compression.rs::method::LZ4RawCodec.compress	method	ported	src/parquet/compression_codecs.cr	LZ4RawCodec#compress (paddor/flint BlockCodec#compress_raw)
+parquet/src/compression.rs::method::LZ4RawCodec.decompress	method	ported	src/parquet/compression_codecs.cr	LZ4RawCodec#decompress (flint decompress_raw_into + exact size check)
+parquet/src/compression.rs::method::LZ4RawCodec.new	method	ported	src/parquet/compression_codecs.cr	LZ4RawCodec#initialize
 parquet/src/compression.rs::method::SnappyCodec.compress	method	ported	src/parquet/compression_codecs.cr	SnappyCodec#compress (naqvis/snappy shard; emits empty block for empty input)
 parquet/src/compression.rs::method::SnappyCodec.decompress	method	ported	src/parquet/compression_codecs.cr	SnappyCodec#decompress (naqvis/snappy; enforces recorded length, ExternalError on corrupt input)
 parquet/src/compression.rs::method::SnappyCodec.new	method	ported	src/parquet/compression_codecs.cr	SnappyCodec#initialize

@@ -225,6 +225,17 @@ describe Parquet::File::SerializedFileWriter do
     )
   end
 
+  # Characterization (upstream only exercises SNAPPY here): the LZ4 codecs are
+  # wired through `create_codec`, so a written file must read back.
+  it "round-trips row groups compressed with lz4" do
+    roundtrip_i32(IO::Memory.new, [[1, 2, 3, 4, 5]], PComp::LZ4_RAW)
+    roundtrip_i32(
+      IO::Memory.new,
+      [[1, 2, 3, 4, 5], [1, 2, 3], [1], [1, 2, 3, 4, 5, 6]],
+      PComp::LZ4
+    )
+  end
+
   # Upstream `test_column_offset_index_file`.
   it "writes column and offset indexes" do
     io = IO::Memory.new

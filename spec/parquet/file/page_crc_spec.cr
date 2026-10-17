@@ -45,4 +45,18 @@ describe Parquet::File do
     page = F.decode_page(data_page_header(nil), buffer, PType::INT32, nil)
     page.should be_a(Parquet::Column::Page)
   end
+
+  # The thrift `crc` field is a signed `i32`; upstream compares it with
+  # `expected_crc as u32`, so checksums with the high bit set (negative as i32)
+  # must verify instead of raising an integer-overflow error. Real files contain
+  # them (`hadoop_lz4_compressed_larger.parquet`, for one).
+  it "verifies CRC checksums whose high bit is set" do
+    # `[1, 2, 3, 4, 2]` has CRC32 `0xd96f0c57`, i.e. `-647033769` as an `i32`.
+    buffer = Bytes[1_u8, 2_u8, 3_u8, 4_u8, 2_u8]
+    crc = Digest::CRC32.checksum(buffer).to_i32!
+    crc.should be < 0
+
+    page = F.decode_page(data_page_header(crc), buffer, PType::INT32, nil)
+    page.should be_a(Parquet::Column::Page)
+  end
 end
