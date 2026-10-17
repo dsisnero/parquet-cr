@@ -34,8 +34,9 @@ little-endian layout.
   `plans/parity/<area>.md`, link each here, and mark each split file
   complete/in-progress plus the file being worked on next.
 - Current focus: **Phase 3 — advanced/optional.** **Phase 2 is complete** except
-  the arrow-dependent CLI tools (`parquet-rewrite`/`parquet-fromcsv`). Done in
-  Phase 3 so far:
+  the arrow-dependent CLI tools (`parquet-rewrite`/`parquet-fromcsv`).
+  **Encryption is complete**; the next actionable feature is **item 5 / Phase
+  3.7 (core geospatial module)**. Done in Phase 3 so far:
   - `parquet-variant` (`src/parquet_variant/`): `VariantPath`/
     `VariantPathElement` + dot/bracket parser (`path.cr`); `utils` helpers
     (`utils.cr`); `OffsetSizeBytes`/`map_bytes_to_offsets`, `VariantBasicType`/
@@ -111,15 +112,41 @@ little-endian layout.
      `src/parquet/derive.cr` (`Parquet::Derive::Record` macro + `Codec(T)`) and
      `spec/parquet/derive_spec.cr` (schema generation, read/write round-trip,
      optional-but-valid, pruned/shuffled).
-  4. Phase 3.4 encryption — **3.4a–3.4l complete** (cipher layer, Thrift IDL,
-     AAD builders, properties, `ColumnChunkMetaData` crypto wiring,
+  4. ~~Phase 3.4 encryption.~~ **complete (3.4a–3.4l)** — cipher layer, Thrift
+     IDL, AAD builders, properties, `ColumnChunkMetaData` crypto wiring,
      encrypted-footer reader, encryption-aware metadata writer, public writer
      API, reader metadata decryption, page-data encryption on write, and
-     page-data decryption on read via `CryptoContext`). Remaining encryption
-     gap: AES_GCM_CTR_V1 raises `NYIError`.
-  5. Deferred (recorded divergences): async/object-store suffix fetchers, arrow
+     page-data decryption on read via `CryptoContext`. `AES_GCM_CTR_V1` raises
+     `NYIError`, matching upstream 60.0.0 (not a porting gap).
+  5. Phase 3.7 core geospatial module (`parquet/src/geospatial/`; distinct from
+     the `parquet-geospatial` crate done in 3.2). Port `bounding_box.rs`
+     (`BoundingBox` x/y[/z/m] min/max + `new`/`with_*range`/`is_*_valid`
+     accessors), `statistics.rs` (`GeospatialStatistics`), `accumulator.rs`
+     (`GeoStatsAccumulator`/`GeoStatsAccumulatorFactory`, the global factory
+     cell + `init_geo_stats_accumulator_factory`/`try_new_geo_stats_accumulator`,
+     `VoidGeoStatsAccumulator`, `ParquetGeoStatsAccumulator` built on
+     `ParquetGeospatial::Bounding::GeometryBounder`), and `mod.rs` into
+     `src/parquet/geospatial/`. Wire it in: add `geo_statistics` to
+     `ColumnChunkMetaData` (+ builder `set_geo_statistics`), implement the
+     currently-`Nil` `flush_geospatial_statistics` in
+     `column/writer/encoder.cr` via `try_new_geo_stats_accumulator`, and set the
+     finished stats in `GenericColumnWriter#build_column_metadata`
+     (`column/writer/writer.cr`). Port the upstream unit tests (bounding_box +
+     accumulator) and add a write/read spec asserting the bbox on a GEOMETRY
+     column. Anchors: `vendor/arrow-rs/parquet/src/geospatial/*.rs`,
+     `src/parquet_geospatial/{bounding,interval,wkb}.cr` (reuse),
+     `src/parquet/file/metadata/column_chunk.cr`,
+     `src/parquet/column/writer/{encoder,writer}.cr`. `HeapSize` impls are
+     dropped (intentional divergence).
+  6. Deferred (recorded divergences): async/object-store suffix fetchers, arrow
      interop (`parquet/src/arrow/`), `parquet-variant-compute`/`-json`, and the
      arrow `parquet-rewrite`/`parquet-fromcsv` CLI tools.
+- Remaining `missing` ledger rows are dominated by deferred areas (arrow,
+  variant-compute, benches/examples), `HeapSize`/`memory_size` (intentional
+  divergence), auto-generated `data_type` trait impls (`as_any`/`set_data`/
+  `skip`), the `RowIter` record API, and the content-defined chunker
+  (`column/chunker/cdc.rs` ~3k lines incl. generated gear-hash table) — the
+  chunker is the largest remaining non-deferred feature after 3.7.
 - **Scoping notes / gotchas (found while porting; avoids re-derivation):**
   - Crystal `String.new(Bytes)`/`String#byte_slice?` do **not** validate UTF-8
     and **copy** substrings, so the variant crate's zero-copy APIs
@@ -216,7 +243,8 @@ little-endian layout.
     `FileMetaData` gains `encryption_algorithm`/`footer_signing_key_metadata`
     (thrift fields 8/9). `ParquetMetaData` gains a `file_decryptor` field,
     `with_file_decryptor`, and `ParquetMetaDataBuilder#set_file_decryptor`
-    (included in `==`, as upstream). AES_GCM_CTR_V1 raises `NYIError`.
+    (included in `==`, as upstream). `AES_GCM_CTR_V1` raises `NYIError`
+    (upstream 60.0.0 does the same).
   - Encryption writer: `MetadataObjectWriter` ports the encrypted/signed-plaintext
     footer, row-group/column-chunk encryption, page-index encryption, and the
     `PARE`/`PAR1` magic; `ThriftMetadataWriter`/`ParquetMetaDataWriter` take a
@@ -256,8 +284,20 @@ little-endian layout.
     `SerializedRowGroupReader#get_column_page_reader` (which now carries the row
     group index + full `ParquetMetaData`) also attaches it, so encrypted files
     are readable without an arrow layer.
-- Last commit: `c5056f3 port: page encryption on write`; gates green
-  (`make lint`, `make test` -> 814 examples, 0 failures).
+  - Page-crypto details (learned while porting 3.4l): encrypted headers/pages are
+    framed as `4-byte LE length + ciphertext` (the AesGcm ciphertext carries
+    nonce+tag), so the header byte count is measured with `CountingIO` around
+    `read_and_decrypt`; the dictionary-page flag is `@require_dictionary`
+    (matches upstream), and data decryption uses
+    `with_page_ordinal(@page_index)`/`for_dictionary_page`. `ParquetMetaData#==`
+    now compares `file_decryptor`, which requires `FileDecryptor#==` /
+    `FileDecryptionProperties#==` (the latter had a stale method name, fixed).
+    Tests: `spec/parquet/file/page_decryption_spec.cr`; force multiple pages
+    with `set_data_page_row_count_limit(1)` and corrupted-page failure by
+    flipping the chunk's last ciphertext byte.
+- Last commit: `fe71bb0 port: decrypt parquet data pages`; gates green
+  (`make lint`, `make test` -> 814 examples, 0 failures). Next feature: item 5
+  (Phase 3.7 core geospatial module).
 - Progress by counts (ledger): 1750 `ported`, 199 `intentional_divergence`,
   1 `skipped`, 1565 `missing` (of 3515 rows).
 
@@ -326,8 +366,9 @@ Chunk status by area:
   the public writer API (`WriterProperties`/column writer/`SerializedFileWriter`),
   and reader metadata decryption (`ParquetMetaDataReader`/`SerializedFileReader`),
   and page-data encryption/decryption (`PageEncryptor`; `CryptoContext` wired
-  through `SerializedPageReader`) done; the `WkbType` `ExtensionType` impl, the
-  AES_GCM_CTR_V1 cipher, arrow, and async remain pending.
+  through `SerializedPageReader`) done; the `WkbType` `ExtensionType` impl,
+  the core `parquet/src/geospatial` module (next), arrow, and async remain
+  pending.
 
 ## Phase 0 — Project initialization
 
@@ -725,7 +766,19 @@ Chunk status by area:
   `spec/parquet/column/page_encryption_spec.cr`), and page-data decryption on
   read (`ParquetMetaData#file_decryptor` + `SerializedPageReader` page crypto
   context/header/data handling, `spec/parquet/file/page_decryption_spec.cr`).
-  Remaining encryption gap: AES_GCM_CTR_V1.
+  `AES_GCM_CTR_V1` is NYI upstream as well.
+
+### 3.7 Core geospatial module (next)
+
+- [ ] `parquet/src/geospatial/` — port `bounding_box.rs` (`BoundingBox`),
+      `statistics.rs` (`GeospatialStatistics`), `accumulator.rs`
+      (`GeoStatsAccumulator` + factory + `ParquetGeoStatsAccumulator`) and
+      `mod.rs`, then wire geospatial statistics through the column writer
+      (`ColumnChunkMetaData#geo_statistics`, encoder
+      `flush_geospatial_statistics`, `build_column_metadata`). This is distinct
+      from the completed `parquet-geospatial` crate (3.2) and reuses its
+      `GeometryBounder`/`Interval`/WKB model. See Next up #5 for the file/test
+      checklist. Intentional divergence: drop the `HeapSize` impls.
 
 ### 3.5 Arrow interop (deferred)
 
