@@ -146,12 +146,12 @@ module ParquetTestPageUtil
     def initialize(@page_batches : Array(Array(Parquet::Column::Page)), @position : Int32 = 0)
     end
 
-    def next : Parquet::Column::PageReader?
-      return nil if @position >= @page_batches.size
+    def next : Parquet::Column::PageReader | Iterator::Stop
+      return stop if @position >= @page_batches.size
 
       pages = @page_batches[@position]
       @position += 1
-      InMemoryPageReader.new(pages)
+      InMemoryPageReader.new(pages).as(Parquet::Column::PageReader)
     end
   end
 

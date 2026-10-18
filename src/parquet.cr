@@ -86,6 +86,7 @@ require "./parquet/arrow/record_reader/buffer"
 require "./parquet/arrow/record_reader/definition_levels"
 require "./parquet/arrow/record_reader"
 require "./parquet/arrow/array_reader"
+require "./parquet/arrow/array_reader/primitive_array"
 
 module Parquet
   VERSION = "0.1.0"

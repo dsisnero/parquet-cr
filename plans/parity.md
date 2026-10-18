@@ -49,10 +49,10 @@ little-endian layout.
   `EmptyArrayReader`), and the column reader now exposes the pluggable-decoder
   path the record reader needs (`new_with_arrow_decoders` +
   `read_records_with_reservation`), and `GenericRecordReader`
-  (`arrow/record_reader/mod.rs`) is complete. The next arrow feature is the leaf
-  array readers (`PrimitiveArrayReader` and friends + `ArrayReaderBuilder`).
-  Everything else on this roadmap is complete, blocked (async/object_store), or
-  deferred
+  (`arrow/record_reader/mod.rs`) and the numeric `PrimitiveArrayReader` are
+  complete. The next arrow feature is the remaining leaf readers (`BOOLEAN` +
+  byte arrays + `List`/`Struct`/`Map`) and `ArrayReaderBuilder`. Everything else
+  on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
   `column/page_store.rs`, the arrow reader/writer). Done so far:
   - `parquet-variant` (`src/parquet_variant/`): `VariantPath`/
@@ -280,7 +280,17 @@ little-endian layout.
     `test_skip_required_records`, and both `test_selective_padding_*`), backed by
     the ported `util/test_common/page_util` builders in
     `spec/support/page_util.cr` (`DataPageBuilderImpl`, `InMemoryPageReader`,
-    `InMemoryPageIterator`).
+    `InMemoryPageIterator`). Primitive array reader
+    (`src/parquet/arrow/array_reader/primitive_array.cr`):
+    `PrimitiveArrayReader(T)` for INT32/INT64/FLOAT/DOUBLE (`data_type`,
+    `read_records`/`skip_records` driven by the page iterator,
+    `consume_batch`, `def_levels`/`rep_levels`, `max_def_level`,
+    `padding_threshold`) plus `read_records_from_pages`/`skip_records_from_pages`
+    (upstream `array_reader::{read_records, skip_records}`) and
+    `null_buffer_from` (upstream `NullBuffer::from_unsliced_buffer`). Specs:
+    `spec/parquet/arrow/primitive_array_reader_spec.cr` (optional/required
+    columns across pages, empty page iterators, definition/repetition levels,
+    and skipping).
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -654,12 +664,13 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow record reader`; gates green (`make lint`,
-  `make test` -> 976 examples, 0 failures). Next feature: the leaf array readers
-  (`array_reader/primitive_array.rs` + `builder.rs` first). Note `make install`
-  now requires the sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 1892 `ported`, 180 `intentional_divergence`,
-  13 `skipped`, 1430 `missing` (of 3515 rows).
+- Last commit: `port: arrow primitive array reader`; gates green (`make lint`,
+  `make test` -> 981 examples, 0 failures). Next feature: the remaining leaf
+  array readers (`BOOLEAN`, byte arrays, list/struct/map) and
+  `ArrayReaderBuilder`. Note `make install` now requires the sibling checkout
+  `../arrow-cr`.
+- Progress by counts (ledger): 1900 `ported`, 181 `intentional_divergence`,
+  13 `skipped`, 1421 `missing` (of 3515 rows).
 
 Chunk status by area:
 
