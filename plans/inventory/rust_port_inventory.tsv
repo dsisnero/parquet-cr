@@ -970,7 +970,7 @@ parquet/src/arrow/array_reader/primitive_array.rs::method::PrimitiveArrayReader<
 parquet/src/arrow/array_reader/primitive_array.rs::method::PrimitiveArrayReader<T>.read_records	method	ported	src/parquet/arrow/array_reader/primitive_array.cr	PrimitiveArrayReader#read_records (page-driven record reader)
 parquet/src/arrow/array_reader/primitive_array.rs::method::PrimitiveArrayReader<T>.skip_records	method	ported	src/parquet/arrow/array_reader/primitive_array.cr	PrimitiveArrayReader#skip_records
 parquet/src/arrow/array_reader/primitive_array.rs::method::Vec<Int96>.into_buffer	method	missing	-	INT96 view conversion; INT96 array reader deferred
-parquet/src/arrow/array_reader/primitive_array.rs::method::Vec<bool>.into_buffer	method	missing	-	BOOLEAN has its own array reader upstream (deferred)
+parquet/src/arrow/array_reader/primitive_array.rs::method::Vec<bool>.into_buffer	method	ported	src/parquet/arrow/array_reader/primitive_array.cr	build_array(Array(Bool)) -> BooleanArray via BooleanBuffer
 parquet/src/arrow/array_reader/row_group_cache.rs::method::RowGroupCache.batch_size	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/row_group_cache.rs::method::RowGroupCache.get	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/row_group_cache.rs::method::RowGroupCache.insert	method	missing	-	auto-generated

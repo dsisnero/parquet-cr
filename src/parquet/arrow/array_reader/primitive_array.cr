@@ -123,6 +123,10 @@ module Parquet
       end
 
       # The value used for null slots (upstream `T::default`).
+      private def default_value_for(type : Bool.class) : Bool
+        false
+      end
+
       private def default_value_for(type : Int32.class) : Int32
         0
       end
@@ -141,6 +145,12 @@ module Parquet
 
       private def default_value : T
         default_value_for(T)
+      end
+
+      # BOOLEAN values are packed into a `BooleanBuffer` (upstream
+      # `Vec<bool>.into_buffer`).
+      private def build_array(values : Array(Bool), nulls : ::Arrow::NullBuffer?, data_type : ::Arrow::DataType) : ::Arrow::ArrayBase
+        ::Arrow::BooleanArray.new(::Arrow::BooleanBuffer.from_slice(values), nulls)
       end
 
       private def build_array(values : Array(Int32), nulls : ::Arrow::NullBuffer?, data_type : ::Arrow::DataType) : ::Arrow::ArrayBase

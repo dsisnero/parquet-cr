@@ -13,6 +13,10 @@ private alias PArrow = Parquet::Arrow
 private alias AR = PArrow::ArrayReader
 private alias PageUtil = ParquetTestPageUtil
 
+private def page_of(pages : Array(Parquet::Column::Page)) : Array(Parquet::Column::Page)
+  pages
+end
+
 private def int32_array_reader(pages : Array(Array(Parquet::Column::Page)),
                                message_type : String = "message test_schema { OPTIONAL INT32 leaf; }",
                                arrow_type : Arrow::DataType? = nil,
@@ -40,7 +44,38 @@ private def int32_pages(values : Array(Int32), def_levels : Array(Int16)? = nil,
   [builder.consume]
 end
 
+private def boolean_array_reader(pages : Array(Array(Parquet::Column::Page)),
+                                 message_type : String = "message test_schema { OPTIONAL BOOLEAN leaf; }",
+                                 arrow_type : Arrow::DataType? = nil,
+                                 batch_size : Int32 = 1024) : Parquet::Arrow::PrimitiveArrayReader(Bool)
+  desc = PageUtil.column_descriptor(message_type)
+  Parquet::Arrow::PrimitiveArrayReader(Bool).new(
+    PageUtil::InMemoryPageIterator.new(pages), desc, arrow_type, batch_size, nil
+  )
+end
+
 describe Parquet::Arrow::PrimitiveArrayReader do
+  # Upstream `Vec<bool>.into_buffer` + `BooleanArray` (BOOLEAN leaf reader).
+  it "reads boolean data with nulls" do
+    message_type = "message test_schema { OPTIONAL BOOLEAN leaf; }"
+    desc = PageUtil.column_descriptor(message_type)
+    builder = PageUtil::DataPageBuilderImpl.new(desc, 4_u32, true)
+    builder.add_def_levels(1_i16, [1_i16, 0_i16, 1_i16, 1_i16])
+    builder.add_values(Parquet::Encoding::PLAIN, [true, false, true])
+    reader = boolean_array_reader([page_of([builder.consume])], message_type: message_type)
+
+    reader.data_type.should eq(Arrow::DataType.boolean)
+    reader.read_records(4).should eq(4)
+
+    array = reader.consume_batch.as(Arrow::BooleanArray)
+    array.len.should eq(4)
+    array.null_count.should eq(1)
+    array.null?(1).should be_true
+    array.value(0).should be_true
+    array.value(2).should be_false
+    array.value(3).should be_true
+  end
+
   # Upstream `test_primitive_array_reader_data` (INT32 path).
   it "reads optional int32 data" do
     reader = int32_array_reader([int32_pages([1, 2, 3, 4], [1_i16, 0_i16, 1_i16, 1_i16])])

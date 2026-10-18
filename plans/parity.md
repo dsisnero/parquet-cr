@@ -52,9 +52,10 @@ little-endian layout.
   (`arrow/record_reader/mod.rs`), the numeric `PrimitiveArrayReader` and the
   byte-array `OffsetBuffer` (values buffer + null padding) and the arrow
   specialized decoders (`DictIndexDecoder`, `DeltaByteArrayDecoder`) are
-  complete. The next arrow feature is the byte array readers (`ByteArrayReader`
-  + `ByteArrayColumnValueDecoder`) and the remaining leaves (`BOOLEAN`,
-  `List`/`Struct`/`Map`), then `ArrayReaderBuilder`. Everything else
+  complete, and `PrimitiveArrayReader` covers BOOLEAN as well. The next arrow
+  feature is the byte array readers (`ByteArrayReader` +
+  `ByteArrayColumnValueDecoder`), then `List`/`Struct`/`Map` and
+  `ArrayReaderBuilder`. Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
   `column/page_store.rs`, the arrow reader/writer). Done so far:
@@ -293,7 +294,7 @@ little-endian layout.
     `null_buffer_from` (upstream `NullBuffer::from_unsliced_buffer`). Specs:
     `spec/parquet/arrow/primitive_array_reader_spec.cr` (optional/required
     columns across pages, empty page iterators, definition/repetition levels,
-    and skipping). Byte-array values buffer
+    skipping, and BOOLEAN values with nulls). Byte-array values buffer
     (`src/parquet/arrow/buffer/offset_buffer.cr`): `OffsetBuffer(I)` with
     `with_capacity`/`len`/`empty?`/`try_push` (UTF-8 codepoint-start check),
     `extend_from_dictionary`, `check_valid_utf8`, `into_array`
@@ -680,13 +681,13 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow specialized decoders`; gates green (`make lint`,
-  `make test` -> 993 examples, 0 failures). Next feature: the byte array readers
-  (`ByteArrayReader` + `ByteArrayColumnValueDecoder`), then the remaining leaves
-  and `ArrayReaderBuilder`. Note `make install` now requires the sibling checkout
-  `../arrow-cr`.
-- Progress by counts (ledger): 1916 `ported`, 181 `intentional_divergence`,
-  13 `skipped`, 1405 `missing` (of 3515 rows).
+- Last commit: `port: arrow boolean primitive array reader`; gates green
+  (`make lint`, `make test` -> 994 examples, 0 failures). Next feature: the byte
+  array readers (`ByteArrayReader` + `ByteArrayColumnValueDecoder`), then
+  `List`/`Struct`/`Map` and `ArrayReaderBuilder`. Note `make install` now requires
+  the sibling checkout `../arrow-cr`.
+- Progress by counts (ledger): 1917 `ported`, 181 `intentional_divergence`,
+  13 `skipped`, 1404 `missing` (of 3515 rows).
 
 Chunk status by area:
 
