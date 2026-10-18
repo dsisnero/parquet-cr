@@ -4,9 +4,8 @@ require "../../spec_helper"
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b): the
 # `StructArrayReader`.
 #
-# The upstream `test_struct_array_reader_list` test needs `ListArrayReader`,
-# which is not ported yet; its selective-padding behaviour is covered here with
-# a flat child reader instead.
+# The upstream `test_struct_array_reader_list` test is ported here as well, now
+# that `ListArrayReader` exists.
 private alias PArrow = Parquet::Arrow
 private alias ARUtil = ParquetTestArrayReaderUtil
 
@@ -118,6 +117,43 @@ describe Parquet::Arrow::StructArrayReader do
     expect_raises(Parquet::ParquetError, /out of sync/) do
       reader.skip_records(3)
     end
+  end
+
+  it "reads a struct of lists" do
+    # [
+    #    {foo: [1, 2, null]},
+    #    {foo: []},
+    #    {foo: null},
+    #    null,
+    # ]
+    list_values = Array(Array(Int32?)?).new
+    list_values << ([1, 2, nil] of Int32?)
+    list_values << ([] of Int32?)
+    list_values << nil
+    list_values << nil
+    expected_list = Arrow::GenericListArray(Int32).from_iter_primitive(Int32, list_values)
+
+    struct_data_type = Arrow::DataType.struct(
+      Arrow::Fields.new([Arrow::Field.new("foo", expected_list.data_type, true)])
+    )
+    expected = Arrow::StructArray.new(
+      4,
+      struct_data_type,
+      [expected_list.as(Arrow::ArrayBase)],
+      Arrow::NullBuffer.new(Arrow::BooleanBuffer.from_bits(Bytes[0b0000_0111], 0, 4))
+    )
+
+    item_reader = int32_reader([1, 2],
+      [4_i16, 4_i16, 3_i16, 2_i16, 1_i16, 0_i16],
+      [0_i16, 1_i16, 1_i16, 0_i16, 0_i16, 0_i16], 4_i16, 1_i16, 3_i16)
+    list_reader = PArrow::ListArrayReader(Int32).new(
+      item_reader, expected_list.data_type, 3_i16, 1_i16, true, nil
+    )
+    reader = PArrow::StructArrayReader.new(
+      struct_data_type, [list_reader.as(PArrow::ArrayReader)], 1_i16, 0_i16, true, nil
+    )
+
+    reader.next_batch(1024).should eq(expected)
   end
 
   it "drops parent-level entries with selective padding" do

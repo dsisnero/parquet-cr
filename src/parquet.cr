@@ -93,6 +93,7 @@ require "./parquet/arrow/array_reader/primitive_array"
 require "./parquet/arrow/array_reader/byte_array"
 require "./parquet/arrow/array_reader/byte_view_array"
 require "./parquet/arrow/array_reader/struct_array"
+require "./parquet/arrow/array_reader/list_array"
 
 module Parquet
   VERSION = "0.1.0"

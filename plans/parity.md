@@ -57,9 +57,10 @@ little-endian layout.
   are available to specs (`spec/support/array_reader_util.cr`). The
   variable-length leaf readers are done: `ByteArrayReader` (Utf8/Binary, small
   and large offsets) and `ByteViewArrayReader` (Utf8View/BinaryView), both over
-  the shared record reader, and the first composite reader
-  (`StructArrayReader`) is done. The next arrow feature is `ListArrayReader`
-  (+ `Map`/`FixedSizeList`/`Null`), then `ArrayReaderBuilder`; the leaf
+  the shared record reader, and the composite readers `StructArrayReader` and
+  `ListArrayReader` (List + LargeList, with nested lists and selective padding)
+  are done. The next arrow feature is the remaining composite readers
+  (`Map`/`FixedSizeList`/`ListView`/`Null`), then `ArrayReaderBuilder`; the leaf
   `FixedLenByteArrayReader` needs arrow-cr decimal/float16/interval arrays first.
   Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
@@ -335,9 +336,22 @@ little-endian layout.
     the first child, `max_def_level`, selective padding). Specs:
     `spec/parquet/arrow/struct_array_reader_spec.cr` ports the upstream
     `test_struct_array_reader` (`[true, false, false, false, false]` nulls plus
-    the level buffers) and adds coverage for the struct def level, a
-    non-nullable struct, an empty reader, skipping, both out-of-sync errors, and
-    selective padding (parent-level entries dropped).
+    the level buffers) and `test_struct_array_reader_list` (a struct of lists,
+    list values `[[1, 2, null], [], null, null]` with struct validity
+    `0b0000_0111`), and adds coverage for the struct def level, a non-nullable
+    struct, an empty reader, skipping, both out-of-sync errors, and selective
+    padding (parent-level entries dropped). List reader
+    (`src/parquet/arrow/array_reader/list_array.cr`): `ListArrayReader(O)` for
+    List (Int32) and LargeList (Int64) — offsets and validity rebuilt from the
+    item reader's definition/repetition levels with the upstream
+    `d >= def_level`/`r <= rep_level` scan, list-level null/empty handling,
+    `parent_threshold` for nested lists, the "first repetition level of batch
+    must be 0" and "Failed to reconstruct list from level data" errors, and
+    level/data-type/max-def forwarding. Specs:
+    `spec/parquet/arrow/list_array_reader_spec.cr` ports the upstream
+    `test_nullable_list`/`test_required_list`/`test_nested_list` for both
+    offset types (`test_list_array_reader`/`test_large_list_array_reader`)
+    plus level forwarding, skipping, empty batches and both error paths.
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -711,13 +725,14 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow struct array reader`; gates green (`make lint`,
-  `make test` -> 1025 examples, 0 failures). Next feature: `ListArrayReader`
-  (then `Map`/`FixedSizeList`/`Null` and `ArrayReaderBuilder`), or
-  `FixedLenByteArrayReader` once arrow-cr has decimal/float16/interval arrays.
-  Note `make install` now requires the sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 1947 `ported`, 184 `intentional_divergence`,
-  13 `skipped`, 1371 `missing` (of 3515 rows).
+- Last commit: `port: arrow list array reader`; gates green (`make lint`,
+  `make test` -> 1034 examples, 0 failures). Next feature: the remaining
+  composite readers (`Map`/`FixedSizeList`/`ListView`/`Null`) and
+  `ArrayReaderBuilder`, or `FixedLenByteArrayReader` once arrow-cr has
+  decimal/float16/interval arrays. Note `make install` now requires the sibling
+  checkout `../arrow-cr`.
+- Progress by counts (ledger): 1955 `ported`, 185 `intentional_divergence`,
+  13 `skipped`, 1362 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1305,13 +1320,16 @@ Chunk status by area:
         values buffers, `DefinitionLevelBuffer` and the `DictIndexDecoder`/
         `DeltaByteArrayDecoder`. Composite readers:
         `StructArrayReader` (`src/parquet/arrow/array_reader/struct_array.cr`,
-        level-derived struct null bitmap, children kept in sync). Remaining:
+        level-derived struct null bitmap, children kept in sync) and
+        `ListArrayReader(O)` (`src/parquet/arrow/array_reader/list_array.cr`,
+        List/LargeList offsets + validity rebuilt from the item reader's
+        levels, nested lists and `parent_threshold`). Remaining:
         `FixedLenByteArrayReader` (decimal/float16/interval targets need
         arrow-cr array support), `ByteArrayDictionaryReader`, the byte-array/
         value decoders (`ByteArrayColumnValueDecoder`/
         `ByteViewArrayColumnValueDecoder`), the remaining composite readers
-        (`List`/`Map`/`FixedSizeList`/`ListView`/`Null`),
-        `ArrayReaderBuilder`, and the placeholder/cached readers.
+        (`Map`/`FixedSizeList`/`ListView`/`Null`), `ArrayReaderBuilder`, and
+        the placeholder/cached readers.
 - [ ] `arrow/array_reader/`, `arrow/record_reader/`, `arrow/levels.rs`
       (parquet pages → Arrow arrays).
 - [ ] `arrow/arrow_reader/` (`ParquetRecordBatchReader`, `RowFilter`,
@@ -1491,7 +1509,11 @@ Chunk status by area:
   byte-array/view value decoders therefore stay `missing` in the ledger, and
   `ViewBuffer` (`append_block`/`into_array`/`pad_nulls`) exists but is not yet
   driven by a decoder. Null padding uses an empty `ByteArray` as the pad value
-  (a nil payload cannot be read back).
+  (a nil payload cannot be read back). `ListArrayReader`/`StructArrayReader` use
+  `Int32` counts, so upstream's offset-overflow check (`OffsetSize::from_usize`
+  above `Int32::MAX`/`Int64::MAX`) cannot trigger and is omitted; the unchecked
+  `ArrayDataBuilder::build_unchecked`/`StructArray::new_unchecked_with_length`
+  map to arrow-cr's positional constructors.
 - Derive macros: `parquet_derive`'s proc macros (`#[derive(ParquetRecordWriter)]`
   / `ParquetRecordReader`) are replaced by `include Parquet::Derive::Record`.
   Rust impls `RecordWriter for &[T]` and `RecordReader for Vec<T>`; Crystal
