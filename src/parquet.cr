@@ -87,6 +87,7 @@ require "./parquet/arrow/record_reader/buffer"
 require "./parquet/arrow/record_reader/definition_levels"
 require "./parquet/arrow/record_reader"
 require "./parquet/arrow/array_reader"
+require "./parquet/arrow/decoders"
 require "./parquet/arrow/array_reader/primitive_array"
 
 module Parquet

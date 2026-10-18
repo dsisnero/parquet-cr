@@ -1446,13 +1446,13 @@ parquet/src/arrow/buffer/view_buffer.rs::method::ViewBuffer.is_empty	method	miss
 parquet/src/arrow/buffer/view_buffer.rs::method::ViewBuffer.pad_nulls	method	missing	-	auto-generated
 parquet/src/arrow/buffer/view_buffer.rs::method::ViewBuffer.reserve_exact	method	missing	-	auto-generated
 parquet/src/arrow/buffer/view_buffer.rs::method::ViewBuffer.with_capacity	method	missing	-	auto-generated
-parquet/src/arrow/decoder/delta_byte_array.rs::method::DeltaByteArrayDecoder.new	method	missing	-	auto-generated
-parquet/src/arrow/decoder/delta_byte_array.rs::method::DeltaByteArrayDecoder.read	method	missing	-	auto-generated
-parquet/src/arrow/decoder/delta_byte_array.rs::method::DeltaByteArrayDecoder.remaining	method	missing	-	auto-generated
-parquet/src/arrow/decoder/delta_byte_array.rs::method::DeltaByteArrayDecoder.skip	method	missing	-	auto-generated
-parquet/src/arrow/decoder/dictionary_index.rs::method::DictIndexDecoder.new	method	missing	-	auto-generated
-parquet/src/arrow/decoder/dictionary_index.rs::method::DictIndexDecoder.read	method	missing	-	auto-generated
-parquet/src/arrow/decoder/dictionary_index.rs::method::DictIndexDecoder.skip	method	missing	-	auto-generated
+parquet/src/arrow/decoder/delta_byte_array.rs::method::DeltaByteArrayDecoder.new	method	ported	src/parquet/arrow/decoders.cr	DeltaByteArrayDecoder#initialize (block callbacks)
+parquet/src/arrow/decoder/delta_byte_array.rs::method::DeltaByteArrayDecoder.read	method	ported	src/parquet/arrow/decoders.cr	DeltaByteArrayDecoder#read (yields byte slices)
+parquet/src/arrow/decoder/delta_byte_array.rs::method::DeltaByteArrayDecoder.remaining	method	ported	src/parquet/arrow/decoders.cr	DeltaByteArrayDecoder#remaining
+parquet/src/arrow/decoder/delta_byte_array.rs::method::DeltaByteArrayDecoder.skip	method	ported	src/parquet/arrow/decoders.cr	DeltaByteArrayDecoder#skip
+parquet/src/arrow/decoder/dictionary_index.rs::method::DictIndexDecoder.new	method	ported	src/parquet/arrow/decoders.cr	DictIndexDecoder#initialize (validates bit width)
+parquet/src/arrow/decoder/dictionary_index.rs::method::DictIndexDecoder.read	method	ported	src/parquet/arrow/decoders.cr	DictIndexDecoder#read (yields index chunks)
+parquet/src/arrow/decoder/dictionary_index.rs::method::DictIndexDecoder.skip	method	ported	src/parquet/arrow/decoders.cr	DictIndexDecoder#skip
 parquet/src/arrow/in_memory_row_group.rs::method::ColumnChunkData.get	method	missing	-	auto-generated
 parquet/src/arrow/in_memory_row_group.rs::method::ColumnChunkData.get_bytes	method	missing	-	auto-generated
 parquet/src/arrow/in_memory_row_group.rs::method::ColumnChunkData.get_read	method	missing	-	auto-generated
