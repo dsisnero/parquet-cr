@@ -86,6 +86,13 @@ module Parquet
     # An `ArrayReader` for fixed-length byte array columns (upstream
     # `FixedLenByteArrayReader`).
     class FixedLenByteArrayReader < ArrayReader
+      # Crystal cannot infer this from the `typed_record_reader` call (generic
+      # method calls need an explicit instance variable type).
+      @record_reader : RecordReader::GenericRecordReader(
+        RecordReader::ArrayValuesBuffer(Parquet::FixedLenByteArray),
+        Column::Reader::ColumnValueDecoderImpl(Parquet::FixedLenByteArray),
+      )
+
       def initialize(
         @pages : Column::PageIterator,
         column_desc : Schema::ColumnDescriptor,
@@ -95,7 +102,7 @@ module Parquet
         padding_threshold : Int16?,
       )
         # Null slots are padded with an all-zero value of the column's length.
-        @record_reader = RecordReader::GenericRecordReader(FixedLenByteArray).new(
+        @record_reader = RecordReader.typed_record_reader(
           column_desc, batch_size,
           Parquet::FixedLenByteArray.new(Array(UInt8).new(@byte_length, 0_u8))
         )
@@ -119,7 +126,7 @@ module Parquet
       end
 
       def consume_batch : ::Arrow::ArrayBase
-        values = @record_reader.consume_record_data
+        values = @record_reader.consume_record_data.values
         len = @record_reader.values_written
         nulls = Arrow.null_buffer_from(@record_reader.consume_compact_bitmap, len)
 

@@ -22,7 +22,7 @@ module Parquet
       #
       # Note: this does not reuse arrow-cr's `GenericByteViewBuilder`, because the
       # record reader needs `pad_nulls` over the raw views.
-      class ViewBuffer < RecordReader::ValuesBuffer(UInt128)
+      class ViewBuffer < RecordReader::ValuesBuffer
         getter views : Array(UInt128)
         getter buffers : Array(::Arrow::Buffer)
 

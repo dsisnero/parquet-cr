@@ -14,13 +14,13 @@ require "./bit_util"
 # (upstream `Vec<I>`/`Vec<u8>`); `I` is the Crystal integer type
 # (`Int32`/`Int64`) instead of an `OffsetSizeTrait`; `into_array` builds the
 # array through arrow-cr's `GenericByteArray`/`GenericBinaryArray` (upstream goes
-# through `ArrayDataBuilder`); `extend_from_dictionary` takes `Array(Int64)`
-# keys/offsets (the caller's width is normalized); `usize` counts are `Int32`.
+# through `ArrayDataBuilder`); `extend_from_dictionary` is generic over the key
+# and offset integer types; `usize` counts are `Int32`.
 module Parquet
   module Arrow
     module Buffer
       # A buffer of variable-length byte arrays (`OffsetBuffer<I>`).
-      class OffsetBuffer(I) < RecordReader::ValuesBuffer(I)
+      class OffsetBuffer(I) < RecordReader::ValuesBuffer
         getter offsets : Array(I)
         getter values : Array(UInt8)
 
@@ -69,16 +69,21 @@ module Parquet
 
         # Extends this buffer with dictionary keys: for each key, appends
         # `dict_values[dict_offsets[key]...dict_offsets[key + 1]]`.
-        def extend_from_dictionary(keys : Array(Int64), dict_offsets : Array(Int64), dict_values : Bytes) : Nil
+        #
+        # `K`/`V` are the key and offset integer types (upstream
+        # `ArrowNativeType`; a negative key is out of bounds, as upstream's
+        # `as_usize` would make it).
+        def extend_from_dictionary(keys : Array(K), dict_offsets : Array(V), dict_values : Bytes) : Nil forall K, V
           keys.each do |key|
-            if key + 1 >= dict_offsets.size
+            index = key.to_i64
+            if index < 0 || index + 1 >= dict_offsets.size
               raise general_err!(
                 "dictionary key beyond bounds of dictionary: 0..#{Math.max(dict_offsets.size - 1, 0)}"
               )
             end
 
-            start_offset = dict_offsets[key].to_i32
-            end_offset = dict_offsets[key + 1].to_i32
+            start_offset = dict_offsets[index].to_i32
+            end_offset = dict_offsets[index + 1].to_i32
             @values.concat(dict_values[start_offset...end_offset])
             @offsets << I.new(@values.size)
           end

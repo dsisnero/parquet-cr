@@ -47,7 +47,7 @@ little-endian layout.
   the null-padding `ValuesBuffer`, and the definition-level buffer/packed
   decoder, plus the `ArrayReader`/`RowGroups` interfaces and
   `EmptyArrayReader`), and the column reader now exposes the pluggable-decoder
-  path the record reader needs (`new_with_arrow_decoders` +
+  path the record reader needs (`new_with_decoders` +
   `read_records_with_reservation`), and `GenericRecordReader`
   (`arrow/record_reader/mod.rs`), the numeric `PrimitiveArrayReader` and the
   byte-array `OffsetBuffer` (values buffer + null padding) and the arrow
@@ -70,15 +70,21 @@ little-endian layout.
   selector-backed `RowSelection`/`RowSelector`, the selector cursor and the
   `ReadPlan`/`ReadPlanBuilder`/`LimitedReadPlanBuilder` behind
   `with_row_selection`/`with_offset`/`with_limit` (skips are pushed down as
-  `skip_records`). The next arrow feature is `RowFilter` + statistics pruning,
-  the bitmap row-selection backing (`selection/boolean.rs`/`algebra.rs`) and
-  page pruning (`loaded_row_ranges`). `NullArrayReader` is ported too
-  (arrow-cr now has `Arrow::NullArray`) and so is `FixedLenByteArrayReader`
+  `skip_records`). The arrow array readers are now all ported: `NullArrayReader`
+  (arrow-cr now has `Arrow::NullArray`), `FixedLenByteArrayReader`
   (`FixedSizeBinary`, `Decimal32/64/128/256` and `Interval(YearMonth|DayTime)`
   targets; only `Float16` needs an arrow-cr half-float array because Crystal has
-  no `Float16`, and `Interval(MonthDayNano)` is NYI as upstream). The remaining
-  leaf is `ByteArrayDictionaryReader` (arrow-cr has `DictionaryArray`, so only
-  the parquet-side reader is missing). Everything else
+  no `Float16`, and `Interval(MonthDayNano)` is NYI as upstream) and
+  `ByteArrayDictionaryReader` + `DictionaryBuffer` (dictionary preservation,
+  spilling and recomputation, view conversion), and the `ArrayReaderBuilder`
+  routes dictionary-typed `BYTE_ARRAY`/`FIXED_LEN_BYTE_ARRAY` columns to it.
+  **Next up:** the user-facing dictionary arrow schema (a `with_schema`/
+  `ArrowReaderMetadata` schema override so a `Dictionary(..)` field actually
+  reaches the builder, plus the upstream `arrow_reader`
+  `test_dictionary_preservation` end-to-end test), then `RowFilter` +
+  statistics pruning, the bitmap row-selection backing
+  (`selection/boolean.rs`/`algebra.rs`) and page pruning (`loaded_row_ranges`).
+  Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
   `column/page_store.rs`, the arrow reader/writer). Done so far:
@@ -286,21 +292,25 @@ little-endian layout.
     `spec/parquet/arrow/array_reader_spec.cr` (empty-array row counting,
     `next_batch`, and the `RowGroups` file adapter). Column-reader pluggable
     decoders (`src/parquet/column/reader.cr`):
-    `ColumnReaderImpl.new_with_arrow_decoders` (upstream `new_with_decoders`)
-    swaps the definition-level decoder for an arrow
-    `DefinitionLevelBufferDecoder` (fed from both v1 and v2 data pages), and
+    `ColumnReaderImpl.new_with_decoders` (upstream `new_with_decoders`) takes
+    the values decoder explicitly and swaps the definition-level decoder for an
+    arrow `DefinitionLevelBufferDecoder` (fed from both v1 and v2 data pages), and
     `read_records_with_reservation` invokes a reservation callback with the
     decoded value/level counts before reading values (`read_records` delegates
     with a no-op callback). Specs:
     `spec/parquet/column/arrow_column_reader_spec.cr` (arrow level buffer
     decoding + reservation counts, required columns, and the missing-decoder
     invariant). Record reader (`src/parquet/arrow/record_reader.cr`):
-    `RecordReader::GenericRecordReader(T)` (`set_page_reader`, `read_records`,
+    `RecordReader::GenericRecordReader(V, CV)` — parameterized by the values
+    buffer and the value decoder, like upstream's
+    `GenericRecordReader<V, CV>` — (`set_page_reader`, `read_records`,
     `skip_records`, `num_records`/`num_values`, `consume_record_data`/
     `consume_def_levels`/`consume_rep_levels`/`consume_bitmap`/
     `consume_compact_bitmap`, `values_written`, `reset`, `set_padding_threshold`,
     `max_def_level`, and the private `read_one_batch` with full/selective null
-    padding). Specs: `spec/parquet/arrow/record_reader_spec.cr` (upstream
+    padding), plus the `typed_record_reader` helper for the classic
+    `(ArrayValuesBuffer(T), ColumnValueDecoderImpl(T))` pairing (upstream's
+    `RecordReader<T>`). Specs: `spec/parquet/arrow/record_reader_spec.cr` (upstream
     `test_read_required_records`, `test_capacity_hint_preserved_across_fragmented_reads`,
     `test_read_optional_records`, `test_read_repeated_records`,
     `test_read_more_than_one_batch`, `test_row_group_boundary`,
@@ -417,11 +427,14 @@ little-endian layout.
     `test_create_array_reader` (projected `nested.snappy`-style `b_struct`
     leaf, plus reading the 8 all-null rows), and adds the unprojected/absent
     field fallbacks, list and map fixtures (`list_columns.parquet`,
-    `nested_maps.snappy.parquet`), the batch-size hint, and the
-    `NYIError` for fixed-length byte arrays. Not ported: reader metrics, cache
-    options/`CachedArrayReader`, virtual columns (so upstream's
-    `test_create_array_reader_with_row_numbers` is skipped), and the
-    `NullArrayReader`/dictionary/INT96 leaf paths (which raise `NYIError`).
+    `nested_maps.snappy.parquet`), the batch-size hint, and the fixed-length
+    byte array path (`fixed_length_decimal.parquet`). Not ported: reader
+    metrics, cache options/`CachedArrayReader`, virtual columns (so upstream's
+    `test_create_array_reader_with_row_numbers` is skipped), and the INT96 leaf
+    path (which raises `NYIError`); dictionary-typed byte array columns route to
+    `make_byte_array_dictionary_reader` for both BYTE_ARRAY and
+    FIXED_LEN_BYTE_ARRAY, but the user-facing way to request a dictionary arrow
+    type (`with_schema`) is not ported yet.
     Batch reader (`src/parquet/arrow/arrow_reader.cr`): `ParquetRecordBatchReader`
     wraps the `ArrayReader` + projected schema and yields batches via
     `RecordBatch.from(struct_array)` (so an empty projection still carries the
@@ -479,6 +492,51 @@ little-endian layout.
     type/byte-length/Float16 errors; the builder spec now reads
     `fixed_length_decimal.parquet` (Decimal128(25, 2)) instead of expecting
     `NYIError`.
+    Dictionary-encoded byte array reader
+    (`src/parquet/arrow/array_reader/byte_array_dictionary.cr` +
+    `src/parquet/arrow/buffer/dictionary_buffer.cr`):
+    `make_byte_array_dictionary_reader` (the upstream `make_reader!` macro's
+    `(key type, value type)` dispatch over `UInt8`…`Int64` keys ×
+    Binary/Utf8/LargeBinary/LargeUtf8/FixedSizeBinary/view values, plus the
+    "invalid non-dictionary data type"/"unsupported data type" errors),
+    `ByteArrayDictionaryReader(K, V)` (`try_new` with the view `buffer_type`
+    mapping, `read_records`/`skip_records`, `consume_batch` with the
+    `new_empty_array` path once consumed, `def_levels`/`rep_levels`/
+    `max_def_level`), `convert_values_to_view` (Utf8View/BinaryView), and
+    `DictionaryDecoder(K, V)` (`set_dict` with the encoding/index-width
+    validation, `set_data` splitting dictionary indices from the fallback
+    decoder, `read`/`skip_values`). `DictionaryBuffer(K, V)` is the
+    `ValuesBuffer` that is either dictionary encoded (`Kind::Dict`) or flat
+    (`Kind::Values`): `as_keys`/`spill_values` switch the representation in
+    place, `pad_nulls` pads keys or offsets, `into_array` builds the
+    dictionary array (key validation, `FixedSizeBinary` normalisation) or packs
+    a fresh dictionary from flat values via `pack_values_from_offsets[_impl]`
+    with FNV-1a hashing and collision overflow handling. Specs:
+    `spec/parquet/arrow/byte_array_dictionary_reader_spec.cr` ports all eight
+    upstream `byte_array_dictionary.rs` tests (dictionary preservation and
+    skips, fallback/fallback-skip, too-large dictionary, all-null dictionaries,
+    empty index page, invalid bit width) and adds reader-level coverage
+    (single-page preservation, recomputed dictionary for plain pages, spilling
+    when a batch spans column chunks, skipping, Utf8View conversion, and the
+    non-dictionary data type error);
+    `spec/parquet/arrow/dictionary_buffer_spec.cr` ports all six upstream
+    `dictionary_buffer.rs` tests (preserve/spill/rebuild, key validation, large
+    utf8 and binary value types, the Int8 key overflow boundary and hash
+    collision deduplication).
+    Divergences: `MaybeDictionaryDecoder` is an abstract class with two
+    subclasses (the variant never changes after construction); the fallback
+    (non-dictionary) path decodes through the shared
+    `ColumnValueDecoderImpl(ByteArray)` into an `Array(ByteArray)` scratch and
+    pushes into the record reader's `OffsetBuffer` (no dedicated
+    `ByteArrayDecoder`/`ByteArrayDecoderPlain`), with an empty page payload
+    short-circuited to zero values and a truncated payload still raising; the
+    Rust payload enum's `Arc` identity check is `Reference#same?`; upstream's
+    `ahash` dictionary hashing is a deterministic FNV-1a (only equality of equal
+    byte slices matters); the `hash_scratch: MutableBuffer` parameter is
+    dropped; `into_array` takes the pre-built `NullBuffer` and builds arrow-cr
+    arrays positionally; `convert_values_to_view` takes the key type explicitly
+    and rebuilds the data type (arrow-cr `DictionaryArray#with_values` keeps the
+    stale type).
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -852,13 +910,14 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow fixed-length byte array reader`; gates green
-  (`make lint`, `make test` -> 1109 examples, 0 failures). Next feature:
-  `ByteArrayDictionaryReader` (arrow-cr `DictionaryArray` exists), then
+- Last commit: `port: arrow byte array dictionary reader`; gates green
+  (`make lint`, `make test` -> 1129 examples, 0 failures). Next feature: the
+  user-facing dictionary arrow schema (`with_schema`/schema override) + the
+  upstream `arrow_reader` `test_dictionary_preservation` end-to-end test, then
   `RowFilter` + `statistics.rs`, the bitmap row-selection backing and page
   pruning. Note `make install` now requires the sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 2064 `ported`, 227 `intentional_divergence`,
-  13 skipped, 1211 `missing` (of 3515 rows).
+- Progress by counts (ledger): 2084 `ported`, 232 `intentional_divergence`,
+  13 skipped, 1186 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1651,23 +1710,34 @@ Chunk status by area:
   fallback with `arrow_err!`/`general_err!` where upstream has `arrow_err!`/
   `General`. `parquet_column` returns `Tuple(Int32, Arrow::Field)?` (upstream
   `Option<(usize, &FieldRef)>`).
-- Arrow interop, leaf array readers (`byte_array.rs`/`byte_view_array.rs`):
-  upstream decodes straight into the arrow values buffer with dedicated
-  decoders (`ByteArrayColumnValueDecoder`, `ByteViewArrayColumnValueDecoder`,
-  and the `ByteArrayDecoder*`/`ByteViewArrayDecoder*` families), which needs
-  `GenericRecordReader`/`ColumnReaderImpl` to be generic over *both* the values
-  buffer and the value decoder (upstream `GenericRecordReader<V, CV>`). The port
-  keeps `GenericRecordReader(T)` fixed to `Array(T)` +
-  `ColumnValueDecoderImpl(T)` and converts the decoded batch at
-  `consume_batch` time: `ByteArrayReader` copies values into an
-  `OffsetBuffer(I)`/arrow byte array, `ByteViewArrayReader` builds an
-  `Utf8View`/`BinaryView` array through arrow-cr's view builders (which pick the
-  inline-vs-block representation). Behaviour matches upstream (values, null
-  padding, dictionary/delta encodings); only batch-time allocation differs. The
+- Arrow interop, leaf array readers (`byte_array.rs`/`byte_view_array.rs`/
+  `byte_array_dictionary.rs`): upstream decodes straight into the arrow values
+  buffer with dedicated decoders (`ByteArrayColumnValueDecoder`,
+  `ByteViewArrayColumnValueDecoder`, the `ByteArrayDecoder*`/
+  `ByteViewArrayDecoder*` families and `ByteArrayDecoderPlain` in the
+  dictionary reader). The port's `GenericRecordReader(V, CV)`/
+  `ColumnReaderImpl(B, CV)` *are* generic over both the values buffer and the
+  value decoder (like upstream `GenericRecordReader<V, CV>`), so
+  `ByteArrayDictionaryReader` drives them with
+  `(DictionaryBuffer(K, V), DictionaryDecoder(K, V))`. What is still missing is
+  the byte-array value decoders themselves: `ByteArrayReader`,
+  `ByteViewArrayReader` and the dictionary reader's fallback path decode through
+  `ColumnValueDecoderImpl(ByteArray)` and convert at `consume_batch` time
+  (`ByteArrayReader` copies values into `OffsetBuffer(I)`/arrow byte arrays,
+  `ByteViewArrayReader` builds `Utf8View`/`BinaryView` through arrow-cr's view
+  builders, the dictionary fallback pushes into the record reader's
+  `OffsetBuffer`). Behaviour matches upstream (values, null padding,
+  dictionary/delta encodings); only batch-time allocation differs. The
   byte-array/view value decoders therefore stay `missing` in the ledger, and
   `ViewBuffer` (`append_block`/`into_array`/`pad_nulls`) exists but is not yet
-  driven by a decoder. Null padding uses an empty `ByteArray` as the pad value
-  (a nil payload cannot be read back). `ListArrayReader`/`StructArrayReader` use
+  driven by a decoder. Because `ColumnValueDecoderImpl`/`PlainDecoder` never
+  reads past the values a page claims, an *empty* value payload is
+  short-circuited to zero values (upstream's decoders simply stop at the end of
+  the page buffer); a truncated non-empty payload still raises. Null padding
+  uses an empty `ByteArray` as the pad value (a nil payload cannot be read
+  back). Dictionary hashing uses a deterministic FNV-1a instead of `ahash`
+  (only equality of equal byte slices matters), and the `hash_scratch` buffer is
+  dropped. `ListArrayReader`/`StructArrayReader` use
   `Int32` counts, so upstream's offset-overflow check (`OffsetSize::from_usize`
   above `Int32::MAX`/`Int64::MAX`) cannot trigger and is omitted; the unchecked
   `ArrayDataBuilder::build_unchecked`/`StructArray::new_unchecked_with_length`

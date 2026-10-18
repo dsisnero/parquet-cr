@@ -10,9 +10,12 @@ private alias RR = Parquet::Arrow::RecordReader
 
 private DEFAULT_BATCH_SIZE = 1024
 
-private def record_reader(message_type : String, capacity : Int32 = DEFAULT_BATCH_SIZE) : RR::GenericRecordReader(Int32)
+private alias ValuesBuffer = RR::ArrayValuesBuffer(Int32)
+private alias Decoder = Parquet::Column::Reader::ColumnValueDecoderImpl(Int32)
+
+private def record_reader(message_type : String, capacity : Int32 = DEFAULT_BATCH_SIZE) : RR::GenericRecordReader(ValuesBuffer, Decoder)
   desc = ParquetTestPageUtil.column_descriptor(message_type)
-  RR::GenericRecordReader(Int32).new(desc, capacity, 0)
+  RR.typed_record_reader(desc, capacity, 0)
 end
 
 private def page(desc : Parquet::Schema::ColumnDescriptor, num_values : Int32, v2 : Bool = true) : ParquetTestPageUtil::DataPageBuilderImpl
@@ -49,7 +52,7 @@ describe Parquet::Arrow::RecordReader::GenericRecordReader do
     reader.num_records.should eq(7)
     reader.num_values.should eq(7)
 
-    reader.consume_record_data.should eq([4, 7, 6, 3, 2, 8, 9])
+    reader.consume_record_data.values.should eq([4, 7, 6, 3, 2, 8, 9])
     reader.consume_def_levels.should be_nil
     reader.consume_bitmap.should be_nil
   end
@@ -67,7 +70,7 @@ describe Parquet::Arrow::RecordReader::GenericRecordReader do
     reader.read_records(1).should eq(1)
     reader.read_records(1).should eq(1)
 
-    data = reader.consume_record_data
+    data = reader.consume_record_data.values
     data.should eq([1, 2])
     data.size.should be <= 8 # capacity hint only pre-allocates
   end
@@ -104,7 +107,7 @@ describe Parquet::Arrow::RecordReader::GenericRecordReader do
     expected_valid = [false, true, false, true, true, false, true]
     masks(reader.consume_bitmap.not_nil!, 7).should eq(expected_valid)
 
-    actual = reader.consume_record_data
+    actual = reader.consume_record_data.values
     expected = [0, 7, 0, 6, 3, 0, 8]
     actual.size.should eq(expected.size)
     expected_valid.each_with_index do |valid, i|
@@ -145,7 +148,7 @@ describe Parquet::Arrow::RecordReader::GenericRecordReader do
     expected_valid = [true, false, false, true, true, true, true, true, true]
     masks(reader.consume_bitmap.not_nil!, 9).should eq(expected_valid)
 
-    actual = reader.consume_record_data
+    actual = reader.consume_record_data.values
     expected = [4, 0, 0, 7, 6, 3, 2, 8, 9]
     actual.size.should eq(expected.size)
     expected_valid.each_with_index do |valid, i|
@@ -228,7 +231,7 @@ describe Parquet::Arrow::RecordReader::GenericRecordReader do
     reader.num_values.should eq(3)
     reader.read_records(10).should eq(0)
 
-    reader.consume_record_data.should eq([6, 3, 2])
+    reader.consume_record_data.values.should eq([6, 3, 2])
     reader.consume_def_levels.should be_nil
     reader.consume_bitmap.should be_nil
   end
@@ -237,7 +240,7 @@ describe Parquet::Arrow::RecordReader::GenericRecordReader do
   it "consumes the compact bitmap under selective padding" do
     message_type = "message test_schema { OPTIONAL GROUP my_list (LIST) { REPEATED GROUP list { OPTIONAL INT32 element; } } }"
     desc = ParquetTestPageUtil.column_descriptor(message_type)
-    reader = RR::GenericRecordReader(Int32).new(desc, DEFAULT_BATCH_SIZE, 0)
+    reader = RR.typed_record_reader(desc, DEFAULT_BATCH_SIZE, 0)
     reader.set_padding_threshold(2_i16)
 
     builder = page(desc, 5)
@@ -256,7 +259,7 @@ describe Parquet::Arrow::RecordReader::GenericRecordReader do
   it "only pads item-level entries under selective padding" do
     message_type = "message test_schema { OPTIONAL GROUP my_list (LIST) { REPEATED GROUP list { OPTIONAL INT32 element; } } }"
     desc = ParquetTestPageUtil.column_descriptor(message_type)
-    reader = RR::GenericRecordReader(Int32).new(desc, DEFAULT_BATCH_SIZE, 0)
+    reader = RR.typed_record_reader(desc, DEFAULT_BATCH_SIZE, 0)
     reader.set_padding_threshold(2_i16)
 
     def_levels = Array(Int16).new(30, 0_i16) + [3_i16, 2_i16]

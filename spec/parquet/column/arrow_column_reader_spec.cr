@@ -16,6 +16,7 @@ private alias ST = Parquet::Schema::Type
 private alias PType = Parquet::Type
 private alias PRep = Parquet::Repetition
 private alias RR = Parquet::Arrow::RecordReader
+private alias Decoder = Parquet::Column::Reader::ColumnValueDecoderImpl(Int32)
 
 # Writes an INT32 column with the given repetition/definition levels and returns
 # a page reader positioned at its first page.
@@ -53,8 +54,8 @@ describe Parquet::Column::ColumnReaderImpl do
 
     buffer = RR::DefinitionLevelBuffer.new(descriptor, null_mask_only: true)
     decoder = RR::DefinitionLevelBufferDecoder.new(descriptor.max_def_level, packed: true)
-    column_reader = Parquet::Column::ColumnReaderImpl(Int32).new_with_arrow_decoders(
-      descriptor, pages, buffer, decoder
+    column_reader = Parquet::Column::ColumnReaderImpl(Array(Int32), Decoder).new_with_decoders(
+      descriptor, pages, Decoder.new(descriptor), buffer, decoder
     )
 
     values = [] of Int32
@@ -83,8 +84,8 @@ describe Parquet::Column::ColumnReaderImpl do
     reader, pages = int32_column_pages(PRep::REQUIRED, [] of Int16, [1_i32, 2, 3])
     descriptor = reader.metadata.file_metadata.schema_descr.column(0)
 
-    column_reader = Parquet::Column::ColumnReaderImpl(Int32).new_with_arrow_decoders(
-      descriptor, pages, nil, nil
+    column_reader = Parquet::Column::ColumnReaderImpl(Array(Int32), Decoder).new_with_decoders(
+      descriptor, pages, Decoder.new(descriptor), nil, nil
     )
 
     values = [] of Int32
@@ -109,8 +110,8 @@ describe Parquet::Column::ColumnReaderImpl do
     descriptor = reader.metadata.file_metadata.schema_descr.column(0)
     buffer = RR::DefinitionLevelBuffer.new(descriptor, null_mask_only: true)
 
-    column_reader = Parquet::Column::ColumnReaderImpl(Int32).new_with_arrow_decoders(
-      descriptor, pages, buffer, nil
+    column_reader = Parquet::Column::ColumnReaderImpl(Array(Int32), Decoder).new_with_decoders(
+      descriptor, pages, Decoder.new(descriptor), buffer, nil
     )
 
     expect_raises(Parquet::GeneralError, "definition level decoder is not initialized") do

@@ -2,6 +2,7 @@ require "../../basic"
 require "../../util/bit_util"
 require "../../schema/types"
 require "../../encodings/registry"
+require "../../arrow/record_reader/buffer"
 
 # Ported from `parquet/src/column/reader/decoder.rs` (apache/arrow-rs 60.0.0,
 # ef1fa157977633f0ba21aa921f9ef3d5c669235b).
@@ -37,10 +38,16 @@ module Parquet
       end
 
       # Decodes value data for the data type `T`.
-      abstract class ColumnValueDecoder(T)
+      #
+      # Divergences: the trait is not generic (the concrete `ColumnValueDecoderImpl(T)`
+      # owns the value type), and `read` is deliberately *not* declared here — the
+      # buffer type differs per implementation (the classic `Array(T)` and the
+      # arrow values buffers) and Crystal cannot express the upstream
+      # `ColumnValueDecoder` associated `Buffer` type, so callers duck-type
+      # `read` against the concrete decoder.
+      abstract class ColumnValueDecoder
         abstract def set_dict(buf : Bytes, num_values : UInt32, encoding : Encoding, is_sorted : Bool) : Nil
         abstract def set_data(encoding : Encoding, data : Bytes, num_levels : Int32, num_values : Int32?) : Nil
-        abstract def read(dest : Array(T), num_values : Int32) : Int32
         abstract def skip_values(num_values : Int32) : Int32
       end
 
@@ -104,7 +111,7 @@ module Parquet
       end
 
       # An implementation of `ColumnValueDecoder` for `T`.
-      class ColumnValueDecoderImpl(T) < ColumnValueDecoder(T)
+      class ColumnValueDecoderImpl(T) < ColumnValueDecoder
         def initialize(@descr : Schema::ColumnDescriptor)
           @current_encoding = nil.as(Encoding?)
           @decoder_mask = EncodingMask.new(0)
@@ -155,13 +162,27 @@ module Parquet
         end
 
         def read(dest : Array(T), num_values : Int32) : Int32
+          values = decode(num_values)
+          dest.concat(values)
+          values.size
+        end
+
+        # Reads `num_values` values into an arrow record reader values buffer
+        # (upstream `ColumnValueDecoder::read` with `Buffer = Vec<T>`).
+        def read(dest : Arrow::RecordReader::ArrayValuesBuffer(T), num_values : Int32) : Int32
+          values = decode(num_values)
+          dest.concat(values)
+          values.size
+        end
+
+        # Decodes up to `num_values` values.
+        private def decode(num_values : Int32) : Array(T)
           encoding = @current_encoding || raise "current_encoding should be set"
           decoder = @decoders[encoding.value] || raise "decoder for encoding #{encoding} should be set"
 
           scratch = Array(T).new(num_values) { Reader.default_value(T) }
           read = decoder.get(scratch)
-          dest.concat(scratch[0, read])
-          read
+          scratch[0, read]
         end
 
         def skip_values(num_values : Int32) : Int32

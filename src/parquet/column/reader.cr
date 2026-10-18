@@ -11,18 +11,24 @@ require "../arrow/record_reader/definition_levels"
 # ef1fa157977633f0ba21aa921f9ef3d5c669235b).
 #
 # Ports the `ColumnReader` dispatch (`get_column_reader`/
-# `get_typed_column_reader`) and the typed `ColumnReaderImpl<T>`.
+# `get_typed_column_reader`) and the typed `ColumnReaderImpl(B, CV)` (upstream
+# `GenericColumnReader<R, D, V>`).
 #
 # Divergences: the Rust `ColumnReader` enum is an abstract `ColumnReader` class
-# with the single generic `ColumnReaderImpl(T)` subclass (instead of one variant
-# per physical type); `GenericColumnReader<R, D, V>` is not parameterized
-# (`ColumnReaderImpl(T)` fixes the level/value decoders); buffer lengths are
-# `Int32`. The arrow record reader's pluggable decoder path
-# (`new_with_arrow_decoders` + `read_records_with_reservation`, upstream
-# `new_with_decoders`/`read_records_with_reservation`) is supported by optionally
-# swapping the definition-level decoder for a
-# `Arrow::RecordReader::DefinitionLevelBufferDecoder` and accepting a reservation
-# callback.
+# with the single generic `ColumnReaderImpl(B, CV)` subclass (instead of one
+# variant per physical type); `GenericColumnReader<R, D, V>`'s repetition
+# (`R`) and definition (`D`) decoders are fixed to the ported
+# `RepetitionLevelDecoderImpl` and the classic-`DefinitionLevelDecoder`/
+# arrow-`DefinitionLevelBufferDecoder` pair; the class is parameterized by the
+# values **buffer** (`B`) and the value decoder (`CV`) rather than by the
+# physical type, which is what lets the arrow record reader drive it with the
+# `OffsetBuffer`/`DictionaryBuffer` value buffers; the classic
+# `GenericColumnReader::new` type-parameter inference is replaced by the
+# `column_reader(type, ...)` helper (Crystal cannot infer a method type
+# parameter that only appears in the return type); buffer lengths are `Int32`.
+# The arrow record reader's pluggable decoder path (`new_with_decoders` +
+# `read_records_with_reservation`) accepts an explicit values decoder plus the
+# arrow definition-level buffer/decoder and a reservation callback.
 module Parquet
   module Column
     # Column reader for a Parquet column chunk.
@@ -30,57 +36,50 @@ module Parquet
     end
 
     # Typed value reader for a particular primitive column.
-    class ColumnReaderImpl(T) < ColumnReader
+    class ColumnReaderImpl(B, CV) < ColumnReader
+      @arrow_def_level_buffer : Arrow::RecordReader::DefinitionLevelBuffer?
+      @arrow_def_level_decoder : Arrow::RecordReader::DefinitionLevelBufferDecoder?
+
+      # Creates a reader over the given decoders (upstream
+      # `GenericColumnReader::new`/`new_with_decoders`).
+      #
+      # `arrow_def_level_buffer`/`arrow_def_level_decoder` replace the classic
+      # definition-level decoder for the arrow record reader; they are `nil` for
+      # the classic path, as are the classic decoders for columns whose maximum
+      # definition/repetition level is 0.
+      def initialize(
+        @descr : Schema::ColumnDescriptor,
+        @page_reader : PageReader,
+        @values_decoder : CV,
+        @def_level_decoder : Reader::DefinitionLevelDecoder? = nil,
+        @rep_level_decoder : Reader::RepetitionLevelDecoder? = nil,
+        @arrow_def_level_buffer : Arrow::RecordReader::DefinitionLevelBuffer? = nil,
+        @arrow_def_level_decoder : Arrow::RecordReader::DefinitionLevelBufferDecoder? = nil,
+      )
+        @num_buffered_values = 0
+        @num_decoded_values = 0
+        @has_record_delimiter = false
+      end
+
       # Creates a reader that decodes definition levels into an arrow
       # `DefinitionLevelBuffer` (upstream
       # `GenericColumnReader::new_with_decoders`).
       #
       # `def_level_buffer`/`def_level_buffer_decoder` are `nil` for columns whose
       # maximum definition level is 0.
-      def self.new_with_arrow_decoders(
+      def self.new_with_decoders(
         descr : Schema::ColumnDescriptor,
         page_reader : PageReader,
+        values_decoder : CV,
         def_level_buffer : Arrow::RecordReader::DefinitionLevelBuffer?,
         def_level_buffer_decoder : Arrow::RecordReader::DefinitionLevelBufferDecoder?,
-      ) : ColumnReaderImpl(T) forall T
-        reader = allocate
-        reader.initialize_arrow(descr, page_reader, def_level_buffer, def_level_buffer_decoder)
-        reader
-      end
-
-      protected def initialize_arrow(
-        descr : Schema::ColumnDescriptor,
-        page_reader : PageReader,
-        def_level_buffer : Arrow::RecordReader::DefinitionLevelBuffer?,
-        def_level_buffer_decoder : Arrow::RecordReader::DefinitionLevelBufferDecoder?,
-      ) : Nil
-        @descr = descr
-        @page_reader = page_reader
-        @values_decoder = Reader::ColumnValueDecoderImpl(T).new(descr)
-        @def_level_decoder = nil
-        @arrow_def_level_buffer = def_level_buffer
-        @arrow_def_level_decoder = def_level_buffer_decoder
-        @rep_level_decoder =
-          (descr.max_rep_level != 0) ? Reader::RepetitionLevelDecoderImpl.new(descr.max_rep_level) : nil
-        @num_buffered_values = 0
-        @num_decoded_values = 0
-        @has_record_delimiter = false
-      end
-
-      @arrow_def_level_buffer : Arrow::RecordReader::DefinitionLevelBuffer?
-      @arrow_def_level_decoder : Arrow::RecordReader::DefinitionLevelBufferDecoder?
-
-      def initialize(@descr : Schema::ColumnDescriptor, @page_reader : PageReader)
-        @values_decoder = Reader::ColumnValueDecoderImpl(T).new(@descr)
-        @def_level_decoder =
-          (@descr.max_def_level != 0) ? Reader::DefinitionLevelDecoderImpl.new(@descr.max_def_level) : nil
-        @rep_level_decoder =
-          (@descr.max_rep_level != 0) ? Reader::RepetitionLevelDecoderImpl.new(@descr.max_rep_level) : nil
-        @num_buffered_values = 0
-        @num_decoded_values = 0
-        @has_record_delimiter = false
-        @arrow_def_level_buffer = nil
-        @arrow_def_level_decoder = nil
+      ) : ColumnReaderImpl(B, CV)
+        new(
+          descr, page_reader, values_decoder,
+          rep_level_decoder: (descr.max_rep_level != 0) ? Reader::RepetitionLevelDecoderImpl.new(descr.max_rep_level) : nil,
+          arrow_def_level_buffer: def_level_buffer,
+          arrow_def_level_decoder: def_level_buffer_decoder,
+        )
       end
 
       # Read up to `max_records` whole records.
@@ -90,7 +89,7 @@ module Parquet
         max_records : Int32,
         def_levels : Array(Int16)?,
         rep_levels : Array(Int16)?,
-        values : Array(T),
+        values : B,
       ) : Tuple(Int32, Int32, Int32)
         read_records_with_reservation(max_records, def_levels, rep_levels, values) do |_values, _values_to_read, _levels_to_read, _def_levels|
         end
@@ -109,7 +108,7 @@ module Parquet
         max_records : Int32,
         def_levels : Array(Int16)?,
         rep_levels : Array(Int16)?,
-        values : Array(T),
+        values : B,
         &
       ) : Tuple(Int32, Int32, Int32)
         total_records_read = 0
@@ -369,22 +368,46 @@ module Parquet
     # Gets a column reader for `descr`, reading pages from `col_page_reader`.
     def self.get_column_reader(descr : Schema::ColumnDescriptor, col_page_reader : PageReader) : ColumnReader
       case descr.physical_type
-      when Parquet::Type::BOOLEAN              then ColumnReaderImpl(Bool).new(descr, col_page_reader)
-      when Parquet::Type::INT32                then ColumnReaderImpl(Int32).new(descr, col_page_reader)
-      when Parquet::Type::INT64                then ColumnReaderImpl(Int64).new(descr, col_page_reader)
-      when Parquet::Type::INT96                then ColumnReaderImpl(Int96).new(descr, col_page_reader)
-      when Parquet::Type::FLOAT                then ColumnReaderImpl(Float32).new(descr, col_page_reader)
-      when Parquet::Type::DOUBLE               then ColumnReaderImpl(Float64).new(descr, col_page_reader)
-      when Parquet::Type::BYTE_ARRAY           then ColumnReaderImpl(ByteArray).new(descr, col_page_reader)
-      when Parquet::Type::FIXED_LEN_BYTE_ARRAY then ColumnReaderImpl(FixedLenByteArray).new(descr, col_page_reader)
+      when Parquet::Type::BOOLEAN              then column_reader(Bool, descr, col_page_reader)
+      when Parquet::Type::INT32                then column_reader(Int32, descr, col_page_reader)
+      when Parquet::Type::INT64                then column_reader(Int64, descr, col_page_reader)
+      when Parquet::Type::INT96                then column_reader(Int96, descr, col_page_reader)
+      when Parquet::Type::FLOAT                then column_reader(Float32, descr, col_page_reader)
+      when Parquet::Type::DOUBLE               then column_reader(Float64, descr, col_page_reader)
+      when Parquet::Type::BYTE_ARRAY           then column_reader(ByteArray, descr, col_page_reader)
+      when Parquet::Type::FIXED_LEN_BYTE_ARRAY then column_reader(FixedLenByteArray, descr, col_page_reader)
       else
         raise general_err!("Cannot get column reader for physical type #{descr.physical_type}")
       end
     end
 
-    # Up-casts `col_reader` to a typed `ColumnReaderImpl(T)`.
-    def self.get_typed_column_reader(type : T.class, col_reader : ColumnReader) : ColumnReaderImpl(T) forall T
-      col_reader.as(ColumnReaderImpl(T))
+    # Creates a `ColumnReaderImpl` with the classic decoders for the physical
+    # value type `T` (upstream `GenericColumnReader::new`).
+    #
+    # Crystal cannot infer a method type parameter that only appears in the
+    # return type, so the classic path is driven by an explicit value type
+    # rather than the class's own type arguments.
+    def self.column_reader(
+      type : T.class,
+      descr : Schema::ColumnDescriptor,
+      page_reader : PageReader,
+    ) : ColumnReaderImpl(Array(T), Reader::ColumnValueDecoderImpl(T)) forall T
+      ColumnReaderImpl(Array(T), Reader::ColumnValueDecoderImpl(T)).new(
+        descr,
+        page_reader,
+        Reader::ColumnValueDecoderImpl(T).new(descr),
+        (descr.max_def_level != 0) ? Reader::DefinitionLevelDecoderImpl.new(descr.max_def_level) : nil,
+        (descr.max_rep_level != 0) ? Reader::RepetitionLevelDecoderImpl.new(descr.max_rep_level) : nil,
+      )
+    end
+
+    # Up-casts `col_reader` to a typed `ColumnReaderImpl` (upstream
+    # `get_typed_column_reader`).
+    def self.get_typed_column_reader(
+      type : T.class,
+      col_reader : ColumnReader,
+    ) : ColumnReaderImpl(Array(T), Reader::ColumnValueDecoderImpl(T)) forall T
+      col_reader.as(ColumnReaderImpl(Array(T), Reader::ColumnValueDecoderImpl(T)))
     rescue TypeCastError
       raise general_err!(
         "Failed to convert column reader into a typed column reader for `#{Encodings.physical_type(T)}` type"

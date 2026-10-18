@@ -61,10 +61,10 @@ module Parquet
       end
     end
 
-    # Typed triplet iterator wrapping a `ColumnReaderImpl(T)`.
+    # Typed triplet iterator wrapping a `ColumnReaderImpl`.
     class TypedTripletIter(T) < TripletIter
       getter column_descr : Schema::ColumnDescriptor
-      @reader : Column::ColumnReaderImpl(T)
+      @reader : Column::ColumnReaderImpl(Array(T), Column::Reader::ColumnValueDecoderImpl(T))
       @batch_size : Int32
       @max_def_level : Int16
       @max_rep_level : Int16

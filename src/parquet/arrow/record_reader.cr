@@ -9,26 +9,33 @@ require "./record_reader/definition_levels"
 # Ported from `parquet/src/arrow/record_reader/mod.rs`
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
 #
-# Ports `GenericRecordReader` (upstream `RecordReader<T>` = the `Int32`/value
-# generic with the classic decoders) and `packed_null_mask`.
+# Ports `GenericRecordReader<V, CV>` (upstream's `RecordReader<T>` is the
+# `V = Vec<T::T>`, `CV = ColumnValueDecoderImpl<T>` instantiation) and
+# `packed_null_mask`. The upstream `read_records`/`skip_records` helpers live in
+# `array_reader/primitive_array.cr` (`read_records_from_pages`/
+# `skip_records_from_pages`).
 #
-# Divergences: upstream is generic over the values buffer and value decoder
-# (`GenericRecordReader<V, CV>`); the port fixes them to `Array(T)` /
-# `ColumnValueDecoderImpl(T)` (the only combinations this crate constructs), and
-# the pad value for null slots is a constructor argument (Crystal has no
-# `Default` bound). `usize` counts are `Int32`. `consume_bitmap`/
-# `consume_compact_bitmap` return `Bytes?` (upstream `Option<Buffer>`).
+# Divergences: the arrow values buffers are the `ValuesBuffer` subclasses
+# (`ArrayValuesBuffer(T)`, `Buffer::OffsetBuffer(I)`,
+# `Buffer::DictionaryBuffer(K, V)`) rather than upstream's `Vec` impls, and the
+# value decoder is a type *parameter* (`CV`) rather than the associated
+# `ColumnValueDecoder::Buffer`, so a record reader's `(V, CV)` pair is chosen at
+# construction; `V::with_capacity(0)` becomes a `->V` factory because Crystal
+# has no `Default` bound; `usize` counts are `Int32`; `consume_bitmap`/
+# `consume_compact_bitmap` return `Bytes?` (upstream `Option<Buffer>`); the
+# upstream `debug_assert!`s (reservation accounting and compact-bitmap length)
+# are dropped.
 module Parquet
   module Arrow
     module RecordReader
       # A stateful column reader that delimits semantic records.
-      class GenericRecordReader(T)
+      class GenericRecordReader(V, CV)
         getter column_desc : Schema::ColumnDescriptor
 
-        @values : Array(T)?
+        @values : V?
         @def_levels : DefinitionLevelBuffer?
         @rep_levels : Array(Int16)?
-        @column_reader : Column::ColumnReaderImpl(T)?
+        @column_reader : Column::ColumnReaderImpl(V, CV)?
         # Number of buffered levels / null-padded values.
         @num_values : Int32
         # Number of buffered records.
@@ -43,8 +50,15 @@ module Parquet
         # Compact bitmap accumulated during selective padding.
         @compact_bitmap : ::Arrow::BooleanBufferBuilder?
 
-        # Creates a record reader. `default_value` fills null slots.
-        def initialize(@column_desc : Schema::ColumnDescriptor, @capacity_hint : Int32, @default_value : T)
+        # Creates a record reader (upstream `GenericRecordReader::new`).
+        #
+        # `new_values` lazily creates the values buffer (upstream
+        # `V::with_capacity(0)`).
+        def initialize(
+          @column_desc : Schema::ColumnDescriptor,
+          @capacity_hint : Int32,
+          @new_values : -> V,
+        )
           desc = @column_desc
           @values = nil
           @def_levels = desc.max_def_level > 0 ? DefinitionLevelBuffer.new(desc, packed_null_mask(desc)) : nil
@@ -66,8 +80,8 @@ module Parquet
               DefinitionLevelBufferDecoder.new(desc.max_def_level, packed_null_mask(desc))
             end
 
-          @column_reader = Column::ColumnReaderImpl(T).new_with_arrow_decoders(
-            desc, page_reader, @def_levels, def_level_decoder
+          @column_reader = Column::ColumnReaderImpl(V, CV).new_with_decoders(
+            desc, page_reader, CV.new(desc), @def_levels, def_level_decoder
           )
           nil
         end
@@ -116,11 +130,15 @@ module Parquet
           levels
         end
 
-        # Returns the currently stored values (upstream `consume_record_data`).
-        def consume_record_data : Array(T)
+        # Returns the currently stored values buffer (upstream
+        # `consume_record_data`).
+        #
+        # Takes the buffer, leaving `nil`; the next read lazily allocates a new
+        # one via the constructor's factory.
+        def consume_record_data : V
           values = @values
           @values = nil
-          values || [] of T
+          values || @new_values.call
         end
 
         # Resets the buffer state (call after consuming data).
@@ -184,8 +202,12 @@ module Parquet
           physical_values_to_read = 0
           output_slots_to_read = 0
 
-          values = @values || (@values = [] of T)
+          values = @values || (@values = @new_values.call)
           reader = @column_reader || raise general_err!("column reader is not initialized")
+
+          if padding_threshold.nil?
+            values.reserve_exact(Math.max(@capacity_hint - @num_values, 0))
+          end
 
           records_read, values_read, levels_read = reader.read_records_with_reservation(
             batch_size, nil, @rep_levels, values
@@ -205,8 +227,7 @@ module Parquet
               output_slots = levels_to_read
             end
 
-            # Upstream reserves capacity here; Crystal arrays grow amortized.
-            buffer.size
+            buffer.reserve_exact(output_slots_to_read + output_slots - physical_values_to_read)
 
             output_slots_to_read += output_slots
             physical_values_to_read += values_to_read
@@ -218,7 +239,8 @@ module Parquet
 
             # Pad values to item positions (only when there are gaps).
             if values_read < item_count
-              pad(values, @values_written, values_read, item_count, bitmap.as_slice)
+              values.reserve_exact(item_count - values_read)
+              values.pad_nulls(@values_written, values_read, item_count, bitmap.as_slice)
             end
 
             @values_written += item_count
@@ -226,25 +248,13 @@ module Parquet
             def_buffer = @def_levels || raise general_err!(
               "Definition levels should exist when data is less than levels!"
             )
-            pad(values, @num_values, values_read, levels_read, def_buffer.nulls.as_slice)
+            values.reserve_exact(levels_read - values_read)
+            values.pad_nulls(@num_values, values_read, levels_read, def_buffer.nulls.as_slice)
           end
 
           @num_records += records_read
           @num_values += levels_read
           records_read
-        end
-
-        # Pads `values` with the default value (see `ArrayValuesBuffer`) and
-        # moves the decoded values into their valid positions.
-        private def pad(
-          values : Array(T),
-          read_offset : Int32,
-          values_read : Int32,
-          levels_read : Int32,
-          valid_mask : Bytes,
-        ) : Nil
-          ArrayValuesBuffer(T).new(values, @default_value)
-            .pad_nulls(read_offset, values_read, levels_read, valid_mask)
         end
 
         # Whether the null bitmap can be decoded straight into a bitmask: only
@@ -253,6 +263,21 @@ module Parquet
         private def packed_null_mask(descr : Schema::ColumnDescriptor) : Bool
           descr.max_def_level == 1 && descr.max_rep_level == 0 && descr.self_type.optional?
         end
+      end
+
+      # Creates a record reader over `ArrayValuesBuffer(T)` and the classic
+      # value decoder (upstream `RecordReader<T>`).
+      #
+      # Crystal cannot infer a method type parameter that only appears in the
+      # return type, so the classic path is driven by an explicit value type.
+      def self.typed_record_reader(
+        column_desc : Schema::ColumnDescriptor,
+        capacity_hint : Int32,
+        pad_default : T,
+      ) : GenericRecordReader(ArrayValuesBuffer(T), Column::Reader::ColumnValueDecoderImpl(T)) forall T
+        GenericRecordReader(ArrayValuesBuffer(T), Column::Reader::ColumnValueDecoderImpl(T)).new(
+          column_desc, capacity_hint, -> { ArrayValuesBuffer(T).new(pad_default) }
+        )
       end
     end
   end

@@ -51,6 +51,13 @@ module Parquet
     # An `ArrayReader` for variable-length byte arrays stored as views
     # (upstream `ByteViewArrayReader`).
     class ByteViewArrayReader < ArrayReader
+      # Crystal cannot infer this from the `typed_record_reader` call (generic
+      # method calls need an explicit instance variable type).
+      @record_reader : RecordReader::GenericRecordReader(
+        RecordReader::ArrayValuesBuffer(Parquet::ByteArray),
+        Column::Reader::ColumnValueDecoderImpl(Parquet::ByteArray),
+      )
+
       def initialize(
         @pages : Column::PageIterator,
         @data_type : ::Arrow::DataType,
@@ -60,7 +67,7 @@ module Parquet
       )
         # Null slots are padded with an empty byte array (their values are
         # masked off by the null bitmap).
-        @record_reader = RecordReader::GenericRecordReader(ByteArray).new(
+        @record_reader = RecordReader.typed_record_reader(
           column_desc, batch_size, Parquet::ByteArray.new(Bytes.empty)
         )
         if threshold = padding_threshold
@@ -83,7 +90,7 @@ module Parquet
       end
 
       def consume_batch : ::Arrow::ArrayBase
-        values = @record_reader.consume_record_data
+        values = @record_reader.consume_record_data.values
         len = @record_reader.values_written
         bitmap = @record_reader.consume_compact_bitmap
 

@@ -4,6 +4,7 @@ require "../array_reader"
 require "../schema/complex"
 require "./primitive_array"
 require "./byte_array"
+require "./byte_array_dictionary"
 require "./byte_view_array"
 require "./struct_array"
 require "./list_array"
@@ -26,9 +27,7 @@ require "./fixed_len_byte_array"
 #   and no virtual columns (`RowNumber`/`RowGroupIndex`), so `ParquetFieldType`
 #   only has primitive/group fields;
 # - not-yet-ported leaf readers raise `NYIError` instead of being built:
-#   `NullArrayReader` (`DataType::Null`), the byte-array dictionary reader, the
-#   fixed-length byte-array reader and INT96 (the numeric primitive reader does
-#   not model `Int96`);
+#   INT96 (the numeric primitive reader does not model `Int96`);
 # - `usize` counts are `Int32`, and the per-field `ReaderArgs` struct is replaced
 #   by three method parameters (`field`, `mask`, `padding_threshold`).
 module Parquet
@@ -255,7 +254,9 @@ module Parquet
         when Parquet::Type::BYTE_ARRAY
           case arrow_type.kind
           when .dictionary?
-            raise NYIError.new("byte array dictionary reader is not ported")
+            Arrow.make_byte_array_dictionary_reader(
+              page_iterator, column_desc, arrow_type, @batch_size, padding_threshold
+            )
           when .utf8_view?, .binary_view?
             Arrow.make_byte_view_array_reader(
               page_iterator, column_desc, arrow_type, @batch_size, padding_threshold
@@ -266,9 +267,15 @@ module Parquet
             )
           end
         else
-          Arrow.make_fixed_len_byte_array_reader(
-            page_iterator, column_desc, arrow_type, @batch_size, padding_threshold
-          )
+          if arrow_type.kind.dictionary?
+            Arrow.make_byte_array_dictionary_reader(
+              page_iterator, column_desc, arrow_type, @batch_size, padding_threshold
+            )
+          else
+            Arrow.make_fixed_len_byte_array_reader(
+              page_iterator, column_desc, arrow_type, @batch_size, padding_threshold
+            )
+          end
         end
       end
 

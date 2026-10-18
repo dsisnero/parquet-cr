@@ -20,13 +20,20 @@ module Parquet
     # An `ArrayReader` yielding `Arrow::NullArray`s (upstream
     # `NullArrayReader<T>`).
     class NullArrayReader < ArrayReader
+      # Crystal cannot infer this from the `typed_record_reader` call (generic
+      # method calls need an explicit instance variable type).
+      @record_reader : RecordReader::GenericRecordReader(
+        RecordReader::ArrayValuesBuffer(Int32),
+        Column::Reader::ColumnValueDecoderImpl(Int32),
+      )
+
       def initialize(
         @pages : Column::PageIterator,
         column_desc : Schema::ColumnDescriptor,
         batch_size : Int32,
         padding_threshold : Int16?,
       )
-        @record_reader = RecordReader::GenericRecordReader(Int32).new(column_desc, batch_size, 0)
+        @record_reader = RecordReader.typed_record_reader(column_desc, batch_size, 0)
         if threshold = padding_threshold
           @record_reader.set_padding_threshold(threshold)
         end

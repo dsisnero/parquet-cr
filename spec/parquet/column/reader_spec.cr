@@ -85,7 +85,7 @@ describe Parquet::Column::ColumnReaderImpl do
     values_buf = Parquet::Encodings::PlainEncoder(Int32).encode_all([1_i32, 2_i32, 3_i32])
     page = Page::DataPage.new(values_buf, 3_u32, Enc::PLAIN, Enc::RLE, Enc::RLE, nil)
 
-    reader = ColumnReaderImpl(Int32).new(descr, TestPageReader.new([page] of Parquet::Column::Page))
+    reader = Parquet::Column.column_reader(Int32, descr, TestPageReader.new([page] of Parquet::Column::Page))
     values = [] of Int32
     reader.read_records(3, nil, nil, values).should eq({3, 3, 3})
     values.should eq([1_i32, 2_i32, 3_i32])
@@ -97,7 +97,7 @@ describe Parquet::Column::ColumnReaderImpl do
     values_buf = Parquet::Encodings::PlainEncoder(Int32).encode_all([10_i32, 20_i32, 30_i32])
     page = Page::DataPage.new(concat_bytes(def_buf, values_buf), 5_u32, Enc::PLAIN, Enc::RLE, Enc::RLE, nil)
 
-    reader = ColumnReaderImpl(Int32).new(descr, TestPageReader.new([page] of Parquet::Column::Page))
+    reader = Parquet::Column.column_reader(Int32, descr, TestPageReader.new([page] of Parquet::Column::Page))
     def_levels = [] of Int16
     values = [] of Int32
     reader.read_records(5, def_levels, nil, values).should eq({5, 3, 5})
@@ -112,7 +112,7 @@ describe Parquet::Column::ColumnReaderImpl do
     values_buf = Parquet::Encodings::PlainEncoder(Int32).encode_all([1_i32, 2_i32, 3_i32, 4_i32, 5_i32])
     page = Page::DataPage.new(concat_bytes(rep_buf, def_buf, values_buf), 5_u32, Enc::PLAIN, Enc::RLE, Enc::RLE, nil)
 
-    reader = ColumnReaderImpl(Int32).new(descr, TestPageReader.new([page] of Parquet::Column::Page))
+    reader = Parquet::Column.column_reader(Int32, descr, TestPageReader.new([page] of Parquet::Column::Page))
     def_levels = [] of Int16
     rep_levels = [] of Int16
     values = [] of Int32
@@ -128,7 +128,7 @@ describe Parquet::Column::ColumnReaderImpl do
     buf = concat_bytes(def_buf, values_buf)
     page = Page::DataPageV2.new(buf, 3_u32, Enc::PLAIN, 1_u32, 3_u32, def_buf.size.to_u32, 0_u32, true, nil)
 
-    reader = ColumnReaderImpl(Int32).new(descr, TestPageReader.new([page] of Parquet::Column::Page))
+    reader = Parquet::Column.column_reader(Int32, descr, TestPageReader.new([page] of Parquet::Column::Page))
     def_levels = [] of Int16
     values = [] of Int32
     reader.read_records(3, def_levels, nil, values).should eq({3, 2, 3})
@@ -141,7 +141,7 @@ describe Parquet::Column::ColumnReaderImpl do
     values_buf = Parquet::Encodings::PlainEncoder(Int32).encode_all([1_i32, 2_i32, 3_i32, 4_i32, 5_i32])
     page = Page::DataPage.new(values_buf, 5_u32, Enc::PLAIN, Enc::RLE, Enc::RLE, nil)
 
-    reader = ColumnReaderImpl(Int32).new(descr, TestPageReader.new([page] of Parquet::Column::Page))
+    reader = Parquet::Column.column_reader(Int32, descr, TestPageReader.new([page] of Parquet::Column::Page))
     reader.skip_records(2).should eq(2)
 
     values = [] of Int32

@@ -23,10 +23,10 @@ module Parquet
     # returning the number of records read (upstream
     # `array_reader::read_records`).
     def self.read_records_from_pages(
-      record_reader : RecordReader::GenericRecordReader(T),
+      record_reader : RecordReader::GenericRecordReader(V, CV),
       pages : Column::PageIterator,
       batch_size : Int32,
-    ) : Int32 forall T
+    ) : Int32 forall V, CV
       records_read = 0
       while records_read < batch_size
         records_to_read = batch_size - records_read
@@ -46,10 +46,10 @@ module Parquet
     # Skips up to `batch_size` records from `pages` (upstream
     # `array_reader::skip_records`).
     def self.skip_records_from_pages(
-      record_reader : RecordReader::GenericRecordReader(T),
+      record_reader : RecordReader::GenericRecordReader(V, CV),
       pages : Column::PageIterator,
       batch_size : Int32,
-    ) : Int32 forall T
+    ) : Int32 forall V, CV
       records_skipped = 0
       while records_skipped < batch_size
         records_to_skip = batch_size - records_skipped
@@ -67,6 +67,13 @@ module Parquet
 
     # Reads parquet data into arrow primitive arrays.
     class PrimitiveArrayReader(T) < ArrayReader
+      # Crystal cannot infer this from the `typed_record_reader` call because the
+      # padded default value's type is the class's own type parameter.
+      @record_reader : RecordReader::GenericRecordReader(
+        RecordReader::ArrayValuesBuffer(T),
+        Column::Reader::ColumnValueDecoderImpl(T),
+      )
+
       def initialize(
         @pages : Column::PageIterator,
         column_desc : Schema::ColumnDescriptor,
@@ -75,7 +82,7 @@ module Parquet
         padding_threshold : Int16?,
       )
         @data_type = arrow_type || Arrow.parquet_to_arrow_field(column_desc).data_type
-        @record_reader = RecordReader::GenericRecordReader(T).new(column_desc, batch_size, default_value)
+        @record_reader = RecordReader.typed_record_reader(column_desc, batch_size, default_value)
         if threshold = padding_threshold
           @record_reader.set_padding_threshold(threshold)
         end
@@ -98,7 +105,7 @@ module Parquet
       def consume_batch : ::Arrow::ArrayBase
         target_type = @data_type
         len = @record_reader.values_written
-        values = @record_reader.consume_record_data
+        values = @record_reader.consume_record_data.values
         nulls = Arrow.null_buffer_from(@record_reader.consume_compact_bitmap, len)
 
         array = build_array(values, nulls, target_type)

@@ -7,16 +7,19 @@ require "../buffer/bit_util"
 # Ports the `ValuesBuffer` trait (null padding) and upstream's `ValuesBuffer for
 # Vec<T>` impl.
 #
-# Divergences: the trait is an abstract generic class and upstream's `Vec<T>`
-# impl becomes `ArrayValuesBuffer(T)` (reopening Crystal's `Array` for a mixin
-# would collide with stdlib constructors); the value used to pad is passed to the
-# constructor instead of relying on Rust's `Default` bound; upstream's
+# Divergences: the trait is an abstract class (Crystal cannot reopen the
+# stdlib's `Array` for a mixin, so upstream's `Vec<T>` impl becomes the separate
+# `ArrayValuesBuffer(T)`; the buffer subclasses are `ArrayValuesBuffer(T)`,
+# `Buffer::OffsetBuffer(I)` and `Buffer::DictionaryBuffer(K, V)`); the trait is
+# not generic over the value type — the concrete buffers own their element type,
+# which lets the record reader hold any of them; the value used to pad is passed
+# to the constructor instead of relying on Rust's `Default` bound; upstream's
 # `debug_assert!(level_pos >= value_pos)` is dropped; `usize` counts are `Int32`.
 module Parquet
   module Arrow
     module RecordReader
       # A buffer of decoded values that supports padding with nulls.
-      abstract class ValuesBuffer(T)
+      abstract class ValuesBuffer
         # Reserves capacity for `additional` more logical values.
         abstract def reserve_exact(additional : Int32) : Nil
 
@@ -38,7 +41,7 @@ module Parquet
 
       # The `Vec<T>` implementation of `ValuesBuffer` (upstream
       # `impl<T: Copy + Default> ValuesBuffer for Vec<T>`).
-      class ArrayValuesBuffer(T) < ValuesBuffer(T)
+      class ArrayValuesBuffer(T) < ValuesBuffer
         getter values : Array(T)
         # The value inserted for null slots.
         getter default : T
