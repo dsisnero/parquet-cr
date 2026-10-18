@@ -36,11 +36,13 @@ little-endian layout.
 - Current focus: **Arrow interop is underway.** `parquet-cr` now depends on the
   sibling `arrow-cr` port (`path: ../arrow-cr`) and the first chunk — the
   Arrow → Parquet *schema* direction (`Parquet::Arrow::ArrowSchemaConverter`) —
-  is complete. The next arrow feature is the Parquet → Arrow schema direction
-  (`ParquetField`/`Visitor`/`parquet_to_arrow_schema*`), which is available
-  except for the `ARROW:schema` IPC fast path (blocked on arrow-cr's
-  `arrow-ipc`; see `shards_info/arrow_cr.1.md`). Everything else on this
-  roadmap is complete, blocked (async/object_store), or deferred
+  is complete, and so is the `ARROW:schema` IPC metadata round-trip
+  (`encode_arrow_schema`/`get_arrow_schema_from_metadata`/
+  `add_encoded_arrow_schema_to_metadata`, using arrow-cr's `arrow-ipc` schema
+  message). The next arrow feature is the Parquet → Arrow schema direction
+  (`ParquetField`/`Visitor`/`parquet_to_arrow_schema*`), which is now fully
+  unblocked. Everything else on this roadmap is complete, blocked
+  (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
   `column/page_store.rs`, the arrow reader/writer). Done so far:
   - `parquet-variant` (`src/parquet_variant/`): `VariantPath`/
@@ -186,7 +188,15 @@ little-endian layout.
     `spec/parquet/arrow/schema_spec.cr` (upstream `test_field_to_column_desc`,
     `test_coerced_map_list`, `test_empty_struct_field` + the doc example,
     field ids, non-logical-type physical mappings, date64 coercion, root name,
-    decimal byte lengths).
+    decimal byte lengths). Schema metadata: `encode_arrow_schema`
+    (legacy `0xFF*4 + u32le(len)` prefix + base64 of the arrow-cr IPC schema
+    `Message`), `get_arrow_schema_from_metadata` (handles both the framed and
+    raw-flatbuffer shapes), and `add_encoded_arrow_schema_to_metadata` (adds or
+    replaces `ARROW:schema` in `WriterProperties#key_value_metadata`, flattening
+    run-end-encoded fields). The encoded metadata written by this port is
+    accepted by upstream `parquet-read` (arrow-rs 60.0.0), and the port decodes
+    it back to the original schema (incl. schema/field metadata, dictionaries,
+    decimals, timestamps, nested lists).
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -294,10 +304,10 @@ little-endian layout.
       `vendor/arrow-rs/parquet/src/file/serialized_reader.rs`
       (`SerializedPageReaderState`), `src/parquet/file/serialized_reader.cr`,
       `src/parquet/file/reader.cr`.
-  11. ~~Arrow interop: Arrow → Parquet schema.~~ **complete** — see the Phase 3.5
-      checklist; `arrow-cr` is a `path: ../arrow-cr` dependency now. The next
-      arrow feature is the Parquet → Arrow schema direction (Phase 3.5, first
-      unchecked item).
+  11. ~~Arrow interop: Arrow → Parquet schema + `ARROW:schema` metadata.~~
+      **complete** — see the Phase 3.5 checklist; `arrow-cr` is a
+      `path: ../arrow-cr` dependency now. The next arrow feature is the
+      Parquet → Arrow schema direction (Phase 3.5, first unchecked item).
   12. Deferred / blocked (recorded divergences and candidates):
      - **Blocked on the separate `../arrow-cr` port**: `parquet/src/arrow/`, the
        `column/page_store.rs` module (only consumed by the arrow writer), the
@@ -560,12 +570,12 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow schema converter (arrow -> parquet)`; gates green
-  (`make lint`, `make test` -> 888 examples, 0 failures). Next feature: the
-  Parquet → Arrow schema direction (Phase 3.5). Note `make install` now requires
-  the sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 1825 `ported`, 181 `intentional_divergence`,
-  11 `skipped`, 1498 `missing` (of 3515 rows).
+- Last commit: `port: arrow schema metadata`; gates green (`make lint`,
+  `make test` -> 895 examples, 0 failures). Next feature: the Parquet → Arrow
+  schema direction (Phase 3.5). Note `make install` now requires the sibling
+  checkout `../arrow-cr`.
+- Progress by counts (ledger): 1827 `ported`, 181 `intentional_divergence`,
+  11 `skipped`, 1496 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1122,14 +1132,16 @@ Chunk status by area:
         `arrow_to_parquet_type`, `field_id`, `decimal_length_from_precision`,
         and the `PARQUET_*` naming constants (`src/parquet/arrow/schema.cr`,
         `spec/parquet/arrow/schema_spec.cr`).
+  - [x] `arrow/schema/mod.rs` schema metadata: `encode_arrow_schema`,
+        `get_arrow_schema_from_metadata`, `add_encoded_arrow_schema_to_metadata`
+        (+ `flatten_ree_field`) over arrow-cr's `Arrow::Ipc.schema_message`/
+        `read_message`; `ARROW_SCHEMA_META_KEY`/`PARQUET_FIELD_ID_META_KEY`.
 - [ ] `arrow/schema` Parquet → Arrow direction: `ParquetField`/
       `ParquetFieldType`/`VisitorContext`/`Visitor` (`complex.rs`),
       `parquet_to_arrow_schema[_by_columns]`, `parquet_to_arrow_field`,
-      `FieldLevels`/`parquet_to_arrow_field_levels`, `parse_key_value_metadata`.
-      Can be ported now, except the "use the embedded `ARROW:schema`" branch,
-      which needs arrow-cr's `arrow-ipc` schema flatbuffers
-      (`encode_arrow_schema`/`get_arrow_schema_from_metadata`) — see
-      `shards_info/arrow_cr.1.md`.
+      `FieldLevels`/`parquet_to_arrow_field_levels`, `parse_key_value_metadata`
+      (plus `ProjectionMask` for the by-columns variant). Fully unblocked now
+      that the `ARROW:schema` decode side is ported.
 - [ ] `arrow/array_reader/`, `arrow/record_reader/`, `arrow/levels.rs`
       (parquet pages → Arrow arrays).
 - [ ] `arrow/arrow_reader/` (`ParquetRecordBatchReader`, `RowFilter`,
@@ -1273,7 +1285,18 @@ Chunk status by area:
   `renamed_field`/`retyped_field` (see `shards_info/arrow_cr.1.md`).
   `SchemaDescriptor` gained the upstream-derived `==` (`schema`/`leaves`/
   `leaf_to_base`) so descriptors can be compared like upstream's
-  `assert_eq!(schema, expected)`.
+  `assert_eq!(schema, expected)`. Schema metadata: `encode_arrow_schema` uses
+  arrow-cr's `Arrow::Ipc.schema_message` (upstream
+  `IpcDataGenerator::schema_to_bytes_with_dictionary_tracker`), and
+  `get_arrow_schema_from_metadata` feeds the decoded bytes to
+  `Arrow::Ipc.read_message` (upstream strips the legacy prefix and calls
+  `root_as_message`); because arrow-cr's flatbuffer reader raises `IndexError`
+  on garbage, any non-`ParquetError` failure is wrapped as
+  `ArrowError("Unable to get root as message stored in ARROW:schema, …")`.
+  `WriterProperties#key_value_metadata` is a writable `property` (upstream
+  `pub(crate)`) so `add_encoded_arrow_schema_to_metadata` can mutate it.
+  Upstream's `{:?}` error formatting is approximated with the underlying
+  message.
 - Derive macros: `parquet_derive`'s proc macros (`#[derive(ParquetRecordWriter)]`
   / `ParquetRecordReader`) are replaced by `include Parquet::Derive::Record`.
   Rust impls `RecordWriter for &[T]` and `RecordReader for Vec<T>`; Crystal

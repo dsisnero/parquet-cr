@@ -296,3 +296,101 @@ describe Parquet::Arrow::ArrowSchemaConverter do
     PArrow.decimal_length_from_precision(39).should eq(17)
   end
 end
+
+# Ported from `parquet/src/arrow/schema/mod.rs`
+# (`encode_arrow_schema`, `get_arrow_schema_from_metadata`,
+# `add_encoded_arrow_schema_to_metadata`, `flatten_ree_field`).
+#
+# `arrow-ipc`'s schema `Message` flatbuffer lives in arrow-cr
+# (`Arrow::Ipc.schema_message` / `Arrow::Ipc.read_message`), so the
+# `ARROW:schema` metadata round-trip is portable.
+private alias PWriterProperties = Parquet::File::Properties::WriterProperties
+
+private def sample_arrow_schema : ArrowSchema
+  ArrowSchema.new(
+    ArrowFields.new([
+      ArrowField.new("a", ArrowDataType.int64, false),
+      ArrowField.new("b", ArrowDataType.utf8, true),
+      ArrowField.new_list("c", ArrowField.new("element", ArrowDataType.float64, true), true),
+      ArrowField.new("d", ArrowDataType.decimal128(30, 2), true),
+      ArrowField.new("e", ArrowDataType.timestamp(ArrowTimeUnit::Microsecond, "UTC"), true),
+      ArrowField.new_dictionary("f", ArrowDataType.int32, ArrowDataType.utf8, false),
+    ]),
+    Arrow::Metadata.from({"created_by" => "parquet-cr"})
+  )
+end
+
+describe "Parquet::Arrow schema metadata" do
+  it "round-trips an arrow schema through the ARROW:schema metadata" do
+    schema = sample_arrow_schema
+    encoded = PArrow.encode_arrow_schema(schema)
+    encoded.should_not be_empty
+
+    decoded = PArrow.get_arrow_schema_from_metadata(encoded)
+    decoded.should eq(schema)
+  end
+
+  it "encodes the legacy 8-byte IPC length prefix" do
+    encoded = PArrow.encode_arrow_schema(sample_arrow_schema)
+    bytes = Base64.decode(encoded)
+    bytes[0, 4].should eq(Bytes[0xFF_u8, 0xFF_u8, 0xFF_u8, 0xFF_u8])
+
+    # The prefix length is the size of the remaining flatbuffer.
+    length = IO::ByteFormat::LittleEndian.decode(Int32, bytes[4, 4])
+    length.should eq(bytes.size - 8)
+  end
+
+  it "adds the encoded arrow schema to writer properties" do
+    schema = sample_arrow_schema
+    props = PWriterProperties.default
+    PArrow.add_encoded_arrow_schema_to_metadata(schema, props)
+
+    metadata = props.key_value_metadata.not_nil!
+    entry = metadata.find { |kv| kv.key == PArrow::ARROW_SCHEMA_META_KEY }.not_nil!
+    PArrow.get_arrow_schema_from_metadata(entry.value.not_nil!).should eq(schema)
+  end
+
+  it "replaces an existing encoded arrow schema" do
+    props = PWriterProperties.default
+    props.key_value_metadata = [
+      Parquet::File::Metadata::KeyValue.new("foo", "bar"),
+      Parquet::File::Metadata::KeyValue.new(PArrow::ARROW_SCHEMA_META_KEY, "stale"),
+    ]
+
+    PArrow.add_encoded_arrow_schema_to_metadata(sample_arrow_schema, props)
+
+    metadata = props.key_value_metadata.not_nil!
+    metadata.count { |kv| kv.key == PArrow::ARROW_SCHEMA_META_KEY }.should eq(1)
+    metadata[0].key.should eq("foo")
+    PArrow.get_arrow_schema_from_metadata(metadata[1].value.not_nil!).should eq(sample_arrow_schema)
+  end
+
+  # `flatten_ree_field`: run-end encoded fields are written as their value type.
+  it "flattens run-end encoded fields in the stored schema" do
+    values = ArrowField.new("values", ArrowDataType.utf8, true)
+    run_ends = ArrowField.new("run_ends", ArrowDataType.int32, false)
+    schema = ArrowSchema.new(ArrowFields.new([
+      ArrowField.new("ree", ArrowDataType.run_end_encoded(run_ends, values), true),
+    ]))
+
+    props = PWriterProperties.default
+    PArrow.add_encoded_arrow_schema_to_metadata(schema, props)
+    entry = props.key_value_metadata.not_nil!.find { |kv| kv.key == PArrow::ARROW_SCHEMA_META_KEY }.not_nil!
+    decoded = PArrow.get_arrow_schema_from_metadata(entry.value.not_nil!)
+
+    decoded.fields[0].name.should eq("ree")
+    decoded.fields[0].data_type.should eq(ArrowDataType.utf8)
+  end
+
+  it "rejects values that are not base64" do
+    expect_raises(Parquet::ArrowError, "Unable to decode the encoded schema stored in ARROW:schema") do
+      PArrow.get_arrow_schema_from_metadata("!!!not base64!!!")
+    end
+  end
+
+  it "rejects base64 that is not an IPC message" do
+    expect_raises(Parquet::ArrowError, "Unable to get root as message stored in ARROW:schema") do
+      PArrow.get_arrow_schema_from_metadata(Base64.strict_encode(Bytes[1_u8, 2, 3, 4, 5, 6, 7, 8, 9, 10]))
+    end
+  end
+end

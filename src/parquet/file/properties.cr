@@ -325,7 +325,9 @@ module Parquet
         getter bloom_filter_for_dictionary_encoded_chunks : Bool
         getter writer_version : WriterVersion
         getter created_by : String
-        getter key_value_metadata : Array(Metadata::KeyValue)?
+        # Divergence: upstream keeps this `pub(crate)`; the arrow schema
+        # metadata helper mutates it (`add_encoded_arrow_schema_to_metadata`).
+        property key_value_metadata : Array(Metadata::KeyValue)?
         getter sorting_columns : Array(Metadata::SortingColumn)?
         getter column_index_truncate_length : Int32?
         getter statistics_truncate_length : Int32?

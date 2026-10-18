@@ -1,19 +1,23 @@
+require "base64"
 require "arrow-cr"
 require "../basic"
 require "../errors"
+require "../file/metadata"
+require "../file/properties"
 require "../schema/types"
 
 # Ported from `parquet/src/arrow/schema/mod.rs` (the Arrow -> Parquet direction)
 # and `parquet/src/arrow/schema/extension.rs` (apache/arrow-rs 60.0.0,
 # ef1fa157977633f0ba21aa921f9ef3d5c669235b).
 #
-# Ports `ArrowSchemaConverter`, `arrow_to_parquet_type`,
-# `field_id`, and `decimal_length_from_precision`.
+# Ports `ArrowSchemaConverter`, `arrow_to_parquet_type`, `field_id`,
+# `decimal_length_from_precision`, `encode_arrow_schema`,
+# `get_arrow_schema_from_metadata`, and
+# `add_encoded_arrow_schema_to_metadata` (the `ARROW:schema` IPC round-trip uses
+# arrow-cr's `arrow-ipc` schema message).
 #
-# The other direction (`parquet_to_arrow_schema*`, `ParquetField`,
-# `FieldLevels`, `parquet_to_arrow_field`, `encode_arrow_schema`/
-# `get_arrow_schema_from_metadata`) needs arrow-cr's `arrow-ipc` schema
-# flatbuffers and is tracked in `shards_info/arrow_cr.1.md`.
+# The other direction (`parquet_to_arrow_schema*`, `ParquetField`, `Visitor`,
+# `FieldLevels`, `parquet_to_arrow_field`) is the next arrow feature.
 #
 # Divergences: upstream's `ArrowSchemaConverter::with_*` builders consume `self`
 # and return a new converter; the port mutates the converter and returns `self`
@@ -54,6 +58,110 @@ module Parquet
     def self.field_id(field : ::Arrow::Field) : Int32?
       value = field.metadata.get(PARQUET_FIELD_ID_META_KEY)
       value.try(&.to_i?)
+    end
+
+    # Encodes the Arrow schema into the IPC format and base64-encodes it
+    # (upstream `encode_arrow_schema`).
+    #
+    # The payload is the legacy IPC framing: four `0xFF` continuation bytes, the
+    # little-endian flatbuffer length, then the IPC `Message` flatbuffer whose
+    # header carries the schema.
+    def self.encode_arrow_schema(schema : ::Arrow::Schema) : String
+      ipc_message = ::Arrow::Ipc.schema_message(schema)
+
+      prefix = Bytes.new(8)
+      prefix[0] = 0xFF_u8
+      prefix[1] = 0xFF_u8
+      prefix[2] = 0xFF_u8
+      prefix[3] = 0xFF_u8
+      IO::ByteFormat::LittleEndian.encode(ipc_message.size.to_i32, prefix[4, 4])
+
+      Base64.strict_encode(Bytes.new(prefix.size + ipc_message.size) { |i| i < prefix.size ? prefix[i] : ipc_message[i - prefix.size] })
+    end
+
+    # Tries to convert the `ARROW:schema` metadata value into an Arrow schema
+    # (upstream `get_arrow_schema_from_metadata`).
+    def self.get_arrow_schema_from_metadata(encoded_meta : String) : ::Arrow::Schema
+      bytes =
+        begin
+          Base64.decode(encoded_meta)
+        rescue error : Base64::Error
+          # The C++ implementation returns an error if the schema can't be parsed.
+          raise arrow_err!("Unable to decode the encoded schema stored in #{ARROW_SCHEMA_META_KEY}, #{error.message}")
+        end
+
+      # Upstream strips the legacy prefix and calls `root_as_message`; the port
+      # hands both shapes to the IPC message reader, which understands the
+      # legacy `0xFF*4 + len` framing, so raw flatbuffers get framed first.
+      slice = if bytes.size > 8 && bytes[0, 4] == Bytes[0xFF_u8, 0xFF_u8, 0xFF_u8, 0xFF_u8]
+                bytes
+              else
+                framed = Bytes.new(bytes.size + 8)
+                framed[0] = 0xFF_u8
+                framed[1] = 0xFF_u8
+                framed[2] = 0xFF_u8
+                framed[3] = 0xFF_u8
+                IO::ByteFormat::LittleEndian.encode(bytes.size.to_i32, framed[4, 4])
+                bytes.copy_to(framed[8, bytes.size])
+                framed
+              end
+
+      message =
+        begin
+          # The flatbuffers implementation returns an error on a verification
+          # error. arrow-cr's flatbuffer reader can also raise `IndexError` on a
+          # truncated/garbage buffer (see `shards_info/arrow_cr.1.md`), so wrap
+          # any failure here.
+          ::Arrow::Ipc.read_message(slice)[0]
+        rescue error : ParquetError
+          raise error
+        rescue error
+          raise arrow_err!("Unable to get root as message stored in #{ARROW_SCHEMA_META_KEY}, #{error.message}")
+        end
+
+      schema = message.try(&.schema)
+      raise arrow_err!("the message is not Arrow Schema") unless schema
+      schema
+    end
+
+    # Stores the encoded Arrow schema hint in `WriterProperties` under
+    # `ARROW:schema`, replacing any existing value (upstream
+    # `add_encoded_arrow_schema_to_metadata`).
+    #
+    # Run-end encoded fields are flattened to their value type (upstream
+    # `flatten_ree_field`).
+    def self.add_encoded_arrow_schema_to_metadata(
+      schema : ::Arrow::Schema,
+      props : File::Properties::WriterProperties,
+    ) : Nil
+      has_ree = schema.fields.any?(&.data_type.kind.run_end_encoded?)
+      encoded = if has_ree
+                  flat_fields = schema.fields.map { |field| flatten_ree_field(field) }
+                  encode_arrow_schema(::Arrow::Schema.new(::Arrow::Fields.from(flat_fields), schema.metadata))
+                else
+                  encode_arrow_schema(schema)
+                end
+
+      schema_kv = File::Metadata::KeyValue.new(ARROW_SCHEMA_META_KEY, encoded)
+      meta = props.key_value_metadata || [] of File::Metadata::KeyValue
+
+      # `ARROW:schema` is overwritten if it already exists.
+      if index = meta.index { |entry| entry.key == ARROW_SCHEMA_META_KEY }
+        meta.delete_at(index)
+      end
+      meta << schema_kv
+
+      props.key_value_metadata = meta
+    end
+
+    # Upstream `flatten_ree_field`.
+    private def self.flatten_ree_field(field : ::Arrow::Field) : ::Arrow::Field
+      if field.data_type.kind.run_end_encoded?
+        values = field.data_type.field2 || raise general_err!("RunEndEncoded is missing its values field")
+        retyped_field(field, values.data_type)
+      else
+        field
+      end
     end
 
     # Returns a copy of `field` with a new name.
