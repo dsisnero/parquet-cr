@@ -993,15 +993,15 @@ parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.read_recor
 parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.skip_records	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.take_range	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.try_new	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.as_any	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.consume_batch	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.get_data_type	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.get_def_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.get_rep_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.max_def_level	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.new	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.read_records	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.skip_records	method	missing	-	auto-generated
+parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.as_any	method	intentional_divergence	src/parquet/arrow/array_reader/struct_array.cr	`as_any` not modelled (Crystal `is_a?`)
+parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.consume_batch	method	ported	src/parquet/arrow/array_reader/struct_array.cr	StructArrayReader#consume_batch (builds the StructArray + level-derived null bitmap)
+parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.get_data_type	method	ported	src/parquet/arrow/array_reader/struct_array.cr	StructArrayReader#data_type
+parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.get_def_levels	method	ported	src/parquet/arrow/array_reader/struct_array.cr	StructArrayReader#def_levels (first child)
+parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.get_rep_levels	method	ported	src/parquet/arrow/array_reader/struct_array.cr	StructArrayReader#rep_levels (first child)
+parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.max_def_level	method	ported	src/parquet/arrow/array_reader/struct_array.cr	StructArrayReader#max_def_level
+parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.new	method	ported	src/parquet/arrow/array_reader/struct_array.cr	StructArrayReader#initialize(data_type, children, def_level, rep_level, nullable, padding_threshold)
+parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.read_records	method	ported	src/parquet/arrow/array_reader/struct_array.cr	StructArrayReader#read_records (children kept in sync)
+parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.skip_records	method	ported	src/parquet/arrow/array_reader/struct_array.cr	StructArrayReader#skip_records (children kept in sync)
 parquet/src/arrow/array_reader/test_util.rs::method::EmptyPageIterator.next	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/filter.rs::method::ArrowPredicateFn<F>.evaluate	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/filter.rs::method::ArrowPredicateFn<F>.new	method	missing	-	auto-generated

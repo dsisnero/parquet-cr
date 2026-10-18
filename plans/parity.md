@@ -57,10 +57,11 @@ little-endian layout.
   are available to specs (`spec/support/array_reader_util.cr`). The
   variable-length leaf readers are done: `ByteArrayReader` (Utf8/Binary, small
   and large offsets) and `ByteViewArrayReader` (Utf8View/BinaryView), both over
-  the shared record reader. The next arrow feature is
-  `FixedLenByteArrayReader` (needs arrow-cr decimal/float16/interval arrays) or,
-  preferably, the composite readers (`List`/`Struct`/`Map`) and then
-  `ArrayReaderBuilder`. Everything else
+  the shared record reader, and the first composite reader
+  (`StructArrayReader`) is done. The next arrow feature is `ListArrayReader`
+  (+ `Map`/`FixedSizeList`/`Null`), then `ArrayReaderBuilder`; the leaf
+  `FixedLenByteArrayReader` needs arrow-cr decimal/float16/interval arrays first.
+  Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
   `column/page_store.rs`, the arrow reader/writer). Done so far:
@@ -325,7 +326,18 @@ little-endian layout.
     `GenericRecordReader` (plain, dictionary and delta encodings, null padding,
     `def_levels`/`rep_levels`, skipping). Specs:
     `spec/parquet/arrow/byte_array_reader_spec.cr` and
-    `spec/parquet/arrow/byte_view_array_reader_spec.cr`.
+    `spec/parquet/arrow/byte_view_array_reader_spec.cr`. Struct reader
+    (`src/parquet/arrow/array_reader/struct_array.cr`): `StructArrayReader`
+    (child readers kept in sync on read/skip with the upstream out-of-sync
+    errors, `data_type`, `consume_batch` building the `StructArray` with a null
+    bitmap from the first child's levels via
+    `build_filtered_validity_bitmap`, `def_levels`/`rep_levels` forwarded from
+    the first child, `max_def_level`, selective padding). Specs:
+    `spec/parquet/arrow/struct_array_reader_spec.cr` ports the upstream
+    `test_struct_array_reader` (`[true, false, false, false, false]` nulls plus
+    the level buffers) and adds coverage for the struct def level, a
+    non-nullable struct, an empty reader, skipping, both out-of-sync errors, and
+    selective padding (parent-level entries dropped).
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -699,13 +711,13 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow byte-view array reader`; gates green (`make lint`,
-  `make test` -> 1017 examples, 0 failures). Next feature: the composite readers
-  (`List`/`Struct`/`Map`) and `ArrayReaderBuilder`, or `FixedLenByteArrayReader`
-  once arrow-cr has decimal/float16/interval arrays. Note `make install` now
-  requires the sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 1939 `ported`, 183 `intentional_divergence`,
-  13 `skipped`, 1380 `missing` (of 3515 rows).
+- Last commit: `port: arrow struct array reader`; gates green (`make lint`,
+  `make test` -> 1025 examples, 0 failures). Next feature: `ListArrayReader`
+  (then `Map`/`FixedSizeList`/`Null` and `ArrayReaderBuilder`), or
+  `FixedLenByteArrayReader` once arrow-cr has decimal/float16/interval arrays.
+  Note `make install` now requires the sibling checkout `../arrow-cr`.
+- Progress by counts (ledger): 1947 `ported`, 184 `intentional_divergence`,
+  13 `skipped`, 1371 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1291,12 +1303,15 @@ Chunk status by area:
         (Utf8/LargeUtf8/Binary/LargeBinary) and `ByteViewArrayReader`
         (Utf8View/BinaryView) are done, with the `OffsetBuffer`/`ViewBuffer`
         values buffers, `DefinitionLevelBuffer` and the `DictIndexDecoder`/
-        `DeltaByteArrayDecoder`. Remaining: `FixedLenByteArrayReader`
-        (decimal/float16/interval targets need arrow-cr array support),
-        `ByteArrayDictionaryReader`, the byte-array/value decoders
-        (`ByteArrayColumnValueDecoder`/`ByteViewArrayColumnValueDecoder`), the
-        composite readers (`List`/`Struct`/`Map`/`FixedSizeList`/`ListView`/
-        `Null`), `ArrayReaderBuilder`, and the placeholder/cached readers.
+        `DeltaByteArrayDecoder`. Composite readers:
+        `StructArrayReader` (`src/parquet/arrow/array_reader/struct_array.cr`,
+        level-derived struct null bitmap, children kept in sync). Remaining:
+        `FixedLenByteArrayReader` (decimal/float16/interval targets need
+        arrow-cr array support), `ByteArrayDictionaryReader`, the byte-array/
+        value decoders (`ByteArrayColumnValueDecoder`/
+        `ByteViewArrayColumnValueDecoder`), the remaining composite readers
+        (`List`/`Map`/`FixedSizeList`/`ListView`/`Null`),
+        `ArrayReaderBuilder`, and the placeholder/cached readers.
 - [ ] `arrow/array_reader/`, `arrow/record_reader/`, `arrow/levels.rs`
       (parquet pages → Arrow arrays).
 - [ ] `arrow/arrow_reader/` (`ParquetRecordBatchReader`, `RowFilter`,
