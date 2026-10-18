@@ -2,6 +2,7 @@ require "arrow-cr"
 require "../errors"
 require "./array_reader"
 require "./array_reader/builder"
+require "./read_plan"
 require "./mod"
 require "./schema"
 require "../file/reader"
@@ -80,6 +81,9 @@ module Parquet
         @fields : ParquetField?,
         @batch_size : Int32 = ArrayReaderBuilder::DEFAULT_BATCH_SIZE,
         @projection : ProjectionMask = ProjectionMask.all,
+        @row_selection : RowSelection? = nil,
+        @offset : Int32? = nil,
+        @limit : Int32? = nil,
       )
       end
 
@@ -108,6 +112,25 @@ module Parquet
         self
       end
 
+      # Only reads the rows selected by `selection` (upstream
+      # `with_row_selection`).
+      def with_row_selection(selection : RowSelection) : self
+        @row_selection = selection
+        self
+      end
+
+      # Skips the first `offset` selected rows (upstream `with_offset`).
+      def with_offset(offset : Int32) : self
+        @offset = offset
+        self
+      end
+
+      # Reads at most `limit` selected rows (upstream `with_limit`).
+      def with_limit(limit : Int32) : self
+        @limit = limit
+        self
+      end
+
       # The parquet schema descriptor.
       def parquet_schema : Schema::SchemaDescriptor
         @metadata.file_metadata.schema_descr
@@ -124,7 +147,13 @@ module Parquet
         array_reader = ArrayReaderBuilder.new(row_groups, batch_size)
           .build_array_reader(@fields, @projection)
 
-        ParquetRecordBatchReader.new(array_reader, batch_size)
+        plan = ReadPlanBuilder.new(batch_size)
+          .with_selection(@row_selection)
+          .limited(@metadata.file_metadata.num_rows.to_i32)
+        plan = plan.with_offset(@offset) if @offset
+        plan = plan.with_limit(@limit) if @limit
+
+        ParquetRecordBatchReader.new(array_reader, plan.build_limited.build)
       end
     end
 
@@ -135,13 +164,18 @@ module Parquet
 
       # The projected schema (derived from the array reader's data type).
       getter schema : ::Arrow::Schema
-      # The number of rows requested per batch.
-      getter batch_size : Int32
+      # The read plan (batch size + row selection cursor).
+      getter read_plan : ReadPlan
 
-      def initialize(@array_reader : ArrayReader, @batch_size : Int32)
+      def initialize(@array_reader : ArrayReader, @read_plan : ReadPlan)
         data_type = @array_reader.data_type
         fields = data_type.fields || ::Arrow::Fields.empty
         @schema = ::Arrow::Schema.new(fields)
+      end
+
+      # The number of rows requested per batch.
+      def batch_size : Int32
+        @read_plan.batch_size
       end
 
       # Creates a reader for `reader` with the given batch size (upstream
@@ -154,9 +188,46 @@ module Parquet
 
       # Returns the next batch, or `nil` at the end of the file.
       def next_batch : ::Arrow::RecordBatch?
-        return nil if @batch_size == 0
+        batch_size = @read_plan.batch_size
+        return nil if batch_size == 0
 
-        @array_reader.read_records(@batch_size)
+        cursor = @read_plan.cursor
+        if selectors = cursor.as?(RowSelectionCursor::SelectorsCursor)
+          read_records = 0
+          while read_records < batch_size && !selectors.empty?
+            front = selectors.next_selector
+            if front.skip?
+              skipped = @array_reader.skip_records(front.row_count)
+              if skipped != front.row_count
+                raise general_err!(
+                  "failed to skip rows, expected #{front.row_count}, got #{skipped}"
+                )
+              end
+              next
+            end
+
+            # Zero-row selectors are treated as end-of-reader.
+            next if front.row_count == 0
+
+            need_read = batch_size - read_records
+            remaining = front.row_count - need_read
+            to_read =
+              if remaining > 0
+                selectors.return_selector(RowSelector.select(remaining))
+                need_read
+              else
+                front.row_count
+              end
+
+            read = @array_reader.read_records(to_read)
+            break if read == 0
+
+            read_records += read
+          end
+        else
+          @array_reader.read_records(batch_size)
+        end
+
         batch = consume_record_batch(@array_reader)
         batch.num_rows > 0 ? batch : nil
       end

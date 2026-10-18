@@ -66,12 +66,13 @@ little-endian layout.
   selective-padding threshold) and the batch-reading core
   (`ArrowReaderMetadata`, `ParquetRecordBatchReaderBuilder`,
   `ParquetRecordBatchReader`) are done, so a parquet file can be read end to end
-  as `Arrow::RecordBatch`es, and the first piece of row selection
-  (`RowSelector` + the selector-backed `RowSelection` with
-  offset/limit/trim/split_off) is done. The next arrow feature is the
-  selectors cursor + `read_plan.rs` wiring (`with_row_selection`/
-  `with_offset`/`with_limit`), then `RowFilter`/statistics pruning; the
-  remaining leaf readers
+  as `Arrow::RecordBatch`es, and row selection is wired end to end: the
+  selector-backed `RowSelection`/`RowSelector`, the selector cursor and the
+  `ReadPlan`/`ReadPlanBuilder`/`LimitedReadPlanBuilder` behind
+  `with_row_selection`/`with_offset`/`with_limit` (skips are pushed down as
+  `skip_records`). The next arrow feature is `RowFilter` + statistics pruning,
+  the bitmap row-selection backing (`selection/boolean.rs`/`algebra.rs`) and
+  page pruning (`loaded_row_ranges`); the remaining leaf readers
   (`NullArrayReader`/`ByteArrayDictionaryReader`/`FixedLenByteArrayReader`) are
   blocked on arrow-cr `NullArray`/decimal/float16/interval arrays. Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
@@ -438,7 +439,21 @@ little-endian layout.
     `spec/parquet/arrow/row_selection_spec.cr` ports all upstream
     `selection/selector.rs` tests (normalization, combining, ranges,
     `offset`, `limit`, `split_off`, `trim`) and the selector-backed
-    `selection/mod.rs` tests.
+    `selection/mod.rs` tests. Read plan (`src/parquet/arrow/read_plan.cr`):
+    `ReadPlanBuilder` (`new`, `with_selection`, `selection`, `selects_any?`,
+    `num_rows_selected`, `limited`), `LimitedReadPlanBuilder` (`with_offset`,
+    `with_limit`, `build_limited` — clamping the limit to the row count,
+    emptying the plan when the offset covers every row, applying offset/limit
+    to an existing selection) and `ReadPlan` (`batch_size`, `cursor`) with the
+    `RowSelectionCursor` (`AllCursor` / `SelectorsCursor` with
+    `next_selector`/`return_selector`/`position`). The reader consumes the
+    cursor in `next_batch`: skip runs call `ArrayReader#skip_records` (errors
+    when fewer rows were skipped), select runs are read up to the batch size
+    and returned to the cursor when partially consumed. Specs:
+    `spec/parquet/arrow/read_plan_spec.cr` (builder/cursor/limits) and the row
+    plan group of `spec/parquet/arrow/arrow_reader_spec.cr` (offset+limit,
+    row selection, selected batches split by `batch_size`, selection combined
+    with offset/limit, and empty plans).
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -812,16 +827,15 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow row selection`; gates green (`make lint`,
-  `make test` -> 1080 examples, 0 failures). Next feature: the selectors cursor
-  and `read_plan.rs`, wiring `with_row_selection`/`with_offset`/`with_limit`
-  into the batch reader, then `RowFilter`/`statistics.rs`; the remaining leaf
-  readers (`NullArrayReader`/`ByteArrayDictionaryReader`/
-  `FixedLenByteArrayReader`) wait on arrow-cr array types (`NullArray`,
-  decimals, float16, intervals). Note `make install` now requires the sibling
-  checkout `../arrow-cr`.
-- Progress by counts (ledger): 2027 `ported`, 218 `intentional_divergence`,
-  13 `skipped`, 1257 `missing` (of 3515 rows).
+- Last commit: `port: arrow read plan`; gates green (`make lint`,
+  `make test` -> 1096 examples, 0 failures). Next feature: `RowFilter` +
+  `statistics.rs`, the bitmap row-selection backing (`selection/boolean.rs`/
+  `algebra.rs`) and page pruning; the remaining leaf readers
+  (`NullArrayReader`/`ByteArrayDictionaryReader`/`FixedLenByteArrayReader`)
+  wait on arrow-cr array types (`NullArray`, decimals, float16, intervals).
+  Note `make install` now requires the sibling checkout `../arrow-cr`.
+- Progress by counts (ledger): 2048 `ported`, 225 `intentional_divergence`,
+  13 `skipped`, 1229 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1427,7 +1441,10 @@ Chunk status by area:
         `ParquetRecordBatchReaderBuilder`, `ParquetRecordBatchReader`) and the
         selector-backed row selection (`src/parquet/arrow/row_selection.cr`:
         `RowSelector` + `RowSelection` with consecutive ranges,
-        offset/limit/trim/split_off and the row counts). Remaining:
+        offset/limit/trim/split_off and the row counts), plus the read plan
+        (`src/parquet/arrow/read_plan.cr`: `ReadPlan`,
+        `ReadPlanBuilder`/`LimitedReadPlanBuilder`, and the
+        `RowSelectionCursor` all/selectors cursors). Remaining:
         `FixedLenByteArrayReader` (decimal/float16/interval targets need
         arrow-cr array support), `ByteArrayDictionaryReader`, the byte-array/
         value decoders (`ByteArrayColumnValueDecoder`/
@@ -1444,10 +1461,13 @@ Chunk status by area:
       `ParquetRecordBatchReader` (`try_new`, `next_batch`, `Iterator`,
       `schema`) reading every row of every row group. Remaining:
       selector-backed `RowSelector`/`RowSelection`
-      (`src/parquet/arrow/row_selection.cr`) — the selectors cursor,
-      `read_plan.rs` (offset/limit/row-group plans), the bitmap backing
-      (`selection/boolean.rs`/`algebra.rs`), `RowFilter`, `statistics.rs`,
-      `metrics.rs`, and `arrow/push_decoder/`.
+      (`src/parquet/arrow/row_selection.cr`), the selector cursor and the
+      offset/limit read plan (`src/parquet/arrow/read_plan.cr`, wired through
+      `with_row_selection`/`with_offset`/`with_limit`). Remaining: the bitmap
+      backing (`selection/boolean.rs`/`algebra.rs`), `RowSelectionPolicy`,
+      page pruning (`loaded_row_ranges`), row-group selection,
+      `RowFilter`, `statistics.rs`, `metrics.rs`, and
+      `arrow/push_decoder/`.
 - [ ] `arrow/arrow_writer/` (`ArrowWriter`, `levels.rs`, `byte_array.rs`),
       `arrow/mod.rs` (`ProjectionMask`, `ARROW_SCHEMA_META_KEY` plumbing,
       `apply_schema`), and `arrow/buffer/`.
@@ -1662,6 +1682,11 @@ Chunk status by area:
   are not ported, so every selection is selector-backed; `usize` counts are
   `Int32`, and `from_consecutive_ranges` raises `GeneralError("out of order")`
   where upstream panics.
+- Arrow interop, read plan: the plan is always selector-backed (no
+  `RowSelectionPolicy`/mask cursor), has no row predicates
+  (`with_predicate`/`PredicateOptions`), no loaded-row-ranges/page pruning and
+  no row-group selection. `ReadPlan` exposes its cursor directly instead of
+  `row_selection_cursor_mut`, and `usize` counts/offsets/limits are `Int32`.
 - Arrow interop, skipping: `ColumnReaderImpl#skip_records` (like upstream) only
   consults the classic definition-level decoder, so with the arrow
   `DefinitionLevelBuffer` in use every skipped level is treated as a value. Skip

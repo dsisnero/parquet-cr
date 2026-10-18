@@ -16,6 +16,23 @@ private def serialized_reader(name : String) : Parquet::File::SerializedFileRead
   Parquet::File::SerializedFileReader.new(BytesCR.new(ParquetTestHelpers.fixture_bytes(name)))
 end
 
+# A reader over the `id` column of `alltypes_plain.parquet` (ids 4, 5, 6, 7, 2,
+# 3, 0, 1) — a REQUIRED INT32 leaf, so skips are well defined.
+private def projected_id_reader(batch_size : Int32 = 1024) : PArrow::ParquetRecordBatchReaderBuilder
+  reader_file = serialized_reader("alltypes_plain.parquet")
+  mask = PArrow::ProjectionMask.leaves(reader_file.metadata.file_metadata.schema_descr, [0])
+  PArrow::ParquetRecordBatchReaderBuilder.try_new(reader_file)
+    .with_projection(mask)
+    .with_batch_size(batch_size)
+end
+
+private def ids(batches : Array(Arrow::RecordBatch)) : Array(Int32)
+  batches.flat_map do |batch|
+    column = batch.column(0).as(Arrow::PrimitiveArray(Int32))
+    (0...column.len).map { |idx| column.value(idx).as(Int32) }
+  end
+end
+
 private def read_batches(name : String, batch_size : Int32 = 1024,
                          projection : PArrow::ProjectionMask? = nil) : Array(Arrow::RecordBatch)
   builder = PArrow::ParquetRecordBatchReaderBuilder.try_new(serialized_reader(name))
@@ -123,6 +140,44 @@ describe Parquet::Arrow::ParquetRecordBatchReader do
     # The empty reader still yields the row count, with no columns.
     batches.map(&.num_rows).should eq([8])
     batches.first.num_columns.should eq(0)
+  end
+end
+
+describe "Parquet::Arrow::ParquetRecordBatchReader row plans" do
+  it "applies an offset and a limit" do
+    batches = projected_id_reader.with_offset(2).with_limit(3).build.to_a
+    batches.map(&.num_rows).should eq([3])
+    ids(batches).should eq([6, 7, 2])
+  end
+
+  it "applies a row selection" do
+    selection = PArrow::RowSelection.new([
+      PArrow::RowSelector.select(2),
+      PArrow::RowSelector.skip(4),
+      PArrow::RowSelector.select(2),
+    ])
+    batches = projected_id_reader.with_row_selection(selection).build.to_a
+    ids(batches).should eq([4, 5, 0, 1])
+  end
+
+  it "splits selected rows into batches" do
+    selection = PArrow::RowSelection.new([PArrow::RowSelector.select(3)])
+    batches = projected_id_reader(batch_size: 2).with_row_selection(selection).build.to_a
+    batches.map(&.num_rows).should eq([2, 1])
+    ids(batches).should eq([4, 5, 6])
+  end
+
+  it "combines a selection with an offset and a limit" do
+    selection = PArrow::RowSelection.new([PArrow::RowSelector.select(2), PArrow::RowSelector.skip(4), PArrow::RowSelector.select(2)])
+    batches = projected_id_reader.with_row_selection(selection).with_offset(1).with_limit(2).build.to_a
+    ids(batches).should eq([5, 0])
+  end
+
+  it "returns no batches when the plan selects nothing" do
+    projected_id_reader.with_offset(8).build.to_a.should be_empty
+    projected_id_reader.with_limit(0).build.to_a.should be_empty
+    selection = PArrow::RowSelection.new([PArrow::RowSelector.skip(8)])
+    projected_id_reader.with_row_selection(selection).build.to_a.should be_empty
   end
 end
 
