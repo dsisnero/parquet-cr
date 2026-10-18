@@ -53,7 +53,9 @@ little-endian layout.
   byte-array `OffsetBuffer` (values buffer + null padding) and the arrow
   specialized decoders (`DictIndexDecoder`, `DeltaByteArrayDecoder`) are
   complete, `PrimitiveArrayReader` covers BOOLEAN as well, and the byte-view
-  `ViewBuffer` is ported. The next arrow feature is the byte array readers
+  `ViewBuffer` is ported, and the upstream `array_reader/test_util.rs` helpers
+  are available to specs (`spec/support/array_reader_util.cr`). The next arrow
+  feature is the byte array readers
   (`ByteArrayReader` + `ByteArrayColumnValueDecoder`, which need a pluggable
   value decoder in the record/column reader), then `List`/`Struct`/`Map` and
   `ArrayReaderBuilder`. Everything else
@@ -686,8 +688,8 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow view buffer`; gates green (`make lint`,
-  `make test` -> 997 examples, 0 failures). Next feature: the byte array readers
+- Last commit: `test: arrow array reader utilities`; gates green (`make lint`,
+  `make test` -> 1002 examples, 0 failures). Next feature: the byte array readers
   (`ByteArrayReader` + `ByteArrayColumnValueDecoder`; the pluggable value decoder
   in `GenericRecordReader`/`ColumnReaderImpl` is the prerequisite), then
   `List`/`Struct`/`Map` and `ArrayReaderBuilder`. Note `make install` now requires
