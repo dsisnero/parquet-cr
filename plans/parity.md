@@ -57,12 +57,12 @@ little-endian layout.
   are available to specs (`spec/support/array_reader_util.cr`). The
   variable-length leaf readers are done: `ByteArrayReader` (Utf8/Binary, small
   and large offsets) and `ByteViewArrayReader` (Utf8View/BinaryView), both over
-  the shared record reader, and the composite readers `StructArrayReader` and
-  `ListArrayReader` (List + LargeList, with nested lists and selective padding)
-  are done. The next arrow feature is the remaining composite readers
-  (`Map`/`FixedSizeList`/`ListView`/`Null`), then `ArrayReaderBuilder`; the leaf
-  `FixedLenByteArrayReader` needs arrow-cr decimal/float16/interval arrays first.
-  Everything else
+  the shared record reader, and the composite readers `StructArrayReader`,
+  `ListArrayReader` (List + LargeList, nested lists, selective padding) and
+  `MapArrayReader` (a list of key/value entry structs) are done. The next arrow
+  feature is the remaining composite readers (`FixedSizeList`/`ListView`/
+  `Null`), then `ArrayReaderBuilder`; the leaf `FixedLenByteArrayReader` needs
+  arrow-cr decimal/float16/interval arrays first. Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
   `column/page_store.rs`, the arrow reader/writer). Done so far:
@@ -351,7 +351,19 @@ little-endian layout.
     `spec/parquet/arrow/list_array_reader_spec.cr` ports the upstream
     `test_nullable_list`/`test_required_list`/`test_nested_list` for both
     offset types (`test_list_array_reader`/`test_large_list_array_reader`)
-    plus level forwarding, skipping, empty batches and both error paths.
+    plus level forwarding, skipping, empty batches and both error paths. Map
+    reader (`src/parquet/arrow/array_reader/map_array.cr`): `MapArrayReader`
+    (struct def level from the key reader's max def level, struct rep level
+    `rep_level + 1`, non-nullable entry struct, `List(element)` feeding the list
+    reader, `consume_batch` reinterpreting the list data as a `MapArray`, and
+    the "expected map type"/"expected struct with two fields"/"map struct
+    cannot be nullable" errors). Specs:
+    `spec/parquet/arrow/map_array_reader_spec.cr` covers the upstream map data
+    shape (two null maps plus `{three..seven}` string→int32, checking
+    `MapArray#value` keys/values), the `keys`/`values`/`value_length` helpers,
+    level forwarding, skipping and both type errors. The upstream
+    `read_map_array_column` test itself round-trips through `ArrowWriter` +
+    `ParquetRecordBatchReader`, neither of which is ported yet.
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -725,14 +737,14 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow list array reader`; gates green (`make lint`,
-  `make test` -> 1034 examples, 0 failures). Next feature: the remaining
-  composite readers (`Map`/`FixedSizeList`/`ListView`/`Null`) and
+- Last commit: `port: arrow map array reader`; gates green (`make lint`,
+  `make test` -> 1040 examples, 0 failures). Next feature: the remaining
+  composite readers (`FixedSizeList`/`ListView`/`Null`) and
   `ArrayReaderBuilder`, or `FixedLenByteArrayReader` once arrow-cr has
   decimal/float16/interval arrays. Note `make install` now requires the sibling
   checkout `../arrow-cr`.
-- Progress by counts (ledger): 1955 `ported`, 185 `intentional_divergence`,
-  13 `skipped`, 1362 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1963 `ported`, 186 `intentional_divergence`,
+  13 `skipped`, 1353 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1323,13 +1335,15 @@ Chunk status by area:
         level-derived struct null bitmap, children kept in sync) and
         `ListArrayReader(O)` (`src/parquet/arrow/array_reader/list_array.cr`,
         List/LargeList offsets + validity rebuilt from the item reader's
-        levels, nested lists and `parent_threshold`). Remaining:
-        `FixedLenByteArrayReader` (decimal/float16/interval targets need
-        arrow-cr array support), `ByteArrayDictionaryReader`, the byte-array/
-        value decoders (`ByteArrayColumnValueDecoder`/
+        levels, nested lists and `parent_threshold`), and `MapArrayReader`
+        (`src/parquet/arrow/array_reader/map_array.cr`, a list reader over a
+        two-field struct reader, output reinterpreted as a `MapArray`).
+        Remaining: `FixedLenByteArrayReader` (decimal/float16/interval targets
+        need arrow-cr array support), `ByteArrayDictionaryReader`, the
+        byte-array/value decoders (`ByteArrayColumnValueDecoder`/
         `ByteViewArrayColumnValueDecoder`), the remaining composite readers
-        (`Map`/`FixedSizeList`/`ListView`/`Null`), `ArrayReaderBuilder`, and
-        the placeholder/cached readers.
+        (`FixedSizeList`/`ListView`/`Null`), `ArrayReaderBuilder`, and the
+        placeholder/cached readers.
 - [ ] `arrow/array_reader/`, `arrow/record_reader/`, `arrow/levels.rs`
       (parquet pages → Arrow arrays).
 - [ ] `arrow/arrow_reader/` (`ParquetRecordBatchReader`, `RowFilter`,
@@ -1513,7 +1527,17 @@ Chunk status by area:
   `Int32` counts, so upstream's offset-overflow check (`OffsetSize::from_usize`
   above `Int32::MAX`/`Int64::MAX`) cannot trigger and is omitted; the unchecked
   `ArrayDataBuilder::build_unchecked`/`StructArray::new_unchecked_with_length`
-  map to arrow-cr's positional constructors.
+  map to arrow-cr's positional constructors. `MapArrayReader` is a
+  `ListArrayReader` over a two-field `StructArrayReader`; upstream's
+  `assert!`/`unreachable!` panics are `GeneralError`s and the output list data is
+  rebuilt as `MapArray` data with `ArrayData.builder(map_type)` (upstream
+  `into_builder`).
+- Arrow interop, skipping: `ColumnReaderImpl#skip_records` (like upstream) only
+  consults the classic definition-level decoder, so with the arrow
+  `DefinitionLevelBuffer` in use every skipped level is treated as a value. Skip
+  therefore assumes there are no null slots (skipping levels, not nulls); the
+  upstream tests only skip required/all-present columns, and the port's specs do
+  the same (recorded here because it is invisible from the call sites).
 - Derive macros: `parquet_derive`'s proc macros (`#[derive(ParquetRecordWriter)]`
   / `ParquetRecordReader`) are replaced by `include Parquet::Derive::Record`.
   Rust impls `RecordWriter for &[T]` and `RecordReader for Vec<T>`; Crystal

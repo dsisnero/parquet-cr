@@ -938,15 +938,15 @@ parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<O
 parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<OffsetSize>.new	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<OffsetSize>.read_records	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<OffsetSize>.skip_records	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/map_array.rs::method::MapArrayReader.as_any	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/map_array.rs::method::MapArrayReader.consume_batch	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/map_array.rs::method::MapArrayReader.get_data_type	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/map_array.rs::method::MapArrayReader.get_def_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/map_array.rs::method::MapArrayReader.get_rep_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/map_array.rs::method::MapArrayReader.max_def_level	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/map_array.rs::method::MapArrayReader.new	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/map_array.rs::method::MapArrayReader.read_records	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/map_array.rs::method::MapArrayReader.skip_records	method	missing	-	auto-generated
+parquet/src/arrow/array_reader/map_array.rs::method::MapArrayReader.as_any	method	intentional_divergence	src/parquet/arrow/array_reader/map_array.cr	`as_any` not modelled (Crystal `is_a?`)
+parquet/src/arrow/array_reader/map_array.rs::method::MapArrayReader.consume_batch	method	ported	src/parquet/arrow/array_reader/map_array.cr	MapArrayReader#consume_batch (list array data reinterpreted as a MapArray)
+parquet/src/arrow/array_reader/map_array.rs::method::MapArrayReader.get_data_type	method	ported	src/parquet/arrow/array_reader/map_array.cr	MapArrayReader#data_type
+parquet/src/arrow/array_reader/map_array.rs::method::MapArrayReader.get_def_levels	method	ported	src/parquet/arrow/array_reader/map_array.cr	MapArrayReader#def_levels (list reader)
+parquet/src/arrow/array_reader/map_array.rs::method::MapArrayReader.get_rep_levels	method	ported	src/parquet/arrow/array_reader/map_array.cr	MapArrayReader#rep_levels (list reader)
+parquet/src/arrow/array_reader/map_array.rs::method::MapArrayReader.max_def_level	method	ported	src/parquet/arrow/array_reader/map_array.cr	MapArrayReader#max_def_level (list reader)
+parquet/src/arrow/array_reader/map_array.rs::method::MapArrayReader.new	method	ported	src/parquet/arrow/array_reader/map_array.cr	MapArrayReader#initialize(key_reader, value_reader, data_type, def_level, rep_level, nullable, parent_threshold)
+parquet/src/arrow/array_reader/map_array.rs::method::MapArrayReader.read_records	method	ported	src/parquet/arrow/array_reader/map_array.cr	MapArrayReader#read_records (list reader)
+parquet/src/arrow/array_reader/map_array.rs::method::MapArrayReader.skip_records	method	ported	src/parquet/arrow/array_reader/map_array.cr	MapArrayReader#skip_records (list reader)
 parquet/src/arrow/array_reader/mod.rs::method::Arc<dyn FileReader>.column_chunks	method	ported	src/parquet/arrow/array_reader.cr	FileRowGroups#column_chunks (FilePageIterator)
 parquet/src/arrow/array_reader/mod.rs::method::Arc<dyn FileReader>.metadata	method	ported	src/parquet/arrow/array_reader.cr	FileRowGroups#metadata
 parquet/src/arrow/array_reader/mod.rs::method::Arc<dyn FileReader>.num_rows	method	ported	src/parquet/arrow/array_reader.cr	FileRowGroups#num_rows
