@@ -49,9 +49,11 @@ little-endian layout.
   `EmptyArrayReader`), and the column reader now exposes the pluggable-decoder
   path the record reader needs (`new_with_arrow_decoders` +
   `read_records_with_reservation`), and `GenericRecordReader`
-  (`arrow/record_reader/mod.rs`) and the numeric `PrimitiveArrayReader` are
-  complete. The next arrow feature is the remaining leaf readers (`BOOLEAN` +
-  byte arrays + `List`/`Struct`/`Map`) and `ArrayReaderBuilder`. Everything else
+  (`arrow/record_reader/mod.rs`), the numeric `PrimitiveArrayReader` and the
+  byte-array `OffsetBuffer` (values buffer + null padding) are complete. The next
+  arrow feature is the byte array readers (`ByteArrayReader` + its value decoder)
+  and the remaining leaves (`BOOLEAN`, `List`/`Struct`/`Map`), then
+  `ArrayReaderBuilder`. Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
   `column/page_store.rs`, the arrow reader/writer). Done so far:
@@ -290,7 +292,14 @@ little-endian layout.
     `null_buffer_from` (upstream `NullBuffer::from_unsliced_buffer`). Specs:
     `spec/parquet/arrow/primitive_array_reader_spec.cr` (optional/required
     columns across pages, empty page iterators, definition/repetition levels,
-    and skipping).
+    and skipping). Byte-array values buffer
+    (`src/parquet/arrow/buffer/offset_buffer.cr`): `OffsetBuffer(I)` with
+    `with_capacity`/`len`/`empty?`/`try_push` (UTF-8 codepoint-start check),
+    `extend_from_dictionary`, `check_valid_utf8`, `into_array`
+    (string/binary arrays) and the `ValuesBuffer` `pad_nulls` (leading/trailing
+    nulls, corrupt-input errors). Specs:
+    `spec/parquet/arrow/offset_buffer_spec.cr` ports all seven upstream
+    `offset_buffer.rs` tests.
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -664,13 +673,13 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow primitive array reader`; gates green (`make lint`,
-  `make test` -> 981 examples, 0 failures). Next feature: the remaining leaf
-  array readers (`BOOLEAN`, byte arrays, list/struct/map) and
-  `ArrayReaderBuilder`. Note `make install` now requires the sibling checkout
+- Last commit: `port: arrow byte-array offset buffer`; gates green (`make lint`,
+  `make test` -> 988 examples, 0 failures). Next feature: the byte array readers
+  (`ByteArrayReader` + `ByteArrayColumnValueDecoder`), then the remaining leaves
+  and `ArrayReaderBuilder`. Note `make install` now requires the sibling checkout
   `../arrow-cr`.
-- Progress by counts (ledger): 1900 `ported`, 181 `intentional_divergence`,
-  13 `skipped`, 1421 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1909 `ported`, 181 `intentional_divergence`,
+  13 `skipped`, 1412 `missing` (of 3515 rows).
 
 Chunk status by area:
 

@@ -1431,15 +1431,15 @@ parquet/src/arrow/buffer/dictionary_buffer.rs::method::DictionaryBuffer<K, V>.wi
 parquet/src/arrow/buffer/dictionary_buffer.rs::method::PassthroughHasher.finish	method	missing	-	auto-generated
 parquet/src/arrow/buffer/dictionary_buffer.rs::method::PassthroughHasher.write	method	missing	-	auto-generated
 parquet/src/arrow/buffer/dictionary_buffer.rs::method::PassthroughHasher.write_u64	method	missing	-	auto-generated
-parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.check_valid_utf8	method	missing	-	auto-generated
-parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.extend_from_dictionary	method	missing	-	auto-generated
-parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.into_array	method	missing	-	auto-generated
-parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.is_empty	method	missing	-	auto-generated
-parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.len	method	missing	-	auto-generated
-parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.pad_nulls	method	missing	-	auto-generated
-parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.reserve_exact	method	missing	-	auto-generated
-parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.try_push	method	missing	-	auto-generated
-parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.with_capacity	method	missing	-	auto-generated
+parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.check_valid_utf8	method	ported	src/parquet/arrow/buffer/offset_buffer.cr	OffsetBuffer#check_valid_utf8
+parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.extend_from_dictionary	method	ported	src/parquet/arrow/buffer/offset_buffer.cr	OffsetBuffer#extend_from_dictionary (Int64 keys/offsets)
+parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.into_array	method	ported	src/parquet/arrow/buffer/offset_buffer.cr	OffsetBuffer#into_array (GenericString/BinaryArray)
+parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.is_empty	method	ported	src/parquet/arrow/buffer/offset_buffer.cr	OffsetBuffer#empty?
+parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.len	method	ported	src/parquet/arrow/buffer/offset_buffer.cr	OffsetBuffer#len
+parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.pad_nulls	method	ported	src/parquet/arrow/buffer/offset_buffer.cr	OffsetBuffer#pad_nulls (ValuesBuffer impl)
+parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.reserve_exact	method	ported	src/parquet/arrow/buffer/offset_buffer.cr	OffsetBuffer#reserve_exact (no-op; Array has no capacity)
+parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.try_push	method	ported	src/parquet/arrow/buffer/offset_buffer.cr	OffsetBuffer#try_push (UTF-8 codepoint start check)
+parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.with_capacity	method	ported	src/parquet/arrow/buffer/offset_buffer.cr	OffsetBuffer.with_capacity (hint ignored)
 parquet/src/arrow/buffer/view_buffer.rs::method::ViewBuffer.append_block	method	missing	-	auto-generated
 parquet/src/arrow/buffer/view_buffer.rs::method::ViewBuffer.into_array	method	missing	-	auto-generated
 parquet/src/arrow/buffer/view_buffer.rs::method::ViewBuffer.is_empty	method	missing	-	auto-generated
