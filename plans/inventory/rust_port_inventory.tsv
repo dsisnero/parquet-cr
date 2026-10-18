@@ -929,15 +929,15 @@ parquet/src/arrow/array_reader/list_array.rs::method::ListArrayReader<OffsetSize
 parquet/src/arrow/array_reader/list_array.rs::method::ListArrayReader<OffsetSize>.new	method	ported	src/parquet/arrow/array_reader/list_array.cr	ListArrayReader#initialize(item_reader, data_type, def_level, rep_level, nullable, parent_threshold)
 parquet/src/arrow/array_reader/list_array.rs::method::ListArrayReader<OffsetSize>.read_records	method	ported	src/parquet/arrow/array_reader/list_array.cr	ListArrayReader#read_records (delegates to the item reader)
 parquet/src/arrow/array_reader/list_array.rs::method::ListArrayReader<OffsetSize>.skip_records	method	ported	src/parquet/arrow/array_reader/list_array.cr	ListArrayReader#skip_records (delegates to the item reader)
-parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<OffsetSize>.as_any	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<OffsetSize>.consume_batch	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<OffsetSize>.get_data_type	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<OffsetSize>.get_def_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<OffsetSize>.get_rep_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<OffsetSize>.max_def_level	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<OffsetSize>.new	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<OffsetSize>.read_records	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<OffsetSize>.skip_records	method	missing	-	auto-generated
+parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<OffsetSize>.as_any	method	intentional_divergence	src/parquet/arrow/array_reader/list_view_array.cr	`as_any` not modelled (Crystal `is_a?`)
+parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<OffsetSize>.consume_batch	method	ported	src/parquet/arrow/array_reader/list_view_array.cr	ListViewArrayReader#consume_batch (list array converted to offsets+sizes)
+parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<OffsetSize>.get_data_type	method	ported	src/parquet/arrow/array_reader/list_view_array.cr	ListViewArrayReader#data_type
+parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<OffsetSize>.get_def_levels	method	ported	src/parquet/arrow/array_reader/list_view_array.cr	ListViewArrayReader#def_levels (list reader)
+parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<OffsetSize>.get_rep_levels	method	ported	src/parquet/arrow/array_reader/list_view_array.cr	ListViewArrayReader#rep_levels (list reader)
+parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<OffsetSize>.max_def_level	method	ported	src/parquet/arrow/array_reader/list_view_array.cr	ListViewArrayReader#max_def_level (list reader)
+parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<OffsetSize>.new	method	ported	src/parquet/arrow/array_reader/list_view_array.cr	ListViewArrayReader#initialize(item_reader, data_type, def_level, rep_level, nullable, parent_threshold)
+parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<OffsetSize>.read_records	method	ported	src/parquet/arrow/array_reader/list_view_array.cr	ListViewArrayReader#read_records (list reader)
+parquet/src/arrow/array_reader/list_view_array.rs::method::ListViewArrayReader<OffsetSize>.skip_records	method	ported	src/parquet/arrow/array_reader/list_view_array.cr	ListViewArrayReader#skip_records (list reader)
 parquet/src/arrow/array_reader/map_array.rs::method::MapArrayReader.as_any	method	intentional_divergence	src/parquet/arrow/array_reader/map_array.cr	`as_any` not modelled (Crystal `is_a?`)
 parquet/src/arrow/array_reader/map_array.rs::method::MapArrayReader.consume_batch	method	ported	src/parquet/arrow/array_reader/map_array.cr	MapArrayReader#consume_batch (list array data reinterpreted as a MapArray)
 parquet/src/arrow/array_reader/map_array.rs::method::MapArrayReader.get_data_type	method	ported	src/parquet/arrow/array_reader/map_array.cr	MapArrayReader#data_type
