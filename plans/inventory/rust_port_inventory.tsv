@@ -1035,16 +1035,16 @@ parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_fi
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_groups	method	intentional_divergence	src/parquet/arrow/arrow_reader.cr	row-group selection is not ported (all row groups are read)
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_selection	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_row_selection
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_selection_policy	method	intentional_divergence	src/parquet/arrow/arrow_reader.cr	RowSelection is not ported
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderMetadata.load	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderMetadata.load(reader)
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderMetadata.load	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderMetadata.load(reader, options)
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderMetadata.metadata	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderMetadata#metadata
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderMetadata.parquet_schema	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderMetadata#parquet_schema
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderMetadata.schema	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderMetadata#schema
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderMetadata.try_new	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderMetadata.try_new(metadata, skip_arrow_metadata)
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderMetadata.with_supplied_schema	method	intentional_divergence	src/parquet/arrow/arrow_reader.cr	supplied-schema overrides are not modelled
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderMetadata.try_new	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderMetadata.try_new(metadata, options)
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderMetadata.with_supplied_schema	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderMetadata.with_supplied_schema (field count/type/nullability/metadata validation)
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.column_index_policy	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.file_decryption_properties	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.metadata_options	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.new	method	missing	-	auto-generated
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.new	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderOptions#initialize (skip_arrow_metadata/supplied schema)
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.offset_index_policy	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.with_column_index_policy	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.with_column_stats_policy	method	missing	-	auto-generated
@@ -1054,9 +1054,9 @@ parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.with_file_decr
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.with_offset_index_policy	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.with_page_index_policy	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.with_parquet_schema	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.with_schema	method	missing	-	auto-generated
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.with_schema	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderOptions#with_schema (also skips embedded metadata)
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.with_size_stats_policy	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.with_skip_arrow_metadata	method	missing	-	auto-generated
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.with_skip_arrow_metadata	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderOptions#with_skip_arrow_metadata
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.with_virtual_columns	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::method::FilterMaskAccumulator.append	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::method::FilterMaskAccumulator.finish	method	missing	-	auto-generated
@@ -1073,7 +1073,7 @@ parquet/src/arrow/arrow_reader/mod.rs::method::ParquetRecordBatchReaderBuilder<T
 parquet/src/arrow/arrow_reader/mod.rs::method::ParquetRecordBatchReaderBuilder<T>.get_row_group_column_bloom_filter	method	intentional_divergence	src/parquet/arrow/arrow_reader.cr	bloom filters are not ported
 parquet/src/arrow/arrow_reader/mod.rs::method::ParquetRecordBatchReaderBuilder<T>.new_with_metadata	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder.new_with_metadata(reader, metadata)
 parquet/src/arrow/arrow_reader/mod.rs::method::ParquetRecordBatchReaderBuilder<T>.try_new	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder.try_new(reader)
-parquet/src/arrow/arrow_reader/mod.rs::method::ParquetRecordBatchReaderBuilder<T>.try_new_with_options	method	intentional_divergence	src/parquet/arrow/arrow_reader.cr	no `ArrowReaderOptions` beyond `skip_arrow_metadata`
+parquet/src/arrow/arrow_reader/mod.rs::method::ParquetRecordBatchReaderBuilder<T>.try_new_with_options	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder.try_new_with_options(reader, options)
 parquet/src/arrow/arrow_reader/mod.rs::method::RandFixedLenGen.r#gen	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::method::RandUtf8Gen.r#gen	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::method::ReaderPageIterator<T>.next	method	missing	-	auto-generated

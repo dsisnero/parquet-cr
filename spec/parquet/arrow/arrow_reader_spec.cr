@@ -8,12 +8,121 @@ require "../../spec_helper"
 # Divergences (see `plans/parity.md`): the port reads every row of every row
 # group, so upstream's row selection (`RowSelection`), row-group/offset/limit
 # plans, `RowFilter` evaluation, statistics and reader metrics are not available
-# yet.
+# yet. The supplied-schema tests that upstream writes through `ArrowWriter`
+# (`write_parquet_from_iter`/`arrow::ArrowWriter`) are characterized with the
+# ported `SerializedFileWriter` instead, since the arrow writer is not ported.
 private alias PArrow = Parquet::Arrow
 private alias BytesCR = Parquet::File::BytesChunkReader
+private alias FWriter = Parquet::File::SerializedFileWriter
+private alias WP = Parquet::File::Properties::WriterProperties
+private alias ST = Parquet::Schema::Type
+private alias PType = Parquet::Type
+private alias PRep = Parquet::Repetition
 
 private def serialized_reader(name : String) : Parquet::File::SerializedFileReader
   Parquet::File::SerializedFileReader.new(BytesCR.new(ParquetTestHelpers.fixture_bytes(name)))
+end
+
+# Ported from upstream `generate_single_column_file_with_data` (the
+# `arrow_reader` test helper): writes one OPTIONAL UTF8 `BYTE_ARRAY` column, one
+# row group per `def_levels` entry, optionally embedding `field` as the
+# `ARROW:schema` metadata.
+private def write_utf8_file(
+  values : Array(Array(String)),
+  def_levels : Array(Array(Int16)),
+  field : Arrow::Field? = nil,
+  optional : Bool = true,
+  dictionary : Bool = true,
+) : Parquet::File::SerializedFileReader
+  leaf = ST.primitive_type_builder("leaf", PType::BYTE_ARRAY)
+    .with_repetition(optional ? PRep::OPTIONAL : PRep::REQUIRED)
+    .with_converted_type(Parquet::ConvertedType::UTF8)
+    .build.as(ST)
+  schema = ST.group_type_builder("test_schema").with_fields([leaf]).build
+
+  props = WP.builder.set_dictionary_enabled(dictionary).build
+  if arrow_field = field
+    PArrow.add_encoded_arrow_schema_to_metadata(
+      Arrow::Schema.new(Arrow::Fields.new([arrow_field])), props
+    )
+  end
+
+  io = IO::Memory.new
+  writer = FWriter.new(io, schema, props)
+  values.each_with_index do |column_values, idx|
+    row_group = writer.next_row_group
+    column_writer = row_group.next_column.not_nil!
+    column_writer.typed(Parquet::ByteArray).write_batch(
+      column_values.map { |value| Parquet::ByteArray.new(value) },
+      optional ? def_levels[idx] : nil,
+      nil,
+    )
+    column_writer.close
+    row_group.close
+  end
+  writer.close
+  Parquet::File::SerializedFileReader.new(BytesCR.new(io.to_slice))
+end
+
+# Writes a REQUIRED struct column (`nested`) holding one REQUIRED UTF8 leaf
+# (`utf8_to_dict`), used for the nested supplied-schema test.
+private def write_nested_utf8_file(values : Array(String)) : Parquet::File::SerializedFileReader
+  leaf = ST.primitive_type_builder("utf8_to_dict", PType::BYTE_ARRAY)
+    .with_repetition(PRep::REQUIRED)
+    .with_converted_type(Parquet::ConvertedType::UTF8)
+    .build.as(ST)
+  nested = ST.group_type_builder("nested")
+    .with_repetition(PRep::REQUIRED)
+    .with_fields([leaf])
+    .build.as(ST)
+  schema = ST.group_type_builder("schema").with_fields([nested]).build
+
+  io = IO::Memory.new
+  writer = FWriter.new(io, schema, WP.builder.build)
+  row_group = writer.next_row_group
+  column_writer = row_group.next_column.not_nil!
+  column_writer.typed(Parquet::ByteArray).write_batch(
+    values.map { |value| Parquet::ByteArray.new(value) }, nil, nil
+  )
+  column_writer.close
+  row_group.close
+  writer.close
+  Parquet::File::SerializedFileReader.new(BytesCR.new(io.to_slice))
+end
+
+# Writes a one-row file with the given REQUIRED columns (INT32/INT64 only), used
+# for the supplied-schema validation tests.
+private def write_int_file(columns : Array(Tuple(String, Parquet::Type))) : Parquet::File::SerializedFileReader
+  fields = columns.map do |(name, physical)|
+    ST.primitive_type_builder(name, physical).with_repetition(PRep::REQUIRED).build.as(ST)
+  end
+  schema = ST.group_type_builder("schema").with_fields(fields).build
+
+  io = IO::Memory.new
+  writer = FWriter.new(io, schema, WP.builder.build)
+  row_group = writer.next_row_group
+  columns.each do |(_name, physical)|
+    column_writer = row_group.next_column.not_nil!
+    case physical
+    when PType::INT64
+      column_writer.typed(Int64).write_batch([0_i64], nil, nil)
+    when PType::INT32
+      column_writer.typed(Int32).write_batch([0_i32], nil, nil)
+    else
+      raise ArgumentError.new("unsupported physical type #{physical}")
+    end
+    column_writer.close
+  end
+  row_group.close
+  writer.close
+  Parquet::File::SerializedFileReader.new(BytesCR.new(io.to_slice))
+end
+
+# The dictionary values of a `Dictionary(Int32, Utf8)` column (upstream compares
+# the child `ArrayData` of the dictionary array).
+private def dictionary_values_of(column : Arrow::ArrayBase) : Array(String?)
+  values = column.as(Arrow::DictionaryArray(Int32)).values.as(Arrow::GenericStringArray(Int32))
+  Array(String?).new(values.len) { |idx| values.value(idx) }
 end
 
 # A reader over the `id` column of `alltypes_plain.parquet` (ids 4, 5, 6, 7, 2,
@@ -194,8 +303,242 @@ describe Parquet::Arrow::ArrowReaderMetadata do
 
   it "can skip the embedded arrow schema" do
     metadata = PArrow::ArrowReaderMetadata.try_new(
-      serialized_reader("list_columns.parquet").metadata, skip_arrow_metadata: true
+      serialized_reader("list_columns.parquet").metadata,
+      PArrow::ArrowReaderOptions.new.with_skip_arrow_metadata(true),
     )
     metadata.schema.fields.len.should eq(2)
+  end
+end
+
+describe "Parquet::Arrow::ArrowReaderOptions supplied schemas" do
+  # Upstream `test_dictionary_preservation` (an end-to-end dictionary read where
+  # the dictionary arrow field is embedded in the `ARROW:schema` metadata).
+  it "preserves dictionary encoding across batches and row groups" do
+    dict_type = Arrow::DataType.dictionary(Arrow::DataType.int32, Arrow::DataType.utf8)
+    reader_file = write_utf8_file(
+      [["hello", "a", "b", "d"], ["c", "a", "b"]],
+      [
+        [1_i16, 0_i16, 0_i16, 1_i16, 0_i16, 0_i16, 1_i16, 1_i16],
+        [0_i16, 0_i16, 1_i16, 1_i16, 0_i16, 0_i16, 1_i16, 0_i16, 0_i16],
+      ],
+      Arrow::Field.new("leaf", dict_type, true),
+    )
+
+    batches = PArrow::ParquetRecordBatchReader.try_new(reader_file, 3).to_a
+
+    batches.size.should eq(6)
+    batches.each { |batch| batch.num_columns.should eq(1) }
+
+    row_counts = batches.map { |batch| {batch.num_rows, batch.column(0).null_count} }
+    row_counts.should eq([{3, 2}, {3, 2}, {3, 1}, {3, 1}, {3, 2}, {2, 2}])
+
+    dictionaries = batches.map { |batch| dictionary_values_of(batch.column(0)) }
+
+    # First and second batch in the same row group -> same dictionary.
+    dictionaries[0].should eq(dictionaries[1])
+    # Third batch spans row groups -> computed dictionary.
+    dictionaries[1].should_not eq(dictionaries[2])
+    dictionaries[2].should_not eq(dictionaries[3])
+    # Fourth, fifth and sixth from the same row group -> same dictionary.
+    dictionaries[3].should eq(dictionaries[4])
+    dictionaries[4].should eq(dictionaries[5])
+
+    # The underlying values are preserved by the dictionary encoding.
+    strings = batches.flat_map do |batch|
+      dict = batch.column(0).as(Arrow::DictionaryArray(Int32))
+      values = dict.values.as(Arrow::GenericStringArray(Int32))
+      keys = dict.keys
+      Array(String?).new(dict.len) do |idx|
+        dict.valid?(idx) ? values.value(keys.value(idx)) : nil
+      end
+    end
+    strings.should eq([
+      "hello", nil, nil,
+      "a", nil, nil,
+      "b", "d",
+      nil, nil, "c",
+      "a", nil, nil,
+      "b", nil, nil,
+    ])
+  end
+
+  # Upstream `test_null_schema_inference`.
+  it "infers the parquet schema when the arrow metadata is skipped" do
+    builder = PArrow::ParquetRecordBatchReaderBuilder.try_new_with_options(
+      serialized_reader("null_list.parquet"),
+      PArrow::ArrowReaderOptions.new.with_skip_arrow_metadata(true),
+    )
+
+    schema = builder.schema
+    schema.fields.len.should eq(1)
+    schema.fields[0].should eq(Arrow::Field.new(
+      "emptylist",
+      Arrow::DataType.list(Arrow::Field.new("item", Arrow::DataType.null, true)),
+      true,
+    ))
+  end
+
+  # Characterization of upstream's `with_schema` dictionary preservation (the
+  # upstream test writes through `ArrowWriter`, which is not ported).
+  it "reads a column as a dictionary with a supplied schema" do
+    reader_file = write_utf8_file(
+      [["Berlin", "Berlin", "Paris", "Berlin", "Paris"]],
+      [[1_i16, 1_i16, 1_i16, 1_i16, 1_i16]],
+    )
+    dict_type = Arrow::DataType.dictionary(Arrow::DataType.int32, Arrow::DataType.utf8)
+    supplied = Arrow::Schema.new(Arrow::Fields.new([
+      Arrow::Field.new("leaf", dict_type, true),
+    ]))
+
+    builder = PArrow::ParquetRecordBatchReaderBuilder.try_new_with_options(
+      reader_file, PArrow::ArrowReaderOptions.new.with_schema(supplied)
+    )
+
+    builder.schema.should eq(supplied)
+
+    reader = builder.build
+    reader.schema.should eq(supplied)
+
+    batch = reader.next_batch.not_nil!
+    batch.num_rows.should eq(5)
+    batch.num_columns.should eq(1)
+    batch.column(0).data_type.should eq(dict_type)
+    dictionary_values_of(batch.column(0)).should eq(["Berlin", "Paris"])
+  end
+
+  # Characterization of upstream's `with_schema` nested dictionary preservation
+  # (`test_with_schema`'s `nested.utf8_to_dict` assertions).
+  it "reads a nested struct column as a dictionary with a supplied schema" do
+    reader_file = write_nested_utf8_file(["a", "a", "a", "b"])
+    dict_type = Arrow::DataType.dictionary(Arrow::DataType.int32, Arrow::DataType.utf8)
+    supplied = Arrow::Schema.new(Arrow::Fields.new([
+      Arrow::Field.new(
+        "nested",
+        Arrow::DataType.struct(Arrow::Fields.new([
+          Arrow::Field.new("utf8_to_dict", dict_type, false),
+        ])),
+        false,
+      ),
+    ]))
+
+    reader = PArrow::ParquetRecordBatchReaderBuilder.try_new_with_options(
+      reader_file, PArrow::ArrowReaderOptions.new.with_schema(supplied)
+    ).build
+
+    batch = reader.next_batch.not_nil!
+    batch.num_rows.should eq(4)
+    nested = batch.column(0).as(Arrow::StructArray)
+    nested_dict = nested.column(0).as(Arrow::DictionaryArray(Int32))
+
+    dictionary_values_of(nested_dict).should eq(["a", "b"])
+    keys = nested_dict.keys
+    Array(Int32).new(keys.len) { |idx| keys.value(idx) }.should eq([0, 0, 0, 1])
+  end
+
+  # Upstream `test_schema_too_few_columns`.
+  it "rejects a supplied schema with too few columns" do
+    reader_file = write_int_file([{"int64", PType::INT64}, {"int32", PType::INT32}])
+    supplied = Arrow::Schema.new(Arrow::Fields.new([
+      Arrow::Field.new("int64", Arrow::DataType.int64, false),
+    ]))
+
+    err = expect_raises(Parquet::ArrowError) do
+      PArrow::ParquetRecordBatchReaderBuilder.try_new_with_options(
+        reader_file, PArrow::ArrowReaderOptions.new.with_schema(supplied)
+      )
+    end
+    err.to_s.should eq("Arrow: incompatible arrow schema, expected 2 struct fields got 1")
+  end
+
+  # Upstream `test_schema_too_many_columns`.
+  it "rejects a supplied schema with too many columns" do
+    reader_file = write_int_file([{"int64", PType::INT64}])
+    supplied = Arrow::Schema.new(Arrow::Fields.new([
+      Arrow::Field.new("int64", Arrow::DataType.int64, false),
+      Arrow::Field.new("int32", Arrow::DataType.int32, false),
+    ]))
+
+    err = expect_raises(Parquet::ArrowError) do
+      PArrow::ParquetRecordBatchReaderBuilder.try_new_with_options(
+        reader_file, PArrow::ArrowReaderOptions.new.with_schema(supplied)
+      )
+    end
+    err.to_s.should eq("Arrow: incompatible arrow schema, expected 1 struct fields got 2")
+  end
+
+  # Upstream `test_schema_mismatched_column_names`.
+  it "rejects a supplied schema with mismatched column names" do
+    reader_file = write_int_file([{"int64", PType::INT64}])
+    supplied = Arrow::Schema.new(Arrow::Fields.new([
+      Arrow::Field.new("other", Arrow::DataType.int64, false),
+    ]))
+
+    err = expect_raises(Parquet::ArrowError) do
+      PArrow::ParquetRecordBatchReaderBuilder.try_new_with_options(
+        reader_file, PArrow::ArrowReaderOptions.new.with_schema(supplied)
+      )
+    end
+    err.to_s.should eq("Arrow: incompatible arrow schema, expected field named int64 got other")
+  end
+
+  # Upstream `test_schema_incompatible_columns`.
+  it "rejects a supplied schema with incompatible column types" do
+    reader_file = write_int_file([
+      {"col1_invalid", PType::INT64},
+      {"col2_valid", PType::INT32},
+      {"col3_invalid", PType::INT64},
+    ])
+    supplied = Arrow::Schema.new(Arrow::Fields.new([
+      Arrow::Field.new("col1_invalid", Arrow::DataType.int32, false),
+      Arrow::Field.new("col2_valid", Arrow::DataType.int32, false),
+      Arrow::Field.new("col3_invalid", Arrow::DataType.int32, false),
+    ]))
+
+    err = expect_raises(Parquet::ArrowError) do
+      PArrow::ParquetRecordBatchReaderBuilder.try_new_with_options(
+        reader_file, PArrow::ArrowReaderOptions.new.with_schema(supplied)
+      )
+    end
+    err.to_s.should eq(
+      "Arrow: Incompatible supplied Arrow schema: " \
+      "data type mismatch for field col1_invalid: requested Int32 but found Int64, " \
+      "data type mismatch for field col3_invalid: requested Int32 but found Int64"
+    )
+  end
+
+  # Upstream `test_schema_error_bad_types`.
+  it "rejects a supplied schema with an incompatible type" do
+    reader_file = write_utf8_file([["foo", "bar", "baz"]], [[] of Int16], optional: false)
+    supplied = Arrow::Schema.new(Arrow::Fields.new([
+      Arrow::Field.new("leaf", Arrow::DataType.int32, false),
+    ]))
+
+    err = expect_raises(Parquet::ArrowError) do
+      PArrow::ParquetRecordBatchReaderBuilder.try_new_with_options(
+        reader_file, PArrow::ArrowReaderOptions.new.with_schema(supplied)
+      )
+    end
+    err.to_s.should eq(
+      "Arrow: Incompatible supplied Arrow schema: " \
+      "data type mismatch for field leaf: requested Int32 but found Utf8"
+    )
+  end
+
+  # Upstream `test_schema_error_bad_nullability`.
+  it "rejects a supplied schema with an incompatible nullability" do
+    reader_file = write_utf8_file([["foo", "bar", "baz"]], [[] of Int16], optional: false)
+    supplied = Arrow::Schema.new(Arrow::Fields.new([
+      Arrow::Field.new("leaf", Arrow::DataType.utf8, true),
+    ]))
+
+    err = expect_raises(Parquet::ArrowError) do
+      PArrow::ParquetRecordBatchReaderBuilder.try_new_with_options(
+        reader_file, PArrow::ArrowReaderOptions.new.with_schema(supplied)
+      )
+    end
+    err.to_s.should eq(
+      "Arrow: Incompatible supplied Arrow schema: " \
+      "nullability mismatch for field leaf: expected true but found false"
+    )
   end
 end

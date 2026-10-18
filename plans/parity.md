@@ -78,12 +78,17 @@ little-endian layout.
   `ByteArrayDictionaryReader` + `DictionaryBuffer` (dictionary preservation,
   spilling and recomputation, view conversion), and the `ArrayReaderBuilder`
   routes dictionary-typed `BYTE_ARRAY`/`FIXED_LEN_BYTE_ARRAY` columns to it.
-  **Next up:** the user-facing dictionary arrow schema (a `with_schema`/
-  `ArrowReaderMetadata` schema override so a `Dictionary(..)` field actually
-  reaches the builder, plus the upstream `arrow_reader`
-  `test_dictionary_preservation` end-to-end test), then `RowFilter` +
-  statistics pruning, the bitmap row-selection backing
-  (`selection/boolean.rs`/`algebra.rs`) and page pruning (`loaded_row_ranges`).
+  The user-facing schema override is ported too: `ArrowReaderOptions`
+  (`with_schema`/`with_skip_arrow_metadata`) +
+  `ArrowReaderMetadata.load`/`try_new`/`with_supplied_schema` (field count,
+  type, nullability and metadata validation with the upstream messages) +
+  `ParquetRecordBatchReaderBuilder.try_new_with_options`, so a supplied or
+  embedded `Dictionary(..)` field actually reaches the array reader builder and
+  the upstream `arrow_reader` `test_dictionary_preservation` end-to-end test
+  passes.
+  **Next up:** `RowFilter` + statistics pruning, the bitmap row-selection
+  backing (`selection/boolean.rs`/`algebra.rs`) and page pruning
+  (`loaded_row_ranges`).
   Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
@@ -439,13 +444,28 @@ little-endian layout.
     wraps the `ArrayReader` + projected schema and yields batches via
     `RecordBatch.from(struct_array)` (so an empty projection still carries the
     row count), splitting by `batch_size` (capped at the file row count) and
-    returning `nil` for empty batches. Specs:
-    `spec/parquet/arrow/arrow_reader_spec.cr` covers an all-null struct column
-    (`nulls.snappy.parquet`), batch splitting, a 10-leaf projection over
+    returning `nil` for empty batches. `ArrowReaderOptions` (skip-embedded-
+    metadata + supplied arrow schema) feeds `ArrowReaderMetadata.load`/
+    `try_new` (`with_supplied_schema` validates the field count, data types,
+    nullability and metadata against the hinted parquet conversion), and
+    `ParquetRecordBatchReaderBuilder.try_new_with_options` is the entry point,
+    so a supplied `Dictionary(..)` field (or an `ARROW:schema` one) reaches the
+    array reader builder and the dictionary encoding is preserved end to end.
+    Specs: `spec/parquet/arrow/arrow_reader_spec.cr` covers an all-null struct
+    column (`nulls.snappy.parquet`), batch splitting, a 10-leaf projection over
     `alltypes_plain.parquet` (INT32/BOOLEAN/INT64/FLOAT/DOUBLE/BYTE_ARRAY values
     checked), list columns (`list_columns.parquet`), nested lists
     (`nested_lists.snappy.parquet`), the `try_new` convenience constructor, the
-    empty projection, and `ArrowReaderMetadata.load`/`try_new`. Row selection
+    empty projection, `ArrowReaderMetadata.load`/`try_new`, the upstream
+    `test_dictionary_preservation` end-to-end dictionary case (six batches, row
+    counts/null counts, dictionary identity inside a row group and recomputation
+    across row groups), `test_null_schema_inference` (skipped arrow metadata on
+    `null_list.parquet`), the supplied-schema dictionary read (top level and
+    inside a struct, matching upstream `test_with_schema`'s dictionary
+    assertions) and the supplied-schema validation errors (`test_schema_too_few_
+    columns`, `test_schema_too_many_columns`, `test_schema_mismatched_column_
+    names`, `test_schema_incompatible_columns`, `test_schema_error_bad_types`,
+    `test_schema_error_bad_nullability` with the upstream messages). Row selection
     (`src/parquet/arrow/row_selection.cr`): `RowSelector` (`select`/`skip`,
     `row_count`, `skip?`) and the RLE-backed `RowSelection` (normalizing
     construction that drops empty and combines adjacent selectors,
@@ -910,14 +930,12 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow byte array dictionary reader`; gates green
-  (`make lint`, `make test` -> 1129 examples, 0 failures). Next feature: the
-  user-facing dictionary arrow schema (`with_schema`/schema override) + the
-  upstream `arrow_reader` `test_dictionary_preservation` end-to-end test, then
+- Last commit: `port: arrow reader supplied schemas`; gates green
+  (`make lint`, `make test` -> 1139 examples, 0 failures). Next feature:
   `RowFilter` + `statistics.rs`, the bitmap row-selection backing and page
   pruning. Note `make install` now requires the sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 2084 `ported`, 232 `intentional_divergence`,
-  13 skipped, 1186 `missing` (of 3515 rows).
+- Progress by counts (ledger): 2089 `ported`, 230 `intentional_divergence`,
+  13 skipped, 1183 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1758,10 +1776,9 @@ Chunk status by area:
   metrics, cache options (`CachedArrayReader`/`RowGroupCache`) and virtual
   columns (`ParquetFieldType` only models primitive/group fields in this port),
   and the per-field `ReaderArgs` struct is replaced by explicit
-  `(field, mask, padding_threshold)` parameters. Leaves whose readers are not
-  ported raise `NYIError` with a specific message: `DataType::Null`
-  (`NullArrayReader`), dictionary-typed byte arrays
-  (`ByteArrayDictionaryReader`) and `INT96`.
+  `(field, mask, padding_threshold)` parameters. `INT96` (the only leaf reader
+  not ported, because the numeric primitive reader does not model it) raises
+  `NYIError`.
 - Arrow interop, null columns: `NullArrayReader` follows upstream in fixing the
   record reader to INT32 (a Null column carries no non-null values); skipping an
   all-null column is not supported because the shared skip path treats each
@@ -1776,10 +1793,17 @@ Chunk status by area:
   `File::FileReader` (upstream any `ChunkReader`) and reads **all** rows of
   **all** row groups: `RowSelection`/cursors/selectors, `read_plan.rs`
   (offset/limit/row-group plans), `RowFilter`, `statistics.rs`, `metrics.rs`,
-  bloom filters, supplied-schema overrides and page-index policies are not
-  modelled. `ArrowReaderMetadata` only supports the `skip_arrow_metadata`
-  option, and the reader's `schema` keeps the projected field metadata (upstream
-  strips it from `RecordBatchReader::schema`).
+  bloom filters and page-index policies are not modelled. `ArrowReaderOptions`
+  models only `skip_arrow_metadata` and the supplied arrow schema (no
+  page-index/encoding-statistics policies, decryption properties or virtual
+  columns), and the supplied-schema field-metadata mismatch message renders
+  Crystal's `Hash?` inspection where upstream uses Rust's `Debug` formatting.
+  The reader's `schema` keeps the projected field metadata (upstream strips it
+  from `RecordBatchReader::schema`). The upstream `arrow_reader` tests that
+  build their fixture with `ArrowWriter` (`test_with_schema`, `test_skip_metadata`,
+  `test_read_binary_as_utf8`, …) are characterized with the ported
+  `SerializedFileWriter` instead; `test_dictionary_preservation` and
+  `test_null_schema_inference` are ported directly.
 - Arrow interop, row selection: only the selector (RLE) backing of
   `RowSelection` is modelled. `RowSelection::from_boolean_buffer`/`from_filters`/
   `as_mask`, `MaskRunIter`, `selection/boolean.rs`, `selection/algebra.rs`
