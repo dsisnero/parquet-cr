@@ -951,15 +951,15 @@ parquet/src/arrow/array_reader/mod.rs::method::Arc<dyn FileReader>.column_chunks
 parquet/src/arrow/array_reader/mod.rs::method::Arc<dyn FileReader>.metadata	method	ported	src/parquet/arrow/array_reader.cr	FileRowGroups#metadata
 parquet/src/arrow/array_reader/mod.rs::method::Arc<dyn FileReader>.num_rows	method	ported	src/parquet/arrow/array_reader.cr	FileRowGroups#num_rows
 parquet/src/arrow/array_reader/mod.rs::method::Arc<dyn FileReader>.row_groups	method	ported	src/parquet/arrow/array_reader.cr	FileRowGroups#row_groups
-parquet/src/arrow/array_reader/null_array.rs::method::NullArrayReader<T>.as_any	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/null_array.rs::method::NullArrayReader<T>.consume_batch	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/null_array.rs::method::NullArrayReader<T>.get_data_type	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/null_array.rs::method::NullArrayReader<T>.get_def_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/null_array.rs::method::NullArrayReader<T>.get_rep_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/null_array.rs::method::NullArrayReader<T>.max_def_level	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/null_array.rs::method::NullArrayReader<T>.new	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/null_array.rs::method::NullArrayReader<T>.read_records	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/null_array.rs::method::NullArrayReader<T>.skip_records	method	missing	-	auto-generated
+parquet/src/arrow/array_reader/null_array.rs::method::NullArrayReader<T>.as_any	method	intentional_divergence	src/parquet/arrow/array_reader/null_array.cr	`as_any` not modelled (Crystal `is_a?`)
+parquet/src/arrow/array_reader/null_array.rs::method::NullArrayReader<T>.consume_batch	method	ported	src/parquet/arrow/array_reader/null_array.cr	NullArrayReader#consume_batch (NullArray of values_written, levels saved, bitmap discarded)
+parquet/src/arrow/array_reader/null_array.rs::method::NullArrayReader<T>.get_data_type	method	ported	src/parquet/arrow/array_reader/null_array.cr	NullArrayReader#data_type
+parquet/src/arrow/array_reader/null_array.rs::method::NullArrayReader<T>.get_def_levels	method	ported	src/parquet/arrow/array_reader/null_array.cr	NullArrayReader#def_levels
+parquet/src/arrow/array_reader/null_array.rs::method::NullArrayReader<T>.get_rep_levels	method	ported	src/parquet/arrow/array_reader/null_array.cr	NullArrayReader#rep_levels
+parquet/src/arrow/array_reader/null_array.rs::method::NullArrayReader<T>.max_def_level	method	ported	src/parquet/arrow/array_reader/null_array.cr	NullArrayReader#max_def_level
+parquet/src/arrow/array_reader/null_array.rs::method::NullArrayReader<T>.new	method	ported	src/parquet/arrow/array_reader/null_array.cr	NullArrayReader#initialize(pages, column_desc, batch_size, padding_threshold)
+parquet/src/arrow/array_reader/null_array.rs::method::NullArrayReader<T>.read_records	method	ported	src/parquet/arrow/array_reader/null_array.cr	NullArrayReader#read_records
+parquet/src/arrow/array_reader/null_array.rs::method::NullArrayReader<T>.skip_records	method	ported	src/parquet/arrow/array_reader/null_array.cr	NullArrayReader#skip_records
 parquet/src/arrow/array_reader/primitive_array.rs::method::PrimitiveArrayReader<T>.as_any	method	intentional_divergence	src/parquet/arrow/array_reader/primitive_array.cr	`as_any` not modelled (Crystal `is_a?`)
 parquet/src/arrow/array_reader/primitive_array.rs::method::PrimitiveArrayReader<T>.consume_batch	method	ported	src/parquet/arrow/array_reader/primitive_array.cr	PrimitiveArrayReader#consume_batch (numeric types)
 parquet/src/arrow/array_reader/primitive_array.rs::method::PrimitiveArrayReader<T>.get_data_type	method	ported	src/parquet/arrow/array_reader/primitive_array.cr	PrimitiveArrayReader#data_type

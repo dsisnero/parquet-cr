@@ -10,6 +10,7 @@ require "./list_array"
 require "./list_view_array"
 require "./map_array"
 require "./fixed_size_list_array"
+require "./null_array"
 
 # Ported from `parquet/src/arrow/array_reader/builder.rs`
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
@@ -220,11 +221,11 @@ module Parquet
         arrow_type = field.arrow_type
 
         # `LogicalType::Unknown` maps to `DataType::Null` (an entirely null
-        # column); it needs the null array reader.
+        # column), which is read by the null array reader. Upstream notes the
+        # physical type is irrelevant there (it can only be annotated on a
+        # column of nulls), so the reader is always instantiated for INT32.
         if arrow_type.kind.null?
-          raise NYIError.new(
-            "NullArrayReader is not ported (arrow-cr has no Arrow::NullArray yet)"
-          )
+          return NullArrayReader.new(page_iterator, column_desc, @batch_size, padding_threshold)
         end
 
         case physical_type
