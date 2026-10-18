@@ -48,10 +48,11 @@ little-endian layout.
   decoder, plus the `ArrayReader`/`RowGroups` interfaces and
   `EmptyArrayReader`), and the column reader now exposes the pluggable-decoder
   path the record reader needs (`new_with_arrow_decoders` +
-  `read_records_with_reservation`). The next arrow feature is
-  `GenericRecordReader` (`arrow/record_reader/mod.rs`), then the leaf array
-  readers. Everything else on this roadmap is complete, blocked
-  (async/object_store), or deferred
+  `read_records_with_reservation`), and `GenericRecordReader`
+  (`arrow/record_reader/mod.rs`) is complete. The next arrow feature is the leaf
+  array readers (`PrimitiveArrayReader` and friends + `ArrayReaderBuilder`).
+  Everything else on this roadmap is complete, blocked (async/object_store), or
+  deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
   `column/page_store.rs`, the arrow reader/writer). Done so far:
   - `parquet-variant` (`src/parquet_variant/`): `VariantPath`/
@@ -266,7 +267,20 @@ little-endian layout.
     with a no-op callback). Specs:
     `spec/parquet/column/arrow_column_reader_spec.cr` (arrow level buffer
     decoding + reservation counts, required columns, and the missing-decoder
-    invariant).
+    invariant). Record reader (`src/parquet/arrow/record_reader.cr`):
+    `RecordReader::GenericRecordReader(T)` (`set_page_reader`, `read_records`,
+    `skip_records`, `num_records`/`num_values`, `consume_record_data`/
+    `consume_def_levels`/`consume_rep_levels`/`consume_bitmap`/
+    `consume_compact_bitmap`, `values_written`, `reset`, `set_padding_threshold`,
+    `max_def_level`, and the private `read_one_batch` with full/selective null
+    padding). Specs: `spec/parquet/arrow/record_reader_spec.cr` (upstream
+    `test_read_required_records`, `test_capacity_hint_preserved_across_fragmented_reads`,
+    `test_read_optional_records`, `test_read_repeated_records`,
+    `test_read_more_than_one_batch`, `test_row_group_boundary`,
+    `test_skip_required_records`, and both `test_selective_padding_*`), backed by
+    the ported `util/test_common/page_util` builders in
+    `spec/support/page_util.cr` (`DataPageBuilderImpl`, `InMemoryPageReader`,
+    `InMemoryPageIterator`).
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -640,14 +654,12 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: column reader pluggable decoders`; gates green
-  (`make lint`, `make test` -> 967 examples, 0 failures). Next feature:
-  `GenericRecordReader` (`arrow/record_reader/mod.rs`), its upstream tests need
-  the `util/test_common/page_util` builders (`DataPageBuilder`,
-  `InMemoryPageReader`). Note `make install` now requires the sibling checkout
-  `../arrow-cr`.
-- Progress by counts (ledger): 1876 `ported`, 180 `intentional_divergence`,
-  13 `skipped`, 1446 `missing` (of 3515 rows).
+- Last commit: `port: arrow record reader`; gates green (`make lint`,
+  `make test` -> 976 examples, 0 failures). Next feature: the leaf array readers
+  (`array_reader/primitive_array.rs` + `builder.rs` first). Note `make install`
+  now requires the sibling checkout `../arrow-cr`.
+- Progress by counts (ledger): 1892 `ported`, 180 `intentional_divergence`,
+  13 `skipped`, 1430 `missing` (of 3515 rows).
 
 Chunk status by area:
 

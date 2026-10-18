@@ -59,8 +59,10 @@ module Parquet
           new(Array(T).new(capacity), default)
         end
 
+        # Crystal arrays expose no capacity API, so this is a no-op (upstream
+        # reserves exact capacity to avoid reallocations).
         def reserve_exact(additional : Int32) : Nil
-          @values.reserve(additional)
+          _ = additional
         end
 
         def pad_nulls(

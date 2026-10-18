@@ -1586,22 +1586,22 @@ parquet/src/arrow/record_reader/definition_levels.rs::method::PackedDecoder.read
 parquet/src/arrow/record_reader/definition_levels.rs::method::PackedDecoder.set_data	method	ported	src/parquet/arrow/record_reader/definition_levels.cr	PackedDecoder#set_data
 parquet/src/arrow/record_reader/definition_levels.rs::method::PackedDecoder.skip	method	ported	src/parquet/arrow/record_reader/definition_levels.cr	PackedDecoder#skip
 parquet/src/arrow/record_reader/definition_levels.rs::method::PackedDecoder.try_consume_all_valid	method	ported	src/parquet/arrow/record_reader/definition_levels.cr	PackedDecoder#try_consume_all_valid
-parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.consume_bitmap	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.consume_compact_bitmap	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.consume_def_levels	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.consume_record_data	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.consume_rep_levels	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.max_def_level	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.new	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.num_records	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.num_values	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.read_one_batch	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.read_records	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.reset	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.set_padding_threshold	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.set_page_reader	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.skip_records	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.values_written	method	missing	-	auto-generated
+parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.consume_bitmap	method	ported	src/parquet/arrow/record_reader.cr	GenericRecordReader#consume_bitmap (Bytes?)
+parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.consume_compact_bitmap	method	ported	src/parquet/arrow/record_reader.cr	GenericRecordReader#consume_compact_bitmap (Bytes?)
+parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.consume_def_levels	method	ported	src/parquet/arrow/record_reader.cr	GenericRecordReader#consume_def_levels
+parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.consume_record_data	method	ported	src/parquet/arrow/record_reader.cr	GenericRecordReader#consume_record_data
+parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.consume_rep_levels	method	ported	src/parquet/arrow/record_reader.cr	GenericRecordReader#consume_rep_levels
+parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.max_def_level	method	ported	src/parquet/arrow/record_reader.cr	GenericRecordReader#max_def_level
+parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.new	method	ported	src/parquet/arrow/record_reader.cr	GenericRecordReader#initialize(desc, capacity, default_value)
+parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.num_records	method	ported	src/parquet/arrow/record_reader.cr	GenericRecordReader#num_records
+parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.num_values	method	ported	src/parquet/arrow/record_reader.cr	GenericRecordReader#num_values
+parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.read_one_batch	method	ported	src/parquet/arrow/record_reader.cr	GenericRecordReader#read_one_batch (private)
+parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.read_records	method	ported	src/parquet/arrow/record_reader.cr	GenericRecordReader#read_records
+parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.reset	method	ported	src/parquet/arrow/record_reader.cr	GenericRecordReader#reset
+parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.set_padding_threshold	method	ported	src/parquet/arrow/record_reader.cr	GenericRecordReader#set_padding_threshold
+parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.set_page_reader	method	ported	src/parquet/arrow/record_reader.cr	GenericRecordReader#set_page_reader
+parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.skip_records	method	ported	src/parquet/arrow/record_reader.cr	GenericRecordReader#skip_records
+parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.values_written	method	ported	src/parquet/arrow/record_reader.cr	GenericRecordReader#values_written
 parquet/src/arrow/schema/complex.rs::method::ParquetField.children	method	ported	src/parquet/arrow/schema/complex.cr	ParquetField#children
 parquet/src/arrow/schema/complex.rs::method::ParquetField.into_list	method	ported	src/parquet/arrow/schema/complex.cr	ParquetField#into_list
 parquet/src/arrow/schema/complex.rs::method::ParquetField.into_list_with_arrow_list_hint	method	ported	src/parquet/arrow/schema/complex.cr	ParquetField#into_list_with_arrow_list_hint

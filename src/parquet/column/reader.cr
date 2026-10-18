@@ -339,11 +339,18 @@ module Parquet
             end
 
             if @descr.max_def_level > 0
-              (@def_level_decoder || raise general_err!("definition level decoder is not initialized"))
-                .set_data(
+              if decoder = @arrow_def_level_decoder
+                decoder.set_data(
                   Encoding::RLE,
                   page.buf[page.rep_levels_byte_len.to_i32, page.def_levels_byte_len.to_i32],
                 )
+              else
+                (@def_level_decoder || raise general_err!("definition level decoder is not initialized"))
+                  .set_data(
+                    Encoding::RLE,
+                    page.buf[page.rep_levels_byte_len.to_i32, page.def_levels_byte_len.to_i32],
+                  )
+              end
             end
 
             value_offset = (page.rep_levels_byte_len + page.def_levels_byte_len).to_i32
