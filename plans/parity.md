@@ -40,10 +40,12 @@ little-endian layout.
   (`encode_arrow_schema`/`get_arrow_schema_from_metadata`/
   `add_encoded_arrow_schema_to_metadata`, using arrow-cr's `arrow-ipc` schema
   message), plus `ProjectionMask` and the primitive type mapping
-  (`convert_primitive`). The next arrow feature is the Parquet → Arrow schema
-  direction (`ParquetField`/`Visitor`/`parquet_to_arrow_schema*`), which is now
-  fully unblocked. Everything else on this roadmap is complete, blocked
-  (async/object_store), or deferred
+  (`convert_primitive`), and the Parquet → Arrow schema direction
+  (`ParquetField`/`Visitor`/`convert_schema`/`parquet_to_arrow_schema*`/
+  `parquet_to_arrow_field`/`FieldLevels`). The schema module is now complete in
+  both directions; the next arrow feature is the array reader layer
+  (`arrow/array_reader`, `arrow/levels.rs`, `arrow/record_reader`). Everything
+  else on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
   `column/page_store.rs`, the arrow reader/writer). Done so far:
   - `parquet-variant` (`src/parquet_variant/`): `VariantPath`/
@@ -209,7 +211,22 @@ little-endian layout.
     `test_projection_mask_intersect` + roots/none/leaf checks and
     `parquet_column`) and `spec/parquet/arrow/primitive_spec.cr` (every
     `from_parquet` branch, the upstream FLBA decimal/interval length tests, and
-    `apply_hint`).
+    `apply_hint`). Parquet → Arrow schema:
+    `ParquetField`/`ParquetFieldType`/`VisitorContext`/`Visitor`
+    (`src/parquet/arrow/schema/complex.cr`: `visit_primitive`/`visit_struct`/
+    `visit_list`/`visit_map`/`dispatch`, including the backward-compatibility
+    rules for legacy list/map encodings), `convert_field`/`convert_schema`/
+    `convert_type`, and `parquet_to_arrow_schema[_by_columns]`/
+    `parquet_to_arrow_schema_and_fields`/`parquet_to_arrow_field_levels`/
+    `parquet_to_arrow_field`/`FieldLevels`/`parse_key_value_metadata` (preferring
+    the decoded `ARROW:schema` hint when present). Specs:
+    `spec/parquet/arrow/parquet_to_arrow_spec.cr` (upstream
+    `test_flat_primitives`, `test_decimal_fields`, `test_byte_array_fields`,
+    `test_duplicate_fields`, `test_parquet_lists`, `test_parquet_maps`,
+    `test_nested_schema`, `test_repeated_nested_schema`,
+    `test_column_desc_to_field`, `test_metadata`, the `convert_schema` roundtrip
+    invariant, and a compact arrow→parquet→arrow roundtrip covering
+    field ids/metadata).
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -583,12 +600,13 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow projection mask and primitive conversion`; gates
-  green (`make lint`, `make test` -> 929 examples, 0 failures). Next feature: the
-  Parquet → Arrow schema direction (Phase 3.5). Note `make install` now requires
-  the sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 1835 `ported`, 181 `intentional_divergence`,
-  11 `skipped`, 1488 `missing` (of 3515 rows).
+- Last commit: `port: parquet to arrow schema conversion`; gates green
+  (`make lint`, `make test` -> 941 examples, 0 failures). Next feature: the arrow
+  array reader layer (`arrow/array_reader`, `arrow/levels.rs`,
+  `arrow/record_reader`). Note `make install` now requires the sibling checkout
+  `../arrow-cr`.
+- Progress by counts (ledger): 1844 `ported`, 181 `intentional_divergence`,
+  12 `skipped`, 1478 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1156,14 +1174,18 @@ Chunk status by area:
         `get_arrow_schema_from_metadata`, `add_encoded_arrow_schema_to_metadata`
         (+ `flatten_ree_field`) over arrow-cr's `Arrow::Ipc.schema_message`/
         `read_message`; `ARROW_SCHEMA_META_KEY`/`PARQUET_FIELD_ID_META_KEY`.
-- [ ] `arrow/schema` Parquet → Arrow direction (next feature):
-      `ParquetField`/`ParquetFieldType`/`VisitorContext`/`Visitor`
-      (`complex.rs`), `convert_type`/`convert_schema`/`convert_field`,
-      `parquet_to_arrow_schema[_by_columns]`/`parquet_to_arrow_schema_and_fields`,
-      `parquet_to_arrow_field`, `FieldLevels`/`parquet_to_arrow_field_levels`
-      (+ `_with_virtual`), and `parse_key_value_metadata`. Everything it needs is
-      now ported (`ProjectionMask`, `convert_primitive`, the `ARROW:schema`
-      decode).
+  - [x] `arrow/schema` Parquet → Arrow direction:
+        `ParquetField`/`ParquetFieldType`/`VisitorContext`/`Visitor`
+        (`src/parquet/arrow/schema/complex.cr`), `convert_type`/`convert_schema`/
+        `convert_field`, `parquet_to_arrow_schema[_by_columns]`/
+        `parquet_to_arrow_schema_and_fields`, `parquet_to_arrow_field`,
+        `FieldLevels`/`parquet_to_arrow_field_levels`, and
+        `parse_key_value_metadata` (`src/parquet/arrow/schema.cr`).  Remaining in
+        this area: `parquet_to_arrow_field_levels_with_virtual` + virtual
+        columns (`VirtualColumnType`/`convert_virtual_field`, needs arrow-cr
+        canonical extension types), `ProjectionMask::without_nested_types`, and
+        the upstream `test_parquet_list_nullable`/`test_nested_schema_partial*`
+        plus the remaining `complex.rs` hint tests.
 - [ ] `arrow/array_reader/`, `arrow/record_reader/`, `arrow/levels.rs`
       (parquet pages → Arrow arrays).
 - [ ] `arrow/arrow_reader/` (`ParquetRecordBatchReader`, `RowFilter`,

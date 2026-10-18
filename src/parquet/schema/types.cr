@@ -76,6 +76,28 @@ module Parquet
         raise general_err!("Cannot call get_fields() on a non-group type")
       end
 
+      # Returns `true` if this is a group annotated as a LIST (upstream
+      # `Type::is_list`).
+      # ameba:disable Naming/PredicateName
+      def is_list? : Bool
+        return false unless group?
+        info = basic_info
+        if logical = info.logical_type_ref
+          return logical.is_a?(LogicalType::List)
+        end
+        info.converted_type == ConvertedType::LIST
+      end
+
+      # Returns `true` if this is a group with a single repeated child
+      # (upstream `Type::has_single_repeated_child`).
+      def has_single_repeated_child? : Bool
+        return false unless group?
+        children = get_fields
+        children.size == 1 &&
+          children[0].basic_info.has_repetition? &&
+          children[0].basic_info.repetition == Repetition::REPEATED
+      end
+
       # Checks if `sub_type` schema is part of the current schema.
       # ameba:disable Metrics/CyclomaticComplexity
       def check_contains(sub_type : Type) : Bool

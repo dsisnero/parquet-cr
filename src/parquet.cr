@@ -81,7 +81,6 @@ require "./parquet/bin/parquet_schema"
 require "./parquet/bin/parquet_concat"
 require "./parquet/arrow/mod"
 require "./parquet/arrow/schema"
-require "./parquet/arrow/schema/primitive"
 
 module Parquet
   VERSION = "0.1.0"

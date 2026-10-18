@@ -472,3 +472,112 @@ module Parquet
     end
   end
 end
+
+require "./schema/complex"
+
+# The Parquet -> Arrow direction (upstream `parquet_to_arrow_schema*`,
+# `parquet_to_arrow_field*`, `FieldLevels`, `parse_key_value_metadata`).
+module Parquet
+  module Arrow
+    # Arrow `Fields` together with the dremel levels needed to decode them
+    # (upstream `FieldLevels`).
+    class FieldLevels
+      getter fields : ::Arrow::Fields
+      getter levels : ParquetField?
+
+      def initialize(@fields : ::Arrow::Fields, @levels : ParquetField?)
+      end
+    end
+
+    # Converts a parquet schema to an arrow schema, including optional metadata
+    # (upstream `parquet_to_arrow_schema`).
+    def self.parquet_to_arrow_schema(
+      parquet_schema : Schema::SchemaDescriptor,
+      key_value_metadata : Array(File::Metadata::KeyValue)?,
+    ) : ::Arrow::Schema
+      parquet_to_arrow_schema_by_columns(parquet_schema, ProjectionMask.all, key_value_metadata)
+    end
+
+    # Converts a parquet schema to an arrow schema, only preserving the leaf
+    # columns selected by `mask`.
+    def self.parquet_to_arrow_schema_by_columns(
+      parquet_schema : Schema::SchemaDescriptor,
+      mask : ProjectionMask,
+      key_value_metadata : Array(File::Metadata::KeyValue)?,
+    ) : ::Arrow::Schema
+      parquet_to_arrow_schema_and_fields(parquet_schema, mask, key_value_metadata).first
+    end
+
+    # Determines the arrow schema (and levels) from a parquet schema.
+    #
+    # A decoded `ARROW:schema` metadata hint is used when present so that types
+    # parquet cannot represent round-trip losslessly.
+    def self.parquet_to_arrow_schema_and_fields(
+      parquet_schema : Schema::SchemaDescriptor,
+      mask : ProjectionMask,
+      key_value_metadata : Array(File::Metadata::KeyValue)?,
+    ) : Tuple(::Arrow::Schema, ParquetField?)
+      metadata = parse_key_value_metadata(key_value_metadata) || {} of String => String
+      maybe_schema = if value = metadata.delete(ARROW_SCHEMA_META_KEY)
+                       get_arrow_schema_from_metadata(value)
+                     end
+
+      # Add the arrow metadata to the parquet metadata, skipping keys that collide.
+      if arrow_schema = maybe_schema
+        arrow_schema.metadata.each do |(key, value)|
+          metadata[key] = value unless metadata.has_key?(key)
+        end
+      end
+
+      hint = maybe_schema.try(&.fields)
+      field_levels = parquet_to_arrow_field_levels(parquet_schema, mask, hint)
+      schema = ::Arrow::Schema.new(field_levels.fields, ::Arrow::Metadata.from(metadata))
+      {schema, field_levels.levels}
+    end
+
+    # Converts a parquet schema to `FieldLevels`, ignoring columns outside `mask`
+    # (upstream `parquet_to_arrow_field_levels`).
+    #
+    # Where a type in `hint` is compatible with the parquet type it is used,
+    # otherwise the default arrow type for the parquet column is used.
+    def self.parquet_to_arrow_field_levels(
+      schema : Schema::SchemaDescriptor,
+      mask : ProjectionMask,
+      hint : ::Arrow::Fields?,
+    ) : FieldLevels
+      levels = convert_schema(schema, mask, hint)
+      return FieldLevels.new(::Arrow::Fields.empty, nil) unless levels
+
+      fields = levels.arrow_type.fields || ::Arrow::Fields.empty
+      FieldLevels.new(fields, levels)
+    end
+
+    # Converts a parquet column descriptor to an arrow `Field`
+    # (upstream `parquet_to_arrow_field`).
+    def self.parquet_to_arrow_field(parquet_column : Schema::ColumnDescriptor) : ::Arrow::Field
+      field = convert_type(parquet_column.self_type)
+      ret = ::Arrow::Field.new(parquet_column.name, field.arrow_type, field.nullable)
+
+      basic_info = parquet_column.get_basic_info
+      return ret unless basic_info.has_id?
+
+      ret.with_metadata({PARQUET_FIELD_ID_META_KEY => basic_info.id.to_s})
+    end
+
+    # Converts key/value metadata into a map, dropping entries without a value
+    # (upstream `parse_key_value_metadata`).
+    private def self.parse_key_value_metadata(
+      key_value_metadata : Array(File::Metadata::KeyValue)?,
+    ) : Hash(String, String)?
+      return nil unless key_values = key_value_metadata
+
+      map = {} of String => String
+      key_values.each do |entry|
+        if value = entry.value
+          map[entry.key] = value
+        end
+      end
+      map.empty? ? nil : map
+    end
+  end
+end

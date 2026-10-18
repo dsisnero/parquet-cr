@@ -1602,16 +1602,16 @@ parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.set_p
 parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.set_page_reader	method	missing	-	auto-generated
 parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.skip_records	method	missing	-	auto-generated
 parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.values_written	method	missing	-	auto-generated
-parquet/src/arrow/schema/complex.rs::method::ParquetField.children	method	missing	-	auto-generated
-parquet/src/arrow/schema/complex.rs::method::ParquetField.into_list	method	missing	-	auto-generated
-parquet/src/arrow/schema/complex.rs::method::ParquetField.into_list_with_arrow_list_hint	method	missing	-	auto-generated
-parquet/src/arrow/schema/complex.rs::method::Visitor.dispatch	method	missing	-	auto-generated
-parquet/src/arrow/schema/complex.rs::method::Visitor.visit_list	method	missing	-	auto-generated
-parquet/src/arrow/schema/complex.rs::method::Visitor.visit_map	method	missing	-	auto-generated
-parquet/src/arrow/schema/complex.rs::method::Visitor.visit_primitive	method	missing	-	auto-generated
-parquet/src/arrow/schema/complex.rs::method::Visitor.visit_struct	method	missing	-	auto-generated
-parquet/src/arrow/schema/complex.rs::method::VisitorContext.levels	method	missing	-	auto-generated
-parquet/src/arrow/schema/complex.rs::method::arrow_schema::Field.with_field_id	method	missing	-	auto-generated
+parquet/src/arrow/schema/complex.rs::method::ParquetField.children	method	ported	src/parquet/arrow/schema/complex.cr	ParquetField#children
+parquet/src/arrow/schema/complex.rs::method::ParquetField.into_list	method	ported	src/parquet/arrow/schema/complex.cr	ParquetField#into_list
+parquet/src/arrow/schema/complex.rs::method::ParquetField.into_list_with_arrow_list_hint	method	ported	src/parquet/arrow/schema/complex.cr	ParquetField#into_list_with_arrow_list_hint
+parquet/src/arrow/schema/complex.rs::method::Visitor.dispatch	method	ported	src/parquet/arrow/schema/complex.cr	Visitor#dispatch
+parquet/src/arrow/schema/complex.rs::method::Visitor.visit_list	method	ported	src/parquet/arrow/schema/complex.cr	Visitor#visit_list
+parquet/src/arrow/schema/complex.rs::method::Visitor.visit_map	method	ported	src/parquet/arrow/schema/complex.cr	Visitor#visit_map
+parquet/src/arrow/schema/complex.rs::method::Visitor.visit_primitive	method	ported	src/parquet/arrow/schema/complex.cr	Visitor#visit_primitive
+parquet/src/arrow/schema/complex.rs::method::Visitor.visit_struct	method	ported	src/parquet/arrow/schema/complex.cr	Visitor#visit_struct
+parquet/src/arrow/schema/complex.rs::method::VisitorContext.levels	method	ported	src/parquet/arrow/schema/complex.cr	VisitorContext#levels
+parquet/src/arrow/schema/complex.rs::method::arrow_schema::Field.with_field_id	method	skipped	-	test-only helper trait in complex.rs's test module
 parquet/src/arrow/schema/mod.rs::const::PARQUET_KEY_FIELD_NAME	const	ported	src/parquet/arrow/schema.cr	Parquet::Arrow::PARQUET_KEY_FIELD_NAME
 parquet/src/arrow/schema/mod.rs::const::PARQUET_LIST_ELEMENT_NAME	const	ported	src/parquet/arrow/schema.cr	Parquet::Arrow::PARQUET_LIST_ELEMENT_NAME
 parquet/src/arrow/schema/mod.rs::const::PARQUET_MAP_STRUCT_NAME	const	ported	src/parquet/arrow/schema.cr	Parquet::Arrow::PARQUET_MAP_STRUCT_NAME
