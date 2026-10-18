@@ -52,9 +52,10 @@ little-endian layout.
   (`arrow/record_reader/mod.rs`), the numeric `PrimitiveArrayReader` and the
   byte-array `OffsetBuffer` (values buffer + null padding) and the arrow
   specialized decoders (`DictIndexDecoder`, `DeltaByteArrayDecoder`) are
-  complete, and `PrimitiveArrayReader` covers BOOLEAN as well. The next arrow
-  feature is the byte array readers (`ByteArrayReader` +
-  `ByteArrayColumnValueDecoder`), then `List`/`Struct`/`Map` and
+  complete, `PrimitiveArrayReader` covers BOOLEAN as well, and the byte-view
+  `ViewBuffer` is ported. The next arrow feature is the byte array readers
+  (`ByteArrayReader` + `ByteArrayColumnValueDecoder`, which need a pluggable
+  value decoder in the record/column reader), then `List`/`Struct`/`Map` and
   `ArrayReaderBuilder`. Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
@@ -307,7 +308,11 @@ little-endian layout.
     (`DELTA_BYTE_ARRAY`: prefix/suffix length decoding via
     `DeltaBitPackDecoder`, incremental values, skip, EOF reporting). Specs:
     `spec/parquet/arrow/decoders_spec.cr` (both upstream error tests + chunked
-    decode/skip round-trips).
+    decode/skip round-trips). Byte-view values buffer
+    (`src/parquet/arrow/buffer/view_buffer.cr`): `ViewBuffer` (`append_block`,
+    `into_array` for `Utf8View`/`BinaryView`, and `pad_nulls` over the view
+    slots). Specs: `spec/parquet/arrow/view_buffer_spec.cr` ports all three
+    upstream `view_buffer.rs` tests.
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -681,13 +686,14 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow boolean primitive array reader`; gates green
-  (`make lint`, `make test` -> 994 examples, 0 failures). Next feature: the byte
-  array readers (`ByteArrayReader` + `ByteArrayColumnValueDecoder`), then
+- Last commit: `port: arrow view buffer`; gates green (`make lint`,
+  `make test` -> 997 examples, 0 failures). Next feature: the byte array readers
+  (`ByteArrayReader` + `ByteArrayColumnValueDecoder`; the pluggable value decoder
+  in `GenericRecordReader`/`ColumnReaderImpl` is the prerequisite), then
   `List`/`Struct`/`Map` and `ArrayReaderBuilder`. Note `make install` now requires
   the sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 1917 `ported`, 181 `intentional_divergence`,
-  13 `skipped`, 1404 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1923 `ported`, 181 `intentional_divergence`,
+  13 `skipped`, 1398 `missing` (of 3515 rows).
 
 Chunk status by area:
 

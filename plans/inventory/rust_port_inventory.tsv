@@ -1440,12 +1440,12 @@ parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.pad_nulls	met
 parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.reserve_exact	method	ported	src/parquet/arrow/buffer/offset_buffer.cr	OffsetBuffer#reserve_exact (no-op; Array has no capacity)
 parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.try_push	method	ported	src/parquet/arrow/buffer/offset_buffer.cr	OffsetBuffer#try_push (UTF-8 codepoint start check)
 parquet/src/arrow/buffer/offset_buffer.rs::method::OffsetBuffer<I>.with_capacity	method	ported	src/parquet/arrow/buffer/offset_buffer.cr	OffsetBuffer.with_capacity (hint ignored)
-parquet/src/arrow/buffer/view_buffer.rs::method::ViewBuffer.append_block	method	missing	-	auto-generated
-parquet/src/arrow/buffer/view_buffer.rs::method::ViewBuffer.into_array	method	missing	-	auto-generated
-parquet/src/arrow/buffer/view_buffer.rs::method::ViewBuffer.is_empty	method	missing	-	auto-generated
-parquet/src/arrow/buffer/view_buffer.rs::method::ViewBuffer.pad_nulls	method	missing	-	auto-generated
-parquet/src/arrow/buffer/view_buffer.rs::method::ViewBuffer.reserve_exact	method	missing	-	auto-generated
-parquet/src/arrow/buffer/view_buffer.rs::method::ViewBuffer.with_capacity	method	missing	-	auto-generated
+parquet/src/arrow/buffer/view_buffer.rs::method::ViewBuffer.append_block	method	ported	src/parquet/arrow/buffer/view_buffer.cr	ViewBuffer#append_block
+parquet/src/arrow/buffer/view_buffer.rs::method::ViewBuffer.into_array	method	ported	src/parquet/arrow/buffer/view_buffer.cr	ViewBuffer#into_array (String/BinaryViewArray)
+parquet/src/arrow/buffer/view_buffer.rs::method::ViewBuffer.is_empty	method	ported	src/parquet/arrow/buffer/view_buffer.cr	ViewBuffer#empty?
+parquet/src/arrow/buffer/view_buffer.rs::method::ViewBuffer.pad_nulls	method	ported	src/parquet/arrow/buffer/view_buffer.cr	ViewBuffer#pad_nulls (delegates to ArrayValuesBuffer(UInt128))
+parquet/src/arrow/buffer/view_buffer.rs::method::ViewBuffer.reserve_exact	method	ported	src/parquet/arrow/buffer/view_buffer.cr	ViewBuffer#reserve_exact (no-op)
+parquet/src/arrow/buffer/view_buffer.rs::method::ViewBuffer.with_capacity	method	ported	src/parquet/arrow/buffer/view_buffer.cr	ViewBuffer.with_capacity (hint ignored)
 parquet/src/arrow/decoder/delta_byte_array.rs::method::DeltaByteArrayDecoder.new	method	ported	src/parquet/arrow/decoders.cr	DeltaByteArrayDecoder#initialize (block callbacks)
 parquet/src/arrow/decoder/delta_byte_array.rs::method::DeltaByteArrayDecoder.read	method	ported	src/parquet/arrow/decoders.cr	DeltaByteArrayDecoder#read (yields byte slices)
 parquet/src/arrow/decoder/delta_byte_array.rs::method::DeltaByteArrayDecoder.remaining	method	ported	src/parquet/arrow/decoders.cr	DeltaByteArrayDecoder#remaining
