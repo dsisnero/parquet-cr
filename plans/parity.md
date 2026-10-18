@@ -44,10 +44,10 @@ little-endian layout.
   (`ParquetField`/`Visitor`/`convert_schema`/`parquet_to_arrow_schema*`/
   `parquet_to_arrow_field`/`FieldLevels`). The schema module is now complete in
   both directions, and the arrow-reader foundations are started (bit utilities
-  and the null-padding `ValuesBuffer`). The next arrow feature is the record
-  reader proper (`arrow/record_reader/mod.rs` `GenericRecordReader` +
-  `definition_levels.rs`), then the array readers. Everything else on this
-  roadmap is complete, blocked (async/object_store), or deferred
+  the null-padding `ValuesBuffer`, and the definition-level buffer/packed
+  decoder). The next arrow feature is `GenericRecordReader`
+  (`arrow/record_reader/mod.rs`), then the array readers. Everything else on
+  this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
   `column/page_store.rs`, the arrow reader/writer). Done so far:
   - `parquet-variant` (`src/parquet_variant/`): `VariantPath`/
@@ -235,7 +235,17 @@ little-endian layout.
     (`src/parquet/arrow/record_reader/buffer.cr`: `reserve_exact`, `pad_nulls`),
     with `spec/parquet/arrow/buffer_spec.cr` porting upstream `test_bit_fns` and
     covering `sign_extend_be` and the padding cases (valid positions only, null
-    slots hold stale values — as upstream).
+    slots hold stale values — as upstream). Definition levels
+    (`src/parquet/arrow/record_reader/definition_levels.cr`):
+    `DefinitionLevelBuffer` (full/mask modes: `consume_levels`,
+    `consume_bitmask`, `levels`, `nulls`), `build_filtered_validity_bitmap`,
+    `DefinitionLevelBufferDecoder` (packed fast path + fallback), and
+    `PackedDecoder` (RLE/bit-packed runs straight into a bitmask:
+    `set_data`/`read`/`skip`/`try_consume_all_valid`). Specs:
+    `spec/parquet/arrow/definition_levels_spec.cr` (upstream
+    `test_build_validity_bitmap_unfiltered_word_chunk`, `test_packed_decoder`,
+    `test_packed_decoder_skip`, `test_try_consume_all_valid` + filtered-bitmap
+    and both buffer-mode cases).
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -609,13 +619,12 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow buffer bit utils and values buffer`; gates green
-  (`make lint`, `make test` -> 950 examples, 0 failures). Next feature: the
-  record reader core (`arrow/record_reader/mod.rs` + `definition_levels.rs`),
-  then the array readers. Note `make install` now requires the sibling checkout
-  `../arrow-cr`.
-- Progress by counts (ledger): 1847 `ported`, 181 `intentional_divergence`,
-  12 `skipped`, 1475 `missing` (of 3515 rows).
+- Last commit: `port: arrow definition level buffer and packed decoder`; gates
+  green (`make lint`, `make test` -> 958 examples, 0 failures). Next feature:
+  `GenericRecordReader` (`arrow/record_reader/mod.rs`), then the array readers.
+  Note `make install` now requires the sibling checkout `../arrow-cr`.
+- Progress by counts (ledger): 1863 `ported`, 181 `intentional_divergence`,
+  13 `skipped`, 1458 `missing` (of 3515 rows).
 
 Chunk status by area:
 

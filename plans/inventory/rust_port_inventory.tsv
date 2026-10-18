@@ -1569,23 +1569,23 @@ parquet/src/arrow/push_decoder/remaining.rs::method::RowGroupFrontier.update_bud
 parquet/src/arrow/record_reader/buffer.rs::method::Vec<T>.pad_nulls	method	ported	src/parquet/arrow/record_reader/buffer.cr	ArrayValuesBuffer#pad_nulls (scalar iter_set_bits_rev)
 parquet/src/arrow/record_reader/buffer.rs::method::Vec<T>.reserve_exact	method	ported	src/parquet/arrow/record_reader/buffer.cr	ArrayValuesBuffer#reserve_exact
 parquet/src/arrow/record_reader/buffer.rs::method::Vec<T>.with_capacity	method	ported	src/parquet/arrow/record_reader/buffer.cr	ArrayValuesBuffer.with_capacity(capacity, default)
-parquet/src/arrow/record_reader/definition_levels.rs::const::CHUNKS	const	missing	-	auto-generated
-parquet/src/arrow/record_reader/definition_levels.rs::method::DefinitionLevelBuffer.consume_bitmask	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/definition_levels.rs::method::DefinitionLevelBuffer.consume_levels	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/definition_levels.rs::method::DefinitionLevelBuffer.levels	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/definition_levels.rs::method::DefinitionLevelBuffer.new	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/definition_levels.rs::method::DefinitionLevelBuffer.nulls	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/definition_levels.rs::method::DefinitionLevelBufferDecoder.new	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/definition_levels.rs::method::DefinitionLevelBufferDecoder.read_def_levels	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/definition_levels.rs::method::DefinitionLevelBufferDecoder.set_data	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/definition_levels.rs::method::DefinitionLevelBufferDecoder.skip_def_levels	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/definition_levels.rs::method::PackedDecoder.decode_header	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/definition_levels.rs::method::PackedDecoder.new	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/definition_levels.rs::method::PackedDecoder.next_rle_block	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/definition_levels.rs::method::PackedDecoder.read	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/definition_levels.rs::method::PackedDecoder.set_data	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/definition_levels.rs::method::PackedDecoder.skip	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/definition_levels.rs::method::PackedDecoder.try_consume_all_valid	method	missing	-	auto-generated
+parquet/src/arrow/record_reader/definition_levels.rs::const::CHUNKS	const	skipped	-	word-chunk constant of the u64 fast path; the port loops bitwise
+parquet/src/arrow/record_reader/definition_levels.rs::method::DefinitionLevelBuffer.consume_bitmask	method	ported	src/parquet/arrow/record_reader/definition_levels.cr	DefinitionLevelBuffer#consume_bitmask
+parquet/src/arrow/record_reader/definition_levels.rs::method::DefinitionLevelBuffer.consume_levels	method	ported	src/parquet/arrow/record_reader/definition_levels.cr	DefinitionLevelBuffer#consume_levels
+parquet/src/arrow/record_reader/definition_levels.rs::method::DefinitionLevelBuffer.levels	method	ported	src/parquet/arrow/record_reader/definition_levels.cr	DefinitionLevelBuffer#levels (+ #levels_array)
+parquet/src/arrow/record_reader/definition_levels.rs::method::DefinitionLevelBuffer.new	method	ported	src/parquet/arrow/record_reader/definition_levels.cr	DefinitionLevelBuffer#initialize(desc, null_mask_only)
+parquet/src/arrow/record_reader/definition_levels.rs::method::DefinitionLevelBuffer.nulls	method	ported	src/parquet/arrow/record_reader/definition_levels.cr	DefinitionLevelBuffer#nulls
+parquet/src/arrow/record_reader/definition_levels.rs::method::DefinitionLevelBufferDecoder.new	method	ported	src/parquet/arrow/record_reader/definition_levels.cr	DefinitionLevelBufferDecoder#initialize(max_level, packed)
+parquet/src/arrow/record_reader/definition_levels.rs::method::DefinitionLevelBufferDecoder.read_def_levels	method	ported	src/parquet/arrow/record_reader/definition_levels.cr	DefinitionLevelBufferDecoder#read_def_levels(buffer, n)
+parquet/src/arrow/record_reader/definition_levels.rs::method::DefinitionLevelBufferDecoder.set_data	method	ported	src/parquet/arrow/record_reader/definition_levels.cr	DefinitionLevelBufferDecoder#set_data
+parquet/src/arrow/record_reader/definition_levels.rs::method::DefinitionLevelBufferDecoder.skip_def_levels	method	ported	src/parquet/arrow/record_reader/definition_levels.cr	DefinitionLevelBufferDecoder#skip_def_levels
+parquet/src/arrow/record_reader/definition_levels.rs::method::PackedDecoder.decode_header	method	ported	src/parquet/arrow/record_reader/definition_levels.cr	PackedDecoder#decode_header (private)
+parquet/src/arrow/record_reader/definition_levels.rs::method::PackedDecoder.new	method	ported	src/parquet/arrow/record_reader/definition_levels.cr	PackedDecoder#initialize (public for specs)
+parquet/src/arrow/record_reader/definition_levels.rs::method::PackedDecoder.next_rle_block	method	ported	src/parquet/arrow/record_reader/definition_levels.cr	PackedDecoder#next_rle_block (private)
+parquet/src/arrow/record_reader/definition_levels.rs::method::PackedDecoder.read	method	ported	src/parquet/arrow/record_reader/definition_levels.cr	PackedDecoder#read
+parquet/src/arrow/record_reader/definition_levels.rs::method::PackedDecoder.set_data	method	ported	src/parquet/arrow/record_reader/definition_levels.cr	PackedDecoder#set_data
+parquet/src/arrow/record_reader/definition_levels.rs::method::PackedDecoder.skip	method	ported	src/parquet/arrow/record_reader/definition_levels.cr	PackedDecoder#skip
+parquet/src/arrow/record_reader/definition_levels.rs::method::PackedDecoder.try_consume_all_valid	method	ported	src/parquet/arrow/record_reader/definition_levels.cr	PackedDecoder#try_consume_all_valid
 parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.consume_bitmap	method	missing	-	auto-generated
 parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.consume_compact_bitmap	method	missing	-	auto-generated
 parquet/src/arrow/record_reader/mod.rs::method::GenericRecordReader<V, CV>.consume_def_levels	method	missing	-	auto-generated
