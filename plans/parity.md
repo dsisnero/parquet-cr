@@ -54,10 +54,12 @@ little-endian layout.
   specialized decoders (`DictIndexDecoder`, `DeltaByteArrayDecoder`) are
   complete, `PrimitiveArrayReader` covers BOOLEAN as well, and the byte-view
   `ViewBuffer` is ported, and the upstream `array_reader/test_util.rs` helpers
-  are available to specs (`spec/support/array_reader_util.cr`). The next arrow
-  feature is the byte array readers
-  (`ByteArrayReader` + `ByteArrayColumnValueDecoder`, which need a pluggable
-  value decoder in the record/column reader), then `List`/`Struct`/`Map` and
+  are available to specs (`spec/support/array_reader_util.cr`). The
+  variable-length leaf readers are done: `ByteArrayReader` (Utf8/Binary, small
+  and large offsets) and `ByteViewArrayReader` (Utf8View/BinaryView), both over
+  the shared record reader. The next arrow feature is
+  `FixedLenByteArrayReader` (needs arrow-cr decimal/float16/interval arrays) or,
+  preferably, the composite readers (`List`/`Struct`/`Map`) and then
   `ArrayReaderBuilder`. Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
@@ -314,7 +316,16 @@ little-endian layout.
     (`src/parquet/arrow/buffer/view_buffer.cr`): `ViewBuffer` (`append_block`,
     `into_array` for `Utf8View`/`BinaryView`, and `pad_nulls` over the view
     slots). Specs: `spec/parquet/arrow/view_buffer_spec.cr` ports all three
-    upstream `view_buffer.rs` tests.
+    upstream `view_buffer.rs` tests. Variable-length leaf readers
+    (`src/parquet/arrow/array_reader/{byte_array,byte_view_array}.cr`):
+    `Parquet::Arrow.make_byte_array_reader`/`ByteArrayReader(I)` for
+    Utf8/LargeUtf8/Binary/LargeBinary and
+    `Parquet::Arrow.make_byte_view_array_reader`/`ByteViewArrayReader` for
+    Utf8View/BinaryView, both driven by the page iterator over
+    `GenericRecordReader` (plain, dictionary and delta encodings, null padding,
+    `def_levels`/`rep_levels`, skipping). Specs:
+    `spec/parquet/arrow/byte_array_reader_spec.cr` and
+    `spec/parquet/arrow/byte_view_array_reader_spec.cr`.
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -688,13 +699,13 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow byte array reader`; gates green (`make lint`,
-  `make test` -> 1008 examples, 0 failures). Next feature: the remaining leaf
-  readers (`FixedLenByteArrayReader`, byte-view) and the composite readers
-  (`List`/`Struct`/`Map`), then `ArrayReaderBuilder`. Note `make install` now
+- Last commit: `port: arrow byte-view array reader`; gates green (`make lint`,
+  `make test` -> 1017 examples, 0 failures). Next feature: the composite readers
+  (`List`/`Struct`/`Map`) and `ArrayReaderBuilder`, or `FixedLenByteArrayReader`
+  once arrow-cr has decimal/float16/interval arrays. Note `make install` now
   requires the sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 1931 `ported`, 182 `intentional_divergence`,
-  13 `skipped`, 1389 `missing` (of 3515 rows).
+- Progress by counts (ledger): 1939 `ported`, 183 `intentional_divergence`,
+  13 `skipped`, 1380 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1274,6 +1285,18 @@ Chunk status by area:
         canonical extension types), `ProjectionMask::without_nested_types`, and
         the upstream `test_parquet_list_nullable`/`test_nested_schema_partial*`
         plus the remaining `complex.rs` hint tests.
+  - [~] `arrow/record_reader/` + `arrow/array_reader/` leaf readers:
+        `GenericRecordReader`, `ArrayReader`/`RowGroups`/`EmptyArrayReader`,
+        `PrimitiveArrayReader` (numeric + BOOLEAN), `ByteArrayReader`
+        (Utf8/LargeUtf8/Binary/LargeBinary) and `ByteViewArrayReader`
+        (Utf8View/BinaryView) are done, with the `OffsetBuffer`/`ViewBuffer`
+        values buffers, `DefinitionLevelBuffer` and the `DictIndexDecoder`/
+        `DeltaByteArrayDecoder`. Remaining: `FixedLenByteArrayReader`
+        (decimal/float16/interval targets need arrow-cr array support),
+        `ByteArrayDictionaryReader`, the byte-array/value decoders
+        (`ByteArrayColumnValueDecoder`/`ByteViewArrayColumnValueDecoder`), the
+        composite readers (`List`/`Struct`/`Map`/`FixedSizeList`/`ListView`/
+        `Null`), `ArrayReaderBuilder`, and the placeholder/cached readers.
 - [ ] `arrow/array_reader/`, `arrow/record_reader/`, `arrow/levels.rs`
       (parquet pages → Arrow arrays).
 - [ ] `arrow/arrow_reader/` (`ParquetRecordBatchReader`, `RowFilter`,
@@ -1437,6 +1460,23 @@ Chunk status by area:
   fallback with `arrow_err!`/`general_err!` where upstream has `arrow_err!`/
   `General`. `parquet_column` returns `Tuple(Int32, Arrow::Field)?` (upstream
   `Option<(usize, &FieldRef)>`).
+- Arrow interop, leaf array readers (`byte_array.rs`/`byte_view_array.rs`):
+  upstream decodes straight into the arrow values buffer with dedicated
+  decoders (`ByteArrayColumnValueDecoder`, `ByteViewArrayColumnValueDecoder`,
+  and the `ByteArrayDecoder*`/`ByteViewArrayDecoder*` families), which needs
+  `GenericRecordReader`/`ColumnReaderImpl` to be generic over *both* the values
+  buffer and the value decoder (upstream `GenericRecordReader<V, CV>`). The port
+  keeps `GenericRecordReader(T)` fixed to `Array(T)` +
+  `ColumnValueDecoderImpl(T)` and converts the decoded batch at
+  `consume_batch` time: `ByteArrayReader` copies values into an
+  `OffsetBuffer(I)`/arrow byte array, `ByteViewArrayReader` builds an
+  `Utf8View`/`BinaryView` array through arrow-cr's view builders (which pick the
+  inline-vs-block representation). Behaviour matches upstream (values, null
+  padding, dictionary/delta encodings); only batch-time allocation differs. The
+  byte-array/view value decoders therefore stay `missing` in the ledger, and
+  `ViewBuffer` (`append_block`/`into_array`/`pad_nulls`) exists but is not yet
+  driven by a decoder. Null padding uses an empty `ByteArray` as the pad value
+  (a nil payload cannot be read back).
 - Derive macros: `parquet_derive`'s proc macros (`#[derive(ParquetRecordWriter)]`
   / `ParquetRecordReader`) are replaced by `include Parquet::Derive::Record`.
   Rust impls `RecordWriter for &[T]` and `RecordReader for Vec<T>`; Crystal
