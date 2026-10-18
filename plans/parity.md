@@ -61,13 +61,16 @@ little-endian layout.
   `ListArrayReader` (List + LargeList, nested lists, selective padding),
   `MapArrayReader` (a list of key/value entry structs),
   `ListViewArrayReader` (ListView + LargeListView),
-  `FixedSizeListArrayReader` and the `ArrayReaderBuilder` (which wires all of
-  them to real parquet schema/row groups, propagating the projection mask and
-  the selective-padding threshold) are done. The next arrow feature is the
-  arrow `ParquetRecordBatchReader`/`ArrowReaderBuilder` on top of the array
-  readers, plus `NullArrayReader`/`ByteArrayDictionaryReader`/
-  `FixedLenByteArrayReader` (blocked on arrow-cr `NullArray`/decimal/float16/
-  interval arrays) and the cached/row-number readers. Everything else
+  `FixedSizeListArrayReader`, the `ArrayReaderBuilder` (which wires all of them
+  to real parquet schema/row groups, propagating the projection mask and the
+  selective-padding threshold) and the batch-reading core
+  (`ArrowReaderMetadata`, `ParquetRecordBatchReaderBuilder`,
+  `ParquetRecordBatchReader`) are done, so a parquet file can be read end to end
+  as `Arrow::RecordBatch`es. The next arrow feature is row selection
+  (`RowSelection`/cursors, row-group and offset/limit plans), then
+  `RowFilter`/statistics pruning; the remaining leaf readers
+  (`NullArrayReader`/`ByteArrayDictionaryReader`/`FixedLenByteArrayReader`) are
+  blocked on arrow-cr `NullArray`/decimal/float16/interval arrays. Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
   `column/page_store.rs`, the arrow reader/writer). Done so far:
@@ -411,6 +414,17 @@ little-endian layout.
     options/`CachedArrayReader`, virtual columns (so upstream's
     `test_create_array_reader_with_row_numbers` is skipped), and the
     `NullArrayReader`/dictionary/INT96 leaf paths (which raise `NYIError`).
+    Batch reader (`src/parquet/arrow/arrow_reader.cr`): `ParquetRecordBatchReader`
+    wraps the `ArrayReader` + projected schema and yields batches via
+    `RecordBatch.from(struct_array)` (so an empty projection still carries the
+    row count), splitting by `batch_size` (capped at the file row count) and
+    returning `nil` for empty batches. Specs:
+    `spec/parquet/arrow/arrow_reader_spec.cr` covers an all-null struct column
+    (`nulls.snappy.parquet`), batch splitting, a 10-leaf projection over
+    `alltypes_plain.parquet` (INT32/BOOLEAN/INT64/FLOAT/DOUBLE/BYTE_ARRAY values
+    checked), list columns (`list_columns.parquet`), nested lists
+    (`nested_lists.snappy.parquet`), the `try_new` convenience constructor, the
+    empty projection, and `ArrowReaderMetadata.load`/`try_new`.
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -784,15 +798,15 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow array reader builder`; gates green (`make lint`,
-  `make test` -> 1061 examples, 0 failures). Next feature: the arrow
-  `ArrowReaderBuilder`/`ParquetRecordBatchReader` over these readers, then
-  `NullArrayReader`/`ByteArrayDictionaryReader`/`FixedLenByteArrayReader` once
-  arrow-cr has the missing array types (`NullArray`, decimals, float16,
-  intervals). Note `make install` now requires the sibling checkout
-  `../arrow-cr`.
-- Progress by counts (ledger): 1989 `ported`, 192 `intentional_divergence`,
-  13 `skipped`, 1321 `missing` (of 3515 rows).
+- Last commit: `port: arrow record batch reader`; gates green (`make lint`,
+  `make test` -> 1070 examples, 0 failures). Next feature: row selection
+  (`RowSelection`/`selection/`, `read_plan.rs`) and then
+  `RowFilter`/`statistics.rs`; the remaining leaf readers
+  (`NullArrayReader`/`ByteArrayDictionaryReader`/`FixedLenByteArrayReader`) wait
+  on arrow-cr array types (`NullArray`, decimals, float16, intervals). Note
+  `make install` now requires the sibling checkout `../arrow-cr`.
+- Progress by counts (ledger): 2009 `ported`, 206 `intentional_divergence`,
+  13 `skipped`, 1287 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1393,7 +1407,10 @@ Chunk status by area:
         child + `MutableArrayData` null blocks, per-row alignment checks) and
         the `ArrayReaderBuilder` (`src/parquet/arrow/array_reader/builder.cr`,
         field-tree dispatch with projection mask + padding-threshold
-        propagation and the empty-reader fallback). Remaining:
+        propagation and the empty-reader fallback), and the batch reader
+        (`src/parquet/arrow/arrow_reader.cr`: `ArrowReaderMetadata`,
+        `ParquetRecordBatchReaderBuilder`, `ParquetRecordBatchReader`).
+        Remaining:
         `FixedLenByteArrayReader` (decimal/float16/interval targets need
         arrow-cr array support), `ByteArrayDictionaryReader`, the byte-array/
         value decoders (`ByteArrayColumnValueDecoder`/
@@ -1402,9 +1419,16 @@ Chunk status by area:
         readers.
 - [ ] `arrow/array_reader/`, `arrow/record_reader/`, `arrow/levels.rs`
       (parquet pages → Arrow arrays).
-- [ ] `arrow/arrow_reader/` (`ParquetRecordBatchReader`, `RowFilter`,
-      `RowSelection`, `selection/`, `statistics.rs`, `read_plan.rs`) and
-      `arrow/push_decoder/`.
+- [~] `arrow/arrow_reader/`: the batch core is ported
+      (`src/parquet/arrow/arrow_reader.cr` — `ArrowReaderMetadata.load`/
+      `try_new` with `skip_arrow_metadata`, `ParquetRecordBatchReaderBuilder`
+      (`try_new`, `new_with_metadata`, `with_batch_size`, `with_projection`,
+      `metadata`/`schema`/`parquet_schema`, `build`), and
+      `ParquetRecordBatchReader` (`try_new`, `next_batch`, `Iterator`,
+      `schema`) reading every row of every row group. Remaining:
+      `RowSelection`/`selection/` cursors and selectors, `read_plan.rs`
+      (offset/limit/row-group plans), `RowFilter`, `statistics.rs`,
+      `metrics.rs`, and `arrow/push_decoder/`.
 - [ ] `arrow/arrow_writer/` (`ArrowWriter`, `levels.rs`, `byte_array.rs`),
       `arrow/mod.rs` (`ProjectionMask`, `ARROW_SCHEMA_META_KEY` plumbing,
       `apply_schema`), and `arrow/buffer/`.
@@ -1604,6 +1628,14 @@ Chunk status by area:
   ported raise `NYIError` with a specific message: `DataType::Null`
   (`NullArrayReader`), dictionary-typed byte arrays
   (`ByteArrayDictionaryReader`), `FIXED_LEN_BYTE_ARRAY` and `INT96`.
+- Arrow interop, batch reader: `ParquetRecordBatchReaderBuilder` takes a
+  `File::FileReader` (upstream any `ChunkReader`) and reads **all** rows of
+  **all** row groups: `RowSelection`/cursors/selectors, `read_plan.rs`
+  (offset/limit/row-group plans), `RowFilter`, `statistics.rs`, `metrics.rs`,
+  bloom filters, supplied-schema overrides and page-index policies are not
+  modelled. `ArrowReaderMetadata` only supports the `skip_arrow_metadata`
+  option, and the reader's `schema` keeps the projected field metadata (upstream
+  strips it from `RecordBatchReader::schema`).
 - Arrow interop, skipping: `ColumnReaderImpl#skip_records` (like upstream) only
   consults the classic definition-level decoder, so with the arrow
   `DefinitionLevelBuffer` in use every skipped level is treated as a value. Skip
