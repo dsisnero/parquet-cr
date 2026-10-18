@@ -81,6 +81,8 @@ require "./parquet/bin/parquet_schema"
 require "./parquet/bin/parquet_concat"
 require "./parquet/arrow/mod"
 require "./parquet/arrow/schema"
+require "./parquet/arrow/buffer/bit_util"
+require "./parquet/arrow/record_reader/buffer"
 
 module Parquet
   VERSION = "0.1.0"

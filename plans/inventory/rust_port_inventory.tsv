@@ -1566,9 +1566,9 @@ parquet/src/arrow/push_decoder/remaining.rs::method::RowGroupFrontier.next_reada
 parquet/src/arrow/push_decoder/remaining.rs::method::RowGroupFrontier.peek_next_row_group	method	missing	-	auto-generated
 parquet/src/arrow/push_decoder/remaining.rs::method::RowGroupFrontier.plan_selected_row_group	method	missing	-	auto-generated
 parquet/src/arrow/push_decoder/remaining.rs::method::RowGroupFrontier.update_budget_after_row_group	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/buffer.rs::method::Vec<T>.pad_nulls	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/buffer.rs::method::Vec<T>.reserve_exact	method	missing	-	auto-generated
-parquet/src/arrow/record_reader/buffer.rs::method::Vec<T>.with_capacity	method	missing	-	auto-generated
+parquet/src/arrow/record_reader/buffer.rs::method::Vec<T>.pad_nulls	method	ported	src/parquet/arrow/record_reader/buffer.cr	ArrayValuesBuffer#pad_nulls (scalar iter_set_bits_rev)
+parquet/src/arrow/record_reader/buffer.rs::method::Vec<T>.reserve_exact	method	ported	src/parquet/arrow/record_reader/buffer.cr	ArrayValuesBuffer#reserve_exact
+parquet/src/arrow/record_reader/buffer.rs::method::Vec<T>.with_capacity	method	ported	src/parquet/arrow/record_reader/buffer.cr	ArrayValuesBuffer.with_capacity(capacity, default)
 parquet/src/arrow/record_reader/definition_levels.rs::const::CHUNKS	const	missing	-	auto-generated
 parquet/src/arrow/record_reader/definition_levels.rs::method::DefinitionLevelBuffer.consume_bitmask	method	missing	-	auto-generated
 parquet/src/arrow/record_reader/definition_levels.rs::method::DefinitionLevelBuffer.consume_levels	method	missing	-	auto-generated
