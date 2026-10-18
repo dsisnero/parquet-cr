@@ -688,14 +688,13 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `test: arrow array reader utilities`; gates green (`make lint`,
-  `make test` -> 1002 examples, 0 failures). Next feature: the byte array readers
-  (`ByteArrayReader` + `ByteArrayColumnValueDecoder`; the pluggable value decoder
-  in `GenericRecordReader`/`ColumnReaderImpl` is the prerequisite), then
-  `List`/`Struct`/`Map` and `ArrayReaderBuilder`. Note `make install` now requires
-  the sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 1923 `ported`, 181 `intentional_divergence`,
-  13 `skipped`, 1398 `missing` (of 3515 rows).
+- Last commit: `port: arrow byte array reader`; gates green (`make lint`,
+  `make test` -> 1008 examples, 0 failures). Next feature: the remaining leaf
+  readers (`FixedLenByteArrayReader`, byte-view) and the composite readers
+  (`List`/`Struct`/`Map`), then `ArrayReaderBuilder`. Note `make install` now
+  requires the sibling checkout `../arrow-cr`.
+- Progress by counts (ledger): 1931 `ported`, 182 `intentional_divergence`,
+  13 `skipped`, 1389 `missing` (of 3515 rows).
 
 Chunk status by area:
 

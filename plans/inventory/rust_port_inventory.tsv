@@ -812,15 +812,15 @@ parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayDecoderDictionary
 parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayDecoderPlain.new	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayDecoderPlain.read	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayDecoderPlain.skip	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayReader<I>.as_any	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayReader<I>.consume_batch	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayReader<I>.get_data_type	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayReader<I>.get_def_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayReader<I>.get_rep_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayReader<I>.max_def_level	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayReader<I>.new	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayReader<I>.read_records	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayReader<I>.skip_records	method	missing	-	auto-generated
+parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayReader<I>.as_any	method	intentional_divergence	src/parquet/arrow/array_reader/byte_array.cr	`as_any` not modelled (Crystal `is_a?`)
+parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayReader<I>.consume_batch	method	ported	src/parquet/arrow/array_reader/byte_array.cr	ByteArrayReader#consume_batch (copies decoded values into the offset buffer)
+parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayReader<I>.get_data_type	method	ported	src/parquet/arrow/array_reader/byte_array.cr	ByteArrayReader#data_type
+parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayReader<I>.get_def_levels	method	ported	src/parquet/arrow/array_reader/byte_array.cr	ByteArrayReader#def_levels
+parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayReader<I>.get_rep_levels	method	ported	src/parquet/arrow/array_reader/byte_array.cr	ByteArrayReader#rep_levels
+parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayReader<I>.max_def_level	method	ported	src/parquet/arrow/array_reader/byte_array.cr	ByteArrayReader#max_def_level
+parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayReader<I>.new	method	ported	src/parquet/arrow/array_reader/byte_array.cr	ByteArrayReader#initialize(pages, desc, data_type, batch_size, padding_threshold)
+parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayReader<I>.read_records	method	ported	src/parquet/arrow/array_reader/byte_array.cr	ByteArrayReader#read_records
+parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayReader<I>.skip_records	method	ported	src/parquet/arrow/array_reader/byte_array.cr	ByteArrayReader#skip_records
 parquet/src/arrow/array_reader/byte_array_dictionary.rs::method::ByteArrayDictionaryReader<K, V>.as_any	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/byte_array_dictionary.rs::method::ByteArrayDictionaryReader<K, V>.consume_batch	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/byte_array_dictionary.rs::method::ByteArrayDictionaryReader<K, V>.get_data_type	method	missing	-	auto-generated
