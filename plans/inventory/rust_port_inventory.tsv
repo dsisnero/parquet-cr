@@ -1807,11 +1807,11 @@ parquet/src/column/reader.rs::method::ColumnReaderTester<T>.plain_v2	method	inte
 parquet/src/column/reader.rs::method::ColumnReaderTester<T>.test_read_batch	method	intentional_divergence	spec/parquet/column/reader_spec.cr	upstream test infra not ported
 parquet/src/column/reader.rs::method::ColumnReaderTester<T>.test_read_batch_general	method	intentional_divergence	spec/parquet/column/reader_spec.cr	upstream test infra not ported
 parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.has_next	method	ported	src/parquet/column/reader.cr	ColumnReaderImpl
-parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.new_with_decoders	method	intentional_divergence	src/parquet/column/reader.cr	ColumnReaderImpl(T) fixes the decoders
+parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.new_with_decoders	method	ported	src/parquet/column/reader.cr	ColumnReaderImpl.new_with_arrow_decoders (pluggable arrow DefinitionLevelBufferDecoder)
 parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.read_dictionary_page	method	ported	src/parquet/column/reader.cr	ColumnReaderImpl
 parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.read_new_page	method	ported	src/parquet/column/reader.cr	ColumnReaderImpl
 parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.read_records	method	ported	src/parquet/column/reader.cr	ColumnReaderImpl
-parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.read_records_with_reservation	method	intentional_divergence	src/parquet/column/reader.cr	reservation callback not modeled
+parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.read_records_with_reservation	method	ported	src/parquet/column/reader.cr	read_records_with_reservation (block callback; read_records passes a no-op)
 parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.skip_records	method	ported	src/parquet/column/reader.cr	ColumnReaderImpl
 parquet/src/column/reader.rs::method::GenericColumnReader<RepetitionLevelDecoderImpl, DefinitionLevelDecoderImpl, V>.new	method	ported	src/parquet/column/reader.cr	ColumnReaderImpl
 parquet/src/column/reader/decoder.rs::const::ENCODING_SLOTS	const	ported	src/parquet/column/reader/decoder.cr	column reader decoder

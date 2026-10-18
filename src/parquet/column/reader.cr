@@ -5,6 +5,7 @@ require "../encodings/registry"
 require "../util/bit_util"
 require "./page"
 require "./reader/decoder"
+require "../arrow/record_reader/definition_levels"
 
 # Ported from `parquet/src/column/reader.rs` (apache/arrow-rs 60.0.0,
 # ef1fa157977633f0ba21aa921f9ef3d5c669235b).
@@ -15,8 +16,13 @@ require "./reader/decoder"
 # Divergences: the Rust `ColumnReader` enum is an abstract `ColumnReader` class
 # with the single generic `ColumnReaderImpl(T)` subclass (instead of one variant
 # per physical type); `GenericColumnReader<R, D, V>` is not parameterized
-# (`ColumnReaderImpl(T)` fixes the level/value decoders); `read_records` drops
-# the internal reservation callback; buffer lengths are `Int32`.
+# (`ColumnReaderImpl(T)` fixes the level/value decoders); buffer lengths are
+# `Int32`. The arrow record reader's pluggable decoder path
+# (`new_with_arrow_decoders` + `read_records_with_reservation`, upstream
+# `new_with_decoders`/`read_records_with_reservation`) is supported by optionally
+# swapping the definition-level decoder for a
+# `Arrow::RecordReader::DefinitionLevelBufferDecoder` and accepting a reservation
+# callback.
 module Parquet
   module Column
     # Column reader for a Parquet column chunk.
@@ -25,6 +31,45 @@ module Parquet
 
     # Typed value reader for a particular primitive column.
     class ColumnReaderImpl(T) < ColumnReader
+      # Creates a reader that decodes definition levels into an arrow
+      # `DefinitionLevelBuffer` (upstream
+      # `GenericColumnReader::new_with_decoders`).
+      #
+      # `def_level_buffer`/`def_level_buffer_decoder` are `nil` for columns whose
+      # maximum definition level is 0.
+      def self.new_with_arrow_decoders(
+        descr : Schema::ColumnDescriptor,
+        page_reader : PageReader,
+        def_level_buffer : Arrow::RecordReader::DefinitionLevelBuffer?,
+        def_level_buffer_decoder : Arrow::RecordReader::DefinitionLevelBufferDecoder?,
+      ) : ColumnReaderImpl(T) forall T
+        reader = allocate
+        reader.initialize_arrow(descr, page_reader, def_level_buffer, def_level_buffer_decoder)
+        reader
+      end
+
+      protected def initialize_arrow(
+        descr : Schema::ColumnDescriptor,
+        page_reader : PageReader,
+        def_level_buffer : Arrow::RecordReader::DefinitionLevelBuffer?,
+        def_level_buffer_decoder : Arrow::RecordReader::DefinitionLevelBufferDecoder?,
+      ) : Nil
+        @descr = descr
+        @page_reader = page_reader
+        @values_decoder = Reader::ColumnValueDecoderImpl(T).new(descr)
+        @def_level_decoder = nil
+        @arrow_def_level_buffer = def_level_buffer
+        @arrow_def_level_decoder = def_level_buffer_decoder
+        @rep_level_decoder =
+          (descr.max_rep_level != 0) ? Reader::RepetitionLevelDecoderImpl.new(descr.max_rep_level) : nil
+        @num_buffered_values = 0
+        @num_decoded_values = 0
+        @has_record_delimiter = false
+      end
+
+      @arrow_def_level_buffer : Arrow::RecordReader::DefinitionLevelBuffer?
+      @arrow_def_level_decoder : Arrow::RecordReader::DefinitionLevelBufferDecoder?
+
       def initialize(@descr : Schema::ColumnDescriptor, @page_reader : PageReader)
         @values_decoder = Reader::ColumnValueDecoderImpl(T).new(@descr)
         @def_level_decoder =
@@ -34,17 +79,38 @@ module Parquet
         @num_buffered_values = 0
         @num_decoded_values = 0
         @has_record_delimiter = false
+        @arrow_def_level_buffer = nil
+        @arrow_def_level_decoder = nil
       end
 
       # Read up to `max_records` whole records.
       #
       # Returns `(records_read, values_read, levels_read)`.
-      # ameba:disable Metrics/CyclomaticComplexity
       def read_records(
         max_records : Int32,
         def_levels : Array(Int16)?,
         rep_levels : Array(Int16)?,
         values : Array(T),
+      ) : Tuple(Int32, Int32, Int32)
+        read_records_with_reservation(max_records, def_levels, rep_levels, values) do |_values, _values_to_read, _levels_to_read, _def_levels|
+        end
+      end
+
+      # Read up to `max_records` whole records, invoking `reserve_values` once
+      # the level decoders know how many output slots a batch needs (upstream
+      # `GenericColumnReader::read_records_with_reservation`).
+      #
+      # The callback receives the values buffer, the number of values/levels to
+      # read, and the arrow definition level buffer when one is in use.
+      #
+      # Returns `(records_read, values_read, levels_read)`.
+      # ameba:disable Metrics/CyclomaticComplexity
+      def read_records_with_reservation(
+        max_records : Int32,
+        def_levels : Array(Int16)?,
+        rep_levels : Array(Int16)?,
+        values : Array(T),
+        &
       ) : Tuple(Int32, Int32, Int32)
         total_records_read = 0
         total_levels_read = 0
@@ -72,8 +138,18 @@ module Parquet
               {min, min}
             end
 
+          arrow_buffer = @arrow_def_level_buffer
           values_to_read =
-            if reader = @def_level_decoder
+            if reader = @arrow_def_level_decoder
+              buffer = arrow_buffer || raise general_err!("must specify definition levels")
+              values_read, levels_read = reader.read_def_levels(buffer, levels_to_read)
+              if levels_read != levels_to_read
+                raise general_err!(
+                  "insufficient definition levels read from column - expected #{levels_to_read}, got #{levels_read}"
+                )
+              end
+              values_read
+            elsif reader = @def_level_decoder
               dest = def_levels || raise general_err!("must specify definition levels")
               values_read, levels_read = reader.read_def_levels(dest, levels_to_read)
               if levels_read != levels_to_read
@@ -85,6 +161,8 @@ module Parquet
             else
               levels_to_read
             end
+
+          yield values, values_to_read, levels_to_read, arrow_buffer
 
           values_read = @values_decoder.read(values, values_to_read)
           if values_read != values_to_read
@@ -229,8 +307,12 @@ module Parquet
                 page.buf[offset, page.buf.size - offset],
               )
               offset += bytes_read
-              (@def_level_decoder || raise general_err!("definition level decoder is not initialized"))
-                .set_data(page.def_level_encoding, level_data)
+              if decoder = @arrow_def_level_decoder
+                decoder.set_data(page.def_level_encoding, level_data)
+              else
+                (@def_level_decoder || raise general_err!("definition level decoder is not initialized"))
+                  .set_data(page.def_level_encoding, level_data)
+              end
             end
 
             @values_decoder.set_data(
