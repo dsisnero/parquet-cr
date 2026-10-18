@@ -45,9 +45,12 @@ little-endian layout.
   `parquet_to_arrow_field`/`FieldLevels`). The schema module is now complete in
   both directions, and the arrow-reader foundations are started (bit utilities
   the null-padding `ValuesBuffer`, and the definition-level buffer/packed
-  decoder). The next arrow feature is `GenericRecordReader`
-  (`arrow/record_reader/mod.rs`), then the array readers. Everything else on
-  this roadmap is complete, blocked (async/object_store), or deferred
+  decoder, plus the `ArrayReader`/`RowGroups` interfaces and
+  `EmptyArrayReader`). The next arrow feature is `GenericRecordReader`
+  (`arrow/record_reader/mod.rs`) — it needs a pluggable-decoder column reader
+  (`new_with_decoders`/`read_records_with_reservation`) first — then the leaf
+  array readers. Everything else on this roadmap is complete, blocked
+  (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
   `column/page_store.rs`, the arrow reader/writer). Done so far:
   - `parquet-variant` (`src/parquet_variant/`): `VariantPath`/
@@ -245,7 +248,14 @@ little-endian layout.
     `spec/parquet/arrow/definition_levels_spec.cr` (upstream
     `test_build_validity_bitmap_unfiltered_word_chunk`, `test_packed_decoder`,
     `test_packed_decoder_skip`, `test_try_consume_all_valid` + filtered-bitmap
-    and both buffer-mode cases).
+    and both buffer-mode cases). Array-reader interfaces
+    (`src/parquet/arrow/array_reader.cr`): `ArrayReader` (`data_type`,
+    `read_records`/`consume_batch`/`skip_records`, `def_levels`/`rep_levels`,
+    `max_def_level`, `next_batch`), `RowGroups` + `FileRowGroups` (over
+    `FileReader`/`FilePageIterator`), `EmptyArrayReader` and
+    `make_empty_array_reader`. Specs:
+    `spec/parquet/arrow/array_reader_spec.cr` (empty-array row counting,
+    `next_batch`, and the `RowGroups` file adapter).
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -619,12 +629,14 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow definition level buffer and packed decoder`; gates
-  green (`make lint`, `make test` -> 958 examples, 0 failures). Next feature:
-  `GenericRecordReader` (`arrow/record_reader/mod.rs`), then the array readers.
-  Note `make install` now requires the sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 1863 `ported`, 181 `intentional_divergence`,
-  13 `skipped`, 1458 `missing` (of 3515 rows).
+- Last commit: `port: arrow array reader interfaces`; gates green (`make lint`,
+  `make test` -> 964 examples, 0 failures). Next feature: `GenericRecordReader`,
+  which first needs a pluggable-decoder `GenericColumnReader`
+  (`new_with_decoders`/`read_records_with_reservation`) in
+  `src/parquet/column/reader.cr`. Note `make install` now requires the sibling
+  checkout `../arrow-cr`.
+- Progress by counts (ledger): 1874 `ported`, 182 `intentional_divergence`,
+  13 `skipped`, 1446 `missing` (of 3515 rows).
 
 Chunk status by area:
 
