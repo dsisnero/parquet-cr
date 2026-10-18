@@ -114,12 +114,18 @@ describe Parquet::Arrow::ArrayReaderBuilder do
     reader.next_batch(3).len.should eq(3)
   end
 
-  it "rejects fixed length byte arrays until that reader is ported" do
+  it "builds fixed length byte array readers for decimal columns" do
     reader_file = file_reader("fixed_length_decimal.parquet")
     mask = PArrow::ProjectionMask.all
 
-    expect_raises(Parquet::NYIError, /fixed length byte array reader/) do
-      builder_for(reader_file).build_array_reader(root_field(reader_file), mask)
-    end
+    reader = builder_for(reader_file).build_array_reader(root_field(reader_file), mask)
+    root_type = reader.data_type.as(Arrow::DataType)
+    field = root_type.fields.not_nil!.to_a.first
+    field.data_type.should eq(Arrow::DataType.decimal128(25, 2))
+
+    array = reader.next_batch(1024).as(Arrow::StructArray)
+    array.len.should be > 0
+    array.column(0).as(Arrow::PrimitiveArray(Int128)).data_type
+      .should eq(Arrow::DataType.decimal128(25, 2))
   end
 end

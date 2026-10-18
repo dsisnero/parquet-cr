@@ -73,12 +73,12 @@ little-endian layout.
   `skip_records`). The next arrow feature is `RowFilter` + statistics pruning,
   the bitmap row-selection backing (`selection/boolean.rs`/`algebra.rs`) and
   page pruning (`loaded_row_ranges`). `NullArrayReader` is ported too
-  (arrow-cr now has `Arrow::NullArray`); the remaining leaves are
-  `ByteArrayDictionaryReader` (arrow-cr has `DictionaryArray`, so only the
-  parquet-side reader is missing) and `FixedLenByteArrayReader` (decimal/interval
-  targets are representable as `PrimitiveArray(T)` + decimal/interval data
-  types; only the `Float16` target needs an arrow-cr half-float array, since
-  Crystal has no `Float16`). Everything else
+  (arrow-cr now has `Arrow::NullArray`) and so is `FixedLenByteArrayReader`
+  (`FixedSizeBinary`, `Decimal32/64/128/256` and `Interval(YearMonth|DayTime)`
+  targets; only `Float16` needs an arrow-cr half-float array because Crystal has
+  no `Float16`, and `Interval(MonthDayNano)` is NYI as upstream). The remaining
+  leaf is `ByteArrayDictionaryReader` (arrow-cr has `DictionaryArray`, so only
+  the parquet-side reader is missing). Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
   `column/page_store.rs`, the arrow reader/writer). Done so far:
@@ -465,6 +465,20 @@ little-endian layout.
     `spec/parquet/arrow/null_array_reader_spec.cr` covers an all-null column,
     empty batches, batch splitting, and the builder wiring over
     `nulls.snappy.parquet`'s `b_c_int` leaf with a Null arrow field.
+    Fixed-length byte array reader
+    (`src/parquet/arrow/array_reader/fixed_len_byte_array.cr`):
+    `make_fixed_len_byte_array_reader` (upstream byte-length validation for each
+    target, `NYIError` for `Float16`) and `FixedLenByteArrayReader` — the values
+    are decoded through the shared record reader and converted at
+    `consume_batch` time to `FixedSizeBinary`, `Decimal32/64/128/256`
+    (big-endian, sign-extended via `sign_extend_be`, as `PrimitiveArray(T)` with
+    the decimal data type) or `Interval(YearMonth|DayTime)` (little-endian
+    components; `MonthDayNano` NYI). Specs:
+    `spec/parquet/arrow/fixed_len_byte_array_reader_spec.cr` covers decimals of
+    every width, fixed-size binary, both interval units, null padding, and the
+    type/byte-length/Float16 errors; the builder spec now reads
+    `fixed_length_decimal.parquet` (Decimal128(25, 2)) instead of expecting
+    `NYIError`.
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -838,16 +852,13 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow null array reader`; gates green (`make lint`,
-  `make test` -> 1100 examples, 0 failures). Next feature:
-  `FixedLenByteArrayReader` (all targets except `Float16`) or
-  `ByteArrayDictionaryReader` — both are unblocked now that arrow-cr has
-  `NullArray`/`DictionaryArray` and decimals/intervals are representable as
-  `PrimitiveArray(T)`; then `RowFilter` + `statistics.rs`, the bitmap
-  row-selection backing and page pruning. Note `make install` now requires the
-  sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 2056 `ported`, 226 `intentional_divergence`,
-  13 skipped, 1220 `missing` (of 3515 rows).
+- Last commit: `port: arrow fixed-length byte array reader`; gates green
+  (`make lint`, `make test` -> 1109 examples, 0 failures). Next feature:
+  `ByteArrayDictionaryReader` (arrow-cr `DictionaryArray` exists), then
+  `RowFilter` + `statistics.rs`, the bitmap row-selection backing and page
+  pruning. Note `make install` now requires the sibling checkout `../arrow-cr`.
+- Progress by counts (ledger): 2064 `ported`, 227 `intentional_divergence`,
+  13 skipped, 1211 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1456,15 +1467,15 @@ Chunk status by area:
         offset/limit/trim/split_off and the row counts), plus the read plan
         (`src/parquet/arrow/read_plan.cr`: `ReadPlan`,
         `ReadPlanBuilder`/`LimitedReadPlanBuilder`, and the
-        `RowSelectionCursor` all/selectors cursors), and `NullArrayReader`
-        (`src/parquet/arrow/array_reader/null_array.cr`). Remaining:
-        `FixedLenByteArrayReader` (decimal/interval targets can use
-        `PrimitiveArray(T)` + decimal/interval data types; the `Float16` target
-        needs a half-float array in arrow-cr because Crystal has no `Float16`),
+        `RowSelectionCursor` all/selectors cursors), `NullArrayReader`
+        (`src/parquet/arrow/array_reader/null_array.cr`) and
+        `FixedLenByteArrayReader`
+        (`src/parquet/arrow/array_reader/fixed_len_byte_array.cr`). Remaining:
         `ByteArrayDictionaryReader` (arrow-cr `DictionaryArray` exists, so only
         the reader is missing), the byte-array/value decoders
-        (`ByteArrayColumnValueDecoder`/`ByteViewArrayColumnValueDecoder`), and
-        the placeholder/cached/virtual readers.
+        (`ByteArrayColumnValueDecoder`/`ByteViewArrayColumnValueDecoder`), the
+        `Float16`/`MonthDayNano` fixed-length byte array targets, and the
+        placeholder/cached/virtual readers.
 - [ ] `arrow/array_reader/`, `arrow/record_reader/`, `arrow/levels.rs`
       (parquet pages → Arrow arrays).
 - [~] `arrow/arrow_reader/`: the batch core is ported
@@ -1680,11 +1691,17 @@ Chunk status by area:
   `(field, mask, padding_threshold)` parameters. Leaves whose readers are not
   ported raise `NYIError` with a specific message: `DataType::Null`
   (`NullArrayReader`), dictionary-typed byte arrays
-  (`ByteArrayDictionaryReader`), `FIXED_LEN_BYTE_ARRAY` and `INT96`.
+  (`ByteArrayDictionaryReader`) and `INT96`.
 - Arrow interop, null columns: `NullArrayReader` follows upstream in fixing the
   record reader to INT32 (a Null column carries no non-null values); skipping an
   all-null column is not supported because the shared skip path treats each
   skipped level as a value (see the skipping note above).
+- Arrow interop, fixed-length byte arrays: the reader decodes through
+  `ColumnValueDecoderImpl(FixedLenByteArray)` and converts at `consume_batch`
+  time, so decimals/intervals are `PrimitiveArray(T)` values carrying the
+  matching decimal/interval data type (arrow-cr has no `Decimal*Array`/
+  `Interval*Array` classes); `Float16` raises `NYIError` (no Crystal `Float16`)
+  and `Interval(MonthDayNano)` is NYI as upstream.
 - Arrow interop, batch reader: `ParquetRecordBatchReaderBuilder` takes a
   `File::FileReader` (upstream any `ChunkReader`) and reads **all** rows of
   **all** row groups: `RowSelection`/cursors/selectors, `read_plan.rs`

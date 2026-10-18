@@ -897,15 +897,15 @@ parquet/src/arrow/array_reader/fixed_len_byte_array.rs::const::VEC_CUTOFF	const	
 parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::FixedLenByteArrayBuffer.pad_nulls	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::FixedLenByteArrayBuffer.reserve_exact	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::FixedLenByteArrayBuffer.with_capacity	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::FixedLenByteArrayReader.as_any	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::FixedLenByteArrayReader.consume_batch	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::FixedLenByteArrayReader.get_data_type	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::FixedLenByteArrayReader.get_def_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::FixedLenByteArrayReader.get_rep_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::FixedLenByteArrayReader.max_def_level	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::FixedLenByteArrayReader.new	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::FixedLenByteArrayReader.read_records	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::FixedLenByteArrayReader.skip_records	method	missing	-	auto-generated
+parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::FixedLenByteArrayReader.as_any	method	intentional_divergence	src/parquet/arrow/array_reader/fixed_len_byte_array.cr	`as_any` not modelled (Crystal `is_a?`)
+parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::FixedLenByteArrayReader.consume_batch	method	ported	src/parquet/arrow/array_reader/fixed_len_byte_array.cr	FixedLenByteArrayReader#consume_batch (FixedSizeBinary + decimal/interval conversion)
+parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::FixedLenByteArrayReader.get_data_type	method	ported	src/parquet/arrow/array_reader/fixed_len_byte_array.cr	FixedLenByteArrayReader#data_type
+parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::FixedLenByteArrayReader.get_def_levels	method	ported	src/parquet/arrow/array_reader/fixed_len_byte_array.cr	FixedLenByteArrayReader#def_levels
+parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::FixedLenByteArrayReader.get_rep_levels	method	ported	src/parquet/arrow/array_reader/fixed_len_byte_array.cr	FixedLenByteArrayReader#rep_levels
+parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::FixedLenByteArrayReader.max_def_level	method	ported	src/parquet/arrow/array_reader/fixed_len_byte_array.cr	FixedLenByteArrayReader#max_def_level
+parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::FixedLenByteArrayReader.new	method	ported	src/parquet/arrow/array_reader/fixed_len_byte_array.cr	FixedLenByteArrayReader#initialize(pages, column_desc, data_type, byte_length, batch_size, padding_threshold)
+parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::FixedLenByteArrayReader.read_records	method	ported	src/parquet/arrow/array_reader/fixed_len_byte_array.cr	FixedLenByteArrayReader#read_records
+parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::FixedLenByteArrayReader.skip_records	method	ported	src/parquet/arrow/array_reader/fixed_len_byte_array.cr	FixedLenByteArrayReader#skip_records
 parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::ValueDecoder.new	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::ValueDecoder.read	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::ValueDecoder.set_data	method	missing	-	auto-generated

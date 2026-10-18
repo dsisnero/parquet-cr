@@ -11,6 +11,7 @@ require "./list_view_array"
 require "./map_array"
 require "./fixed_size_list_array"
 require "./null_array"
+require "./fixed_len_byte_array"
 
 # Ported from `parquet/src/arrow/array_reader/builder.rs`
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
@@ -265,7 +266,9 @@ module Parquet
             )
           end
         else
-          raise NYIError.new("fixed length byte array reader is not ported")
+          Arrow.make_fixed_len_byte_array_reader(
+            page_iterator, column_desc, arrow_type, @batch_size, padding_threshold
+          )
         end
       end
 
