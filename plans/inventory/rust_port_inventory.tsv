@@ -1155,40 +1155,40 @@ parquet/src/arrow/arrow_reader/selection/cursor.rs::method::RowSelectionPolicy.d
 parquet/src/arrow/arrow_reader/selection/cursor.rs::method::SelectorsCursor.is_empty	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/selection/cursor.rs::method::SelectorsCursor.next_selector	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/selection/cursor.rs::method::SelectorsCursor.return_selector	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.and_then	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.as_mask	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.auto_selection_strategy	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.eq	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.expand_to_batch_boundaries	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.fmt	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_boolean_buffer	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_consecutive_ranges	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_filters	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_iter	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_mask_selection	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_selectors	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.intersection	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.into_inner	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.into_selectors_vec	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.iter	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.limit	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.offset	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.row_count	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.row_ranges_for_selected_pages	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.scan_ranges	method	missing	-	auto-generated
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.and_then	method	intentional_divergence	src/parquet/arrow/row_selection.cr	selection algebra (and_then/intersection/union) is deferred with the read plan
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.as_mask	method	intentional_divergence	src/parquet/arrow/row_selection.cr	only the selector (RLE) backing is modelled; the bitmap backing is not ported
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.auto_selection_strategy	method	intentional_divergence	src/parquet/arrow/row_selection.cr	only the selector (RLE) backing is modelled
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.eq	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#==
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.expand_to_batch_boundaries	method	intentional_divergence	src/parquet/arrow/row_selection.cr	deferred with the cached array readers/read plan
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.fmt	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#to_s
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from	method	ported	src/parquet/arrow/row_selection.cr	RowSelection.new(selectors) (normalizing)
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_boolean_buffer	method	intentional_divergence	src/parquet/arrow/row_selection.cr	only the selector (RLE) backing is modelled; the bitmap backing is not ported
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_consecutive_ranges	method	ported	src/parquet/arrow/row_selection.cr	RowSelection.from_consecutive_ranges(ranges, total_rows)
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_filters	method	intentional_divergence	src/parquet/arrow/row_selection.cr	only the selector (RLE) backing is modelled (needs the bitmap path)
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_iter	method	ported	src/parquet/arrow/row_selection.cr	RowSelection.new(selectors) (adjacent combining)
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_mask_selection	method	intentional_divergence	src/parquet/arrow/row_selection.cr	only the selector (RLE) backing is modelled
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_selectors	method	ported	src/parquet/arrow/row_selection.cr	RowSelection.new(selectors)
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.intersection	method	intentional_divergence	src/parquet/arrow/row_selection.cr	selection algebra (and_then/intersection/union) is deferred with the read plan
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.into_inner	method	intentional_divergence	src/parquet/arrow/row_selection.cr	no internal Mask/Selectors enum: selections are always selector-backed
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.into_selectors_vec	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#to_a (Enumerable)
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.iter	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#each
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.limit	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#limit
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.offset	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#offset
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.row_count	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#row_count
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.row_ranges_for_selected_pages	method	intentional_divergence	src/parquet/arrow/row_selection.cr	page-level range scanning is deferred with the read plan
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.scan_ranges	method	intentional_divergence	src/parquet/arrow/row_selection.cr	page-level range scanning is deferred with the read plan
 parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.selectors	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.selects_any	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.skipped_row_count	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.split_off	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.total_row_count	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.trim	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.union	method	missing	-	auto-generated
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.selects_any	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#selects_any?
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.skipped_row_count	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#skipped_row_count
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.split_off	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#split_off
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.total_row_count	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#total_row_count
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.trim	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#trim
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.union	method	intentional_divergence	src/parquet/arrow/row_selection.cr	selection algebra (and_then/intersection/union) is deferred with the read plan
 parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelectionInner.default	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/selection/mod.rs::method::Vec<RowSelector>.from	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/selection/mod.rs::method::VecDeque<RowSelector>.from	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/selector.rs::method::RowSelector.select	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/selector.rs::method::RowSelector.skip	method	missing	-	auto-generated
+parquet/src/arrow/arrow_reader/selection/selector.rs::method::RowSelector.select	method	ported	src/parquet/arrow/row_selection.cr	RowSelector.select
+parquet/src/arrow/arrow_reader/selection/selector.rs::method::RowSelector.skip	method	ported	src/parquet/arrow/row_selection.cr	RowSelector.skip
 parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.arrow_field	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.data_page_maxes	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.data_page_mins	method	missing	-	auto-generated
