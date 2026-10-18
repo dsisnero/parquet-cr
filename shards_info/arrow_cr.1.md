@@ -8,14 +8,13 @@ schema direction and the `ARROW:schema` metadata round-trip are ported and use:
 
 - `Arrow::Schema`, `Field`, `Fields`, `Metadata`, `DataType` +
   `TimeUnit`/`IntervalUnit` (all fine),
-- **`Arrow::Ipc.schema_message(schema)`** (upstream
+- `Arrow::Ipc.schema_message(schema)` (upstream
   `IpcDataGenerator::schema_to_bytes_with_dictionary_tracker(...).ipc_message`)
-  and **`Arrow::Ipc.read_message(bytes)`** (upstream `root_as_message` +
+  and `Arrow::Ipc.read_message(bytes)` (upstream `root_as_message` +
   `header_as_schema` + `try_fb_to_schema`) for `encode_arrow_schema` /
-  `get_arrow_schema_from_metadata` — thank you, these were exactly what was
-  needed (an earlier note claimed `arrow-ipc` was missing; it was stale).
+  `get_arrow_schema_from_metadata`.
 
-Two follow-ups:
+Only one open item remains:
 
 ## 1. Bug: `Field#with_*` mutates the receiver
 
@@ -52,23 +51,23 @@ coerced names. `parquet-cr` works around it by constructing
 Please audit `Schema#with_metadata`, `Fields` helpers and `DataType` builders for
 the same pattern.
 
-## 2. Bug (robustness): flatbuffer decoding raises `IndexError` on bad input
+## 2. ~~Bug: flatbuffer decoding raises `IndexError` on bad input~~ — FIXED
 
-`Arrow::Ipc.read_message` on a truncated/garbage buffer raises
-`IndexError: Index out of bounds` from `Arrow::Ipc::FlatBuffer#field`/`#i32`
-instead of an `ArrowError`. Upstream's `flatbuffers` crate *verifies* the buffer
-and returns a typed error, which `parquet` wraps as
-`Arrow: Unable to get root as message stored in ARROW:schema, …`.
+Fixed by arrow-cr `07088a3` ("arrow-ipc bounds-checked flatbuffers"): the
+FlatBuffers reader range-checks every scalar/vtable/vector/string access and
+raises `Arrow::Ipc::InvalidFlatbufferError < ArrowError`; message boundaries
+convert it to `Parser error: Unable to get root as message: …`.
+`Ipc.read_message`, `schema_from_flatbuffer`,
+`schema_from_message_flatbuffer`, `schema_from_ipc_buffer`, streams and the file
+reader now only raise `ArrowError` on hostile input (13 new malformed-input
+specs), and the useful upstream entry points `Ipc.schema_from_ipc_buffer`
+(`try_schema_from_ipc_buffer`) / `Ipc.schema_from_message_flatbuffer`
+(`try_schema_from_flatbuffer_bytes`) are available.
 
-This matters for `parquet-cr` because `ARROW:schema` comes from untrusted file
-metadata: `Parquet::Arrow.get_arrow_schema_from_metadata` currently has to
-`rescue` every exception (`rescue error : ParquetError` re-raised, anything else
-wrapped as `ArrowError`) to reproduce upstream's behavior.
-
-**Needed:** bounds-check flatbuffer reads (root table/vector/vtable offsets) and
-raise `ArrowError.new("Parser error: …")` for invalid buffers; add specs that
-feed truncated and random bytes to `read_message`/`schema_from_flatbuffer`.
-Once that lands, `parquet-cr` can narrow its rescue to `ArrowError`.
+`parquet-cr` verified it end to end: garbage, framed garbage, truncated and
+zeroed `ARROW:schema` payloads all surface as `Parquet::ArrowError`, and the
+port's rescue in `Parquet::Arrow.get_arrow_schema_from_metadata` was narrowed
+from "any exception" to `Arrow::ArrowError` accordingly. Thanks!
 
 ## 3. Optional: canonical extension types
 

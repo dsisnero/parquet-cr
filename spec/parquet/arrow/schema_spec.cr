@@ -393,4 +393,37 @@ describe "Parquet::Arrow schema metadata" do
       PArrow.get_arrow_schema_from_metadata(Base64.strict_encode(Bytes[1_u8, 2, 3, 4, 5, 6, 7, 8, 9, 10]))
     end
   end
+
+  # arrow-cr's flatbuffer reader is bounds-checked (it raises `ArrowError`, not
+  # `IndexError`, on hostile metadata), so truncated payloads must surface as a
+  # `Parquet::ArrowError` rather than a crash.
+  it "rejects truncated encoded schemas without leaking slice errors" do
+    encoded = Base64.decode(PArrow.encode_arrow_schema(sample_arrow_schema))
+    [encoded.size // 2, encoded.size - 4, encoded.size - 8].each do |length|
+      next if length <= 8
+
+      truncated = encoded[0, length]
+      expect_raises(Parquet::ArrowError) do
+        PArrow.get_arrow_schema_from_metadata(Base64.strict_encode(truncated))
+      end
+    end
+  end
+
+  # A message whose header is not a schema (e.g. zeroed metadata: upstream's
+  # "empty table" with `header = NONE`).
+  it "rejects messages that are not arrow schemas" do
+    payload = Bytes[0xFF_u8, 0xFF_u8, 0xFF_u8, 0xFF_u8] + Bytes[40_u8, 0_u8, 0_u8, 0_u8] + Bytes.new(40, 0_u8)
+    expect_raises(Parquet::ArrowError, "the message is not Arrow Schema") do
+      PArrow.get_arrow_schema_from_metadata(Base64.strict_encode(payload))
+    end
+  end
+
+  # The decoder also accepts a bare IPC `Message` flatbuffer (no legacy prefix).
+  it "decodes an unframed IPC message flatbuffer" do
+    schema = sample_arrow_schema
+    framed = Base64.decode(PArrow.encode_arrow_schema(schema))
+    flatbuffer = framed[8, framed.size - 8]
+
+    PArrow.get_arrow_schema_from_metadata(Base64.strict_encode(flatbuffer)).should eq(schema)
+  end
 end

@@ -108,14 +108,11 @@ module Parquet
 
       message =
         begin
-          # The flatbuffers implementation returns an error on a verification
-          # error. arrow-cr's flatbuffer reader can also raise `IndexError` on a
-          # truncated/garbage buffer (see `shards_info/arrow_cr.1.md`), so wrap
-          # any failure here.
+          # arrow-cr's flatbuffer reader is bounds-checked and only raises
+          # `ArrowError` (upstream's flatbuffers verifier), so no other exception
+          # can escape from hostile metadata.
           ::Arrow::Ipc.read_message(slice)[0]
-        rescue error : ParquetError
-          raise error
-        rescue error
+        rescue error : ::Arrow::ArrowError
           raise arrow_err!("Unable to get root as message stored in #{ARROW_SCHEMA_META_KEY}, #{error.message}")
         end
 

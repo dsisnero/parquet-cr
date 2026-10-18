@@ -1290,9 +1290,10 @@ Chunk status by area:
   `IpcDataGenerator::schema_to_bytes_with_dictionary_tracker`), and
   `get_arrow_schema_from_metadata` feeds the decoded bytes to
   `Arrow::Ipc.read_message` (upstream strips the legacy prefix and calls
-  `root_as_message`); because arrow-cr's flatbuffer reader raises `IndexError`
-  on garbage, any non-`ParquetError` failure is wrapped as
-  `ArrowError("Unable to get root as message stored in ARROW:schema, …")`.
+  `root_as_message`). arrow-cr's flatbuffer reader is bounds-checked and only
+  raises `ArrowError`, which the port wraps as
+  `ArrowError("Unable to get root as message stored in ARROW:schema, …")`;
+  hostile/truncated metadata is covered by specs.
   `WriterProperties#key_value_metadata` is a writable `property` (upstream
   `pub(crate)`) so `add_encoded_arrow_schema_to_metadata` can mutate it.
   Upstream's `{:?}` error formatting is approximated with the underlying
