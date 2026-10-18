@@ -911,15 +911,15 @@ parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::ValueDecoder.rea
 parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::ValueDecoder.set_data	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::ValueDecoder.set_dict	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/fixed_len_byte_array.rs::method::ValueDecoder.skip_values	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/fixed_size_list_array.rs::method::FixedSizeListArrayReader.as_any	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/fixed_size_list_array.rs::method::FixedSizeListArrayReader.consume_batch	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/fixed_size_list_array.rs::method::FixedSizeListArrayReader.get_data_type	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/fixed_size_list_array.rs::method::FixedSizeListArrayReader.get_def_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/fixed_size_list_array.rs::method::FixedSizeListArrayReader.get_rep_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/fixed_size_list_array.rs::method::FixedSizeListArrayReader.max_def_level	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/fixed_size_list_array.rs::method::FixedSizeListArrayReader.new	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/fixed_size_list_array.rs::method::FixedSizeListArrayReader.read_records	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/fixed_size_list_array.rs::method::FixedSizeListArrayReader.skip_records	method	missing	-	auto-generated
+parquet/src/arrow/array_reader/fixed_size_list_array.rs::method::FixedSizeListArrayReader.as_any	method	intentional_divergence	src/parquet/arrow/array_reader/fixed_size_list_array.cr	`as_any` not modelled (Crystal `is_a?`)
+parquet/src/arrow/array_reader/fixed_size_list_array.rs::method::FixedSizeListArrayReader.consume_batch	method	ported	src/parquet/arrow/array_reader/fixed_size_list_array.cr	FixedSizeListArrayReader#consume_batch (per-row alignment checks, null-block insertion, level-derived bitmap)
+parquet/src/arrow/array_reader/fixed_size_list_array.rs::method::FixedSizeListArrayReader.get_data_type	method	ported	src/parquet/arrow/array_reader/fixed_size_list_array.cr	FixedSizeListArrayReader#data_type
+parquet/src/arrow/array_reader/fixed_size_list_array.rs::method::FixedSizeListArrayReader.get_def_levels	method	ported	src/parquet/arrow/array_reader/fixed_size_list_array.cr	FixedSizeListArrayReader#def_levels (item reader)
+parquet/src/arrow/array_reader/fixed_size_list_array.rs::method::FixedSizeListArrayReader.get_rep_levels	method	ported	src/parquet/arrow/array_reader/fixed_size_list_array.cr	FixedSizeListArrayReader#rep_levels (item reader)
+parquet/src/arrow/array_reader/fixed_size_list_array.rs::method::FixedSizeListArrayReader.max_def_level	method	ported	src/parquet/arrow/array_reader/fixed_size_list_array.cr	FixedSizeListArrayReader#max_def_level
+parquet/src/arrow/array_reader/fixed_size_list_array.rs::method::FixedSizeListArrayReader.new	method	ported	src/parquet/arrow/array_reader/fixed_size_list_array.cr	FixedSizeListArrayReader#initialize(item_reader, fixed_size, data_type, def_level, rep_level, nullable, parent_threshold)
+parquet/src/arrow/array_reader/fixed_size_list_array.rs::method::FixedSizeListArrayReader.read_records	method	ported	src/parquet/arrow/array_reader/fixed_size_list_array.cr	FixedSizeListArrayReader#read_records (item reader)
+parquet/src/arrow/array_reader/fixed_size_list_array.rs::method::FixedSizeListArrayReader.skip_records	method	ported	src/parquet/arrow/array_reader/fixed_size_list_array.cr	FixedSizeListArrayReader#skip_records (item reader)
 parquet/src/arrow/array_reader/list_array.rs::method::ListArrayReader<OffsetSize>.as_any	method	intentional_divergence	src/parquet/arrow/array_reader/list_array.cr	`as_any` not modelled (Crystal `is_a?`)
 parquet/src/arrow/array_reader/list_array.rs::method::ListArrayReader<OffsetSize>.consume_batch	method	ported	src/parquet/arrow/array_reader/list_array.cr	ListArrayReader#consume_batch (offsets + validity rebuilt from item-reader levels)
 parquet/src/arrow/array_reader/list_array.rs::method::ListArrayReader<OffsetSize>.get_data_type	method	ported	src/parquet/arrow/array_reader/list_array.cr	ListArrayReader#data_type
