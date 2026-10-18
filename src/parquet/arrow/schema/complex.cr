@@ -138,12 +138,8 @@ module Parquet
 
       # Returns the children of a group field.
       def children : Array(ParquetField)?
-        case field_type
-        when ParquetFieldType::Group
-          field_type.children
-        else
-          nil
-        end
+        kind = field_type
+        kind.is_a?(ParquetFieldType::Group) ? kind.children : nil
       end
     end
 

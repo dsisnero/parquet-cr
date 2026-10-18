@@ -773,20 +773,20 @@ parquet/examples/read_with_rowgroup.rs::method::InMemoryRowGroup.metadata	method
 parquet/examples/read_with_rowgroup.rs::method::InMemoryRowGroup.num_rows	method	missing	-	auto-generated
 parquet/examples/read_with_rowgroup.rs::method::InMemoryRowGroup.row_group_metadata	method	missing	-	auto-generated
 parquet/examples/read_with_rowgroup.rs::method::InMemoryRowGroup.row_groups	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_array_reader	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_fixed_size_list_reader	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_list_reader	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_map_reader	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_primitive_reader	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_reader	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_row_group_index_reader	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_row_number_reader	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_struct_reader	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.new	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.num_rows	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.with_batch_size	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.with_cache_options	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.with_parquet_metadata	method	missing	-	auto-generated
+parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_array_reader	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#build_array_reader (empty reader fallback when unprojected)
+parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_fixed_size_list_reader	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#build_fixed_size_list_reader
+parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_list_reader	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#build_list_reader (List/LargeList/ListView/LargeListView)
+parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_map_reader	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#build_map_reader (key/value readers, rebuilt map data type)
+parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_primitive_reader	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#build_primitive_reader (BOOL/INT32/INT64/FLOAT/DOUBLE/BYTE_ARRAY; NYI for INT96/FLBA/dictionary/Null)
+parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_reader	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#build_reader (primitive/struct/map/list/fixed-size dispatch)
+parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_row_group_index_reader	method	intentional_divergence	src/parquet/arrow/array_reader/builder.cr	virtual row-group-index columns are not modelled (no ParquetFieldType::Virtual)
+parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_row_number_reader	method	intentional_divergence	src/parquet/arrow/array_reader/builder.cr	virtual row-number columns are not modelled (no ParquetFieldType::Virtual)
+parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_struct_reader	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#build_struct_reader (projected children, rebuilt struct data type)
+parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.new	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#initialize(row_groups, batch_size)
+parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.num_rows	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#num_rows
+parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.with_batch_size	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#with_batch_size
+parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.with_cache_options	method	intentional_divergence	src/parquet/arrow/array_reader/builder.cr	row-group caching (`CachedArrayReader`/`RowGroupCache`) is not ported
+parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.with_parquet_metadata	method	intentional_divergence	src/parquet/arrow/array_reader/builder.cr	metadata is not needed: only virtual columns use it, and they are not ported
 parquet/src/arrow/array_reader/builder.rs::method::CacheOptionsBuilder<'a>.consumer	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/builder.rs::method::CacheOptionsBuilder<'a>.new	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/builder.rs::method::CacheOptionsBuilder<'a>.producer	method	missing	-	auto-generated

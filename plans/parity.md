@@ -60,12 +60,14 @@ little-endian layout.
   the shared record reader, and the composite readers `StructArrayReader`,
   `ListArrayReader` (List + LargeList, nested lists, selective padding),
   `MapArrayReader` (a list of key/value entry structs),
-  `ListViewArrayReader` (ListView + LargeListView) and
-  `FixedSizeListArrayReader` are done. The next arrow feature is
-  `ArrayReaderBuilder` (wiring these readers to real parquet schema/row
-  groups) and the remaining `NullArrayReader`/placeholders; the leaf
-  `FixedLenByteArrayReader` needs arrow-cr decimal/float16/interval arrays first
-  (and `NullArrayReader` needs `Arrow::NullArray` in arrow-cr). Everything else
+  `ListViewArrayReader` (ListView + LargeListView),
+  `FixedSizeListArrayReader` and the `ArrayReaderBuilder` (which wires all of
+  them to real parquet schema/row groups, propagating the projection mask and
+  the selective-padding threshold) are done. The next arrow feature is the
+  arrow `ParquetRecordBatchReader`/`ArrowReaderBuilder` on top of the array
+  readers, plus `NullArrayReader`/`ByteArrayDictionaryReader`/
+  `FixedLenByteArrayReader` (blocked on arrow-cr `NullArray`/decimal/float16/
+  interval arrays) and the cached/row-number readers. Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
   `column/page_store.rs`, the arrow reader/writer). Done so far:
@@ -393,7 +395,22 @@ little-endian layout.
     fixed-size lists over two batches), and adds data-type/level forwarding, an
     empty batch and skipping. Not ported yet: `test_nested_var_list` (built with
     `FixedSizeListBuilder` over a `ListBuilder`) and the two `ArrowWriter`
-    round-trip tests.
+    round-trip tests. Array reader builder
+    (`src/parquet/arrow/array_reader/builder.cr`): `ArrayReaderBuilder` —
+    recursive `build_reader` dispatch over the `ParquetField` tree (primitive,
+    struct, map, list/list-view, fixed-size list), `build_array_reader` with
+    the `make_empty_array_reader(num_rows)` fallback when the field is absent or
+    fully unprojected, `with_batch_size`, and selective-padding propagation
+    (children of lists/maps are padded at the parent's `def_level`). Specs:
+    `spec/parquet/arrow/array_reader_builder_spec.cr` ports the upstream
+    `test_create_array_reader` (projected `nested.snappy`-style `b_struct`
+    leaf, plus reading the 8 all-null rows), and adds the unprojected/absent
+    field fallbacks, list and map fixtures (`list_columns.parquet`,
+    `nested_maps.snappy.parquet`), the batch-size hint, and the
+    `NYIError` for fixed-length byte arrays. Not ported: reader metrics, cache
+    options/`CachedArrayReader`, virtual columns (so upstream's
+    `test_create_array_reader_with_row_numbers` is skipped), and the
+    `NullArrayReader`/dictionary/INT96 leaf paths (which raise `NYIError`).
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -767,14 +784,15 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow fixed-size list array reader`; gates green
-  (`make lint`, `make test` -> 1054 examples, 0 failures). Next feature:
-  `ArrayReaderBuilder` (wiring the readers to real schema/row groups), then
-  `NullArrayReader` once arrow-cr has `Arrow::NullArray`, or
-  `FixedLenByteArrayReader` once arrow-cr has decimal/float16/interval arrays.
-  Note `make install` now requires the sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 1979 `ported`, 188 `intentional_divergence`,
-  13 `skipped`, 1335 `missing` (of 3515 rows).
+- Last commit: `port: arrow array reader builder`; gates green (`make lint`,
+  `make test` -> 1061 examples, 0 failures). Next feature: the arrow
+  `ArrowReaderBuilder`/`ParquetRecordBatchReader` over these readers, then
+  `NullArrayReader`/`ByteArrayDictionaryReader`/`FixedLenByteArrayReader` once
+  arrow-cr has the missing array types (`NullArray`, decimals, float16,
+  intervals). Note `make install` now requires the sibling checkout
+  `../arrow-cr`.
+- Progress by counts (ledger): 1989 `ported`, 192 `intentional_divergence`,
+  13 `skipped`, 1321 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1372,13 +1390,16 @@ Chunk status by area:
         list_view_array.cr`, a list reader whose output is converted to
         offsets+sizes), and `FixedSizeListArrayReader`
         (`src/parquet/arrow/array_reader/fixed_size_list_array.cr`, compact
-        child + `MutableArrayData` null blocks, per-row alignment checks).
-        Remaining: `FixedLenByteArrayReader` (decimal/float16/interval targets
-        need arrow-cr array support), `ByteArrayDictionaryReader`, the
-        byte-array/value decoders (`ByteArrayColumnValueDecoder`/
+        child + `MutableArrayData` null blocks, per-row alignment checks) and
+        the `ArrayReaderBuilder` (`src/parquet/arrow/array_reader/builder.cr`,
+        field-tree dispatch with projection mask + padding-threshold
+        propagation and the empty-reader fallback). Remaining:
+        `FixedLenByteArrayReader` (decimal/float16/interval targets need
+        arrow-cr array support), `ByteArrayDictionaryReader`, the byte-array/
+        value decoders (`ByteArrayColumnValueDecoder`/
         `ByteViewArrayColumnValueDecoder`), `NullArrayReader` (needs
-        `Arrow::NullArray` in arrow-cr), `ArrayReaderBuilder`, and the
-        placeholder/cached readers.
+        `Arrow::NullArray` in arrow-cr), and the placeholder/cached/virtual
+        readers.
 - [ ] `arrow/array_reader/`, `arrow/record_reader/`, `arrow/levels.rs`
       (parquet pages → Arrow arrays).
 - [ ] `arrow/arrow_reader/` (`ParquetRecordBatchReader`, `RowFilter`,
@@ -1575,6 +1596,14 @@ Chunk status by area:
   `try_extend_nulls` (which raise on error in Crystal instead of returning
   `Result`) for the null-list blocks and an empty batch returns a zero-length
   fixed-size list over an empty child.
+- Arrow interop, array reader builder: `ArrayReaderBuilder` drops the reader
+  metrics, cache options (`CachedArrayReader`/`RowGroupCache`) and virtual
+  columns (`ParquetFieldType` only models primitive/group fields in this port),
+  and the per-field `ReaderArgs` struct is replaced by explicit
+  `(field, mask, padding_threshold)` parameters. Leaves whose readers are not
+  ported raise `NYIError` with a specific message: `DataType::Null`
+  (`NullArrayReader`), dictionary-typed byte arrays
+  (`ByteArrayDictionaryReader`), `FIXED_LEN_BYTE_ARRAY` and `INT96`.
 - Arrow interop, skipping: `ColumnReaderImpl#skip_records` (like upstream) only
   consults the classic definition-level decoder, so with the arrow
   `DefinitionLevelBuffer` in use every skipped level is treated as a value. Skip

@@ -97,6 +97,7 @@ require "./parquet/arrow/array_reader/list_array"
 require "./parquet/arrow/array_reader/map_array"
 require "./parquet/arrow/array_reader/list_view_array"
 require "./parquet/arrow/array_reader/fixed_size_list_array"
+require "./parquet/arrow/array_reader/builder"
 
 module Parquet
   VERSION = "0.1.0"
