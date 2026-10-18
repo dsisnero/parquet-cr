@@ -51,8 +51,11 @@ Lint/ShadowingOuterLocalVar:
   Excluded:
     - src/parquet/column/writer/writer.cr
 
+# `apply_hint`/`from_int64` are direct ports of upstream's large `match`es
+# (every parquet/arrow type pair), so the complexity budget does not apply.
 Metrics/CyclomaticComplexity:
   Excluded:
+    - src/parquet/arrow/schema/primitive.cr
     - src/parquet/column/writer/writer.cr
     - src/parquet_variant/variant.cr
     - src/parquet_variant/variant/debug.cr

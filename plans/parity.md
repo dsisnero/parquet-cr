@@ -39,9 +39,10 @@ little-endian layout.
   is complete, and so is the `ARROW:schema` IPC metadata round-trip
   (`encode_arrow_schema`/`get_arrow_schema_from_metadata`/
   `add_encoded_arrow_schema_to_metadata`, using arrow-cr's `arrow-ipc` schema
-  message). The next arrow feature is the Parquet → Arrow schema direction
-  (`ParquetField`/`Visitor`/`parquet_to_arrow_schema*`), which is now fully
-  unblocked. Everything else on this roadmap is complete, blocked
+  message), plus `ProjectionMask` and the primitive type mapping
+  (`convert_primitive`). The next arrow feature is the Parquet → Arrow schema
+  direction (`ParquetField`/`Visitor`/`parquet_to_arrow_schema*`), which is now
+  fully unblocked. Everything else on this roadmap is complete, blocked
   (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
   `column/page_store.rs`, the arrow reader/writer). Done so far:
@@ -196,7 +197,19 @@ little-endian layout.
     run-end-encoded fields). The encoded metadata written by this port is
     accepted by upstream `parquet-read` (arrow-rs 60.0.0), and the port decodes
     it back to the original schema (incl. schema/field metadata, dictionaries,
-    decimals, timestamps, nested lists).
+    decimals, timestamps, nested lists). Projection/primitive layer:
+    `Parquet::Arrow::ProjectionMask` (`all`/`none`/`leaves`/`roots`/`columns`/
+    `leaf_included?`/`union`/`intersect`), `Parquet::Arrow.parquet_column`, and
+    `Parquet::Arrow.convert_primitive` (parquet primitive → arrow `DataType`
+    with the embedded-schema hint logic: timestamp/time/date64/duration, offset
+    and view width, interval unit, decimal width, dictionary preservation), in
+    `src/parquet/arrow/mod.cr` and `arrow/schema/primitive.cr`. Specs:
+    `spec/parquet/arrow/projection_spec.cr` (upstream
+    `test_mask_from_column_names`/`test_projection_mask_union`/
+    `test_projection_mask_intersect` + roots/none/leaf checks and
+    `parquet_column`) and `spec/parquet/arrow/primitive_spec.cr` (every
+    `from_parquet` branch, the upstream FLBA decimal/interval length tests, and
+    `apply_hint`).
   - Both crates are required from `src/parquet-cr.cr` (`./parquet_variant`,
     `./parquet_geospatial`) and are linted/tested by `make lint`/`make test`.
 - Next up (take the first unchecked item; each is ~one commit):
@@ -570,12 +583,12 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow schema metadata`; gates green (`make lint`,
-  `make test` -> 895 examples, 0 failures). Next feature: the Parquet → Arrow
-  schema direction (Phase 3.5). Note `make install` now requires the sibling
-  checkout `../arrow-cr`.
-- Progress by counts (ledger): 1827 `ported`, 181 `intentional_divergence`,
-  11 `skipped`, 1496 `missing` (of 3515 rows).
+- Last commit: `port: arrow projection mask and primitive conversion`; gates
+  green (`make lint`, `make test` -> 929 examples, 0 failures). Next feature: the
+  Parquet → Arrow schema direction (Phase 3.5). Note `make install` now requires
+  the sibling checkout `../arrow-cr`.
+- Progress by counts (ledger): 1835 `ported`, 181 `intentional_divergence`,
+  11 `skipped`, 1488 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1132,16 +1145,25 @@ Chunk status by area:
         `arrow_to_parquet_type`, `field_id`, `decimal_length_from_precision`,
         and the `PARQUET_*` naming constants (`src/parquet/arrow/schema.cr`,
         `spec/parquet/arrow/schema_spec.cr`).
+  - [x] `arrow/mod.rs` `ProjectionMask` (`all`, `none`, `leaves`, `roots`,
+        `columns`, `leaf_included?`, `union`, `intersect`) and `parquet_column`
+        (`src/parquet/arrow/mod.cr`, `spec/parquet/arrow/projection_spec.cr`);
+        `without_nested_types` is a follow-up (used by `push_decoder`/selection).
+  - [x] `arrow/schema/primitive.rs` `convert_primitive`/`apply_hint`/
+        `from_parquet` (`src/parquet/arrow/schema/primitive.cr`,
+        `spec/parquet/arrow/primitive_spec.cr`).
   - [x] `arrow/schema/mod.rs` schema metadata: `encode_arrow_schema`,
         `get_arrow_schema_from_metadata`, `add_encoded_arrow_schema_to_metadata`
         (+ `flatten_ree_field`) over arrow-cr's `Arrow::Ipc.schema_message`/
         `read_message`; `ARROW_SCHEMA_META_KEY`/`PARQUET_FIELD_ID_META_KEY`.
-- [ ] `arrow/schema` Parquet → Arrow direction: `ParquetField`/
-      `ParquetFieldType`/`VisitorContext`/`Visitor` (`complex.rs`),
-      `parquet_to_arrow_schema[_by_columns]`, `parquet_to_arrow_field`,
-      `FieldLevels`/`parquet_to_arrow_field_levels`, `parse_key_value_metadata`
-      (plus `ProjectionMask` for the by-columns variant). Fully unblocked now
-      that the `ARROW:schema` decode side is ported.
+- [ ] `arrow/schema` Parquet → Arrow direction (next feature):
+      `ParquetField`/`ParquetFieldType`/`VisitorContext`/`Visitor`
+      (`complex.rs`), `convert_type`/`convert_schema`/`convert_field`,
+      `parquet_to_arrow_schema[_by_columns]`/`parquet_to_arrow_schema_and_fields`,
+      `parquet_to_arrow_field`, `FieldLevels`/`parquet_to_arrow_field_levels`
+      (+ `_with_virtual`), and `parse_key_value_metadata`. Everything it needs is
+      now ported (`ProjectionMask`, `convert_primitive`, the `ARROW:schema`
+      decode).
 - [ ] `arrow/array_reader/`, `arrow/record_reader/`, `arrow/levels.rs`
       (parquet pages → Arrow arrays).
 - [ ] `arrow/arrow_reader/` (`ParquetRecordBatchReader`, `RowFilter`,
@@ -1297,7 +1319,14 @@ Chunk status by area:
   `WriterProperties#key_value_metadata` is a writable `property` (upstream
   `pub(crate)`) so `add_encoded_arrow_schema_to_metadata` can mutate it.
   Upstream's `{:?}` error formatting is approximated with the underlying
-  message.
+  message. `ProjectionMask` exposes its `mask` and a `leaves_with_mask`
+  constructor (upstream keeps the field private; its tests construct it
+  in-crate) and `leaf_included` → `leaf_included?`; `convert_primitive`'s
+  `apply_hint`/`from_parquet` are private module methods, and the physical/logical
+  dispatch is a `case` over `LogicalType` subclasses plus the `ConvertedType`
+  fallback with `arrow_err!`/`general_err!` where upstream has `arrow_err!`/
+  `General`. `parquet_column` returns `Tuple(Int32, Arrow::Field)?` (upstream
+  `Option<(usize, &FieldRef)>`).
 - Derive macros: `parquet_derive`'s proc macros (`#[derive(ParquetRecordWriter)]`
   / `ParquetRecordReader`) are replaced by `include Parquet::Derive::Record`.
   Rust impls `RecordWriter for &[T]` and `RecordReader for Vec<T>`; Crystal

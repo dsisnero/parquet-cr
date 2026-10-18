@@ -1466,15 +1466,15 @@ parquet/src/arrow/in_memory_row_group.rs::method::InMemoryRowGroup<'_>.num_rows	
 parquet/src/arrow/in_memory_row_group.rs::method::InMemoryRowGroup<'_>.row_groups	method	missing	-	auto-generated
 parquet/src/arrow/mod.rs::const::ARROW_SCHEMA_META_KEY	const	ported	src/parquet/arrow/schema.cr	Parquet::Arrow::ARROW_SCHEMA_META_KEY
 parquet/src/arrow/mod.rs::const::PARQUET_FIELD_ID_META_KEY	const	ported	src/parquet/arrow/schema.cr	Parquet::Arrow::PARQUET_FIELD_ID_META_KEY
-parquet/src/arrow/mod.rs::method::ProjectionMask.all	method	missing	-	auto-generated
-parquet/src/arrow/mod.rs::method::ProjectionMask.columns	method	missing	-	auto-generated
-parquet/src/arrow/mod.rs::method::ProjectionMask.intersect	method	missing	-	auto-generated
-parquet/src/arrow/mod.rs::method::ProjectionMask.leaf_included	method	missing	-	auto-generated
-parquet/src/arrow/mod.rs::method::ProjectionMask.leaves	method	missing	-	auto-generated
-parquet/src/arrow/mod.rs::method::ProjectionMask.none	method	missing	-	auto-generated
-parquet/src/arrow/mod.rs::method::ProjectionMask.roots	method	missing	-	auto-generated
-parquet/src/arrow/mod.rs::method::ProjectionMask.union	method	missing	-	auto-generated
-parquet/src/arrow/mod.rs::method::ProjectionMask.without_nested_types	method	missing	-	auto-generated
+parquet/src/arrow/mod.rs::method::ProjectionMask.all	method	ported	src/parquet/arrow/mod.cr	ProjectionMask.all
+parquet/src/arrow/mod.rs::method::ProjectionMask.columns	method	ported	src/parquet/arrow/mod.cr	ProjectionMask.columns (path-prefix match)
+parquet/src/arrow/mod.rs::method::ProjectionMask.intersect	method	ported	src/parquet/arrow/mod.cr	ProjectionMask#intersect (mutates self)
+parquet/src/arrow/mod.rs::method::ProjectionMask.leaf_included	method	ported	src/parquet/arrow/mod.cr	ProjectionMask#leaf_included?
+parquet/src/arrow/mod.rs::method::ProjectionMask.leaves	method	ported	src/parquet/arrow/mod.cr	ProjectionMask.leaves
+parquet/src/arrow/mod.rs::method::ProjectionMask.none	method	ported	src/parquet/arrow/mod.cr	ProjectionMask.none
+parquet/src/arrow/mod.rs::method::ProjectionMask.roots	method	ported	src/parquet/arrow/mod.cr	ProjectionMask.roots
+parquet/src/arrow/mod.rs::method::ProjectionMask.union	method	ported	src/parquet/arrow/mod.cr	ProjectionMask#union (mutates self)
+parquet/src/arrow/mod.rs::method::ProjectionMask.without_nested_types	method	missing	-	follow-up: used by push_decoder/selection
 parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.buffered_bytes	method	missing	-	auto-generated
 parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.clear_all_ranges	method	missing	-	auto-generated
 parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.into_builder	method	missing	-	auto-generated
