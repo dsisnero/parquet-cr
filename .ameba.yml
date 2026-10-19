@@ -57,6 +57,7 @@ Metrics/CyclomaticComplexity:
   Excluded:
     - src/parquet/arrow/schema/primitive.cr
     - src/parquet/arrow/row_selection/algebra.cr
+    - src/parquet/arrow/read_plan.cr
     - src/parquet/column/writer/writer.cr
     - src/parquet_variant/variant.cr
     - src/parquet_variant/variant/debug.cr

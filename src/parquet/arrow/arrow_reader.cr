@@ -2,6 +2,7 @@ require "arrow-cr"
 require "../errors"
 require "./array_reader"
 require "./array_reader/builder"
+require "./filter"
 require "./read_plan"
 require "./mod"
 require "./schema"
@@ -14,16 +15,20 @@ require "../file/metadata"
 # Ports the batch-reading core: `ArrowReaderOptions` (embedded-metadata skipping
 # and supplied arrow schemas), `ArrowReaderMetadata` (parquet metadata + arrow
 # schema + projected field tree), `ParquetRecordBatchReaderBuilder` (batch size,
-# projection mask, `build`) and `ParquetRecordBatchReader` (an
-# `Iterator(Arrow::RecordBatch)` over an `ArrayReader`).
+# projection mask, row selection, offset/limit, `with_row_filter`, `build`) and
+# `ParquetRecordBatchReader` (an `Iterator(Arrow::RecordBatch)` over an
+# `ArrayReader`). Row filters are evaluated eagerly in `build`: each predicate's
+# projection is decoded, evaluated, and folded into the read plan's selection
+# (upstream `ReadPlanBuilder::with_predicate`), so only the matching rows reach
+# the final array reader.
 #
 # Divergences (none of the corresponding infrastructure is ported yet):
-# - row selection (`RowSelection`, cursors/selectors), offset/limit plans,
-#   `RowFilter` evaluation and statistics pruning are not modelled: the reader
-#   always reads all rows of all row groups;
-# - no reader metrics, page-index/column-index policies or virtual columns in
-#   `ArrowReaderOptions`/`ArrowReaderMetadata`, and no encryption properties;
+# - the read plan is always selector-backed (no `RowSelectionPolicy`/mask
+#   cursor), there is no row-group selection and no page pruning; statistics
+#   pruning (`StatisticsConverter`), reader metrics, bloom-filter lookups and
+#   page-index/column-index policies are not modelled;
 # - the builder takes a `File::FileReader` (upstream takes any `ChunkReader`),
+#   `ArrowReaderOptions`/`ArrowReaderMetadata`, and no encryption properties;
 #   because the port's `RowGroups` implementation (`FileRowGroups`) needs a
 #   reader; `ReaderRowGroups`/`ReaderPageIterator` are therefore not needed yet;
 # - `usize` counts are `Int32`; the reader's schema carries the projected field
@@ -181,6 +186,7 @@ module Parquet
         @row_selection : RowSelection? = nil,
         @offset : Int32? = nil,
         @limit : Int32? = nil,
+        @row_filter : RowFilter? = nil,
       )
       end
 
@@ -237,6 +243,19 @@ module Parquet
         self
       end
 
+      # Provides a `RowFilter` to skip decoding rows (upstream
+      # `with_row_filter`).
+      #
+      # `RowFilter` predicates are evaluated after any `RowSelection`, and the
+      # results are combined with `RowSelection#and_then`. Use
+      # `ProjectionMask` to select the columns needed by the predicate; any
+      # columns needed for the overall projection are decoded again after a
+      # predicate is applied.
+      def with_row_filter(filter : RowFilter) : self
+        @row_filter = filter
+        self
+      end
+
       # The parquet schema descriptor.
       def parquet_schema : Schema::SchemaDescriptor
         @metadata.file_metadata.schema_descr
@@ -250,16 +269,29 @@ module Parquet
         batch_size = 0 if batch_size < 0
 
         row_groups = FileRowGroups.new(@input)
+        plan_builder = ReadPlanBuilder.new(batch_size).with_selection(@row_selection)
+
+        # Update the selection based on any filters, decoding only each
+        # predicate's projection.
+        if filter = @row_filter
+          filter.predicates.each do |predicate|
+            # Break early if we have ruled out all rows.
+            break unless plan_builder.selects_any?
+
+            predicate_reader = ArrayReaderBuilder.new(row_groups, batch_size)
+              .build_array_reader(@fields, predicate.projection)
+            plan_builder = plan_builder.with_predicate(predicate_reader, predicate)
+          end
+        end
+
         array_reader = ArrayReaderBuilder.new(row_groups, batch_size)
           .build_array_reader(@fields, @projection)
 
-        plan = ReadPlanBuilder.new(batch_size)
-          .with_selection(@row_selection)
-          .limited(@metadata.file_metadata.num_rows.to_i32)
-        plan = plan.with_offset(@offset) if @offset
-        plan = plan.with_limit(@limit) if @limit
+        limited = plan_builder.limited(@metadata.file_metadata.num_rows.to_i32)
+        limited = limited.with_offset(@offset) if @offset
+        limited = limited.with_limit(@limit) if @limit
 
-        ParquetRecordBatchReader.new(array_reader, plan.build_limited.build)
+        ParquetRecordBatchReader.new(array_reader, limited.build_limited.build)
       end
     end
 

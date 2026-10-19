@@ -5,10 +5,11 @@ require "../../spec_helper"
 # `ParquetRecordBatchReader`/`ParquetRecordBatchReaderBuilder` batch-reading
 # path.
 #
-# Divergences (see `plans/parity.md`): the port reads every row of every row
-# group, so upstream's row selection (`RowSelection`), row-group/offset/limit
-# plans, `RowFilter` evaluation, statistics and reader metrics are not available
-# yet. The supplied-schema tests that upstream writes through `ArrowWriter`
+# Divergences (see `plans/parity.md`): row selection, the offset/limit plans and
+# `RowFilter` (see `row_filter_spec.cr`) are ported, but the plan is always
+# selector-backed, there is no row-group selection, and statistics/reader
+# metrics are not available yet. The supplied-schema tests that upstream writes
+# through `ArrowWriter`
 # (`write_parquet_from_iter`/`arrow::ArrowWriter`) are characterized with the
 # ported `SerializedFileWriter` instead, since the arrow writer is not ported.
 private alias PArrow = Parquet::Arrow

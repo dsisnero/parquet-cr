@@ -1003,13 +1003,13 @@ parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.new	me
 parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.read_records	method	ported	src/parquet/arrow/array_reader/struct_array.cr	StructArrayReader#read_records (children kept in sync)
 parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.skip_records	method	ported	src/parquet/arrow/array_reader/struct_array.cr	StructArrayReader#skip_records (children kept in sync)
 parquet/src/arrow/array_reader/test_util.rs::method::EmptyPageIterator.next	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/filter.rs::method::ArrowPredicateFn<F>.evaluate	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/filter.rs::method::ArrowPredicateFn<F>.new	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/filter.rs::method::ArrowPredicateFn<F>.projection	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/filter.rs::method::RowFilter.fmt	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/filter.rs::method::RowFilter.into_predicates	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/filter.rs::method::RowFilter.new	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/filter.rs::method::RowFilter.predicates	method	missing	-	auto-generated
+parquet/src/arrow/arrow_reader/filter.rs::method::ArrowPredicateFn<F>.evaluate	method	ported	src/parquet/arrow/filter.cr	ArrowPredicateFn#evaluate
+parquet/src/arrow/arrow_reader/filter.rs::method::ArrowPredicateFn<F>.new	method	ported	src/parquet/arrow/filter.cr	ArrowPredicateFn#initialize(projection, &block)
+parquet/src/arrow/arrow_reader/filter.rs::method::ArrowPredicateFn<F>.projection	method	ported	src/parquet/arrow/filter.cr	ArrowPredicateFn#projection
+parquet/src/arrow/arrow_reader/filter.rs::method::RowFilter.fmt	method	ported	src/parquet/arrow/filter.cr	RowFilter#to_s (same text as the upstream Debug impl)
+parquet/src/arrow/arrow_reader/filter.rs::method::RowFilter.into_predicates	method	intentional_divergence	src/parquet/arrow/filter.cr	no consuming variant; the `predicates` getter is returned by reference
+parquet/src/arrow/arrow_reader/filter.rs::method::RowFilter.new	method	ported	src/parquet/arrow/filter.cr	RowFilter#initialize(Array(ArrowPredicate)) + splat overload
+parquet/src/arrow/arrow_reader/filter.rs::method::RowFilter.predicates	method	ported	src/parquet/arrow/filter.cr	RowFilter#predicates
 parquet/src/arrow/arrow_reader/metrics.rs::method::ArrowReaderMetrics.disabled	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/metrics.rs::method::ArrowReaderMetrics.enabled	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/metrics.rs::method::ArrowReaderMetrics.increment_cache_reads	method	missing	-	auto-generated
@@ -1027,14 +1027,14 @@ parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.parquet_sch
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.schema	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#schema
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_batch_size	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_batch_size
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_limit	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_limit
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_max_predicate_cache_size	method	intentional_divergence	src/parquet/arrow/arrow_reader.cr	filters are not ported
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_max_predicate_cache_size	method	intentional_divergence	src/parquet/arrow/arrow_reader.cr	the sync reader ignores the predicate cache size (upstream does too, see arrow-rs#8000)
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_metrics	method	intentional_divergence	src/parquet/arrow/arrow_reader.cr	reader metrics are not ported
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_offset	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_offset
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_projection	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_projection
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_filter	method	intentional_divergence	src/parquet/arrow/arrow_reader.cr	RowFilter evaluation is not ported
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_filter	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_row_filter (predicates evaluated in build)
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_groups	method	intentional_divergence	src/parquet/arrow/arrow_reader.cr	row-group selection is not ported (all row groups are read)
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_selection	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_row_selection
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_selection_policy	method	intentional_divergence	src/parquet/arrow/arrow_reader.cr	RowSelection is not ported
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_selection_policy	method	intentional_divergence	src/parquet/arrow/arrow_reader.cr	no RowSelectionPolicy/mask cursor: the plan is always selector-backed
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderMetadata.load	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderMetadata.load(reader, options)
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderMetadata.metadata	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderMetadata#metadata
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderMetadata.parquet_schema	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderMetadata#parquet_schema
@@ -1104,14 +1104,14 @@ parquet/src/arrow/arrow_reader/mod.rs::method::TestOptions.with_row_filter	metho
 parquet/src/arrow/arrow_reader/mod.rs::method::TestOptions.with_row_selections	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::method::TestOptions.writer_props	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::method::ValuesAndRowNumbers.new_from_reader	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/read_plan.rs::const::LIMIT	const	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/read_plan.rs::const::TOTAL_ROWS	const	missing	-	auto-generated
+parquet/src/arrow/arrow_reader/read_plan.rs::const::LIMIT	const	skipped	-	test-only const upstream (#[cfg(test)] mod tests)
+parquet/src/arrow/arrow_reader/read_plan.rs::const::TOTAL_ROWS	const	skipped	-	test-only const upstream (#[cfg(test)] mod tests)
 parquet/src/arrow/arrow_reader/read_plan.rs::method::LimitedReadPlanBuilder.build_limited	method	ported	src/parquet/arrow/read_plan.cr	LimitedReadPlanBuilder#build_limited
 parquet/src/arrow/arrow_reader/read_plan.rs::method::LimitedReadPlanBuilder.new	method	ported	src/parquet/arrow/read_plan.cr	LimitedReadPlanBuilder#initialize
 parquet/src/arrow/arrow_reader/read_plan.rs::method::LimitedReadPlanBuilder.with_limit	method	ported	src/parquet/arrow/read_plan.cr	LimitedReadPlanBuilder#with_limit
 parquet/src/arrow/arrow_reader/read_plan.rs::method::LimitedReadPlanBuilder.with_offset	method	ported	src/parquet/arrow/read_plan.cr	LimitedReadPlanBuilder#with_offset
-parquet/src/arrow/arrow_reader/read_plan.rs::method::PredicateOptions<'a>.new	method	intentional_divergence	src/parquet/arrow/read_plan.cr	row predicates (`RowFilter`) are not ported
-parquet/src/arrow/arrow_reader/read_plan.rs::method::PredicateOptions<'a>.with_limit	method	intentional_divergence	src/parquet/arrow/read_plan.cr	row predicates (`RowFilter`) are not ported
+parquet/src/arrow/arrow_reader/read_plan.rs::method::PredicateOptions<'a>.new	method	ported	src/parquet/arrow/read_plan.cr	PredicateOptions#initialize(array_reader, predicate)
+parquet/src/arrow/arrow_reader/read_plan.rs::method::PredicateOptions<'a>.with_limit	method	ported	src/parquet/arrow/read_plan.cr	PredicateOptions#with_limit(limit, total_rows)
 parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlan.batch_size	method	ported	src/parquet/arrow/read_plan.cr	ReadPlan#batch_size
 parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlan.row_selection_cursor_mut	method	ported	src/parquet/arrow/read_plan.cr	ReadPlan#cursor (selector cursors are mutable in place)
 parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.build	method	ported	src/parquet/arrow/read_plan.cr	ReadPlanBuilder#build
@@ -1123,8 +1123,8 @@ parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.row_selecti
 parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.selection	method	ported	src/parquet/arrow/read_plan.cr	ReadPlanBuilder#selection
 parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.selects_any	method	ported	src/parquet/arrow/read_plan.cr	ReadPlanBuilder#selects_any?
 parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.with_loaded_row_ranges	method	intentional_divergence	src/parquet/arrow/read_plan.cr	page pruning / loaded row ranges are not ported
-parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.with_predicate	method	intentional_divergence	src/parquet/arrow/read_plan.cr	row predicates (`RowFilter`) are not ported
-parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.with_predicate_options	method	intentional_divergence	src/parquet/arrow/read_plan.cr	row predicates (`RowFilter`) are not ported
+parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.with_predicate	method	ported	src/parquet/arrow/read_plan.cr	ReadPlanBuilder#with_predicate
+parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.with_predicate_options	method	ported	src/parquet/arrow/read_plan.cr	ReadPlanBuilder#with_predicate_options (incl. filters_to_boolean_buffer/take_n_true)
 parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.with_row_selection_policy	method	intentional_divergence	src/parquet/arrow/row_selection.cr	mask cursor/RowSelectionPolicy not ported, so the plan is always selector-backed
 parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.with_selection	method	ported	src/parquet/arrow/read_plan.cr	ReadPlanBuilder#with_selection
 parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskRunIter<'_>.next	method	ported	src/parquet/arrow/row_selection.cr	MaskRunIter#next
