@@ -1,6 +1,6 @@
 require "../../spec_helper"
 
-# Ported from `parquet/src/arrow/push_decoder/{mod,remaining}.rs`
+# Ported from `parquet/src/arrow/push_decoder/{mod,remaining,reader_builder/{mod,filter}}.rs`
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b):
 # `ParquetPushDecoderBuilder`/`ParquetPushDecoder` pull-based decoding over
 # caller-supplied bytes (`DecodeResult::NeedsData`/`Data`/`Finished`),
@@ -12,9 +12,10 @@ require "../../spec_helper"
 # strings, two 200-row row groups, 100-row data pages, written in 50-row
 # batches). The port writes the same shape with `SerializedFileWriter`.
 #
-# Deferred in this slice (documented in `plans/parity.md`): row filters in the
-# push path (`with_row_filter`) and the predicate cache
-# (`with_max_predicate_cache_size`).
+# Deferred in this slice (documented in `plans/parity.md`): the predicate cache
+# (`with_max_predicate_cache_size`, `RowGroupCache`/`CachedArrayReader`), so the
+# filter-stage requests are built exactly as upstream builds them with the cache
+# disabled.
 private alias PArrow = Parquet::Arrow
 private alias BytesCR = Parquet::File::BytesChunkReader
 private alias FWriter = Parquet::File::SerializedFileWriter
@@ -869,6 +870,442 @@ describe Parquet::Arrow::ParquetPushDecoder do
       batches1 = drain_reader(reader1)
       batches1.each { |batch| batch.num_columns.should eq(1) }
       batches1.flat_map { |batch| int64_values(batch, 0) }.should eq((200...400).map(&.to_i64))
+      expect_reader_finished(decoder.try_next_reader)
+    end
+  end
+end
+
+# Row filters in the push path (`with_row_filter`, `FilterInfo`/`CacheInfo`,
+# `has_predicates`).
+#
+# Ported from `parquet/src/arrow/push_decoder/{mod,reader_builder/filter}.rs`
+# (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
+#
+# Deferred (documented in `plans/parity.md`): the predicate cache
+# (`RowGroupCache`/`CachedArrayReader`/`CacheOptions`), so
+# `with_max_predicate_cache_size` is accepted but has no effect and the
+# cache-projection expansion of the filter-stage requests (`cache_mask`) is a
+# no-op — equivalent to upstream with the cache disabled.
+private def threshold_predicate(
+  mask : Parquet::Arrow::ProjectionMask,
+  column : Int32,
+  threshold : Int64,
+) : Parquet::Arrow::ArrowPredicate
+  Parquet::Arrow::ArrowPredicateFn.new(mask) do |batch|
+    values = batch.column(column).as(Arrow::PrimitiveArray(Int64))
+    Arrow.gt(values, Arrow::PrimitiveArray(Int64).new_scalar(threshold))
+  end
+end
+
+private def below_predicate(
+  mask : Parquet::Arrow::ProjectionMask,
+  column : Int32,
+  threshold : Int64,
+) : Parquet::Arrow::ArrowPredicate
+  Parquet::Arrow::ArrowPredicateFn.new(mask) do |batch|
+    values = batch.column(column).as(Arrow::PrimitiveArray(Int64))
+    Arrow.lt(values, Arrow::PrimitiveArray(Int64).new_scalar(threshold))
+  end
+end
+
+# Checks the rows of a batch projected to a single column.
+private def check_column_a(batch : Arrow::RecordBatch, start : Int32, count : Int32) : Nil
+  batch.num_rows.should eq(count)
+  int64_values(batch, 0).should eq((start...(start + count)).map(&.to_i64))
+end
+
+private def check_column_b(batch : Arrow::RecordBatch, start : Int32, count : Int32) : Nil
+  batch.num_rows.should eq(count)
+  int64_values(batch, 0).should eq((start...(start + count)).map { |i| (400 + i).to_i64 })
+end
+
+private def check_column_c(batch : Arrow::RecordBatch, start : Int32, count : Int32) : Nil
+  batch.num_rows.should eq(count)
+  string_values(batch, 0).should eq((start...(start + count)).map { |i| test_string(i) })
+end
+
+describe Parquet::Arrow::ParquetPushDecoder do
+  describe "row filters" do
+    it "evaluates a single filter across partial data (upstream test_decoder_single_filter_partial)" do
+      bytes = test_file_bytes
+      metadata = test_metadata(bytes)
+      schema_descr = metadata.file_metadata.schema_descr
+
+      # Claim to use both "a" and "b" so the filter pages come back as two
+      # range requests.
+      predicate = threshold_predicate(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0, 1]), 0, 250_i64)
+
+      decoder = ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        # Read only "a": the filter pages must be reused for the output.
+        .with_projection(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0]))
+        .with_row_filter(Parquet::Arrow::RowFilter.new([predicate] of Parquet::Arrow::ArrowPredicate))
+        .build
+
+      # First row group, evaluating the filter.
+      ranges = expect_needs_data(decoder.try_decode)
+      half = ranges.size // 2
+      ranges1 = ranges[0...half]
+      ranges2 = ranges[half..]
+      ranges1.should_not be_empty
+      ranges2.should_not be_empty
+      push_ranges_to_decoder(decoder, bytes, ranges1)
+
+      # Still expect the remaining ranges, repeatedly without mutating state.
+      expect_needs_data(decoder.try_decode).should eq(ranges2)
+      expect_needs_data(decoder.try_decode).should eq(ranges2)
+      push_ranges_to_decoder(decoder, bytes, ranges2)
+
+      # No rows in row group 0 pass, so no data request follows the filter.
+
+      # Second row group: filter pages, then the projected data.
+      ranges = expect_needs_data(decoder.try_decode)
+      push_ranges_to_decoder(decoder, bytes, ranges)
+
+      check_column_a(expect_data(decoder.try_decode), 251, 149)
+      expect_finished(decoder.try_decode)
+    end
+
+    it "combines a filter with a row selection (upstream test_decoder_single_filter_and_row_selection)" do
+      bytes = test_file_bytes
+      metadata = test_metadata(bytes)
+      schema_descr = metadata.file_metadata.schema_descr
+
+      predicate = threshold_predicate(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0]), 0, 250_i64)
+
+      decoder = ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        .with_projection(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [1]))
+        .with_row_filter(Parquet::Arrow::RowFilter.new([predicate] of Parquet::Arrow::ArrowPredicate))
+        .with_row_selection(RowSelection.new([
+          RowSelector.skip(200),   # skip the first row group entirely
+          RowSelector.select(100), # first 100 rows of the second row group
+          RowSelector.skip(100),
+        ]))
+        .build
+
+      # Row group 0 is filtered out by the row selection, with no request.
+      ranges = expect_needs_data(decoder.try_decode)
+      push_ranges_to_decoder(decoder, bytes, ranges)
+
+      ranges = expect_needs_data(decoder.try_decode)
+      push_ranges_to_decoder(decoder, bytes, ranges)
+
+      check_column_b(expect_data(decoder.try_decode), 251, 49)
+      expect_finished(decoder.try_decode)
+    end
+
+    it "evaluates multiple filters in order (upstream test_decoder_multi_filters)" do
+      bytes = test_file_bytes
+      metadata = test_metadata(bytes)
+      schema_descr = metadata.file_metadata.schema_descr
+
+      filter_a = threshold_predicate(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0]), 0, 175_i64)
+      filter_b = below_predicate(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [1]), 0, 625_i64)
+
+      decoder = ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        .with_projection(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [2]))
+        .with_row_filter(Parquet::Arrow::RowFilter.new([
+          filter_a, filter_b,
+        ] of Parquet::Arrow::ArrowPredicate))
+        .build
+
+      # Row group 0: filter "a", filter "b", then the projected data for "c".
+      3.times do
+        push_ranges_to_decoder(decoder, bytes, expect_needs_data(decoder.try_decode))
+      end
+      check_column_c(expect_data(decoder.try_decode), 176, 24)
+
+      # Row group 1: same three stages.
+      3.times do
+        push_ranges_to_decoder(decoder, bytes, expect_needs_data(decoder.try_decode))
+      end
+      check_column_c(expect_data(decoder.try_decode), 200, 25)
+
+      expect_finished(decoder.try_decode)
+    end
+
+    it "reuses filter pages for the output (upstream test_decoder_reuses_filter_pages)" do
+      bytes = test_file_bytes
+      metadata = test_metadata(bytes)
+      schema_descr = metadata.file_metadata.schema_descr
+
+      predicate = threshold_predicate(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0]), 0, 250_i64)
+
+      decoder = ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        .with_projection(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0]))
+        .with_row_filter(Parquet::Arrow::RowFilter.new([predicate] of Parquet::Arrow::ArrowPredicate))
+        .build
+
+      # Row group 0: the filter rules every row out.
+      push_ranges_to_decoder(decoder, bytes, expect_needs_data(decoder.try_decode))
+
+      # Row group 1: filter pages, then the output reusing them (no new request).
+      push_ranges_to_decoder(decoder, bytes, expect_needs_data(decoder.try_decode))
+      check_column_a(expect_data(decoder.try_decode), 251, 149)
+
+      expect_finished(decoder.try_decode)
+    end
+
+    it "ignores an empty filter (upstream test_decoder_empty_filters)" do
+      bytes = test_file_bytes
+      metadata = test_metadata(bytes)
+      schema_descr = metadata.file_metadata.schema_descr
+
+      decoder = ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        .with_projection(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [2]))
+        # Empty filters should be ignored.
+        .with_row_filter(Parquet::Arrow::RowFilter.new([] of Parquet::Arrow::ArrowPredicate))
+        .build
+
+      # Expect the first two batches to be decoded as rows 0..199 and 200..399
+      # of column "c", with no predicate stage in between.
+      push_ranges_to_decoder(decoder, bytes, expect_needs_data(decoder.try_decode))
+      check_column_c(expect_data(decoder.try_decode), 0, 200)
+
+      push_ranges_to_decoder(decoder, bytes, expect_needs_data(decoder.try_decode))
+      check_column_c(expect_data(decoder.try_decode), 200, 200)
+
+      expect_finished(decoder.try_decode)
+    end
+
+    it "short-circuits the filter once the limit is reached (upstream test_decoder_filter_with_limit_short_circuits_within_row_group)" do
+      bytes = test_file_bytes
+      metadata = test_metadata(bytes)
+      schema_descr = metadata.file_metadata.schema_descr
+
+      evaluated = 0
+      predicate = Parquet::Arrow::ArrowPredicateFn.new(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0])) do |batch|
+        evaluated += batch.num_rows
+        values = batch.column(0).as(Arrow::PrimitiveArray(Int64))
+        Arrow.gt(values, Arrow::PrimitiveArray(Int64).new_scalar(175_i64))
+      end
+
+      # Use a small batch size so the row group is evaluated across multiple
+      # predicate batches; that is the regime where the limit short-circuit
+      # saves predicate evaluation work. Matching rows are 176..199 (24 rows);
+      # with batch_size = 10 those span batches 17, 18 and 19 (rows 170..199).
+      # A limit of 10 should stop filter evaluation in the middle of batch 18.
+      decoder = ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        .with_projection(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0]))
+        .with_row_filter(Parquet::Arrow::RowFilter.new([predicate] of Parquet::Arrow::ArrowPredicate))
+        .with_batch_size(10)
+        .with_limit(10)
+        .build
+
+      push_ranges_to_decoder(decoder, bytes, expect_needs_data(decoder.try_decode))
+      check_column_a(expect_data(decoder.try_decode), 176, 10)
+
+      # No data for row group 1 is requested: the limit was satisfied by row
+      # group 0 and its `Start` state short-circuits to `Finished`.
+      expect_finished(decoder.try_decode)
+
+      # Row 186 is the 11th match; the scan should stop no later than the batch
+      # containing it (rows 180..189), so at most 190 rows are evaluated.
+      evaluated.should be <= 190
+    end
+
+    it "skips later row groups once the limit is reached (upstream test_decoder_filter_with_limit_skips_later_row_groups)" do
+      bytes = test_file_bytes
+      metadata = test_metadata(bytes)
+      schema_descr = metadata.file_metadata.schema_descr
+
+      # `a > 175` matches rows 176..199 in row group 0 (24 matches) and
+      # 200..399 in row group 1 (200 matches). With limit = 5, all matches must
+      # come from row group 0.
+      predicate = threshold_predicate(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0]), 0, 175_i64)
+
+      decoder = ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        .with_projection(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0]))
+        .with_row_filter(Parquet::Arrow::RowFilter.new([predicate] of Parquet::Arrow::ArrowPredicate))
+        .with_limit(5)
+        .build
+
+      push_ranges_to_decoder(decoder, bytes, expect_needs_data(decoder.try_decode))
+      check_column_a(expect_data(decoder.try_decode), 176, 5)
+
+      # Row group 1 must not request data: the limit is already satisfied, so
+      # its `Start` state short-circuits to `Finished`.
+      expect_finished(decoder.try_decode)
+    end
+
+    it "counts the offset towards the predicate limit (upstream test_decoder_filter_with_offset_and_limit)" do
+      bytes = test_file_bytes
+      metadata = test_metadata(bytes)
+      schema_descr = metadata.file_metadata.schema_descr
+
+      # The predicate short-circuit must account for the offset as well as the
+      # limit: the post-predicate offset skips already-selected rows before the
+      # limit counts output rows, so the predicate must retain
+      # `offset + limit` matches. `a > 175` matches rows 176..199 (24 matches);
+      # with offset = 10 and limit = 5 the output is rows 186..190 (the 11th
+      # through 15th matches).
+      predicate = threshold_predicate(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0]), 0, 175_i64)
+
+      decoder = ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        .with_projection(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0]))
+        .with_row_filter(Parquet::Arrow::RowFilter.new([predicate] of Parquet::Arrow::ArrowPredicate))
+        .with_offset(10)
+        .with_limit(5)
+        .build
+
+      push_ranges_to_decoder(decoder, bytes, expect_needs_data(decoder.try_decode))
+      check_column_a(expect_data(decoder.try_decode), 186, 5)
+
+      expect_finished(decoder.try_decode)
+    end
+
+    it "limits the last predicate of a chain (upstream test_decoder_multi_filters_with_limit)" do
+      bytes = test_file_bytes
+      metadata = test_metadata(bytes)
+      schema_descr = metadata.file_metadata.schema_descr
+
+      first_rows = 0
+      second_rows = 0
+      filter_a = Parquet::Arrow::ArrowPredicateFn.new(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0])) do |batch|
+        first_rows += batch.num_rows
+        values = batch.column(0).as(Arrow::PrimitiveArray(Int64))
+        Arrow.gt(values, Arrow::PrimitiveArray(Int64).new_scalar(175_i64))
+      end
+      filter_b = Parquet::Arrow::ArrowPredicateFn.new(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [1])) do |batch|
+        second_rows += batch.num_rows
+        values = batch.column(0).as(Arrow::PrimitiveArray(Int64))
+        Arrow.lt(values, Arrow::PrimitiveArray(Int64).new_scalar(625_i64))
+      end
+
+      decoder = ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        .with_projection(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [2]))
+        .with_row_filter(Parquet::Arrow::RowFilter.new([
+          filter_a, filter_b,
+        ] of Parquet::Arrow::ArrowPredicate))
+        .with_batch_size(10)
+        .with_limit(10)
+        .build
+
+      3.times do
+        push_ranges_to_decoder(decoder, bytes, expect_needs_data(decoder.try_decode))
+      end
+      check_column_c(expect_data(decoder.try_decode), 176, 10)
+
+      expect_finished(decoder.try_decode)
+
+      # Only the last predicate is limited: the first one filters all 200 rows
+      # of row group 0, while the final one short-circuits before consuming all
+      # 24 rows the first predicate selected.
+      first_rows.should eq(200)
+      second_rows.should be < 24
+    end
+
+    it "preserves an explicit row selection while limiting (upstream test_decoder_filter_with_row_selection_and_limit)" do
+      bytes = test_file_bytes
+      metadata = test_metadata(bytes)
+      schema_descr = metadata.file_metadata.schema_descr
+
+      evaluated = 0
+      predicate = Parquet::Arrow::ArrowPredicateFn.new(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0])) do |batch|
+        evaluated += batch.num_rows
+        values = batch.column(0).as(Arrow::PrimitiveArray(Int64))
+        Arrow.gt(values, Arrow::PrimitiveArray(Int64).new_scalar(175_i64))
+      end
+
+      decoder = ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        .with_projection(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0]))
+        .with_row_selection(RowSelection.new([
+          RowSelector.skip(150),
+          RowSelector.select(50),
+        ]))
+        .with_row_filter(Parquet::Arrow::RowFilter.new([predicate] of Parquet::Arrow::ArrowPredicate))
+        .with_batch_size(10)
+        .with_limit(10)
+        .build
+
+      push_ranges_to_decoder(decoder, bytes, expect_needs_data(decoder.try_decode))
+      check_column_a(expect_data(decoder.try_decode), 176, 10)
+
+      expect_finished(decoder.try_decode)
+
+      # The explicit selection narrows row group 0 to rows 150..199 and
+      # `a > 175` keeps 176..199; the limit of 10 stops before evaluating all
+      # 50 selected rows.
+      evaluated.should be < 50
+    end
+
+    it "filters within row-group-local selections (upstream test_row_group_local_selections_with_row_filter)" do
+      bytes = test_file_bytes
+      metadata = test_metadata(bytes)
+      schema_descr = metadata.file_metadata.schema_descr
+
+      predicate = threshold_predicate(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0]), 0, 195_i64)
+
+      decoder = ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        .with_row_filter(Parquet::Arrow::RowFilter.new([predicate] of Parquet::Arrow::ArrowPredicate))
+        .with_row_group_selections([
+          RowGroupSelection.new(1, RowSelection.new([RowSelector.skip(10), RowSelector.select(10)])),
+          RowGroupSelection.new(0, RowSelection.new([RowSelector.skip(190), RowSelector.select(10)])),
+        ])
+        .build
+      prefetch_test_file(decoder, bytes)
+
+      # RG1's local rows 10..19 all pass `a > 195`; RG0's local rows 190..199
+      # keep only 196..199.
+      check_rows(expect_data(decoder.try_decode), 210, 10)
+      check_rows(expect_data(decoder.try_decode), 196, 4)
+      expect_finished(decoder.try_decode)
+    end
+
+    it "carries local selections and the filter through into_builder (upstream test_into_builder_preserves_local_selections_with_row_filter)" do
+      bytes = test_file_bytes
+      metadata = test_metadata(bytes)
+      schema_descr = metadata.file_metadata.schema_descr
+
+      predicate = threshold_predicate(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0]), 0, 195_i64)
+
+      decoder = ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        .with_row_filter(Parquet::Arrow::RowFilter.new([predicate] of Parquet::Arrow::ArrowPredicate))
+        .with_row_group_selections([
+          RowGroupSelection.new(1, RowSelection.new([RowSelector.skip(10), RowSelector.select(10)])),
+          RowGroupSelection.new(0, RowSelection.new([RowSelector.skip(190), RowSelector.select(10)])),
+        ])
+        .build
+      prefetch_test_file(decoder, bytes)
+
+      reader1 = expect_reader(decoder.try_next_reader)
+      drain_reader(reader1).each { |batch| check_rows(batch, 210, 10) }
+
+      # Only RG0 and its local `skip(190) + select(10)` remain.
+      decoder.is_at_row_group_boundary.should be_true
+      decoder.row_groups_remaining.should eq(1)
+      decoder = decoder.into_builder.build
+
+      reader0 = expect_reader(decoder.try_next_reader)
+      drain_reader(reader0).each { |batch| check_rows(batch, 196, 4) }
+      expect_reader_finished(decoder.try_next_reader)
+    end
+
+    it "installs a filter between row groups (upstream test_into_builder_installs_filter_between_row_groups)" do
+      bytes = test_file_bytes
+      metadata = test_metadata(bytes)
+
+      decoder = ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        .with_batch_size(1024)
+        .build
+      prefetch_test_file(decoder, bytes)
+
+      # Reader for row group 0 — no filter.
+      reader0 = expect_reader(decoder.try_next_reader)
+      drain_reader(reader0).each { |batch| check_rows(batch, 0, 200) }
+
+      # Between row groups: rebuild with a filter on column "a". The rebuilt
+      # decoder keeps the buffered bytes, so no data is re-supplied.
+      decoder.is_at_row_group_boundary.should be_true
+      decoder.row_groups_remaining.should eq(1)
+      schema_descr = metadata.file_metadata.schema_descr
+      predicate = threshold_predicate(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0]), 0, 250_i64)
+      decoder = decoder.into_builder
+        .with_row_filter(Parquet::Arrow::RowFilter.new([predicate] of Parquet::Arrow::ArrowPredicate))
+        .build
+
+      # RG1's "a" is 200..399, so `a > 250` keeps 251..399 (149 rows).
+      reader1 = expect_reader(decoder.try_next_reader)
+      drain_reader(reader1).each { |batch| check_rows(batch, 251, 149) }
       expect_reader_finished(decoder.try_next_reader)
     end
   end

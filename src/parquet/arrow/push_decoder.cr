@@ -3,6 +3,7 @@ require "../util/push_buffers"
 require "./array_reader"
 require "./array_reader/builder"
 require "./arrow_reader"
+require "./filter"
 require "./in_memory_row_group"
 require "./metrics"
 require "./mod"
@@ -20,16 +21,18 @@ require "./read_plan"
 # The structures mirror upstream: `RowGroupFrontier` owns the cross-row-group
 # state (queued row groups, selections and the offset/limit budget) and hands
 # one `NextRowGroup` at a time to `RowGroupReaderBuilder`, which drives the
-# per-row-group decode state machine (`Start` → `StartData` → `WaitingOnData` →
-# `Finished`) and asks for the byte ranges it needs through `DataRequest`.
-# `RemainingRowGroups` glues the two together; `ParquetPushDecoder` adds the
-# reader/state machine on top and exposes the adaptive-scan API
-# (`try_next_reader`, `peek_next_row_group`, `into_builder`).
+# per-row-group decode state machine (`Start` → (`Filters` →
+# `WaitingOnFilterData`)* → `StartData` → `WaitingOnData` → `Finished`) and asks
+# for the byte ranges it needs through `DataRequest`. `RemainingRowGroups` glues
+# the two together; `ParquetPushDecoder` adds the reader/state machine on top
+# and exposes the adaptive-scan API (`try_next_reader`, `peek_next_row_group`,
+# `into_builder`).
 #
-# Deferred in this slice (see `plans/parity.md`): row filters in the push path
-# (`RowFilter`/predicate cache) and the generic `ArrowReaderBuilder<I>` refactor
-# upstream shares with the sync/async builders (this builder carries the same
-# options directly).
+# Deferred in this slice (see `plans/parity.md`): the predicate cache
+# (`RowGroupCache`/`CachedArrayReader`/`CacheOptions`, and with it the
+# `cache_mask` expansion of the fetched ranges) and the generic
+# `ArrowReaderBuilder<I>` refactor upstream shares with the sync/async builders
+# (this builder carries the same options directly).
 module Parquet
   module Arrow
     # Running offset/limit budget shared across row groups (upstream
@@ -233,6 +236,7 @@ module Parquet
       )
         @selection = nil.as(RowSelection?)
         @column_chunks = nil.as(Array(ColumnChunkData?)?)
+        @cache_projection = nil.as(ProjectionMask?)
       end
 
       # Sets an optional row selection to apply.
@@ -244,6 +248,18 @@ module Parquet
       # Provides any previously read column chunks.
       def with_column_chunks(column_chunks : Array(ColumnChunkData?)?) : self
         @column_chunks = column_chunks
+        self
+      end
+
+      # Sets the columns whose data is cached across predicates (upstream
+      # `with_cache_projection`).
+      #
+      # Divergence: the predicate cache is not ported, so the projection is
+      # accepted for parity but not used. Upstream expands the selection of the
+      # cached columns to batch boundaries (`cache_mask`); with the cache
+      # disabled it expands nothing, so the requested ranges are unchanged.
+      def with_cache_projection(cache_projection : ProjectionMask?) : self
+        @cache_projection = cache_projection
         self
       end
 
@@ -278,6 +294,90 @@ module Parquet
       end
     end
 
+    # Predicate cache configuration for one row group (upstream `CacheInfo` in
+    # `push_decoder/reader_builder/filter.rs`).
+    #
+    # Divergence: the predicate cache (`RowGroupCache`/`CachedArrayReader`/
+    # `CacheOptions`) is not ported, so this only carries the cache projection
+    # upstream would use. Nothing reads it: data requests are built exactly as
+    # upstream builds them with the cache disabled, where the cache mask expands
+    # no leaves, so the requested byte ranges are identical.
+    class CacheInfo
+      # The columns to cache in the predicate cache.
+      getter cache_projection : ProjectionMask
+
+      def initialize(@cache_projection : ProjectionMask)
+      end
+    end
+
+    # State machine for evaluating a sequence of predicates (upstream
+    # `FilterInfo`).
+    #
+    # The `FilterInfo` owns the `RowFilter` being evaluated and tracks the
+    # current predicate. `ArrowPredicate#evaluate` takes `self` in Rust, so the
+    # filter is moved out of the `RowGroupReaderBuilder` while it is evaluated
+    # and put back when the chain is done (see `FilterAdvanceResult`).
+    class FilterInfo
+      @filter : RowFilter
+      # The predicate to evaluate next, 1-based (upstream `NonZeroUsize`).
+      @next_predicate : Int32
+      getter cache_info : CacheInfo
+
+      def initialize(@filter : RowFilter, @cache_info : CacheInfo)
+        @next_predicate = 1
+      end
+
+      # The predicate to evaluate now.
+      def current : ArrowPredicate
+        @filter.predicates[@next_predicate - 1]
+      end
+
+      # Whether the current predicate is the last one in the chain.
+      def last? : Bool
+        @next_predicate == @filter.predicates.size
+      end
+
+      # The columns to cache for the current predicate.
+      def cache_projection : ProjectionMask
+        @cache_info.cache_projection
+      end
+
+      # Advances to the next predicate (upstream `FilterInfo::advance`).
+      def advance : FilterAdvanceResult
+        if @next_predicate >= @filter.predicates.size
+          FilterAdvanceResult::Done.new(@filter, @cache_info)
+        else
+          @next_predicate += 1
+          FilterAdvanceResult::Continue.new(self)
+        end
+      end
+
+      # Returns the inner filter, consuming this `FilterInfo`.
+      def into_filter : RowFilter
+        @filter
+      end
+    end
+
+    # The result of `FilterInfo#advance` (upstream `AdvanceResult`).
+    abstract class FilterAdvanceResult
+      # There are more predicates to evaluate.
+      class Continue < FilterAdvanceResult
+        getter filter_info : FilterInfo
+
+        def initialize(@filter_info : FilterInfo)
+        end
+      end
+
+      # No more predicates: the filter and its cache info are returned.
+      class Done < FilterAdvanceResult
+        getter filter : RowFilter
+        getter cache_info : CacheInfo
+
+        def initialize(@filter : RowFilter, @cache_info : CacheInfo)
+        end
+      end
+    end
+
     # The per-row-group decoder state (upstream `RowGroupDecoderState`).
     abstract class RowGroupDecoderState
       # Start: planning the row group, before any data is requested.
@@ -285,6 +385,36 @@ module Parquet
         getter row_group_info : RowGroupInfo
 
         def initialize(@row_group_info : RowGroupInfo)
+        end
+      end
+
+      # Planning filters, but the data to evaluate the current predicate has not
+      # been requested yet.
+      class Filters < RowGroupDecoderState
+        getter row_group_info : RowGroupInfo
+        # Any previously read column chunk data from prior predicates.
+        getter column_chunks : Array(ColumnChunkData?)?
+        getter filter_info : FilterInfo
+
+        def initialize(
+          @row_group_info : RowGroupInfo,
+          @column_chunks : Array(ColumnChunkData?)?,
+          @filter_info : FilterInfo,
+        )
+        end
+      end
+
+      # Needs data to evaluate the current filter.
+      class WaitingOnFilterData < RowGroupDecoderState
+        getter row_group_info : RowGroupInfo
+        getter filter_info : FilterInfo
+        getter data_request : DataRequest
+
+        def initialize(
+          @row_group_info : RowGroupInfo,
+          @filter_info : FilterInfo,
+          @data_request : DataRequest,
+        )
         end
       end
 
@@ -361,6 +491,8 @@ module Parquet
       getter batch_size : Int32
       getter projection : ProjectionMask
       getter fields : ParquetField?
+      getter filter : RowFilter?
+      getter max_predicate_cache_size : Int32
       getter metrics : ArrowReaderMetrics
       getter row_selection_policy : RowSelectionPolicy
       # Bytes already pushed into the decoder, carried across a rebuild so they
@@ -371,6 +503,8 @@ module Parquet
         @batch_size : Int32,
         @projection : ProjectionMask,
         @fields : ParquetField?,
+        @filter : RowFilter?,
+        @max_predicate_cache_size : Int32,
         @metrics : ArrowReaderMetrics,
         @row_selection_policy : RowSelectionPolicy,
         @buffers : Util::PushBuffers,
@@ -386,13 +520,19 @@ module Parquet
     # data is available.
     class RowGroupReaderBuilder
       @state : RowGroupDecoderState?
+      # The row filter. It is taken while its predicates are evaluated (see
+      # `FilterInfo`) and put back when the predicate chain completes.
+      getter filter : RowFilter?
+      getter max_predicate_cache_size : Int32
 
       def initialize(
         @batch_size : Int32,
         @projection : ProjectionMask,
         @metadata : File::Metadata::ParquetMetaData,
         @fields : ParquetField?,
+        @filter : RowFilter?,
         @metrics : ArrowReaderMetrics,
+        @max_predicate_cache_size : Int32,
         @row_selection_policy : RowSelectionPolicy,
         @buffers : Util::PushBuffers,
       )
@@ -427,6 +567,8 @@ module Parquet
           @batch_size,
           @projection,
           @fields,
+          @filter,
+          @max_predicate_cache_size,
           @metrics,
           @row_selection_policy,
           @buffers,
@@ -492,7 +634,27 @@ module Parquet
         case current_state
         when RowGroupDecoderState::Start
           info = current_state.row_group_info
-          RowGroupNextState.new(RowGroupDecoderState::StartData.new(info, nil))
+
+          # Take the filter so its predicates can be evaluated mutably; it is
+          # put back when the predicate chain is done (upstream
+          # `self.filter.take()`).
+          filter = @filter
+          @filter = nil
+
+          if filter.nil? || filter.predicates.empty?
+            # No filter (or no predicates): start trying to read data
+            # immediately. An empty filter is dropped, as upstream does.
+            return RowGroupNextState.new(RowGroupDecoderState::StartData.new(info, nil))
+          end
+
+          # There are predicates to evaluate.
+          cache_info = CacheInfo.new(compute_cache_projection(info.row_group_idx, filter))
+          filter_info = FilterInfo.new(filter, cache_info)
+          RowGroupNextState.new(RowGroupDecoderState::Filters.new(info, nil, filter_info))
+        when RowGroupDecoderState::Filters
+          transition_filters(current_state)
+        when RowGroupDecoderState::WaitingOnFilterData
+          transition_waiting_on_filter_data(current_state)
         when RowGroupDecoderState::StartData
           info = current_state.row_group_info
           budgeted = info.budget.apply_to_plan(info.plan_builder, info.row_count)
@@ -563,6 +725,130 @@ module Parquet
         else
           raise general_err!("Internal Error: try_build called without an active row group")
         end
+      end
+
+      # Handles the `Filters` state: requests the data to evaluate the current
+      # predicate (upstream `RowGroupDecoderState::Filters`).
+      private def transition_filters(
+        current_state : RowGroupDecoderState::Filters,
+      ) : RowGroupNextState
+        info = current_state.row_group_info
+        filter_info = current_state.filter_info
+
+        # If nothing is selected, this row group is done.
+        unless info.plan_builder.selects_any?
+          @filter = filter_info.into_filter
+          return RowGroupNextState.new(
+            RowGroupDecoderState::Finished.new,
+            RowGroupBuildResult::Finished.new(info.budget),
+          )
+        end
+
+        # Request the data needed to evaluate the current predicate, using the
+        # predicate's own projection.
+        predicate = filter_info.current
+        data_request = DataRequestBuilder.new(
+          info.row_group_idx,
+          info.row_count,
+          @batch_size,
+          @metadata,
+          predicate.projection,
+        )
+          .with_selection(info.plan_builder.selection)
+          # Output columns cached across predicates reuse these chunks; the
+          # cache itself is not ported, so this changes no requested ranges.
+          .with_cache_projection(filter_info.cache_projection)
+          .with_column_chunks(current_state.column_chunks)
+          .build
+
+        RowGroupNextState.new(
+          RowGroupDecoderState::WaitingOnFilterData.new(info, filter_info, data_request),
+        )
+      end
+
+      # Handles the `WaitingOnFilterData` state: evaluates the current predicate
+      # once its data is buffered, then advances the predicate chain (upstream
+      # `RowGroupDecoderState::WaitingOnFilterData`).
+      private def transition_waiting_on_filter_data(
+        current_state : RowGroupDecoderState::WaitingOnFilterData,
+      ) : RowGroupNextState
+        info = current_state.row_group_info
+        filter_info = current_state.filter_info
+        data_request = current_state.data_request
+
+        needed_ranges = data_request.needed_ranges(@buffers)
+        unless needed_ranges.empty?
+          # Still need data to evaluate the predicate.
+          return RowGroupNextState.new(
+            current_state,
+            RowGroupBuildResult::NeedsData.new(needed_ranges),
+          )
+        end
+
+        # All the data needed to evaluate the predicate is buffered.
+        predicate = filter_info.current
+        row_group = data_request.try_into_in_memory_row_group(
+          info.row_group_idx, info.row_count, @metadata, predicate.projection, @buffers
+        )
+        array_reader = ArrayReaderBuilder.new(row_group, @batch_size, @metrics)
+          .build_array_reader(@fields, predicate.projection)
+
+        # Restore the configured policy, then evaluate the predicate, optionally
+        # stopping once the offset+limit of output rows is reached when this is
+        # the last predicate in the chain.
+        info.plan_builder = info.plan_builder.with_row_selection_policy(@row_selection_policy)
+        options = PredicateOptions.new(array_reader, predicate)
+        if filter_info.last? && (limit = info.budget.selected_row_limit)
+          options = options.with_limit(limit, info.row_count)
+        end
+        info.plan_builder = info.plan_builder.with_predicate_options(options)
+
+        # Keep the column chunks for subsequent predicates and the output stage
+        # (upstream `row_group.column_chunks`).
+        column_chunks = row_group.column_chunks
+
+        case advance = filter_info.advance
+        when FilterAdvanceResult::Continue
+          RowGroupNextState.new(
+            RowGroupDecoderState::Filters.new(info, column_chunks, advance.filter_info),
+          )
+        when FilterAdvanceResult::Done
+          @filter = advance.filter
+          RowGroupNextState.new(RowGroupDecoderState::StartData.new(info, column_chunks))
+        else
+          raise general_err!("Internal Error: invalid filter advance result")
+        end
+      end
+
+      # Computes the columns to cache for `filter` in the given row group
+      # (upstream `compute_cache_projection`).
+      private def compute_cache_projection(
+        row_group_idx : Int32,
+        filter : RowFilter,
+      ) : ProjectionMask
+        metadata = @metadata.row_group(row_group_idx)
+        compute_cache_projection_inner(filter) || ProjectionMask.none(metadata.columns.size)
+      end
+
+      private def compute_cache_projection_inner(filter : RowFilter) : ProjectionMask?
+        # Do not compute the projection mask if the predicate cache is disabled.
+        return nil if @max_predicate_cache_size == 0
+
+        first = filter.predicates.first?
+        return nil unless first
+
+        cache_projection = ProjectionMask.new(first.projection.mask.try(&.dup))
+        filter.predicates.each do |predicate|
+          cache_projection.union(predicate.projection)
+        end
+        cache_projection.intersect(@projection)
+        exclude_nested_columns_from_cache(cache_projection)
+      end
+
+      # Excludes leaves belonging to roots that span multiple parquet leaves
+      # (i.e. nested columns) (upstream `exclude_nested_columns_from_cache`).
+      private def exclude_nested_columns_from_cache(mask : ProjectionMask) : ProjectionMask?
+        mask.without_nested_types(@metadata.file_metadata.schema_descr)
       end
     end
 
@@ -1156,6 +1442,13 @@ module Parquet
     # carries the same options directly (the generic builder refactor is
     # deferred) and models `PushDecoderInput` as the `PushBuffers` field.
     class ParquetPushDecoderBuilder
+      # Upstream `ArrowReaderBuilder`'s default predicate cache size (100MB).
+      #
+      # Divergence: the predicate cache (`RowGroupCache`/`CachedArrayReader`) is
+      # not ported, so this only feeds the (unused) cache projection; decoding
+      # behaves as upstream does with the cache disabled.
+      DEFAULT_MAX_PREDICATE_CACHE_SIZE = 100 * 1024 * 1024
+
       getter metadata : File::Metadata::ParquetMetaData
       getter schema : ::Arrow::Schema
       getter fields : ParquetField?
@@ -1172,6 +1465,8 @@ module Parquet
         @row_selection_policy : RowSelectionPolicy = RowSelectionPolicy.default,
         @metrics : ArrowReaderMetrics = ArrowReaderMetrics.disabled,
         @buffers : Util::PushBuffers = Util::PushBuffers.new,
+        @filter : RowFilter? = nil,
+        @max_predicate_cache_size : Int32 = DEFAULT_MAX_PREDICATE_CACHE_SIZE,
       )
       end
 
@@ -1191,6 +1486,8 @@ module Parquet
           reader_builder.row_selection_policy,
           reader_builder.metrics,
           reader_builder.buffers,
+          reader_builder.filter,
+          reader_builder.max_predicate_cache_size,
         )
       end
 
@@ -1225,6 +1522,26 @@ module Parquet
       # Only decodes the leaves selected by `mask`.
       def with_projection(projection : ProjectionMask) : self
         @projection = projection
+        self
+      end
+
+      # Applies a row filter: only rows accepted by every predicate are
+      # returned (upstream `with_row_filter`).
+      #
+      # Predicates are evaluated row group by row group, after any row-group
+      # selection and before the offset/limit budget is applied.
+      def with_row_filter(filter : RowFilter) : self
+        @filter = filter
+        self
+      end
+
+      # Sets the maximum size of the predicate cache (upstream
+      # `with_max_predicate_cache_size`).
+      #
+      # Divergence: the predicate cache is not ported, so this is accepted for
+      # API parity but has no effect on decoding.
+      def with_max_predicate_cache_size(max_predicate_cache_size : Int32) : self
+        @max_predicate_cache_size = max_predicate_cache_size
         self
       end
 
@@ -1289,12 +1606,17 @@ module Parquet
 
       # Builds the decoder (upstream `build`).
       def build : ParquetPushDecoder
+        filter = @filter
+        has_predicates = filter.nil? ? false : !filter.predicates.empty?
+
         row_group_reader_builder = RowGroupReaderBuilder.new(
           @batch_size,
           @projection,
           @metadata,
           @fields,
+          @filter,
           @metrics,
+          @max_predicate_cache_size,
           @row_selection_policy,
           @buffers,
         )
@@ -1304,7 +1626,7 @@ module Parquet
           @metadata,
           @row_group_plan,
           RowBudget.new(@offset, @limit),
-          false,
+          has_predicates,
           row_group_reader_builder,
         )
         ParquetPushDecoder.new(ParquetDecoderState::ReadingRowGroup.new(remaining))
