@@ -1540,10 +1540,10 @@ parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuil
 parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.new	method	ported	src/parquet/arrow/push_decoder.cr	RowGroupReaderBuilder#initialize
 parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.next_row_group	method	ported	src/parquet/arrow/push_decoder.cr	RowGroupReaderBuilder#next_row_group
 parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.push_data	method	ported	src/parquet/arrow/push_decoder.cr	RowGroupReaderBuilder#push_data
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.row_group_offset_index	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	page pruning happens in InMemoryRowGroup#fetch_ranges (no loaded row ranges)
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.row_group_offset_index	method	ported	src/parquet/arrow/push_decoder.cr	RowGroupReaderBuilder#row_group_offset_index (offset index when the file has one)
 parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.take_state	method	ported	src/parquet/arrow/push_decoder.cr	RowGroupReaderBuilder#take_state (private)
 parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.try_build	method	ported	src/parquet/arrow/push_decoder.cr	RowGroupReaderBuilder#try_build
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.try_transition	method	ported	src/parquet/arrow/push_decoder.cr	all states incl. Filters/WaitingOnFilterData; predicate-stage page skipping follows the prepare_selection_for_page_skipping divergence
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.try_transition	method	ported	src/parquet/arrow/push_decoder.cr	all states incl. Filters/WaitingOnFilterData/StartData; both page-skipping preparations (predicate and output projection) wired
 parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.clear	method	ported	src/parquet/arrow/push_decoder.cr	QueuedRowGroups#clear
 parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.front	method	ported	src/parquet/arrow/push_decoder.cr	QueuedRowGroups#front
 parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.global_selection_is_exhausted	method	ported	src/parquet/arrow/push_decoder.cr	QueuedRowGroups#global_selection_exhausted?

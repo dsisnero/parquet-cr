@@ -28,10 +28,9 @@ require "./read_plan"
 # and exposes the adaptive-scan API (`try_next_reader`, `peek_next_row_group`,
 # `into_builder`).
 #
-# Deferred in this slice (see `plans/parity.md`): the page-pruning path
-# (`prepare_selection_for_page_skipping`) and the generic `ArrowReaderBuilder<I>`
-# refactor upstream shares with the sync/async builders (this builder carries the
-# same options directly).
+# Deferred in this slice (see `plans/parity.md`): the generic
+# `ArrowReaderBuilder<I>` refactor upstream shares with the sync/async builders
+# (this builder carries the same options directly).
 module Parquet
   module Arrow
     # Running offset/limit budget shared across row groups (upstream
@@ -721,13 +720,24 @@ module Parquet
             # don't call `with_cache_projection` here.
             .build
 
+          # Page pruning leaves sparse column data behind, so record which rows
+          # are loaded for the mask path (upstream
+          # `prepare_selection_for_page_skipping`).
+          plan_builder = Arrow.prepare_selection_for_page_skipping(
+            info.plan_builder,
+            @projection,
+            row_group_offset_index(info.row_group_idx),
+            @metadata.file_metadata.schema_descr.num_columns,
+            info.row_count,
+          )
+
           # The budget consumed by this row group must not be re-applied when the
           # data arrives (upstream rebuilds `RowGroupInfo` with
           # `remaining_budget` before handing it to `WaitingOnData`).
           next_info = RowGroupInfo.new(
             info.row_group_idx,
             info.row_count,
-            info.plan_builder,
+            plan_builder,
             budgeted.remaining_budget,
           )
 
@@ -843,8 +853,17 @@ module Parquet
 
         # Restore the configured policy, then evaluate the predicate, optionally
         # stopping once the offset+limit of output rows is reached when this is
-        # the last predicate in the chain.
+        # the last predicate in the chain. Auto resolution and loaded ranges are
+        # projection-specific, so prepare the plan for this predicate's
+        # projection first (upstream `prepare_selection_for_page_skipping`).
         info.plan_builder = info.plan_builder.with_row_selection_policy(@row_selection_policy)
+        info.plan_builder = Arrow.prepare_selection_for_page_skipping(
+          info.plan_builder,
+          predicate.projection,
+          row_group_offset_index(info.row_group_idx),
+          @metadata.file_metadata.schema_descr.num_columns,
+          info.row_count,
+        )
         options = PredicateOptions.new(array_reader, predicate)
         if filter_info.last? && (limit = info.budget.selected_row_limit)
           options = options.with_limit(limit, info.row_count)
@@ -900,6 +919,99 @@ module Parquet
       private def exclude_nested_columns_from_cache(mask : ProjectionMask) : ProjectionMask?
         mask.without_nested_types(@metadata.file_metadata.schema_descr)
       end
+
+      # The offset index for the given row group, if any (upstream
+      # `row_group_offset_index`).
+      private def row_group_offset_index(
+        row_group_idx : Int32,
+      ) : File::Metadata::RowGroupPageIndex?
+        page_index = @metadata.page_index
+        if page_index && page_index.offset_indexes?
+          @metadata.page_index_for_row_group(row_group_idx)
+        end
+      end
+    end
+
+    # Prepares row-selection execution when page pruning produced sparse column
+    # data (upstream `prepare_selection_for_page_skipping`).
+    #
+    # Some pages can be skipped while the `InMemoryRowGroup` is built if the
+    # selection does not read them, so their data pages are never loaded. The
+    # selector strategy copes with that: `skip_records` skips the page. A mask
+    # chunk, however, decodes every row it covers before the mask filter is
+    # applied, so a chunk cannot cross a page that was skipped.
+    #
+    # A simple example: the page size is 2, the mask is 100001 and the row
+    # selection should read(1) skip(4) read(1); the `ColumnChunkData` holds
+    # page1(10), page2(skipped), page3(01). Mask execution therefore records the
+    # row ranges loaded for every projected column, so each mask chunk stays
+    # within loaded data and `skip_records()` crosses the gaps. This applies both
+    # to an explicit mask policy and to Auto when it resolves to mask execution.
+    #
+    # Divergence: upstream keeps this a private free function of
+    # `push_decoder/reader_builder/mod.rs` (its unit tests live in the same
+    # module); the port exposes it on `Parquet::Arrow` so the ported tests can
+    # call it.
+    def self.prepare_selection_for_page_skipping(
+      plan_builder : ReadPlanBuilder,
+      projection_mask : ProjectionMask,
+      page_index : File::Metadata::RowGroupPageIndex?,
+      num_columns : Int32,
+      total_rows : Int32,
+    ) : ReadPlanBuilder
+      case plan_builder.resolve_selection_strategy
+      when .mask?
+        loaded = loaded_row_ranges_for_projection(
+          plan_builder.selection, projection_mask, page_index, num_columns, total_rows
+        )
+        plan_builder
+          .with_row_selection_policy(RowSelectionPolicy::MASK)
+          .with_loaded_row_ranges(loaded)
+      else
+        plan_builder.with_row_selection_policy(RowSelectionPolicy::SELECTORS)
+      end
+    end
+
+    # Computes the row ranges for which every projected column has page data
+    # loaded (upstream `loaded_row_ranges_for_projection`).
+    #
+    # Returns `nil` when there is no selection or no page index, or when every
+    # row of the selection is loaded.
+    #
+    # Divergence: exposed on `Parquet::Arrow` for the same reason as
+    # `prepare_selection_for_page_skipping`.
+    def self.loaded_row_ranges_for_projection(
+      selection : RowSelection?,
+      projection_mask : ProjectionMask,
+      page_index : File::Metadata::RowGroupPageIndex?,
+      num_columns : Int32,
+      total_rows : Int32,
+    ) : LoadedRowRanges?
+      sel = selection
+      return nil unless sel
+      row_group_index = page_index
+      return nil unless row_group_index
+
+      loaded : RowSelection? = nil
+      num_columns.times do |leaf_idx|
+        column_metadata = row_group_index.offset_index(leaf_idx)
+        next unless column_metadata
+
+        pages = column_metadata.page_locations
+        next unless projection_mask.leaf_included?(leaf_idx)
+        next if pages.empty?
+
+        column_loaded = RowSelection.from_consecutive_ranges(
+          sel.row_ranges_for_selected_pages(pages, total_rows), total_rows
+        )
+        loaded = loaded ? loaded.intersection(column_loaded) : column_loaded
+      end
+
+      result = loaded
+      return nil unless result
+      return nil if result.skipped_row_count == 0
+
+      LoadedRowRanges.from_selection(result)
     end
 
     # Row groups and selections that have not yet been handed to the row-group

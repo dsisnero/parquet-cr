@@ -153,13 +153,17 @@ little-endian layout.
   offset index is available, including the dictionary page), `fill_column_chunks`
   with dense/sparse `ColumnChunkData`, and `RowGroups` over
   `SerializedPageReader`s), together with the `RowGroupMetaData#columns` and
-  `ColumnChunkMetaData#byte_range` helpers it needs.
-  **Next up:** the remaining deferred `arrow/push_decoder/` surface — the
-  `LoadedRowRanges` page-pruning path (`prepare_selection_for_page_skipping`,
-  which the cache's batch-boundary expansion enables) — plus the generic
-  `ArrowReaderBuilder<I>` refactor upstream shares with the sync/async builders,
-  then `parquet-variant-compute`, virtual columns (blocked on arrow-cr canonical
-  extension types) and the arrow writer (needs `column/page_store.rs`).
+  `ColumnChunkMetaData#byte_range` helpers it needs. Page pruning now reaches the
+  reader as well: `prepare_selection_for_page_skipping` +
+  `loaded_row_ranges_for_projection` (module functions) pin the resolved
+  selection strategy and, for mask execution, record which row ranges have their
+  pages loaded for every projected column, so a mask chunk never decodes across a
+  page that was skipped during the fetch; `RowGroupReaderBuilder#row_group_offset_index`
+  supplies the offset index for both the predicate and the output stage.
+  **Next up:** the generic `ArrowReaderBuilder<I>` refactor upstream shares with
+  the sync/async builders, then `parquet-variant-compute`, virtual columns
+  (blocked on arrow-cr canonical extension types) and the arrow writer (needs
+  `column/page_store.rs`).
   Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
@@ -1023,13 +1027,11 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow predicate cache`; gates green
-  (`make lint`, `make test` -> 1381 examples, 0 failures). Next feature: the
-  `LoadedRowRanges` page-pruning path
-  (`prepare_selection_for_page_skipping`) in the push decoder, then the generic
-  `ArrowReaderBuilder<I>` refactor. Note `make install` now requires the sibling
-  checkout `../arrow-cr`.
-- Progress by counts (ledger): 2320 `ported`, 203 `intentional_divergence`,
+- Last commit: `port: arrow push decoder page skipping`; gates green
+  (`make lint`, `make test` -> 1385 examples, 0 failures). Next feature: the
+  generic `ArrowReaderBuilder<I>` refactor upstream shares with the sync/async
+  builders. Note `make install` now requires the sibling checkout `../arrow-cr`.
+- Progress by counts (ledger): 2321 `ported`, 202 `intentional_divergence`,
   15 skipped, 977 `missing` (of 3515 rows).
 
 Chunk status by area:
@@ -1702,9 +1704,9 @@ Chunk status by area:
       (`RowGroupCache`/`CachedArrayReader`/`CacheOptions`; see
       `spec/parquet/arrow/push_decoder_spec.cr`,
       `spec/parquet/arrow/cached_array_reader_spec.cr` and
-      `spec/parquet/arrow/row_group_cache_spec.cr`). Remaining: the push
-      decoder's `LoadedRowRanges` page pruning, virtual columns and the arrow
-      writer.
+      `spec/parquet/arrow/row_group_cache_spec.cr`), plus page skipping
+      (`prepare_selection_for_page_skipping`/`loaded_row_ranges_for_projection`).
+      Remaining: virtual columns and the arrow writer.
 - [ ] `arrow/arrow_writer/` (`ArrowWriter`, `levels.rs`, `byte_array.rs`),
       `arrow/mod.rs` (`ProjectionMask`, `ARROW_SCHEMA_META_KEY` plumbing,
       `apply_schema`), and `arrow/buffer/`.
@@ -2152,6 +2154,13 @@ Chunk status by area:
   `fetch_ranges` `cache_mask`, so a column that is both filtered and projected is
   decoded once per row group (the final output request deliberately does not
   call `with_cache_projection`, as upstream comments).
+  Page skipping is ported too: before evaluating each predicate and before
+  building the output reader, the plan's configured policy is restored and
+  `prepare_selection_for_page_skipping` pins it to the resolved strategy,
+  attaching `LoadedRowRanges` (via `loaded_row_ranges_for_projection`) when mask
+  execution would otherwise decode across a page that `fetch_ranges` pruned away;
+  `row_group_offset_index` supplies the `RowGroupPageIndex` for the row group
+  (upstream both use `metadata.page_index()` when it has offset indexes).
   Divergences: `usize` → `Int32`, the state/build-result enums are sealed class
   hierarchies, `RowGroupNextState` replaces upstream's `NextState`, `inspect`
   results are exceptions (Crystal has no `Result`, so `build`/`try_new_decoder`
@@ -2159,21 +2168,27 @@ Chunk status by area:
   copies rather than moves the global selection, `RowGroupFrontier`'s
   copy constructor is `protected` (Crystal cannot call a private constructor
   with an explicit receiver), `StartData`/`WaitingOnData` default `cache_info` to
-  `nil` instead of spelling out `None`, and `ParquetPushDecoderBuilder` is not
-  the generic `ArrowReaderBuilder<I>` (the refactor is deferred). One upstream
-  mechanism stays unported: page pruning — `RowGroupReaderBuilder` does not apply
-  `prepare_selection_for_page_skipping` for the output or the predicate stage,
-  so the push decoder never builds a `LoadedRowRanges` (`fetch_ranges` itself
-  does implement page pruning and the `cache_mask` expansion).
-  `RemainingRowGroups` carries the `::Arrow::Schema` only for `into_parts`.
+  `nil` instead of spelling out `None`, `prepare_selection_for_page_skipping`/
+  `loaded_row_ranges_for_projection` are public `Parquet::Arrow` module functions
+  instead of private free functions (their upstream unit tests live in the
+  module; Crystal specs cannot reach private methods), and
+  `ParquetPushDecoderBuilder` is not the generic `ArrowReaderBuilder<I>` (the
+  refactor is deferred). `RemainingRowGroups` carries the `::Arrow::Schema` only
+  for `into_parts`.
   Tests: `spec/parquet/arrow/push_decoder_spec.cr` covers the decoder, row
   groups/selections, adaptive scans, row filters (single/multiple predicates,
   page reuse, empty filters, filters with a row selection, offset+limit, the
   predicate-limit short-circuit, row-group-local selections with a filter, and
-  both filter-based `into_builder` tests) and the predicate cache (the filter
+  both filter-based `into_builder` tests), the predicate cache (the filter
   column is decoded once and the output is served from the cache; with
   `with_max_predicate_cache_size(0)` nothing is cached and the cache metrics stay
-  at zero). Deferred: the `LoadedRowRanges` page-pruning path. Upstream's
+  at zero) and page skipping (both upstream unit tests — loaded ranges
+  intersected across columns, and Auto staying on mask execution — plus
+  end-to-end mask-strategy reads with and without a filter over a 50-row-page
+  fixture, which fail with the sparse-offset error without the preparation).
+  The fixture's metadata is read with `ReadOptionsBuilder#with_page_index`, like
+  upstream's `test_file_parquet_metadata` (whose metadata decoder fetches the
+  page index), so page pruning is active in every push decoder test. Upstream's
   `test_decoder_size` (a `size_of` assertion) is not ported; the port's
   projection tests assert metadata-derived chunk ranges instead of upstream's
   hardcoded ones (its fixture writes BYTE_ARRAY, not StringView).

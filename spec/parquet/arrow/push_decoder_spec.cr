@@ -12,8 +12,8 @@ require "../../spec_helper"
 # strings, two 200-row row groups, 100-row data pages, written in 50-row
 # batches). The port writes the same shape with `SerializedFileWriter`.
 #
-# Deferred in this slice (documented in `plans/parity.md`): the page-pruning
-# path (`prepare_selection_for_page_skipping`).
+# The fixture's metadata is read with the page index (like upstream's
+# `test_file_parquet_metadata`), so page pruning is active in every example.
 private alias PArrow = Parquet::Arrow
 private alias BytesCR = Parquet::File::BytesChunkReader
 private alias FWriter = Parquet::File::SerializedFileWriter
@@ -36,7 +36,11 @@ end
 
 # The upstream `TEST_FILE_DATA`: 400 rows in two 200-row row groups with
 # 100-row data pages (written in 50-row batches so the page limit applies).
-private def test_file_bytes : Bytes
+#
+# `page_row_limit` lets a spec request smaller pages: the writer flushes a page
+# once the limit is reached at a batch boundary, so `40` yields 50-row pages
+# (four per row group), which page pruning can split.
+private def test_file_bytes(page_row_limit : Int32 = 100) : Bytes
   leaf_a = ST.primitive_type_builder("a", PType::INT64)
     .with_repetition(PRep::REQUIRED).build.as(ST)
   leaf_b = ST.primitive_type_builder("b", PType::INT64)
@@ -49,7 +53,7 @@ private def test_file_bytes : Bytes
 
   props = WP.builder
     .set_max_row_group_row_count(ROW_GROUP_ROWS)
-    .set_data_page_row_count_limit(100)
+    .set_data_page_row_count_limit(page_row_limit)
     .build
 
   io = IO::Memory.new
@@ -90,7 +94,11 @@ private def test_file_bytes : Bytes
 end
 
 private def test_metadata(bytes : Bytes) : Parquet::File::Metadata::ParquetMetaData
-  Parquet::File::SerializedFileReader.new(BytesCR.new(bytes)).metadata
+  # Upstream's `test_file_parquet_metadata` decodes the page index (its
+  # `ParquetMetaDataPushDecoder` fetches the page-index ranges), so page pruning
+  # is active in every upstream push decoder test.
+  options = Parquet::File::ReadOptionsBuilder.new.with_page_index.build
+  Parquet::File::SerializedFileReader.new_with_options(BytesCR.new(bytes), options).metadata
 end
 
 private def expect_data(result : DecodeResult) : Arrow::RecordBatch
@@ -575,10 +583,6 @@ end
 #
 # Ported from `parquet/src/arrow/push_decoder/mod.rs`
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
-#
-# Deferred (documented in `plans/parity.md`): the page-pruning path
-# (`prepare_selection_for_page_skipping`), which the upstream reader wires in
-# alongside these adaptive-scan APIs.
 #
 # Divergence: upstream asserts hardcoded byte ranges. The port's fixture writes
 # column "c" as BYTE_ARRAY instead of StringView, so page and chunk sizes
@@ -1388,6 +1392,156 @@ describe Parquet::Arrow::ParquetPushDecoder do
       # the same: only `CachedArrayReader` updates them).
       (metrics.records_read_from_cache || 0).should eq(0)
       (metrics.records_read_from_inner || 0).should eq(0)
+    end
+  end
+end
+
+# Page skipping in the push decoder: `prepare_selection_for_page_skipping` and
+# `loaded_row_ranges_for_projection`.
+#
+# Ported from `parquet/src/arrow/push_decoder/reader_builder/mod.rs`
+# (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b): the two
+# upstream unit tests, plus end-to-end characterization of the wiring (upstream
+# covers that path through the async row-filter tests, which need the async
+# reader; the port characterizes it through the push decoder).
+#
+# Some pages can be skipped when an `InMemoryRowGroup` is built, so their data is
+# never loaded. The selector strategy handles that by skipping pages with
+# `skip_records`, but a mask chunk decodes every row it covers before filtering,
+# so a chunk must not cross an unloaded page. `prepare_selection_for_page_skipping`
+# pins the strategy to the resolved one and records the loaded row ranges for the
+# mask path.
+private alias PageIndexBuilder = Parquet::File::Metadata::PageIndexBuilder
+private alias OffsetIndexMetaData = Parquet::File::Metadata::OffsetIndexMetaData
+private alias PageLocation = Parquet::File::Metadata::PageLocation
+private alias RowGroupPageIndex = Parquet::File::Metadata::RowGroupPageIndex
+private alias PRowSelection = Parquet::Arrow::RowSelection
+private alias PRowSelector = Parquet::Arrow::RowSelector
+private alias PRowSelectionPolicy = Parquet::Arrow::RowSelectionPolicy
+
+# Rows 0-9 and 110-119: with 50-row pages (row group 0) that selects page 0 and
+# page 2, leaving pages 1 and 3 unloaded.
+private def page_skipping_selection : PRowSelection
+  PRowSelection.new([
+    PRowSelector.select(10),
+    PRowSelector.skip(100),
+    PRowSelector.select(10),
+    PRowSelector.skip(280),
+  ])
+end
+
+describe Parquet::Arrow::ParquetPushDecoder do
+  describe "page skipping" do
+    it "intersects the loaded ranges across projected columns (upstream test_loaded_row_ranges_intersect_column_page_boundaries)" do
+      page_index = PageIndexBuilder.new(1, 2)
+      column = ->(first_rows : Array(Int64)) do
+        OffsetIndexMetaData.new(
+          first_rows.map_with_index do |first_row_index, idx|
+            PageLocation.new((idx * 10).to_i64, 10, first_row_index)
+          end,
+          nil,
+        )
+      end
+      page_index.put_offset_index(column.call([0_i64, 4_i64, 8_i64]), 0, 0)
+      page_index.put_offset_index(column.call([0_i64, 6_i64, 10_i64]), 0, 1)
+
+      selection = PRowSelection.new([
+        PRowSelector.skip(1),
+        PRowSelector.select(1),
+        PRowSelector.skip(9),
+        PRowSelector.select(1),
+      ])
+
+      loaded = PArrow.loaded_row_ranges_for_projection(
+        selection,
+        PArrow::ProjectionMask.all,
+        RowGroupPageIndex.new(0, page_index.build),
+        2,
+        12,
+      ).not_nil!
+
+      loaded.ranges.should eq([0...4, 10...12])
+    end
+
+    it "keeps mask execution when page pruning skips pages (upstream test_auto_keeps_mask_when_page_pruning_skips_pages)" do
+      page_index = PageIndexBuilder.new(1, 1)
+      page_index.put_offset_index(
+        OffsetIndexMetaData.new(
+          [0_i64, 2_i64, 4_i64, 6_i64, 8_i64, 10_i64].map_with_index do |first_row_index, idx|
+            PageLocation.new((idx * 10).to_i64, 10, first_row_index)
+          end,
+          nil,
+        ),
+        0,
+        0,
+      )
+      selection = PRowSelection.new([
+        PRowSelector.select(1),
+        PRowSelector.skip(10),
+        PRowSelector.select(1),
+      ])
+      plan_builder = PArrow::ReadPlanBuilder.new(12)
+        .with_selection(selection)
+        .with_row_selection_policy(PRowSelectionPolicy.auto(32))
+
+      prepared = PArrow.prepare_selection_for_page_skipping(
+        plan_builder,
+        PArrow::ProjectionMask.all,
+        RowGroupPageIndex.new(0, page_index.build),
+        1,
+        12,
+      )
+
+      prepared.row_selection_policy.should eq(PRowSelectionPolicy::MASK)
+    end
+
+    it "reads a page-pruned selection with the mask strategy" do
+      bytes = test_file_bytes(page_row_limit: 40)
+      metadata = test_metadata(bytes)
+
+      decoder = ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        .with_projection(PArrow::ProjectionMask.leaves(metadata.file_metadata.schema_descr, [0]))
+        .with_row_selection(page_skipping_selection)
+        .with_row_selection_policy(PRowSelectionPolicy::MASK)
+        .build
+
+      # Only page 0 (rows 0-9) and page 2 (rows 110-119) are requested, plus the
+      # dictionary page that precedes them.
+      ranges = expect_needs_data(decoder.try_decode)
+      chunk_start, _ = metadata.row_group(0).column(0).byte_range
+      locations = metadata.page_index.not_nil!.offset_index(0, 0).not_nil!.page_locations
+      page_range = ->(idx : Int32) do
+        start = locations[idx].offset.to_u64
+        start...(start + locations[idx].compressed_page_size.to_u64)
+      end
+      ranges.should eq([
+        chunk_start.to_u64...locations[0].offset.to_u64,
+        page_range.call(0),
+        page_range.call(2),
+      ])
+
+      rows = drain_decoder(decoder, bytes).flat_map { |batch| int64_values(batch, 0) }
+      rows.should eq((0...10).map(&.to_i64) + (110...120).map(&.to_i64))
+    end
+
+    it "reads a page-pruned selection through a filter with the mask strategy" do
+      bytes = test_file_bytes(page_row_limit: 40)
+      metadata = test_metadata(bytes)
+      projection = PArrow::ProjectionMask.leaves(metadata.file_metadata.schema_descr, [0])
+
+      decoder = ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        .with_projection(projection)
+        .with_row_selection(page_skipping_selection)
+        .with_row_selection_policy(PRowSelectionPolicy::MASK)
+        .with_row_filter(PArrow::RowFilter.new(
+          [threshold_predicate(projection, 0, 5_i64)] of Parquet::Arrow::ArrowPredicate
+        ))
+        # Keep the predicate cache out of the picture: this spec is about pages.
+        .with_max_predicate_cache_size(0)
+        .build
+
+      rows = drain_decoder(decoder, bytes).flat_map { |batch| int64_values(batch, 0) }
+      rows.should eq([6_i64, 7_i64, 8_i64, 9_i64] + (110...120).map(&.to_i64))
     end
   end
 end
