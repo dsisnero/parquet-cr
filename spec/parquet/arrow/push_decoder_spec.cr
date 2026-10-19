@@ -221,6 +221,23 @@ private def check_rows(batch : Arrow::RecordBatch, start : Int32, count : Int32)
 end
 
 describe Parquet::Arrow::ParquetPushDecoder do
+  it "shares the arrow reader builder options" do
+    bytes = test_file_bytes
+    builder = ParquetPushDecoderBuilder.try_new_decoder(test_metadata(bytes))
+
+    # The push decoder builder is `ArrowReaderBuilder(PushDecoderInput)`
+    # upstream, so it starts from the shared defaults.
+    builder.batch_size.should eq(PArrow::ArrayReaderBuilder::DEFAULT_BATCH_SIZE)
+    builder.max_predicate_cache_size
+      .should eq(PArrow::ArrowReaderBuilder::DEFAULT_MAX_PREDICATE_CACHE_SIZE)
+
+    # `with_batch_size` clamps to the file's row count (upstream
+    # `ArrowReaderBuilder::with_batch_size`), like the synchronous builder.
+    builder.with_batch_size(1024).batch_size.should eq(ROWS)
+    builder.with_batch_size(8).batch_size.should eq(8)
+    builder.batch_size.should eq(8)
+  end
+
   it "decodes the whole file when all data is pushed (upstream test_decoder_all_data)" do
     bytes = test_file_bytes
     decoder = ParquetPushDecoderBuilder.try_new_decoder(test_metadata(bytes)).build

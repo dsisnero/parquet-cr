@@ -176,6 +176,43 @@ describe Parquet::Arrow::ParquetRecordBatchReader do
     batches.map(&.num_rows).should eq([3, 3, 2])
   end
 
+  it "clamps the batch size to the row count (upstream test_batch_size_overallocate)" do
+    builder = PArrow::ParquetRecordBatchReaderBuilder.try_new(
+      serialized_reader("alltypes_plain.parquet")
+    )
+    num_rows = builder.metadata.file_metadata.num_rows
+    num_rows.should eq(8)
+
+    # The port cannot project the INT96 column, so it selects the ten supported
+    # leaves (upstream projects all columns).
+    projection = PArrow::ProjectionMask.leaves(builder.parquet_schema, (0...10).to_a)
+    reader = builder
+      .with_batch_size(1024)
+      .with_projection(projection)
+      .build
+
+    num_rows.should_not eq(1024)
+    # The shared builder clamps eagerly, so `batch_size` reports the clamped
+    # value before `build` (upstream `ArrowReaderBuilder::with_batch_size`).
+    reader.read_plan.batch_size.should eq(num_rows.to_i32)
+  end
+
+  it "accepts a predicate cache size but ignores it (upstream ArrowReaderBuilder)" do
+    builder = PArrow::ParquetRecordBatchReaderBuilder.try_new(
+      serialized_reader("alltypes_plain.parquet")
+    )
+    builder.max_predicate_cache_size
+      .should eq(PArrow::ArrowReaderBuilder::DEFAULT_MAX_PREDICATE_CACHE_SIZE)
+
+    builder = builder.with_max_predicate_cache_size(0)
+    builder.max_predicate_cache_size.should eq(0)
+
+    # The synchronous reader never uses the predicate cache (arrow-rs#8000).
+    projection = PArrow::ProjectionMask.leaves(builder.parquet_schema, (0...10).to_a)
+    batches = builder.with_projection(projection).build.to_a
+    batches.flat_map(&.num_rows).sum.should eq(8)
+  end
+
   it "reads primitive columns with a projection mask" do
     reader_file = serialized_reader("alltypes_plain.parquet")
     builder = PArrow::ParquetRecordBatchReaderBuilder.try_new(reader_file)

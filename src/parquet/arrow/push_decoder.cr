@@ -28,9 +28,10 @@ require "./read_plan"
 # and exposes the adaptive-scan API (`try_next_reader`, `peek_next_row_group`,
 # `into_builder`).
 #
-# Deferred in this slice (see `plans/parity.md`): the generic
-# `ArrowReaderBuilder<I>` refactor upstream shares with the sync/async builders
-# (this builder carries the same options directly).
+# `ParquetPushDecoderBuilder` is the shared `ArrowReaderBuilder` over a
+# `PushDecoderInput` (upstream `ArrowReaderBuilder<PushDecoderInput>`); the
+# generic builder lives in `arrow_reader.cr` because the synchronous reader
+# subclasses it too.
 module Parquet
   module Arrow
     # Running offset/limit budget shared across row groups (upstream
@@ -1597,54 +1598,39 @@ module Parquet
       end
     end
 
-    # A builder for `ParquetPushDecoder` (upstream
-    # `ParquetPushDecoderBuilder`).
+    # The input of the push decoder builder (upstream `PushDecoderInput`).
     #
-    # Divergence: upstream aliases `ArrowReaderBuilder<PushDecoderInput>`; this
-    # carries the same options directly (the generic builder refactor is
-    # deferred) and models `PushDecoderInput` as the `PushBuffers` field.
-    class ParquetPushDecoderBuilder
-      # Upstream `ArrowReaderBuilder`'s default predicate cache size (100MB).
-      DEFAULT_MAX_PREDICATE_CACHE_SIZE = 100 * 1024 * 1024
+    # The push decoder has no underlying reader, so its input is the
+    # `PushBuffers` that caller-pushed bytes accumulate in (empty for a fresh
+    # builder).
+    class PushDecoderInput
+      # Bytes pushed into the decoder, awaiting decode.
+      getter buffers : Util::PushBuffers
 
-      getter metadata : File::Metadata::ParquetMetaData
-      getter schema : ::Arrow::Schema
-      getter fields : ParquetField?
-
-      def initialize(
-        @metadata : File::Metadata::ParquetMetaData,
-        @schema : ::Arrow::Schema,
-        @fields : ParquetField?,
-        @batch_size : Int32 = ArrayReaderBuilder::DEFAULT_BATCH_SIZE,
-        @projection : ProjectionMask = ProjectionMask.all,
-        @row_group_plan : RowGroupPlan = RowGroupPlan.global,
-        @offset : Int32? = nil,
-        @limit : Int32? = nil,
-        @row_selection_policy : RowSelectionPolicy = RowSelectionPolicy.default,
-        @metrics : ArrowReaderMetrics = ArrowReaderMetrics.disabled,
-        @buffers : Util::PushBuffers = Util::PushBuffers.new,
-        @filter : RowFilter? = nil,
-        @max_predicate_cache_size : Int32 = DEFAULT_MAX_PREDICATE_CACHE_SIZE,
-      )
+      def initialize(@buffers : Util::PushBuffers = Util::PushBuffers.new)
       end
+    end
 
+    # A builder for `ParquetPushDecoder` (upstream `ParquetPushDecoderBuilder`,
+    # i.e. `ArrowReaderBuilder<PushDecoderInput>`).
+    class ParquetPushDecoderBuilder < ArrowReaderBuilder(PushDecoderInput)
       # Reassembles a builder from a decoder's not-yet-decoded state — the
       # inverse of `#build` (upstream `builder_from_remaining`).
       def self.from_parts(parts : RemainingRowGroupsParts) : ParquetPushDecoderBuilder
         reader_builder = parts.reader_builder
         new(
+          PushDecoderInput.new(reader_builder.buffers),
           parts.metadata,
           parts.schema,
           reader_builder.fields,
           reader_builder.batch_size,
-          reader_builder.projection,
           parts.row_group_plan,
-          parts.offset,
-          parts.limit,
-          reader_builder.row_selection_policy,
-          reader_builder.metrics,
-          reader_builder.buffers,
+          reader_builder.projection,
           reader_builder.filter,
+          reader_builder.row_selection_policy,
+          parts.limit,
+          parts.offset,
+          reader_builder.metrics,
           reader_builder.max_predicate_cache_size,
         )
       end
@@ -1661,52 +1647,29 @@ module Parquet
         metadata : File::Metadata::ParquetMetaData,
         options : ArrowReaderOptions,
       ) : ParquetPushDecoderBuilder
-        arrow_metadata = ArrowReaderMetadata.try_new(metadata, options)
-        new_with_metadata(arrow_metadata)
+        new_with_metadata(ArrowReaderMetadata.try_new(metadata, options))
       end
 
       # Creates a builder from pre-loaded arrow metadata (upstream
       # `new_with_metadata`).
       def self.new_with_metadata(arrow_metadata : ArrowReaderMetadata) : ParquetPushDecoderBuilder
-        new(arrow_metadata.metadata, arrow_metadata.schema, arrow_metadata.fields)
+        new(
+          PushDecoderInput.new,
+          arrow_metadata.metadata,
+          arrow_metadata.schema,
+          arrow_metadata.fields,
+        )
       end
 
-      # Sets the batch size.
-      def with_batch_size(batch_size : Int32) : self
-        @batch_size = batch_size
-        self
+      # The bytes already pushed into the decoder (upstream `input.buffers`).
+      def buffers : Util::PushBuffers
+        @input.buffers
       end
 
-      # Only decodes the leaves selected by `mask`.
-      def with_projection(projection : ProjectionMask) : self
-        @projection = projection
-        self
-      end
-
-      # Applies a row filter: only rows accepted by every predicate are
-      # returned (upstream `with_row_filter`).
-      #
-      # Predicates are evaluated row group by row group, after any row-group
-      # selection and before the offset/limit budget is applied.
-      def with_row_filter(filter : RowFilter) : self
-        @filter = filter
-        self
-      end
-
-      # Sets the maximum size of the predicate cache (upstream
-      # `with_max_predicate_cache_size`).
-      #
-      # The cache stores the decoded arrays of the columns used by both the row
-      # filter and the output projection, so they are decoded once per row
-      # group; `0` disables it.
-      def with_max_predicate_cache_size(max_predicate_cache_size : Int32) : self
-        @max_predicate_cache_size = max_predicate_cache_size
-        self
-      end
-
-      # Only decodes the given row groups, in the supplied order.
-      def with_row_groups(row_groups : Enumerable(Int32)) : self
-        @row_group_plan.set_row_groups(row_groups.to_a)
+      # Provides preexisting buffers so bytes already fetched are not requested
+      # again (upstream `with_buffers`).
+      def with_buffers(buffers : Util::PushBuffers) : self
+        @input = PushDecoderInput.new(buffers)
         self
       end
 
@@ -1719,48 +1682,6 @@ module Parquet
       def with_row_group_selections(selections : Array(RowGroupSelection)) : self
         @row_group_plan.set_row_group_selections(selections)
         self
-      end
-
-      # Selects rows across the concatenated selected row groups.
-      def with_row_selection(selection : RowSelection) : self
-        @row_group_plan.set_row_selection(selection)
-        self
-      end
-
-      # Skips the first `offset` selected rows.
-      def with_offset(offset : Int32) : self
-        @offset = offset
-        self
-      end
-
-      # Reads at most `limit` selected rows.
-      def with_limit(limit : Int32) : self
-        @limit = limit
-        self
-      end
-
-      # Configures the policy used to materialize the row selection.
-      def with_row_selection_policy(policy : RowSelectionPolicy) : self
-        @row_selection_policy = policy
-        self
-      end
-
-      # Configures metrics collection during decoding.
-      def with_metrics(metrics : ArrowReaderMetrics) : self
-        @metrics = metrics
-        self
-      end
-
-      # Provides preexisting buffers so bytes already fetched are not requested
-      # again (upstream `with_buffers`).
-      def with_buffers(buffers : Util::PushBuffers) : self
-        @buffers = buffers
-        self
-      end
-
-      # The parquet schema descriptor.
-      def parquet_schema : Schema::SchemaDescriptor
-        @metadata.file_metadata.schema_descr
       end
 
       # Builds the decoder (upstream `build`).
@@ -1777,7 +1698,7 @@ module Parquet
           @metrics,
           @max_predicate_cache_size,
           @row_selection_policy,
-          @buffers,
+          @input.buffers,
         )
 
         remaining = RemainingRowGroups.new(

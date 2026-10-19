@@ -160,8 +160,16 @@ little-endian layout.
   pages loaded for every projected column, so a mask chunk never decodes across a
   page that was skipped during the fetch; `RowGroupReaderBuilder#row_group_offset_index`
   supplies the offset index for both the predicate and the output stage.
-  **Next up:** the generic `ArrowReaderBuilder<I>` refactor upstream shares with
-  the sync/async builders, then `parquet-variant-compute`, virtual columns
+  The arrow reader options are shared too: `ArrowReaderBuilder(Input)`
+  (`src/parquet/arrow/arrow_reader.cr`) holds the common reader options (batch
+  size with upstream's row-count clamp, projection, row-group plan, row
+  selection and policy, offset/limit, row filter, metrics and the predicate
+  cache size) and is subclassed by the synchronous
+  `ParquetRecordBatchReaderBuilder` (input `SyncReader(File::FileReader)`) and
+  the push decoder's `ParquetPushDecoderBuilder` (input `PushDecoderInput`),
+  matching upstream's `ArrowReaderBuilder<SyncReader<T>>` /
+  `ArrowReaderBuilder<PushDecoderInput>` aliases.
+  **Next up:** `parquet-variant-compute`, virtual columns
   (blocked on arrow-cr canonical extension types) and the arrow writer (needs
   `column/page_store.rs`).
   Everything else
@@ -516,7 +524,10 @@ little-endian layout.
     `make_byte_array_dictionary_reader` for both BYTE_ARRAY and
     FIXED_LEN_BYTE_ARRAY, but the user-facing way to request a dictionary arrow
     type (`with_schema`) is not ported yet.
-    Batch reader (`src/parquet/arrow/arrow_reader.cr`): `ParquetRecordBatchReader`
+    Batch reader (`src/parquet/arrow/arrow_reader.cr`): the shared
+    `ArrowReaderBuilder(Input)` (see the push decoder note for the generic
+    mapping) carries the reader options for both `ParquetRecordBatchReaderBuilder`
+    and `ParquetPushDecoderBuilder`; `ParquetRecordBatchReader`
     wraps the `ArrayReader` + projected schema and yields batches via
     `RecordBatch.from(struct_array)` (so an empty projection still carries the
     row count), splitting by `batch_size` (capped at the file row count) and
@@ -1027,11 +1038,12 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow push decoder page skipping`; gates green
-  (`make lint`, `make test` -> 1385 examples, 0 failures). Next feature: the
-  generic `ArrowReaderBuilder<I>` refactor upstream shares with the sync/async
-  builders. Note `make install` now requires the sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 2321 `ported`, 202 `intentional_divergence`,
+- Last commit: `port: arrow reader builder`; gates green
+  (`make lint`, `make test` -> 1388 examples, 0 failures). Next feature:
+  `parquet-variant-compute` (then virtual columns, blocked on arrow-cr canonical
+  extension types, and the arrow writer). Note `make install` now requires the
+  sibling checkout `../arrow-cr`.
+- Progress by counts (ledger): 2322 `ported`, 201 `intentional_divergence`,
   15 skipped, 977 `missing` (of 3515 rows).
 
 Chunk status by area:
@@ -1960,11 +1972,19 @@ Chunk status by area:
   matching decimal/interval data type (arrow-cr has no `Decimal*Array`/
   `Interval*Array` classes); `Float16` raises `NYIError` (no Crystal `Float16`)
   and `Interval(MonthDayNano)` is NYI as upstream.
-- Arrow interop, batch reader: `ParquetRecordBatchReaderBuilder` takes a
-  `File::FileReader` (upstream any `ChunkReader`); row selection, row-group
-  selection, offset/limit plans, `RowFilter`, `StatisticsConverter` and reader
-  metrics are ported, while bloom-filter lookups and page-index policies are
-  not. `ArrowReaderOptions`
+- Arrow interop, batch reader: the reader options live in the generic
+  `ArrowReaderBuilder(Input)` (`src/parquet/arrow/arrow_reader.cr`), which the
+  synchronous `ParquetRecordBatchReaderBuilder` (input
+  `SyncReader(File::FileReader)`, upstream `ArrowReaderBuilder<SyncReader<T>>`)
+  and the push decoder's `ParquetPushDecoderBuilder` (input `PushDecoderInput`)
+  subclass; `with_batch_size` clamps to the file row count like upstream (porting
+  `test_batch_size_overallocate`), the shared `with_max_predicate_cache_size` is
+  accepted by both (only the push decoder uses it, as upstream), and each
+  subclass's `build` destructures the shared state as upstream's `impl` blocks
+  do. `ParquetRecordBatchReaderBuilder` takes a `File::FileReader` (upstream any
+  `ChunkReader`); row selection, row-group selection, offset/limit plans,
+  `RowFilter`, `StatisticsConverter` and reader metrics are ported, while
+  bloom-filter lookups and page-index policies are not. `ArrowReaderOptions`
   models only `skip_arrow_metadata` and the supplied arrow schema (no
   page-index/encoding-statistics policies, decryption properties or virtual
   columns), and the supplied-schema field-metadata mismatch message renders
@@ -2172,9 +2192,11 @@ Chunk status by area:
   `loaded_row_ranges_for_projection` are public `Parquet::Arrow` module functions
   instead of private free functions (their upstream unit tests live in the
   module; Crystal specs cannot reach private methods), and
-  `ParquetPushDecoderBuilder` is not the generic `ArrowReaderBuilder<I>` (the
-  refactor is deferred). `RemainingRowGroups` carries the `::Arrow::Schema` only
-  for `into_parts`.
+  `ParquetPushDecoderBuilder` is a Crystal subclass of
+  `ArrowReaderBuilder(PushDecoderInput)` rather than an alias over one struct
+  (`PushDecoderInput` models upstream's buffers-only input, so `with_buffers`
+  replaces the input while `#buffers` reads it). `RemainingRowGroups` carries the
+  `::Arrow::Schema` only for `into_parts`.
   Tests: `spec/parquet/arrow/push_decoder_spec.cr` covers the decoder, row
   groups/selections, adaptive scans, row filters (single/multiple predicates,
   page reuse, empty filters, filters with a row selection, offset+limit, the

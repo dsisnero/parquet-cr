@@ -1021,20 +1021,20 @@ parquet/src/arrow/arrow_reader/mod.rs::const::BATCH_SIZE	const	missing	-	auto-ge
 parquet/src/arrow/arrow_reader/mod.rs::const::DEFAULT_BATCH_SIZE	const	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::const::MESSAGE_TYPE	const	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.fmt	method	intentional_divergence	src/parquet/arrow/arrow_reader.cr	no Rust `Debug` impl
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.metadata	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#metadata
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.new_builder	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#initialize(input, metadata, schema, fields, batch_size, projection)
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.parquet_schema	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#parquet_schema
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.schema	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#schema
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_batch_size	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_batch_size
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_limit	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_limit
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_max_predicate_cache_size	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	sync reader ignores the cache size (upstream does too, arrow-rs#8000); ParquetPushDecoderBuilder#with_max_predicate_cache_size drives RowGroupCache
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_metrics	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_metrics + ArrayReaderBuilder#metrics
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_offset	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_offset
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_projection	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_projection
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_filter	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_row_filter (predicates evaluated in build); ParquetPushDecoderBuilder#with_row_filter evaluates them per row group
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_groups	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_row_groups (FileRowGroups honours the index list)
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_selection	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_row_selection
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_selection_policy	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_row_selection_policy
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.metadata	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderBuilder#metadata (shared by the sync reader and the push decoder)
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.new_builder	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderBuilder.new_builder(input, metadata); SyncReader(Input)/PushDecoderInput model the inputs
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.parquet_schema	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderBuilder#parquet_schema
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.schema	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderBuilder#schema
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_batch_size	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderBuilder#with_batch_size (clamps to the file row count, as upstream)
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_limit	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderBuilder#with_limit
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_max_predicate_cache_size	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderBuilder#with_max_predicate_cache_size; only the push decoder uses it (the sync reader ignores it, as upstream)
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_metrics	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderBuilder#with_metrics + ArrayReaderBuilder#metrics
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_offset	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderBuilder#with_offset
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_projection	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderBuilder#with_projection
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_filter	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderBuilder#with_row_filter (predicates evaluated in the sync reader's build, per row group in the push decoder)
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_groups	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderBuilder#with_row_groups (FileRowGroups honours the index list)
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_selection	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderBuilder#with_row_selection
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_selection_policy	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderBuilder#with_row_selection_policy
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderMetadata.load	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderMetadata.load(reader, options)
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderMetadata.metadata	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderMetadata#metadata
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderMetadata.parquet_schema	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderMetadata#parquet_schema
@@ -1499,7 +1499,7 @@ parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.build	m
 parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.new_with_metadata	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoderBuilder.new_with_metadata
 parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.try_new_decoder	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoderBuilder.try_new_decoder
 parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.try_new_decoder_with_options	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoderBuilder.try_new_decoder_with_options
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.with_buffers	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoderBuilder#with_buffers
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.with_buffers	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoderBuilder#with_buffers (replaces the `PushDecoderInput` buffers)
 parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.with_row_group_selections	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoderBuilder#with_row_group_selections
 parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequest.get_chunks	method	ported	src/parquet/arrow/push_decoder.cr	inlined: PushBuffers#get_bytes per range
 parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequest.needed_ranges	method	ported	src/parquet/arrow/push_decoder.cr	inlined: ranges not covered by PushBuffers

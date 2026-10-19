@@ -14,15 +14,20 @@ require "../file/metadata"
 #
 # Ports the batch-reading core: `ArrowReaderOptions` (embedded-metadata skipping
 # and supplied arrow schemas), `ArrowReaderMetadata` (parquet metadata + arrow
-# schema + projected field tree), `ParquetRecordBatchReaderBuilder` (batch size,
-# projection mask, row selection, offset/limit, `with_row_filter`, `build`) and
-# `ParquetRecordBatchReader` (an `Iterator(Arrow::RecordBatch)` over an
-# `ArrayReader`). Row filters are evaluated eagerly in `build`: each predicate's
+# schema + projected field tree), the generic `ArrowReaderBuilder(Input)` that
+# holds the shared reader options (batch size, projection mask, row selection,
+# offset/limit, row filter, metrics) and is subclassed by
+# `ParquetRecordBatchReaderBuilder` (the synchronous reader) and
+# `ParquetPushDecoderBuilder` (the push decoder), and `ParquetRecordBatchReader`
+# (an `Iterator(Arrow::RecordBatch)` over an `ArrayReader`). Row filters are evaluated eagerly in `build`: each predicate's
 # projection is decoded, evaluated, and folded into the read plan's selection
 # (upstream `ReadPlanBuilder::with_predicate`), so only the matching rows reach
 # the final array reader.
 #
 # Divergences (none of the corresponding infrastructure is ported yet):
+# - the generic builder is modelled with a Crystal generic class plus a
+#   `SyncReader(Input)` wrapper (upstream `ArrowReaderBuilder<SyncReader<T>>` is
+#   a type alias over one struct), and `build` lives on the subclasses;
 # - page pruning is not wired into the reader (the sync reader does not compute
 #   loaded row ranges upstream either, but
 #   `ReadPlanBuilder#with_loaded_row_ranges` is available); bloom-filter lookups
@@ -319,63 +324,99 @@ module Parquet
       end
     end
 
-    # Builds a `ParquetRecordBatchReader`
-    # (upstream `ParquetRecordBatchReaderBuilder`).
-    class ParquetRecordBatchReaderBuilder
+    # The input of the synchronous reader builder (upstream `SyncReader<T>`).
+    #
+    # Divergence: upstream is a tuple struct wrapping the chunk reader; the port
+    # wraps the file reader in a named struct so `ArrowReaderBuilder` can be
+    # generic over its input.
+    struct SyncReader(Input)
+      getter inner : Input
+
+      def initialize(@inner : Input)
+      end
+    end
+
+    # Options and state shared by the arrow reader builders (upstream
+    # `ArrowReaderBuilder<T>`).
+    #
+    # Upstream's synchronous reader (`ParquetRecordBatchReaderBuilder`, i.e.
+    # `ArrowReaderBuilder<SyncReader<T>>`), the push decoder
+    # (`ParquetPushDecoderBuilder`, i.e. `ArrowReaderBuilder<PushDecoderInput>`)
+    # and the async stream builder all embed this builder; only the input type and
+    # the `build` step differ.
+    class ArrowReaderBuilder(Input)
+      # Upstream `ArrowReaderBuilder`'s default predicate cache size (100MB).
+      DEFAULT_MAX_PREDICATE_CACHE_SIZE = 100 * 1024 * 1024
+
+      # The "input" to read parquet data from.
+      #
+      # Note the push decoder has no underlying reader; its input is the
+      # `PushBuffers` that caller-pushed bytes accumulate in.
+      getter input : Input
       getter metadata : File::Metadata::ParquetMetaData
       getter schema : ::Arrow::Schema
       getter fields : ParquetField?
+      getter batch_size : Int32
+      getter row_group_plan : RowGroupPlan
+      getter projection : ProjectionMask
+      getter filter : RowFilter?
+      getter row_selection_policy : RowSelectionPolicy
+      getter limit : Int32?
+      getter offset : Int32?
+      getter metrics : ArrowReaderMetrics
+      getter max_predicate_cache_size : Int32
 
       def initialize(
-        @input : File::FileReader,
+        @input : Input,
         @metadata : File::Metadata::ParquetMetaData,
         @schema : ::Arrow::Schema,
         @fields : ParquetField?,
         @batch_size : Int32 = ArrayReaderBuilder::DEFAULT_BATCH_SIZE,
-        @projection : ProjectionMask = ProjectionMask.all,
         @row_group_plan : RowGroupPlan = RowGroupPlan.global,
-        @offset : Int32? = nil,
-        @limit : Int32? = nil,
-        @row_filter : RowFilter? = nil,
+        @projection : ProjectionMask = ProjectionMask.all,
+        @filter : RowFilter? = nil,
         @row_selection_policy : RowSelectionPolicy = RowSelectionPolicy.default,
+        @limit : Int32? = nil,
+        @offset : Int32? = nil,
         @metrics : ArrowReaderMetrics = ArrowReaderMetrics.disabled,
+        @max_predicate_cache_size : Int32 = DEFAULT_MAX_PREDICATE_CACHE_SIZE,
       )
       end
 
-      # The reader metrics (upstream builder field is `pub(crate)`).
-      getter metrics : ArrowReaderMetrics
-
-      # Creates a builder from a file reader (upstream `try_new`).
-      def self.try_new(reader : File::FileReader) : ParquetRecordBatchReaderBuilder
-        try_new_with_options(reader, ArrowReaderOptions.new)
+      # Creates a builder from an input and its arrow metadata (upstream
+      # `new_builder`).
+      def self.new_builder(input : Input, metadata : ArrowReaderMetadata) : self
+        new(input, metadata.metadata, metadata.schema, metadata.fields)
       end
 
-      # Creates a builder from a file reader and reader options (upstream
-      # `try_new_with_options`), e.g. a supplied arrow schema.
-      def self.try_new_with_options(
-        reader : File::FileReader,
-        options : ArrowReaderOptions,
-      ) : ParquetRecordBatchReaderBuilder
-        metadata = ArrowReaderMetadata.load(reader, options)
-        new(reader, metadata.metadata, metadata.schema, metadata.fields)
+      # The parquet schema descriptor (upstream `parquet_schema`).
+      def parquet_schema : Schema::SchemaDescriptor
+        @metadata.file_metadata.schema_descr
       end
 
-      # Creates a builder from a file reader and pre-loaded metadata (upstream
-      # `new_with_metadata`).
-      def self.new_with_metadata(reader : File::FileReader,
-                                 metadata : ArrowReaderMetadata) : ParquetRecordBatchReaderBuilder
-        new(reader, metadata.metadata, metadata.schema, metadata.fields)
-      end
-
-      # Sets the batch size (the file row count is used when it is smaller).
+      # Sets the batch size (upstream `with_batch_size`).
+      #
+      # Values larger than the file's row count are clamped, as upstream does to
+      # avoid over-allocating buffers.
       def with_batch_size(batch_size : Int32) : self
-        @batch_size = batch_size
+        @batch_size = Math.min(batch_size, @metadata.file_metadata.num_rows.to_i32)
         self
       end
 
-      # Only reads the leaves selected by `mask`.
+      # Only reads the leaves selected by `mask` (upstream `with_projection`).
       def with_projection(projection : ProjectionMask) : self
         @projection = projection
+        self
+      end
+
+      # Configures the policy used to materialize the row selection (upstream
+      # `with_row_selection_policy`).
+      #
+      # Defaults to `RowSelectionPolicy.default` (auto, threshold 32): dense
+      # selections are read through a mask cursor, sparse ones through a
+      # selector queue.
+      def with_row_selection_policy(policy : RowSelectionPolicy) : self
+        @row_selection_policy = policy
         self
       end
 
@@ -402,6 +443,19 @@ module Parquet
         self
       end
 
+      # Provides a `RowFilter` to skip decoding rows (upstream
+      # `with_row_filter`).
+      #
+      # `RowFilter` predicates are evaluated after any `RowSelection`, and the
+      # results are combined with `RowSelection#and_then`. Use
+      # `ProjectionMask` to select the columns needed by the predicate; any
+      # columns needed for the overall projection are decoded again after a
+      # predicate is applied.
+      def with_row_filter(filter : RowFilter) : self
+        @filter = filter
+        self
+      end
+
       # Skips the first `offset` selected rows (upstream `with_offset`).
       def with_offset(offset : Int32) : self
         @offset = offset
@@ -414,17 +468,6 @@ module Parquet
         self
       end
 
-      # Configures the policy used to materialize the row selection (upstream
-      # `with_row_selection_policy`).
-      #
-      # Defaults to `RowSelectionPolicy.default` (auto, threshold 32): dense
-      # selections are read through a mask cursor, sparse ones through a
-      # selector queue.
-      def with_row_selection_policy(policy : RowSelectionPolicy) : self
-        @row_selection_policy = policy
-        self
-      end
-
       # Configures metrics collection during reading (upstream `with_metrics`).
       #
       # `ArrowReaderMetrics` copies share their counters, so keep a copy and
@@ -434,22 +477,42 @@ module Parquet
         self
       end
 
-      # Provides a `RowFilter` to skip decoding rows (upstream
-      # `with_row_filter`).
+      # Sets the maximum size of the predicate cache (upstream
+      # `with_max_predicate_cache_size`).
       #
-      # `RowFilter` predicates are evaluated after any `RowSelection`, and the
-      # results are combined with `RowSelection#and_then`. Use
-      # `ProjectionMask` to select the columns needed by the predicate; any
-      # columns needed for the overall projection are decoded again after a
-      # predicate is applied.
-      def with_row_filter(filter : RowFilter) : self
-        @row_filter = filter
+      # The cache stores the decoded arrays of the columns used by both the row
+      # filter and the output projection, so they are decoded once per row
+      # group; `0` disables it. Only the push decoder uses it (upstream: only the
+      # async decoder, see arrow-rs#8000).
+      def with_max_predicate_cache_size(max_predicate_cache_size : Int32) : self
+        @max_predicate_cache_size = max_predicate_cache_size
         self
       end
+    end
 
-      # The parquet schema descriptor.
-      def parquet_schema : Schema::SchemaDescriptor
-        @metadata.file_metadata.schema_descr
+    # Builds a `ParquetRecordBatchReader`
+    # (upstream `ParquetRecordBatchReaderBuilder<T>`, i.e.
+    # `ArrowReaderBuilder<SyncReader<T>>`).
+    class ParquetRecordBatchReaderBuilder < ArrowReaderBuilder(SyncReader(File::FileReader))
+      # Creates a builder from a file reader (upstream `try_new`).
+      def self.try_new(reader : File::FileReader) : ParquetRecordBatchReaderBuilder
+        try_new_with_options(reader, ArrowReaderOptions.new)
+      end
+
+      # Creates a builder from a file reader and reader options (upstream
+      # `try_new_with_options`), e.g. a supplied arrow schema.
+      def self.try_new_with_options(
+        reader : File::FileReader,
+        options : ArrowReaderOptions,
+      ) : ParquetRecordBatchReaderBuilder
+        new_with_metadata(reader, ArrowReaderMetadata.load(reader, options))
+      end
+
+      # Creates a builder from a file reader and pre-loaded metadata (upstream
+      # `new_with_metadata`).
+      def self.new_with_metadata(reader : File::FileReader,
+                                 metadata : ArrowReaderMetadata) : ParquetRecordBatchReaderBuilder
+        new_builder(SyncReader(File::FileReader).new(reader), metadata)
       end
 
       # Builds the reader.
@@ -460,14 +523,14 @@ module Parquet
         batch_size = 0 if batch_size < 0
 
         row_group_indices, selection = @row_group_plan.into_global
-        row_groups = FileRowGroups.new(@input, row_group_indices)
+        row_groups = FileRowGroups.new(@input.inner, row_group_indices)
         plan_builder = ReadPlanBuilder.new(batch_size)
           .with_selection(selection)
           .with_row_selection_policy(@row_selection_policy)
 
         # Update the selection based on any filters, decoding only each
         # predicate's projection.
-        if filter = @row_filter
+        if filter = @filter
           filter.predicates.each do |predicate|
             # Break early if we have ruled out all rows.
             break unless plan_builder.selects_any?
