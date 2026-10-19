@@ -8,7 +8,7 @@ require "./metrics"
 require "./mod"
 require "./read_plan"
 
-# Ported from `parquet/src/arrow/push_decoder/{mod,remaining}.rs`
+# Ported from `parquet/src/arrow/push_decoder/{mod,remaining,reader_builder/*}.rs`
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
 #
 # A push-based decoder: instead of reading from a file, the caller pushes the
@@ -17,12 +17,19 @@ require "./read_plan"
 # row groups and rows remain, applies offset/limit budgets across row groups, and
 # reads each row group from an `InMemoryRowGroup` built from the pushed bytes.
 #
+# The structures mirror upstream: `RowGroupFrontier` owns the cross-row-group
+# state (queued row groups, selections and the offset/limit budget) and hands
+# one `NextRowGroup` at a time to `RowGroupReaderBuilder`, which drives the
+# per-row-group decode state machine (`Start` → `StartData` → `WaitingOnData` →
+# `Finished`) and asks for the byte ranges it needs through `DataRequest`.
+# `RemainingRowGroups` glues the two together; `ParquetPushDecoder` adds the
+# reader/state machine on top and exposes the adaptive-scan API
+# (`try_next_reader`, `peek_next_row_group`, `into_builder`).
+#
 # Deferred in this slice (see `plans/parity.md`): row filters in the push path
-# (`RowFilter`/predicate cache), row-group-local selections
-# (`with_row_group_selections`), `peek_next_row_group`, `try_next_reader` and
-# `into_builder` (adaptive scans), and the generic `ArrowReaderBuilder<I>`
-# refactor upstream shares with the sync/async builders (this builder carries
-# the same options directly).
+# (`RowFilter`/predicate cache) and the generic `ArrowReaderBuilder<I>` refactor
+# upstream shares with the sync/async builders (this builder carries the same
+# options directly).
 module Parquet
   module Arrow
     # Running offset/limit budget shared across row groups (upstream
@@ -52,6 +59,14 @@ module Parquet
         end
       end
 
+      # The number of selected rows needed before applying the offset
+      # (upstream `selected_row_limit`).
+      def selected_row_limit : Int32?
+        if limit = @limit
+          limit + (@offset || 0)
+        end
+      end
+
       # Advances the budget past one row group.
       #
       # `rows_before` is the number of rows selected before applying the budget
@@ -68,29 +83,486 @@ module Parquet
         end
         RowBudget.new(offset, limit)
       end
+
+      # Applies this budget to `plan_builder` (upstream `apply_to_plan`).
+      def apply_to_plan(plan_builder : ReadPlanBuilder, row_count : Int32) : BudgetedReadPlan
+        rows_before = plan_builder.num_rows_selected || row_count
+        limited = plan_builder.limited(row_count)
+        limited = limited.with_offset(@offset) if @offset
+        limited = limited.with_limit(@limit) if @limit
+        plan_builder = limited.build_limited
+        rows_after = rows_after(rows_before)
+        BudgetedReadPlan.new(
+          plan_builder,
+          rows_before,
+          rows_after,
+          advance(rows_before, rows_after),
+        )
+      end
     end
 
-    # The push decoder's state machine (upstream `ParquetDecoderState`).
-    abstract class ParquetDecoderState
-      # Waiting for the data needed to decode the next row group.
-      class ReadingRowGroup < ParquetDecoderState
-        getter remaining : RemainingRowGroups
+    # The result of applying a `RowBudget` to a row group's read plan (upstream
+    # `BudgetedReadPlan`).
+    struct BudgetedReadPlan
+      # Read plan after applying this row group's share of the offset/limit
+      # budget.
+      getter plan_builder : ReadPlanBuilder
+      # Rows selected by the row selection (and predicates) before applying this
+      # row group's offset/limit budget.
+      getter rows_before_budget : Int32
+      # Rows that remain to be read after applying this row group's budget.
+      getter rows_after_budget : Int32
+      # Budget remaining for later row groups.
+      getter remaining_budget : RowBudget
 
-        def initialize(@remaining : RemainingRowGroups)
+      def initialize(
+        @plan_builder : ReadPlanBuilder,
+        @rows_before_budget : Int32,
+        @rows_after_budget : Int32,
+        @remaining_budget : RowBudget,
+      )
+      end
+    end
+
+    # The row group currently being planned, its read plan and its budget
+    # (upstream `RowGroupInfo`).
+    class RowGroupInfo
+      getter row_group_idx : Int32
+      getter row_count : Int32
+      property plan_builder : ReadPlanBuilder
+      getter budget : RowBudget
+
+      def initialize(
+        @row_group_idx : Int32,
+        @row_count : Int32,
+        @plan_builder : ReadPlanBuilder,
+        @budget : RowBudget,
+      )
+      end
+    end
+
+    # Work item handed from `RowGroupFrontier` to `RowGroupReaderBuilder`
+    # (upstream `NextRowGroup`).
+    class NextRowGroup
+      getter row_group_idx : Int32
+      getter row_count : Int32
+      # This row group's selection, or nil when all rows are selected.
+      getter selection : RowSelection?
+      # Budget snapshot to apply while decoding this row group.
+      getter budget : RowBudget
+
+      def initialize(
+        @row_group_idx : Int32,
+        @row_count : Int32,
+        @selection : RowSelection?,
+        @budget : RowBudget,
+      )
+      end
+    end
+
+    # Tracks the byte ranges needed to build an `InMemoryRowGroup`, together
+    # with any column chunks already fetched by earlier stages (upstream
+    # `DataRequest`).
+    class DataRequest
+      # Any previously read column chunk data.
+      getter column_chunks : Array(ColumnChunkData?)
+      # The ranges of data that are needed next.
+      getter ranges : Array(Range(UInt64, UInt64))
+      # Optional page start offsets for each requested range; used to build the
+      # relevant `InMemoryRowGroup`.
+      getter page_start_offsets : Array(Array(UInt64))?
+
+      def initialize(
+        @column_chunks : Array(ColumnChunkData?),
+        @ranges : Array(Range(UInt64, UInt64)),
+        @page_start_offsets : Array(Array(UInt64))?,
+      )
+      end
+
+      # The ranges still needed to satisfy this request (empty when all ranges
+      # are buffered).
+      def needed_ranges(buffers : Util::PushBuffers) : Array(Range(UInt64, UInt64))
+        @ranges.reject { |range| buffers.has_range?(range) }
+      end
+
+      # Creates a new `InMemoryRowGroup` filled with the buffered data, and
+      # clears the explicitly requested ranges (upstream
+      # `try_into_in_memory_row_group`).
+      #
+      # Assumes that all needed data is present in the buffers.
+      def try_into_in_memory_row_group(
+        row_group_idx : Int32,
+        row_count : Int32,
+        metadata : File::Metadata::ParquetMetaData,
+        projection : ProjectionMask,
+        buffers : Util::PushBuffers,
+      ) : InMemoryRowGroup
+        chunks = @ranges.map do |range|
+          length = (range.end - range.begin).to_i32
+          begin
+            buffers.get_bytes(range.begin, length)
+          rescue error : NeedMoreDataRangeError
+            raise general_err!(
+              "Internal Error missing data for range #{range} in buffers: #{error.message}"
+            )
+          end
+        end
+
+        page_index = DataRequestBuilder.page_index_for(metadata, row_group_idx)
+        row_group = InMemoryRowGroup.new(
+          row_count,
+          @column_chunks,
+          page_index,
+          row_group_idx,
+          metadata,
+        )
+        row_group.fill_column_chunks(projection, @page_start_offsets, chunks)
+        buffers.clear_ranges(@ranges)
+        row_group
+      end
+    end
+
+    # Builder for `DataRequest` (upstream `DataRequestBuilder`).
+    class DataRequestBuilder
+      def initialize(
+        @row_group_idx : Int32,
+        @row_count : Int32,
+        @batch_size : Int32,
+        @metadata : File::Metadata::ParquetMetaData,
+        @projection : ProjectionMask,
+      )
+        @selection = nil.as(RowSelection?)
+        @column_chunks = nil.as(Array(ColumnChunkData?)?)
+      end
+
+      # Sets an optional row selection to apply.
+      def with_selection(selection : RowSelection?) : self
+        @selection = selection
+        self
+      end
+
+      # Provides any previously read column chunks.
+      def with_column_chunks(column_chunks : Array(ColumnChunkData?)?) : self
+        @column_chunks = column_chunks
+        self
+      end
+
+      # The row group's page index, when offset indexes are available (upstream
+      # inlines this check in `build`/`try_into_in_memory_row_group`).
+      def self.page_index_for(
+        metadata : File::Metadata::ParquetMetaData,
+        row_group_idx : Int32,
+      ) : File::Metadata::RowGroupPageIndex?
+        page_index = metadata.page_index
+        if page_index && page_index.offset_indexes?
+          metadata.page_index_for_row_group(row_group_idx)
         end
       end
 
-      # Actively decoding a row group.
-      class DecodingRowGroup < ParquetDecoderState
-        getter reader : ParquetRecordBatchReader
-        getter remaining : RemainingRowGroups
+      # Builds the request (upstream `build`).
+      def build : DataRequest
+        row_group_metadata = @metadata.row_group(@row_group_idx)
+        column_chunks = @column_chunks ||
+                        Array(ColumnChunkData?).new(row_group_metadata.columns.size, nil)
 
-        def initialize(@reader : ParquetRecordBatchReader, @remaining : RemainingRowGroups)
+        row_group = InMemoryRowGroup.new(
+          @row_count,
+          column_chunks,
+          DataRequestBuilder.page_index_for(@metadata, @row_group_idx),
+          @row_group_idx,
+          @metadata,
+        )
+        fetch = row_group.fetch_ranges(@projection, @selection, @batch_size)
+
+        DataRequest.new(row_group.column_chunks, fetch.ranges, fetch.page_start_offsets)
+      end
+    end
+
+    # The per-row-group decoder state (upstream `RowGroupDecoderState`).
+    abstract class RowGroupDecoderState
+      # Start: planning the row group, before any data is requested.
+      class Start < RowGroupDecoderState
+        getter row_group_info : RowGroupInfo
+
+        def initialize(@row_group_info : RowGroupInfo)
         end
       end
 
-      # All rows have been decoded.
-      class Finished < ParquetDecoderState
+      # Know what data to actually read.
+      class StartData < RowGroupDecoderState
+        getter row_group_info : RowGroupInfo
+        # Any previously read column chunk data.
+        getter column_chunks : Array(ColumnChunkData?)?
+
+        def initialize(@row_group_info : RowGroupInfo, @column_chunks : Array(ColumnChunkData?)?)
+        end
+      end
+
+      # Needs data to proceed with reading the output.
+      class WaitingOnData < RowGroupDecoderState
+        getter row_group_info : RowGroupInfo
+        getter data_request : DataRequest
+
+        def initialize(@row_group_info : RowGroupInfo, @data_request : DataRequest)
+        end
+      end
+
+      # Finished (or not yet started) reading this group.
+      class Finished < RowGroupDecoderState
+      end
+    end
+
+    # The result of one `RowGroupReaderBuilder#try_build` step (upstream
+    # `RowGroupBuildResult`).
+    #
+    # Divergence: the upstream enum is a sealed class hierarchy here.
+    abstract class RowGroupBuildResult
+      # The active row group is complete without producing a reader.
+      class Finished < RowGroupBuildResult
+        # Budget remaining after applying this row group's selection.
+        getter remaining_budget : RowBudget
+
+        def initialize(@remaining_budget : RowBudget)
+        end
+      end
+
+      # More bytes are needed before the active row group can make progress.
+      class NeedsData < RowGroupBuildResult
+        getter ranges : Array(Range(UInt64, UInt64))
+
+        def initialize(@ranges : Array(Range(UInt64, UInt64)))
+        end
+      end
+
+      # The active row group produced a reader.
+      class Data < RowGroupBuildResult
+        getter batch_reader : ParquetRecordBatchReader
+        # Budget remaining after applying this row group's selection.
+        getter remaining_budget : RowBudget
+
+        def initialize(@batch_reader : ParquetRecordBatchReader, @remaining_budget : RowBudget)
+        end
+      end
+    end
+
+    # One `try_transition` result: the next state and, when processing should
+    # stop, the result to return (upstream `NextState`).
+    class RowGroupNextState
+      getter next_state : RowGroupDecoderState
+      getter result : RowGroupBuildResult?
+
+      def initialize(@next_state : RowGroupDecoderState, @result : RowGroupBuildResult? = nil)
+      end
+    end
+
+    # The builder-configurable parts of a `RowGroupReaderBuilder`, recovered by
+    # `#into_parts` (upstream `RowGroupReaderBuilderParts`).
+    class RowGroupReaderBuilderParts
+      getter batch_size : Int32
+      getter projection : ProjectionMask
+      getter fields : ParquetField?
+      getter metrics : ArrowReaderMetrics
+      getter row_selection_policy : RowSelectionPolicy
+      # Bytes already pushed into the decoder, carried across a rebuild so they
+      # are not re-requested.
+      getter buffers : Util::PushBuffers
+
+      def initialize(
+        @batch_size : Int32,
+        @projection : ProjectionMask,
+        @fields : ParquetField?,
+        @metrics : ArrowReaderMetrics,
+        @row_selection_policy : RowSelectionPolicy,
+        @buffers : Util::PushBuffers,
+      )
+      end
+    end
+
+    # Builder for `ParquetRecordBatchReader` for a single row group (upstream
+    # `RowGroupReaderBuilder`).
+    #
+    # This drives the main state machine for decoding each row group: it
+    # determines what data is needed, and assembles the batch reader when all
+    # data is available.
+    class RowGroupReaderBuilder
+      @state : RowGroupDecoderState?
+
+      def initialize(
+        @batch_size : Int32,
+        @projection : ProjectionMask,
+        @metadata : File::Metadata::ParquetMetaData,
+        @fields : ParquetField?,
+        @metrics : ArrowReaderMetrics,
+        @row_selection_policy : RowSelectionPolicy,
+        @buffers : Util::PushBuffers,
+      )
+        @state = RowGroupDecoderState::Finished.new
+      end
+
+      # Pushes new data buffers that can be used to satisfy pending requests.
+      def push_data(ranges : Array(Range(UInt64, UInt64)), buffers : Array(Bytes)) : Nil
+        @buffers.push_ranges(ranges, buffers)
+      end
+
+      # The total number of bytes buffered so far.
+      def buffered_bytes : UInt64
+        @buffers.buffered_bytes
+      end
+
+      # Clears any staged ranges currently buffered for future decode work.
+      def clear_all_ranges : Nil
+        @buffers.clear_all_ranges
+      end
+
+      # Whether the inner state is `Finished` — the only state in which it is
+      # safe to decompose the builder via `#into_parts`.
+      def finished? : Bool
+        @state.is_a?(RowGroupDecoderState::Finished)
+      end
+
+      # Decomposes the builder into its configurable parts (upstream
+      # `into_parts`). The runtime decode state is discarded.
+      def into_parts : RowGroupReaderBuilderParts
+        RowGroupReaderBuilderParts.new(
+          @batch_size,
+          @projection,
+          @fields,
+          @metrics,
+          @row_selection_policy,
+          @buffers,
+        )
+      end
+
+      # Whether this builder is currently decoding a row group.
+      def has_active_row_group? : Bool
+        !@state.is_a?(RowGroupDecoderState::Finished)
+      end
+
+      # Sets up this reader to read the next row group (upstream
+      # `next_row_group`).
+      def next_row_group(
+        row_group_idx : Int32,
+        row_count : Int32,
+        selection : RowSelection?,
+        budget : RowBudget,
+      ) : Nil
+        state = take_state
+        unless state.is_a?(RowGroupDecoderState::Finished)
+          @state = state
+          raise general_err!(
+            "Internal Error: next_row_group called while still reading a row group. " \
+            "Expected Finished state"
+          )
+        end
+
+        plan_builder = ReadPlanBuilder.new(@batch_size)
+          .with_selection(selection)
+          .with_row_selection_policy(@row_selection_policy)
+        @state = RowGroupDecoderState::Start.new(
+          RowGroupInfo.new(row_group_idx, row_count, plan_builder, budget)
+        )
+        nil
+      end
+
+      # Tries to build the next `ParquetRecordBatchReader` for the active row
+      # group (upstream `try_build`).
+      def try_build : RowGroupBuildResult
+        loop do
+          current_state = take_state
+          next_state = try_transition(current_state)
+          @state = next_state.next_state
+          if result = next_state.result
+            return result
+          end
+        end
+      end
+
+      private def take_state : RowGroupDecoderState
+        state = @state
+        unless state
+          raise general_err!("Internal Error: RowGroupReader in invalid state")
+        end
+        @state = nil
+        state
+      end
+
+      # Current state -> next state + optional output (upstream
+      # `try_transition`).
+      private def try_transition(current_state : RowGroupDecoderState) : RowGroupNextState
+        case current_state
+        when RowGroupDecoderState::Start
+          info = current_state.row_group_info
+          RowGroupNextState.new(RowGroupDecoderState::StartData.new(info, nil))
+        when RowGroupDecoderState::StartData
+          info = current_state.row_group_info
+          budgeted = info.budget.apply_to_plan(info.plan_builder, info.row_count)
+
+          if budgeted.rows_before_budget == 0
+            # Ruled out the entire row group.
+            return RowGroupNextState.new(
+              RowGroupDecoderState::Finished.new,
+              RowGroupBuildResult::Finished.new(budgeted.remaining_budget),
+            )
+          end
+
+          if budgeted.rows_after_budget == 0
+            # No rows left after applying the limit/offset budget.
+            return RowGroupNextState.new(
+              RowGroupDecoderState::Finished.new,
+              RowGroupBuildResult::Finished.new(budgeted.remaining_budget),
+            )
+          end
+
+          info.plan_builder = budgeted.plan_builder
+            .with_row_selection_policy(@row_selection_policy)
+
+          data_request = DataRequestBuilder.new(
+            info.row_group_idx,
+            info.row_count,
+            @batch_size,
+            @metadata,
+            @projection,
+          )
+            .with_selection(info.plan_builder.selection)
+            .with_column_chunks(current_state.column_chunks)
+            .build
+
+          # The budget consumed by this row group must not be re-applied when the
+          # data arrives (upstream rebuilds `RowGroupInfo` with
+          # `remaining_budget` before handing it to `WaitingOnData`).
+          next_info = RowGroupInfo.new(
+            info.row_group_idx,
+            info.row_count,
+            info.plan_builder,
+            budgeted.remaining_budget,
+          )
+
+          RowGroupNextState.new(RowGroupDecoderState::WaitingOnData.new(next_info, data_request))
+        when RowGroupDecoderState::WaitingOnData
+          info = current_state.row_group_info
+          needed_ranges = current_state.data_request.needed_ranges(@buffers)
+          unless needed_ranges.empty?
+            # Still need data.
+            return RowGroupNextState.new(
+              current_state,
+              RowGroupBuildResult::NeedsData.new(needed_ranges),
+            )
+          end
+
+          row_group = current_state.data_request.try_into_in_memory_row_group(
+            info.row_group_idx, info.row_count, @metadata, @projection, @buffers
+          )
+          plan = info.plan_builder.build
+          array_reader = ArrayReaderBuilder.new(row_group, @batch_size, @metrics)
+            .build_array_reader(@fields, @projection)
+          reader = ParquetRecordBatchReader.new(array_reader, plan)
+          RowGroupNextState.new(
+            RowGroupDecoderState::Finished.new,
+            RowGroupBuildResult::Data.new(reader, info.budget),
+          )
+        else
+          raise general_err!("Internal Error: try_build called without an active row group")
+        end
       end
     end
 
@@ -143,8 +615,33 @@ module Parquet
           raise RowGroupPlan.conflict_error
         else
           row_groups = plan.row_groups || (0...metadata.num_row_groups).to_a
-          new(Kind::Global, row_groups: row_groups.dup, selection: plan.selection)
+          new(
+            Kind::Global,
+            row_groups: row_groups.dup,
+            selection: plan.selection.try(&.dup),
+          )
         end
+      end
+
+      # Converts the remaining queue back into a builder configuration
+      # (upstream `into_plan`).
+      def into_plan : RowGroupPlan
+        if @kind.global?
+          RowGroupPlan.global(@row_groups.dup, @selection)
+        else
+          RowGroupPlan.per_row_group(@selections.dup)
+        end
+      end
+
+      # A copy used for non-mutating peeking (upstream clones the frontier and
+      # with it the queued row groups).
+      def dup : QueuedRowGroups
+        QueuedRowGroups.new(
+          @kind,
+          @row_groups.dup,
+          @selection.try(&.dup),
+          @selections.dup,
+        )
       end
 
       # The index of the next queued row group, if any.
@@ -195,171 +692,272 @@ module Parquet
       end
     end
 
-    # The row groups and rows still to be decoded (upstream
-    # `RemainingRowGroups`).
-    class RemainingRowGroups
+    # Cross-row-group scan state: queued work plus the offset/limit budget
+    # (upstream `RowGroupFrontier`).
+    class RowGroupFrontier
       getter metadata : File::Metadata::ParquetMetaData
-      getter budget : RowBudget
-
-      # A row group whose data request is still outstanding.
-      private class PendingRowGroup
-        getter row_group_idx : Int32
-        getter row_count : Int32
-        getter plan_builder : ReadPlanBuilder
-        getter fetch : InMemoryRowGroup::FetchRanges
-        getter group : InMemoryRowGroup
-
-        def initialize(@row_group_idx, @row_count, @plan_builder, @fetch, @group)
-        end
-      end
+      getter queued : QueuedRowGroups
+      property budget : RowBudget
+      # If predicates are present, row groups with selected rows must be read so
+      # the predicate can decide whether they are actually needed.
+      getter? has_predicates : Bool
 
       def initialize(
         @metadata : File::Metadata::ParquetMetaData,
+        row_group_plan : RowGroupPlan,
+        @budget : RowBudget,
+        @has_predicates : Bool = false,
+      )
+        @queued = QueuedRowGroups.try_new(@metadata, row_group_plan)
+      end
+
+      # Creates a frontier over already-queued row groups (used by `#dup`).
+      #
+      # Divergence: upstream's second constructor is private; Crystal cannot
+      # call a private constructor with an explicit receiver, so this one is
+      # `protected` (callable from other instances of this type only).
+      protected def initialize(
+        @metadata : File::Metadata::ParquetMetaData,
         @queued : QueuedRowGroups,
         @budget : RowBudget,
-        @batch_size : Int32,
-        @projection : ProjectionMask,
-        @fields : ParquetField?,
-        @row_selection_policy : RowSelectionPolicy,
-        @buffers : Util::PushBuffers,
-        @metrics : ArrowReaderMetrics,
+        @has_predicates : Bool,
       )
-        @pending = nil.as(PendingRowGroup?)
+      end
+
+      # A copy of this frontier, used for non-mutating peeking.
+      def dup : RowGroupFrontier
+        RowGroupFrontier.new(@metadata, @queued.dup, @budget, @has_predicates)
+      end
+
+      # Updates the budget after a row group finished (upstream
+      # `update_budget_after_row_group`).
+      def update_budget_after_row_group(budget : RowBudget) : Nil
+        @budget = budget
+      end
+
+      # The row-group index `#next_readable_row_group` would hand out, without
+      # mutating any state (upstream `peek_next_row_group`).
+      #
+      # Runs the real advance logic on a throwaway copy so peek can never drift
+      # from the read path.
+      def peek_next_row_group : Int32?
+        dup.next_readable_row_group.try(&.row_group_idx)
+      end
+
+      # Clears the remaining queued row groups.
+      def clear_remaining : Nil
+        @queued.clear
+      end
+
+      # Whether `next_row_group` should be read or skipped under the remaining
+      # budget (upstream `plan_selected_row_group`).
+      #
+      # Returns the row group to read, or nil after advancing the budget past a
+      # skipped row group.
+      private def plan_selected_row_group(
+        next_row_group : NextRowGroup,
+        selected_rows : Int32,
+      ) : NextRowGroup?
+        # With predicates, the row group must be read so the predicate can
+        # decide whether any of its rows are actually needed.
+        return next_row_group if @has_predicates
+
+        rows_after_budget = @budget.rows_after(selected_rows)
+        return next_row_group if rows_after_budget != 0
+
+        @budget = @budget.advance(selected_rows, rows_after_budget)
+        nil
+      end
+
+      # Advances queued row groups until one should be handed to the builder
+      # (upstream `next_readable_row_group`).
+      def next_readable_row_group : NextRowGroup?
+        loop do
+          row_group_idx = @queued.front
+          return nil unless row_group_idx
+
+          # A global selection can be exhausted before its row-group queue.
+          # Per-row-group selections have no shared cursor to exhaust; empty
+          # local selections are discarded by the `selected_rows == 0` path
+          # below.
+          if @budget.exhausted? || @queued.global_selection_exhausted?
+            clear_remaining
+            return nil
+          end
+
+          row_count = @metadata.row_group_num_rows(row_group_idx).to_i32
+          selection = @queued.pop_front_selection(row_count)
+          if selection
+            selected_rows = selection.row_count
+            next if selected_rows == 0
+
+            # An all-rows selection is equivalent to no selection.
+            selection = nil if selected_rows == row_count
+          else
+            selected_rows = row_count
+          end
+
+          next_row_group = NextRowGroup.new(row_group_idx, row_count, selection, @budget)
+          if planned = plan_selected_row_group(next_row_group, selected_rows)
+            return planned
+          end
+        end
+      end
+    end
+
+    # The state recovered from a `RemainingRowGroups` by `#into_parts`,
+    # describing the row groups not yet decoded (upstream
+    # `RemainingRowGroupsParts`).
+    class RemainingRowGroupsParts
+      # The arrow schema of the decoded output.
+      getter schema : ::Arrow::Schema
+      # The parquet file metadata.
+      getter metadata : File::Metadata::ParquetMetaData
+      # Row groups and selections not yet handed to the reader builder.
+      getter row_group_plan : RowGroupPlan
+      # Offset still to be skipped before the next readable row group.
+      getter offset : Int32?
+      # Output rows still permitted across the remaining row groups.
+      getter limit : Int32?
+      # Builder-configurable parts of the inner row-group reader builder.
+      getter reader_builder : RowGroupReaderBuilderParts
+
+      def initialize(
+        @schema : ::Arrow::Schema,
+        @metadata : File::Metadata::ParquetMetaData,
+        @row_group_plan : RowGroupPlan,
+        @offset : Int32?,
+        @limit : Int32?,
+        @reader_builder : RowGroupReaderBuilderParts,
+      )
+      end
+    end
+
+    # The row groups and rows still to be decoded (upstream
+    # `RemainingRowGroups`).
+    class RemainingRowGroups
+      getter frontier : RowGroupFrontier
+      getter row_group_reader_builder : RowGroupReaderBuilder
+      # The arrow schema of the decoded output; carried only so `#into_parts`
+      # can hand it to a rebuilt builder.
+      getter schema : ::Arrow::Schema
+
+      def initialize(
+        @schema : ::Arrow::Schema,
+        metadata : File::Metadata::ParquetMetaData,
+        row_group_plan : RowGroupPlan,
+        budget : RowBudget,
+        has_predicates : Bool,
+        @row_group_reader_builder : RowGroupReaderBuilder,
+      )
+        @frontier = RowGroupFrontier.new(metadata, row_group_plan, budget, has_predicates)
+      end
+
+      # Decomposes into `RemainingRowGroupsParts` (upstream `into_parts`).
+      #
+      # Must be called at a row-group boundary. The inner reader builder's
+      # runtime decode state is discarded; its buffered bytes are carried
+      # through.
+      def into_parts : RemainingRowGroupsParts
+        RemainingRowGroupsParts.new(
+          @schema,
+          @frontier.metadata,
+          @frontier.queued.into_plan,
+          @frontier.budget.offset,
+          @frontier.budget.limit,
+          @row_group_reader_builder.into_parts,
+        )
       end
 
       # Pushes new data buffers that can satisfy pending requests.
       def push_data(ranges : Array(Range(UInt64, UInt64)), data : Array(Bytes)) : Nil
-        @buffers.push_ranges(ranges, data)
+        @row_group_reader_builder.push_data(ranges, data)
       end
 
       # The total number of bytes buffered so far.
       def buffered_bytes : UInt64
-        @buffers.buffered_bytes
+        @row_group_reader_builder.buffered_bytes
       end
 
       # Clears any staged ranges currently buffered for future decode work.
       def clear_all_ranges : Nil
-        @buffers.clear_all_ranges
+        @row_group_reader_builder.clear_all_ranges
       end
 
-      # Whether no row group is currently being set up (i.e. the decoder is
-      # between row groups).
+      # Whether the decoder is between row groups (no active row group state).
       def at_row_group_boundary? : Bool
-        @pending.nil?
+        @row_group_reader_builder.finished?
       end
 
       # Number of row groups remaining (not including the one currently being
       # decoded).
       def row_groups_remaining : Int32
-        @queued.size
+        @frontier.queued.size
+      end
+
+      # The file-level row-group index the next `#try_next_reader` call will
+      # produce a reader for, after simulating the same skip logic, without
+      # mutating state (upstream `peek_next_row_group`).
+      def peek_next_row_group : Int32?
+        return nil if @row_group_reader_builder.has_active_row_group?
+
+        @frontier.peek_next_row_group
       end
 
       # Returns a `ParquetRecordBatchReader` for the next row group, or the byte
       # ranges still needed to build it (upstream `try_next_reader`).
       def try_next_reader : DecodeResult(ParquetRecordBatchReader)
         loop do
-          if pending = @pending
-            return DecodeResult(ParquetRecordBatchReader).needs_data(needed_ranges(pending)) unless pending_ready?(pending)
+          unless @row_group_reader_builder.has_active_row_group?
+            # Done with the previous row group, seek the next one.
+            next_row_group = @frontier.next_readable_row_group
+            return DecodeResult(ParquetRecordBatchReader).finished unless next_row_group
 
-            return DecodeResult(ParquetRecordBatchReader).data(build_reader(pending))
+            @row_group_reader_builder.next_row_group(
+              next_row_group.row_group_idx,
+              next_row_group.row_count,
+              next_row_group.selection,
+              next_row_group.budget,
+            )
           end
 
-          next_row_group = next_readable_row_group
-          return DecodeResult(ParquetRecordBatchReader).finished unless next_row_group
+          case result = @row_group_reader_builder.try_build
+          when RowGroupBuildResult::Finished
+            @frontier.update_budget_after_row_group(result.remaining_budget)
+            # Reader is done, proceed to the next row group.
+          when RowGroupBuildResult::NeedsData
+            return DecodeResult(ParquetRecordBatchReader).needs_data(result.ranges)
+          when RowGroupBuildResult::Data
+            @frontier.update_budget_after_row_group(result.remaining_budget)
+            return DecodeResult(ParquetRecordBatchReader).data(result.batch_reader)
+          else
+            raise general_err!("Internal Error: invalid row group build result")
+          end
+        end
+      end
+    end
 
-          row_group_idx, row_count, local_selection = next_row_group
-          plan_builder = ReadPlanBuilder.new(@batch_size)
-            .with_selection(local_selection)
-            .with_row_selection_policy(@row_selection_policy)
+    # The push decoder's state machine (upstream `ParquetDecoderState`).
+    abstract class ParquetDecoderState
+      # Waiting for the data needed to decode the next row group.
+      class ReadingRowGroup < ParquetDecoderState
+        getter remaining : RemainingRowGroups
 
-          rows_before = plan_builder.num_rows_selected || row_count
-          limited = plan_builder.limited(row_count)
-          limited = limited.with_offset(@budget.offset) if @budget.offset
-          limited = limited.with_limit(@budget.limit) if @budget.limit
-          plan_builder = limited.build_limited
-          rows_after = @budget.rows_after(rows_before)
-          @budget = @budget.advance(rows_before, rows_after)
-
-          # The row group is ruled out by the selection or the budget.
-          next if rows_before == 0 || rows_after == 0
-
-          group = in_memory_row_group(row_group_idx, row_count)
-          fetch = group.fetch_ranges(@projection, plan_builder.selection, @batch_size)
-          pending = PendingRowGroup.new(row_group_idx, row_count, plan_builder, fetch, group)
-          @pending = pending
-
-          return DecodeResult(ParquetRecordBatchReader).needs_data(needed_ranges(pending)) unless pending_ready?(pending)
-
-          return DecodeResult(ParquetRecordBatchReader).data(build_reader(pending))
+        def initialize(@remaining : RemainingRowGroups)
         end
       end
 
-      private def needed_ranges(pending : PendingRowGroup) : Array(Range(UInt64, UInt64))
-        pending.fetch.ranges.reject { |range| @buffers.has_range?(range) }
-      end
+      # Actively decoding a row group.
+      class DecodingRowGroup < ParquetDecoderState
+        getter reader : ParquetRecordBatchReader
+        getter remaining : RemainingRowGroups
 
-      private def pending_ready?(pending : PendingRowGroup) : Bool
-        needed_ranges(pending).empty?
-      end
-
-      private def build_reader(pending : PendingRowGroup) : ParquetRecordBatchReader
-        group = pending.group
-        fetch = pending.fetch
-        chunks = fetch.ranges.map do |range|
-          @buffers.get_bytes(range.begin, (range.end - range.begin).to_i32)
+        def initialize(@reader : ParquetRecordBatchReader, @remaining : RemainingRowGroups)
         end
-        group.fill_column_chunks(@projection, fetch.page_start_offsets, chunks)
-        @buffers.clear_ranges(fetch.ranges)
-        @pending = nil
-
-        array_reader = ArrayReaderBuilder.new(group, @batch_size, @metrics)
-          .build_array_reader(@fields, @projection)
-        ParquetRecordBatchReader.new(array_reader, pending.plan_builder.build)
       end
 
-      private def in_memory_row_group(row_group_idx : Int32, row_count : Int32) : InMemoryRowGroup
-        num_columns = @metadata.file_metadata.schema_descr.num_columns
-        page_index = @metadata.page_index.try { @metadata.page_index_for_row_group(row_group_idx) }
-        InMemoryRowGroup.new(
-          row_count,
-          Array(ColumnChunkData?).new(num_columns, nil),
-          page_index,
-          row_group_idx,
-          @metadata,
-        )
-      end
-
-      # Plans whether a selected row group should be read or skipped (upstream
-      # `RowGroupFrontier#next_readable_row_group`).
-      private def next_readable_row_group : Tuple(Int32, Int32, RowSelection?)?
-        loop do
-          return nil if @queued.empty?
-
-          if @budget.exhausted? || @queued.global_selection_exhausted?
-            @queued.clear
-            return nil
-          end
-
-          row_group_idx = @queued.front
-          return nil unless row_group_idx
-
-          row_count = @metadata.row_group_num_rows(row_group_idx).to_i32
-          local_selection = @queued.pop_front_selection(row_count)
-          selected_rows = local_selection.try(&.row_count) || row_count
-          next if selected_rows == 0
-
-          local_selection = nil if selected_rows == row_count
-
-          # Apply the offset/limit budget: skip the row group when it contributes
-          # no output rows.
-          rows_after = @budget.rows_after(selected_rows)
-          if rows_after == 0
-            @budget = @budget.advance(selected_rows, 0)
-            next
-          end
-
-          return {row_group_idx, row_count, local_selection}
-        end
+      # All rows have been decoded.
+      class Finished < ParquetDecoderState
       end
     end
 
@@ -396,6 +994,37 @@ module Parquet
           else
             raise general_err!("Internal Error: invalid push decoder state")
           end
+        end
+      end
+
+      # Returns a reader for the next set of rows, or the byte ranges needed to
+      # produce it (upstream `try_next_reader`).
+      #
+      # The returned `ParquetRecordBatchReader` is handed off to the caller: the
+      # decoder keeps no reference to it, so it is safe to call `#into_builder`
+      # while the reader is still being iterated.
+      def try_next_reader : DecodeResult(ParquetRecordBatchReader)
+        case state = @state
+        when ParquetDecoderState::Finished
+          DecodeResult(ParquetRecordBatchReader).finished
+        when ParquetDecoderState::DecodingRowGroup
+          # The active reader is handed off; the decoder becomes ready to plan
+          # the next row group.
+          @state = ParquetDecoderState::ReadingRowGroup.new(state.remaining)
+          DecodeResult(ParquetRecordBatchReader).data(state.reader)
+        when ParquetDecoderState::ReadingRowGroup
+          result = state.remaining.try_next_reader
+          if result.needs_data?
+            DecodeResult(ParquetRecordBatchReader).needs_data(result.ranges)
+          elsif result.finished?
+            @state = ParquetDecoderState::Finished.new
+            DecodeResult(ParquetRecordBatchReader).finished
+          else
+            @state = ParquetDecoderState::ReadingRowGroup.new(state.remaining)
+            DecodeResult(ParquetRecordBatchReader).data(result.data)
+          end
+        else
+          raise general_err!("Internal Error: invalid push decoder state")
         end
       end
 
@@ -444,6 +1073,10 @@ module Parquet
       end
 
       # Whether the decoder is between row groups (no active reader).
+      #
+      # A boundary is "between row groups": the previous row group's reader has
+      # been handed off (via `#try_next_reader`) or fully drained (via
+      # `#try_decode`), and the next row group has not yet been planned.
       # ameba:disable Naming/PredicateName
       def is_at_row_group_boundary : Bool
         case state = @state
@@ -464,6 +1097,55 @@ module Parquet
         else
           0
         end
+      end
+
+      # The row-group index that the next `#try_next_reader` call will produce a
+      # reader for (upstream `peek_next_row_group`).
+      #
+      # Safe to call at any time, does not mutate any state, and returns nil
+      # when no row groups remain or every remaining row group would be skipped.
+      # Mid-row-group it reports the row group `#try_next_reader` will produce
+      # *after* the active one.
+      def peek_next_row_group : Int32?
+        case state = @state
+        when ParquetDecoderState::ReadingRowGroup
+          state.remaining.peek_next_row_group
+        when ParquetDecoderState::DecodingRowGroup
+          state.remaining.peek_next_row_group
+        else
+          nil
+        end
+      end
+
+      # Decomposes this decoder back into a builder for the row groups that have
+      # not yet been decoded (upstream `into_builder`).
+      #
+      # This is the adaptive-scan API: drive the decoder with
+      # `#try_next_reader`, and at any row-group boundary call `#into_builder` to
+      # recover a builder, adjust it and build a fresh decoder that resumes from
+      # the next row group. Already-decoded rows are not produced again, and
+      # bytes already pushed are carried across the rebuild.
+      def into_builder : ParquetPushDecoderBuilder
+        remaining =
+          case state = @state
+          when ParquetDecoderState::ReadingRowGroup
+            state.remaining
+          when ParquetDecoderState::DecodingRowGroup
+            raise general_err!(
+              "into_builder called while a row group is being decoded; " \
+              "check is_at_row_group_boundary() first"
+            )
+          else
+            raise general_err!("into_builder called on a finished decoder")
+          end
+
+        unless remaining.at_row_group_boundary?
+          raise general_err!(
+            "into_builder called mid-row-group; check is_at_row_group_boundary() first"
+          )
+        end
+
+        ParquetPushDecoderBuilder.from_parts(remaining.into_parts)
       end
     end
 
@@ -491,6 +1173,25 @@ module Parquet
         @metrics : ArrowReaderMetrics = ArrowReaderMetrics.disabled,
         @buffers : Util::PushBuffers = Util::PushBuffers.new,
       )
+      end
+
+      # Reassembles a builder from a decoder's not-yet-decoded state — the
+      # inverse of `#build` (upstream `builder_from_remaining`).
+      def self.from_parts(parts : RemainingRowGroupsParts) : ParquetPushDecoderBuilder
+        reader_builder = parts.reader_builder
+        new(
+          parts.metadata,
+          parts.schema,
+          reader_builder.fields,
+          reader_builder.batch_size,
+          reader_builder.projection,
+          parts.row_group_plan,
+          parts.offset,
+          parts.limit,
+          reader_builder.row_selection_policy,
+          reader_builder.metrics,
+          reader_builder.buffers,
+        )
       end
 
       # Creates a builder for the given parquet metadata (upstream
@@ -588,19 +1289,23 @@ module Parquet
 
       # Builds the decoder (upstream `build`).
       def build : ParquetPushDecoder
-        # Validates per-row-group selections and rejects conflicting plans.
-        queued = QueuedRowGroups.try_new(@metadata, @row_group_plan)
-
-        remaining = RemainingRowGroups.new(
-          @metadata,
-          queued,
-          RowBudget.new(@offset, @limit),
+        row_group_reader_builder = RowGroupReaderBuilder.new(
           @batch_size,
           @projection,
+          @metadata,
           @fields,
+          @metrics,
           @row_selection_policy,
           @buffers,
-          @metrics,
+        )
+
+        remaining = RemainingRowGroups.new(
+          @schema,
+          @metadata,
+          @row_group_plan,
+          RowBudget.new(@offset, @limit),
+          false,
+          row_group_reader_builder,
         )
         ParquetPushDecoder.new(ParquetDecoderState::ReadingRowGroup.new(remaining))
       end
