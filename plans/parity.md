@@ -116,16 +116,17 @@ little-endian layout.
   embedded `Dictionary(..)` field actually reaches the array reader builder and
   the upstream `arrow_reader` `test_dictionary_preservation` end-to-end test
   passes.
-  On the variant side, `parquet-variant-json`'s Variant → JSON direction is
-  ported (`src/parquet_variant_json/`: `Variant#to_json`/`#to_json_string`/
+  On the variant side, `parquet-variant-json` is complete in both directions
+  (`src/parquet_variant_json/`: `Variant#to_json`/`#to_json_string`/
   `#to_json_value`, base64 binary, chrono-compatible RFC 3339 timestamps,
-  trimmed time fractions, object/list conversion); the JSON → Variant
-  direction is deferred (it needs `VariantBuilderExt`/`ObjectFieldBuilder`).
+  trimmed time fractions, object/list conversion, and `append_json` for
+  JSON → Variant), built on the newly ported `VariantBuilderExt`/
+  `ObjectFieldBuilder` (`src/parquet_variant/builder/ext.cr`).
   **Next up:** `arrow/push_decoder/` (which needs the generic
   `ArrowReaderBuilder<I>` refactor that upstream shares between the sync, async
-  and push builders), then `parquet-variant-json`'s JSON → Variant direction,
-  virtual columns (blocked on arrow-cr canonical extension types) and the arrow
-  writer (needs `column/page_store.rs`).
+  and push builders), then `parquet-variant-compute`, virtual columns (blocked
+  on arrow-cr canonical extension types) and the arrow writer (needs
+  `column/page_store.rs`).
   Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
@@ -988,12 +989,12 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: parquet-variant-json variant to json`; gates green
-  (`make lint`, `make test` -> 1295 examples, 0 failures). Next feature:
+- Last commit: `port: parquet-variant-json json to variant`; gates green
+  (`make lint`, `make test` -> 1311 examples, 0 failures). Next feature:
   `arrow/push_decoder/` (a large module: it needs the generic
   `ArrowReaderBuilder` refactor first). Note `make install` now requires the
   sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 2185 `ported`, 208 `intentional_divergence`,
+- Progress by counts (ledger): 2194 `ported`, 199 `intentional_divergence`,
   15 skipped, 1107 `missing` (of 3515 rows).
 
 Chunk status by area:
@@ -1441,13 +1442,21 @@ Chunk status by area:
   `VariantBuilderExt`/`ObjectFieldBuilder` are intentional divergences (Crystal
   copies substrings; explicit `abandon`; builder handles all types directly).
 - [ ] `parquet-variant-compute`.
-- [~] `parquet-variant-json`: the Variant → JSON direction is ported
-  (`src/parquet_variant_json/variant_to_json.cr` + `formatting.cr`:
-  `Variant#to_json`/`#to_json_string`/`#to_json_value`, `Formatting`'s
-  date/RFC 3339/trimmed-time/base64/float helpers, object + list converters, and
-  all 20 upstream `to_json.rs` test groups in
-  `spec/parquet_variant/json_spec.cr`). Deferred: `JsonToVariant`/`append_json`
-  (`from_json.rs`), which need `VariantBuilderExt`/`ObjectFieldBuilder`.
+- [x] `parquet-variant-json` — both directions:
+  `src/parquet_variant_json/variant_to_json.cr` + `formatting.cr`
+  (`Variant#to_json`/`#to_json_string`/`#to_json_value`, `Formatting`'s
+  date/RFC 3339/trimmed-time/base64/float helpers, object + list converters, 20
+  upstream `to_json.rs` test groups) and `from_json.cr`
+  (`JsonToVariant#append_json` for `VariantBuilder`/`ListBuilder`/
+  `ObjectFieldBuilder`, the narrowest-`Int8..Int64`/`Double` number selection,
+  the upstream `JSON format error:` wrapper and 16 `from_json.rs` test groups).
+  Built on the new `VariantBuilderExt`/`ObjectFieldBuilder`
+  (`src/parquet_variant/builder/ext.cr`). The upstream `#[ignore]`d decimal
+  expectations are not ported, and two assertions are relaxed by one ULP where
+  serde_json's float parser differs from Crystal's correctly rounded one (see
+  the divergence note). Also fixed `ValueBuilder#splice` to insert in place
+  (one tail `memmove`) instead of rebuilding the buffer, which made deep/large
+  variants quadratic in copying and allocation.
 
 
 ### 3.2 Geospatial
@@ -1684,10 +1693,14 @@ Chunk status by area:
   `ValueConversion.to_variant`; bare `Time` (date/UTC/naive) is deliberately not
   a `VariantValue` (wrap with `Variant.from_date`/`from_datetime_utc`/
   `from_naive_datetime`; only `Time::Span` maps via `from_time`). The
-  `VariantBuilderExt` trait and its `ObjectFieldBuilder` wrapper (only used by
-  `parquet-variant-compute`) are not ported; the builders expose the equivalent
-  inherent methods, so `append_null` maps to `append_value(Variant.from_nil)`.
-  The `try_*` builder methods raise instead of returning `Result`.
+  `VariantBuilderExt` trait is a module (`src/parquet_variant/builder/ext.cr`)
+  included by `VariantBuilder`/`ListBuilder` and implemented by
+  `ObjectFieldBuilder`; its associated `State` type is dropped, `new_list`/
+  `new_object` delegate to the fallible `try_*` methods (which raise instead of
+  returning `Result`), and `append_null` appends `Variant::Null` (an object
+  field's `append_null` inserts nothing, as upstream). `ValueBuilder#splice`
+  inserts in place (one tail `memmove`); the old rebuild-the-buffer version made
+  deep/large variants quadratic.
 - Geospatial bounding: upstream `bounding.rs` traverses `geo-traits` geometries
   and parses WKB with the `wkb` crate. Crystal has neither, so
   `parquet_geospatial/wkb.cr` provides a minimal `WkbReader` + owned
@@ -2450,8 +2463,16 @@ Chunk status by area:
   parsed string and `to_json_value` is relaxed by one ULP for values above
   2^53: serde_json's float parser multiplies by powers of ten (matching
   `integer as f64 / divisor as f64`) while Crystal's parser is correctly
-  rounded. The JSON → Variant direction (`JsonToVariant`/`append_json`) is
-  deferred with `VariantBuilderExt`/`ObjectFieldBuilder`.
+  rounded. The JSON → Variant direction is `JsonToVariant#append_json`
+  (included in `VariantBuilder`, `ListBuilder` and `ObjectFieldBuilder`, since
+  Crystal has no blanket trait impl): numbers become the narrowest
+  `Int8..Int64` that fits or a `Double`, invalid documents raise
+  `ArrowError("JSON format error: ...")` (upstream `InvalidArgumentError`), and
+  upstream's `#[ignore]`d decimal expectations are not ported. The
+  `test_json_to_variant_object_very_large` fixture (34 MB) is split into a
+  full-size encoded-size check plus a reduced-fan-out roundtrip check to keep
+  the suite fast; its upstream value/metadata lengths (34_147_849/2485) are
+  asserted exactly.
 - `chunk_reader`: `BytesChunkReader#get_read`/`get_bytes` and
   `FileChunkReader#get_bytes` raise the upstream `EOF` messages
   ("Expected to read ... while file has length ..."); `FileChunkReader` reads

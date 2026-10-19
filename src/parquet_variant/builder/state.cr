@@ -151,8 +151,21 @@ module ParquetVariant
 
     # Replaces `buffer[0, index]` + `bytes` + `buffer[index..]`.
     def splice(index : Int32, bytes : Array(UInt8)) : Nil
-      tail = index < @buffer.size ? @buffer[index..] : [] of UInt8
-      @buffer = @buffer[0, index] + bytes + tail
+      # Insert in place with one tail `memmove` rather than rebuilding the
+      # buffer: nested objects/lists finish by splicing their header in front of
+      # the data they appended, so rebuilding made deep/large values quadratic
+      # in both copying and allocation.
+      size = bytes.size
+      return nil if size == 0
+
+      old_size = @buffer.size
+      @buffer.concat(bytes)
+      return nil if index >= old_size
+
+      storage = Slice.new(@buffer.to_unsafe, @buffer.size)
+      tail_size = old_size - index
+      (storage.to_unsafe + index + size).move_from(storage.to_unsafe + index, tail_size)
+      Slice.new(bytes.to_unsafe, size).copy_to(storage[index, size])
       nil
     end
 

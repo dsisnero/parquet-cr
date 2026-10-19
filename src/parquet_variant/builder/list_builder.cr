@@ -6,8 +6,8 @@ require "./object_builder"
 #
 # Ports `ListState` and `ListBuilder` (variant list construction). Divergences:
 # `Drop`-based rollback is the explicit `abandon`; `Extend` is `extend`; Rust
-# `Into<Variant>` generics use `VariantValue`; the `VariantBuilderExt` impl is
-# folded into the inherent methods.
+# `Into<Variant>` generics use `VariantValue`; `VariantBuilderExt` lives in
+# `builder/ext.cr`.
 module ParquetVariant
   # Internal rollback state for list building.
   class ListState < BuilderSpecificState
@@ -24,6 +24,8 @@ module ParquetVariant
 
   # A builder for creating `Variant::List` values.
   class ListBuilder
+    include VariantBuilderExt
+
     getter offsets : Array(Int32)
 
     def initialize(@parent_state : ParentState, @validate_unique_fields : Bool)
@@ -43,6 +45,20 @@ module ParquetVariant
     # Returns a nested list builder appended to this list.
     def new_list : ListBuilder
       ListBuilder.new(parent_state, @validate_unique_fields)
+    end
+
+    # Variant arrays cannot encode NULL values, only `Variant::Null` (upstream
+    # `VariantBuilderExt::append_null`).
+    def append_null : Nil
+      append_value(Variant.from_nil)
+    end
+
+    def try_new_list : ListBuilder
+      new_list
+    end
+
+    def try_new_object : ObjectBuilder
+      new_object
     end
 
     # Appends `value` to the list.

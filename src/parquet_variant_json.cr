@@ -2,9 +2,9 @@
 # ef1fa157977633f0ba21aa921f9ef3d5c669235b): conversion between JSON and the
 # Variant binary encoding.
 #
-# This port currently provides the Variant → JSON direction
-# (`Variant#to_json`/`#to_json_string`/`#to_json_value`). The JSON → Variant
-# direction (`JsonToVariant`/`append_json`) is deferred: it needs
-# `VariantBuilderExt`/`ObjectFieldBuilder`, which are only used by
-# `parquet-variant-compute` and are not ported.
+# Both directions are ported: Variant → JSON
+# (`Variant#to_json`/`#to_json_string`/`#to_json_value`) and JSON → Variant
+# (`JsonToVariant#append_json`, built on `VariantBuilderExt`/
+# `ObjectFieldBuilder`).
 require "./parquet_variant_json/variant_to_json"
+require "./parquet_variant_json/from_json"

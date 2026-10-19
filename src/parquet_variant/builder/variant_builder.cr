@@ -22,6 +22,8 @@ module ParquetVariant
 
   # Top-level builder for a single, self-contained `Variant` value.
   class VariantBuilder
+    include VariantBuilderExt
+
     getter value_builder : ValueBuilder
     getter metadata_builder : WritableMetadataBuilder
 
@@ -53,6 +55,20 @@ module ParquetVariant
     def add_field_name(field_name : String) : Nil
       @metadata_builder.upsert_field_name(field_name)
       nil
+    end
+
+    # A variant value cannot encode NULL, only `Variant::Null` (upstream
+    # `VariantBuilderExt::append_null`).
+    def append_null : Nil
+      append_value(Variant.from_nil)
+    end
+
+    def try_new_list : ListBuilder
+      new_list
+    end
+
+    def try_new_object : ObjectBuilder
+      new_object
     end
 
     # Creates a `ListBuilder` for a new top-level `Variant::List`.

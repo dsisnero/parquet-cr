@@ -290,8 +290,8 @@ parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToUuidArrowRowBu
 parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToUuidArrowRowBuilder<'a>.append_value	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToUuidArrowRowBuilder<'a>.finish	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToUuidArrowRowBuilder<'a>.new	method	missing	-	auto-generated
-parquet-variant-json/src/from_json.rs::method::JsonToVariantTest<'_>.run	method	intentional_divergence	spec/parquet_variant/json_spec.cr	from_json tests deferred with `from_json` (needs VariantBuilderExt)
-parquet-variant-json/src/from_json.rs::method::T.append_json	method	intentional_divergence	-	JSON -> Variant deferred (needs VariantBuilderExt/ObjectFieldBuilder)
+parquet-variant-json/src/from_json.rs::method::JsonToVariantTest<'_>.run	method	ported	spec/parquet_variant/json_spec.cr	json_case/from_json spec helpers
+parquet-variant-json/src/from_json.rs::method::T.append_json	method	ported	src/parquet_variant_json/from_json.cr	JsonToVariant#append_json (included in the builders)
 parquet-variant-json/src/to_json.rs::const::DATE_FORMAT	const	ported	src/parquet_variant_json/formatting.cr	Formatting::DATE_FORMAT
 parquet-variant-json/src/to_json.rs::method::JsonTest.run	method	ported	spec/parquet_variant/json_spec.cr	check_json_test (spec helper)
 parquet-variant-json/src/to_json.rs::method::Variant<'_, '_>.to_json	method	ported	src/parquet_variant_json/variant_to_json.cr	Variant#to_json(io)
@@ -347,7 +347,7 @@ parquet-variant/src/builder.rs::method::ValueBuilder.try_append_list	method	port
 parquet-variant/src/builder.rs::method::ValueBuilder.try_append_object	method	ported	src/parquet_variant/builder/state.cr	try_append_object; raises (Result->exception)
 parquet-variant/src/builder.rs::method::ValueBuilder.try_append_variant	method	ported	src/parquet_variant/builder/state.cr	try_append_variant; raises (Result->exception)
 parquet-variant/src/builder.rs::method::VariantBuilder.add_field_name	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#add_field_name
-parquet-variant/src/builder.rs::method::VariantBuilder.append_null	method	intentional_divergence	src/parquet_variant/builder/variant_builder.cr	VariantBuilderExt not ported; use append_value(Variant.from_nil)
+parquet-variant/src/builder.rs::method::VariantBuilder.append_null	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#append_null (VariantBuilderExt)
 parquet-variant/src/builder.rs::method::VariantBuilder.append_value	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#append_value; VariantValue union replaces Into<Variant>
 parquet-variant/src/builder.rs::method::VariantBuilder.append_value_bytes	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#append_value_bytes; VariantValue union replaces Into<Variant>
 parquet-variant/src/builder.rs::method::VariantBuilder.check_no_top_level_value	method	ported	src/parquet_variant/builder/variant_builder.cr	check_no_top_level_value
@@ -368,7 +368,7 @@ parquet-variant/src/builder.rs::method::VariantBuilder.with_field_names	method	p
 parquet-variant/src/builder.rs::method::VariantBuilder.with_metadata	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#with_metadata
 parquet-variant/src/builder.rs::method::VariantBuilder.with_validate_unique_fields	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#with_validate_unique_fields
 parquet-variant/src/builder.rs::method::VariantBuilder.with_value	method	ported	src/parquet_variant/builder/variant_builder.cr	VariantBuilder#with_value; VariantValue union replaces Into<Variant>
-parquet-variant/src/builder/list.rs::method::ListBuilder<'_, S>.append_null	method	intentional_divergence	src/parquet_variant/builder/list_builder.cr	VariantBuilderExt not ported; use append_value(Variant.from_nil)
+parquet-variant/src/builder/list.rs::method::ListBuilder<'_, S>.append_null	method	ported	src/parquet_variant/builder/list_builder.cr	ListBuilder#append_null (VariantBuilderExt)
 parquet-variant/src/builder/list.rs::method::ListBuilder<'_, S>.append_value	method	ported	src/parquet_variant/builder/list_builder.cr	append_value
 parquet-variant/src/builder/list.rs::method::ListBuilder<'_, S>.extend	method	ported	src/parquet_variant/builder/list_builder.cr	extend
 parquet-variant/src/builder/list.rs::method::ListBuilder<'_, S>.try_new_list	method	ported	src/parquet_variant/builder/list_builder.cr	new_list
@@ -419,11 +419,11 @@ parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.try_new_obje
 parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.try_with_field	method	ported	src/parquet_variant/builder/object_builder.cr	try_with_field
 parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.with_field	method	ported	src/parquet_variant/builder/object_builder.cr	with_field
 parquet-variant/src/builder/object.rs::method::ObjectBuilder<'a, S>.with_validate_unique_fields	method	ported	src/parquet_variant/builder/object_builder.cr	with_validate_unique_fields
-parquet-variant/src/builder/object.rs::method::ObjectFieldBuilder<'_, '_, '_, S>.append_null	method	intentional_divergence	src/parquet_variant/builder/object_builder.cr	VariantBuilderExt not ported
-parquet-variant/src/builder/object.rs::method::ObjectFieldBuilder<'_, '_, '_, S>.append_value	method	intentional_divergence	src/parquet_variant/builder/object_builder.cr	VariantBuilderExt not ported
-parquet-variant/src/builder/object.rs::method::ObjectFieldBuilder<'_, '_, '_, S>.try_new_list	method	intentional_divergence	src/parquet_variant/builder/object_builder.cr	VariantBuilderExt not ported
-parquet-variant/src/builder/object.rs::method::ObjectFieldBuilder<'_, '_, '_, S>.try_new_object	method	intentional_divergence	src/parquet_variant/builder/object_builder.cr	VariantBuilderExt not ported
-parquet-variant/src/builder/object.rs::method::ObjectFieldBuilder<'o, 'v, 's, S>.new	method	intentional_divergence	src/parquet_variant/builder/object_builder.cr	VariantBuilderExt not ported
+parquet-variant/src/builder/object.rs::method::ObjectFieldBuilder<'_, '_, '_, S>.append_null	method	ported	src/parquet_variant/builder/ext.cr	ObjectFieldBuilder#append_null (missing field = nothing inserted)
+parquet-variant/src/builder/object.rs::method::ObjectFieldBuilder<'_, '_, '_, S>.append_value	method	ported	src/parquet_variant/builder/ext.cr	ObjectFieldBuilder#append_value
+parquet-variant/src/builder/object.rs::method::ObjectFieldBuilder<'_, '_, '_, S>.try_new_list	method	ported	src/parquet_variant/builder/ext.cr	ObjectFieldBuilder#try_new_list
+parquet-variant/src/builder/object.rs::method::ObjectFieldBuilder<'_, '_, '_, S>.try_new_object	method	ported	src/parquet_variant/builder/ext.cr	ObjectFieldBuilder#try_new_object
+parquet-variant/src/builder/object.rs::method::ObjectFieldBuilder<'o, 'v, 's, S>.new	method	ported	src/parquet_variant/builder/ext.cr	ObjectFieldBuilder#initialize
 parquet-variant/src/builder/object.rs::method::ObjectHeaderWriter<OFFSET_SIZE, ID_SIZE>.write	method	ported	src/parquet_variant/builder/object_builder.cr	inlined into ObjectBuilder#finish
 parquet-variant/src/builder/object.rs::method::ObjectState<'_>.rollback	method	ported	src/parquet_variant/builder/object_builder.cr	rollback
 parquet-variant/src/builder/object.rs::method::ParentState<'a, ObjectState<'a>>.try_object	method	ported	src/parquet_variant/builder/object_builder.cr	try_object
