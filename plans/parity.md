@@ -67,7 +67,10 @@ little-endian layout.
   (`ArrowReaderMetadata`, `ParquetRecordBatchReaderBuilder`,
   `ParquetRecordBatchReader`) are done, so a parquet file can be read end to end
   as `Arrow::RecordBatch`es, and row selection is wired end to end: the
-  selector-backed `RowSelection`/`RowSelector`, the selector cursor and the
+  `RowSelection`/`RowSelector` types (both the RLE and — as of the latest
+  commit — the bitmap backing: `MaskSelection`, `MaskRunIter`,
+  `from_boolean_buffer`/`from_filters`/`as_mask` and the
+  `and_then`/`intersection`/`union` algebra), the selector cursor and the
   `ReadPlan`/`ReadPlanBuilder`/`LimitedReadPlanBuilder` behind
   `with_row_selection`/`with_offset`/`with_limit` (skips are pushed down as
   `skip_records`). The arrow array readers are now all ported: `NullArrayReader`
@@ -86,9 +89,11 @@ little-endian layout.
   embedded `Dictionary(..)` field actually reaches the array reader builder and
   the upstream `arrow_reader` `test_dictionary_preservation` end-to-end test
   passes.
-  **Next up:** `RowFilter` + statistics pruning, the bitmap row-selection
-  backing (`selection/boolean.rs`/`algebra.rs`) and page pruning
-  (`loaded_row_ranges`).
+  **Next up:** `RowFilter` + statistics pruning (`arrow_reader/filter.rs` +
+  `arrow_reader/statistics.rs`, which is what `RowSelection::from_filters` now
+  backs), then the mask cursor (`selection/cursor.rs`:
+  `RowSelectionPolicy`/`MaskCursor`/`LoadedRowRanges`) and page pruning
+  (`row_ranges_for_selected_pages`/`scan_ranges` in `selection/ranges.rs`).
   Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
@@ -467,16 +472,36 @@ little-endian layout.
     names`, `test_schema_incompatible_columns`, `test_schema_error_bad_types`,
     `test_schema_error_bad_nullability` with the upstream messages). Row selection
     (`src/parquet/arrow/row_selection.cr`): `RowSelector` (`select`/`skip`,
-    `row_count`, `skip?`) and the RLE-backed `RowSelection` (normalizing
+    `row_count`, `skip?`), the `RowSelectionInner` backing enum
+    (`Selectors`/`Mask`) and `RowSelection` over either backing (normalizing
     construction that drops empty and combines adjacent selectors,
-    `from_consecutive_ranges`, `each`/`row_count`/`skipped_row_count`/
-    `total_row_count`/`selects_any?`, `offset`/`limit`/`trim`/`split_off`) plus
-    the `RowSelectorTransforms` helpers (upstream `split_off_selectors`/
-    `offset_selectors`/`limit_selectors`). Specs:
-    `spec/parquet/arrow/row_selection_spec.cr` ports all upstream
-    `selection/selector.rs` tests (normalization, combining, ranges,
-    `offset`, `limit`, `split_off`, `trim`) and the selector-backed
-    `selection/mod.rs` tests. Read plan (`src/parquet/arrow/read_plan.cr`):
+    `from_consecutive_ranges`, `from_boolean_buffer`/`from_filters`/`as_mask`,
+    `concat` (upstream `FromIterator<RowSelection>`),
+    `each`/`row_count`/`skipped_row_count`/`total_row_count`/`selects_any?`,
+    `offset`/`limit`/`trim`/`split_off`, `and_then`/`intersection`/`union`,
+    mixed-backing equality and `dup`), plus the `RowSelectorTransforms`
+    helpers (`split_off_selectors`/`offset_selectors`/`limit_selectors`), the
+    bitmap layer (`MaskSelection` with its RLE/popcount caches, `MaskRunIter`,
+    and `SelectionMasks`: `to_selectors`, `has_at_least_runs?`, `split_off`,
+    `trim`, `offset`, `limit`, `from_selectors`), and the algebra
+    (`RowSelectionAlgebra` in `src/parquet/arrow/row_selection/algebra.cr`:
+    `and_then` over selectors/selectors, selectors/mask and mask/anything,
+    `intersect_row_selections`/`union_row_selections`, and the bitwise
+    `intersect_masks`/`union_masks` with the longer side's tail passed
+    through). Specs: `spec/parquet/arrow/row_selection_spec.cr` ports all
+    upstream `selection/selector.rs` tests (normalization, combining, ranges,
+    `offset`, `limit`, `split_off`, `trim`), every `selection/boolean.rs`
+    test (mask runs, cache-drop on clone, cache reuse, set-algebra agreement,
+    `from_boolean_buffer`/`from_filters` equivalence with fuzz loops,
+    offset/limit/split/trim edge cases, cached-count propagation,
+    `boolean_mask_from_selectors` and `mask_has_at_least_runs`), every
+    `selection/algebra.rs` test (`test_and`/`test_and_fuzz`, the
+    longer/shorter errors, `test_intersection`/`test_union` over selectors,
+    mask-backing preservation, mixed-backing intersections/unions, uneven
+    tails, offset/length mask kernels and the mask fuzz loop) and the
+    mixed-backing `selection/mod.rs` tests (`from_filters`, equality
+    mismatches, concatenation into a mask/selectors/empty). Read plan
+    (`src/parquet/arrow/read_plan.cr`):
     `ReadPlanBuilder` (`new`, `with_selection`, `selection`, `selects_any?`,
     `num_rows_selected`, `limited`), `LimitedReadPlanBuilder` (`with_offset`,
     `with_limit`, `build_limited` — clamping the limit to the row count,
@@ -930,12 +955,12 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow reader supplied schemas`; gates green
-  (`make lint`, `make test` -> 1139 examples, 0 failures). Next feature:
-  `RowFilter` + `statistics.rs`, the bitmap row-selection backing and page
-  pruning. Note `make install` now requires the sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 2089 `ported`, 230 `intentional_divergence`,
-  13 skipped, 1183 `missing` (of 3515 rows).
+- Last commit: `port: arrow row selection bitmap backing`; gates green
+  (`make lint`, `make test` -> 1192 examples, 0 failures). Next feature:
+  `RowFilter` + `statistics.rs`, then the mask cursor and page pruning. Note
+  `make install` now requires the sibling checkout `../arrow-cr`.
+- Progress by counts (ledger): 2112 `ported`, 223 `intentional_divergence`,
+  13 skipped, 1167 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1538,10 +1563,11 @@ Chunk status by area:
         field-tree dispatch with projection mask + padding-threshold
         propagation and the empty-reader fallback), and the batch reader
         (`src/parquet/arrow/arrow_reader.cr`: `ArrowReaderMetadata`,
-        `ParquetRecordBatchReaderBuilder`, `ParquetRecordBatchReader`) and the
-        selector-backed row selection (`src/parquet/arrow/row_selection.cr`:
-        `RowSelector` + `RowSelection` with consecutive ranges,
-        offset/limit/trim/split_off and the row counts), plus the read plan
+        `ParquetRecordBatchReaderBuilder`, `ParquetRecordBatchReader`) and row
+        selection (`src/parquet/arrow/row_selection.cr`: `RowSelector` +
+        `RowSelection` over the RLE and bitmap backings, with consecutive
+        ranges, `from_filters`, offset/limit/trim/split_off, the set algebra
+        and the row counts), plus the read plan
         (`src/parquet/arrow/read_plan.cr`: `ReadPlan`,
         `ReadPlanBuilder`/`LimitedReadPlanBuilder`, and the
         `RowSelectionCursor` all/selectors cursors), `NullArrayReader`
@@ -1561,14 +1587,14 @@ Chunk status by area:
       (`try_new`, `new_with_metadata`, `with_batch_size`, `with_projection`,
       `metadata`/`schema`/`parquet_schema`, `build`), and
       `ParquetRecordBatchReader` (`try_new`, `next_batch`, `Iterator`,
-      `schema`) reading every row of every row group. Remaining:
-      selector-backed `RowSelector`/`RowSelection`
-      (`src/parquet/arrow/row_selection.cr`), the selector cursor and the
-      offset/limit read plan (`src/parquet/arrow/read_plan.cr`, wired through
-      `with_row_selection`/`with_offset`/`with_limit`). Remaining: the bitmap
-      backing (`selection/boolean.rs`/`algebra.rs`), `RowSelectionPolicy`,
-      page pruning (`loaded_row_ranges`), row-group selection,
-      `RowFilter`, `statistics.rs`, `metrics.rs`, and
+      `schema`) reading every row of every row group, plus `RowSelector`/
+      `RowSelection` over both backings (`selection/selector.rs`,
+      `selection/boolean.rs`, `selection/algebra.rs`) and the offset/limit read
+      plan (`src/parquet/arrow/read_plan.cr`, wired through
+      `with_row_selection`/`with_offset`/`with_limit`). Remaining: the mask
+      cursor/`RowSelectionPolicy` (`selection/cursor.rs`,
+      `loaded_row_ranges`), page pruning (`selection/ranges.rs`), row-group
+      selection, `RowFilter`, `statistics.rs`, `metrics.rs`, and
       `arrow/push_decoder/`.
 - [ ] `arrow/arrow_writer/` (`ArrowWriter`, `levels.rs`, `byte_array.rs`),
       `arrow/mod.rs` (`ProjectionMask`, `ARROW_SCHEMA_META_KEY` plumbing,
@@ -1804,15 +1830,34 @@ Chunk status by area:
   `test_read_binary_as_utf8`, …) are characterized with the ported
   `SerializedFileWriter` instead; `test_dictionary_preservation` and
   `test_null_schema_inference` are ported directly.
-- Arrow interop, row selection: only the selector (RLE) backing of
-  `RowSelection` is modelled. `RowSelection::from_boolean_buffer`/`from_filters`/
-  `as_mask`, `MaskRunIter`, `selection/boolean.rs`, `selection/algebra.rs`
-  (and_then/intersection/union) and `selection/ranges.rs` (page-range scanning)
-  are not ported, so every selection is selector-backed; `usize` counts are
-  `Int32`, and `from_consecutive_ranges` raises `GeneralError("out of order")`
-  where upstream panics.
-- Arrow interop, read plan: the plan is always selector-backed (no
-  `RowSelectionPolicy`/mask cursor), has no row predicates
+- Arrow interop, row selection: both backings of `RowSelection` are modelled
+  (the RLE `Array(RowSelector)` and the bitmap `MaskSelection`), along with
+  `from_boolean_buffer`/`from_filters`/`as_mask`, `MaskRunIter`, the mask
+  primitives (`SelectionMasks`: `to_selectors`, `has_at_least_runs?`,
+  `split_off`, `trim`, `offset`, `limit`, `from_selectors`) and the
+  `and_then`/`intersection`/`union` algebra (`RowSelectionAlgebra`, in
+  `arrow/row_selection/algebra.cr`). Divergences: `usize` counts are `Int32`;
+  `MaskSelection`'s `OnceLock`s are nilable ivars (`selectors_cached?` exposes
+  the RLE-cache cell for the ported clone test); `iter` returns `&RowSelector`
+  upstream but is `#each`/`Enumerable` here, and `into_selectors`/
+  `into_inner` do not consume the receiver (`inner` is a public getter);
+  `RowSelection#dup` is the `Clone` path (it drops a mask's RLE cache like
+  upstream); `FromIterator<RowSelection>` is `RowSelection.concat`;
+  `RowSelection::from_selectors`/`from_mask_selection` are public (upstream
+  private) because the algebra module lives in another file; the mask algebra
+  is bit-at-a-time rather than `u64`-word kernels, and the unequal-length mask
+  combination always yields a zero-offset buffer (upstream carries the longer
+  mask's sub-byte offset); the `trim`/`last_set_bit_position` scan is per-bit
+  (upstream scans bytes backwards) and `boolean_mask_from_selectors` fills
+  through `BooleanBufferBuilder#append_n` (same bits); the upstream
+  `panic!`s are `GeneralError`s with the same messages; `scan_ranges`/
+  `row_ranges_for_selected_pages` (page pruning, `selection/ranges.rs`) and
+  `expand_to_batch_boundaries`/`auto_selection_strategy` (the mask cursor) are
+  still deferred; `from_consecutive_ranges` raises
+  `GeneralError("out of order")` where upstream panics.
+- Arrow interop, read plan: the plan is always selector-backed (the bitmap
+  backing exists now, but the `RowSelectionPolicy`/mask cursor is not ported
+  yet), has no row predicates
   (`with_predicate`/`PredicateOptions`), no loaded-row-ranges/page pruning and
   no row-group selection. `ReadPlan` exposes its cursor directly instead of
   `row_selection_cursor_mut`, and `usize` counts/offsets/limits are `Int32`.

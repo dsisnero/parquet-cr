@@ -1118,27 +1118,27 @@ parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.build	metho
 parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.limited	method	ported	src/parquet/arrow/read_plan.cr	ReadPlanBuilder#limited
 parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.new	method	ported	src/parquet/arrow/read_plan.cr	ReadPlanBuilder.new(batch_size)
 parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.num_rows_selected	method	ported	src/parquet/arrow/read_plan.cr	ReadPlanBuilder#num_rows_selected
-parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.resolve_selection_strategy	method	intentional_divergence	src/parquet/arrow/read_plan.cr	no mask backing, so the plan is always selector-backed
-parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.row_selection_policy	method	intentional_divergence	src/parquet/arrow/read_plan.cr	no mask backing, so the plan is always selector-backed
+parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.resolve_selection_strategy	method	intentional_divergence	src/parquet/arrow/row_selection.cr	mask cursor/RowSelectionPolicy not ported, so the plan is always selector-backed
+parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.row_selection_policy	method	intentional_divergence	src/parquet/arrow/row_selection.cr	mask cursor/RowSelectionPolicy not ported, so the plan is always selector-backed
 parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.selection	method	ported	src/parquet/arrow/read_plan.cr	ReadPlanBuilder#selection
 parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.selects_any	method	ported	src/parquet/arrow/read_plan.cr	ReadPlanBuilder#selects_any?
 parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.with_loaded_row_ranges	method	intentional_divergence	src/parquet/arrow/read_plan.cr	page pruning / loaded row ranges are not ported
 parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.with_predicate	method	intentional_divergence	src/parquet/arrow/read_plan.cr	row predicates (`RowFilter`) are not ported
 parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.with_predicate_options	method	intentional_divergence	src/parquet/arrow/read_plan.cr	row predicates (`RowFilter`) are not ported
-parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.with_row_selection_policy	method	intentional_divergence	src/parquet/arrow/read_plan.cr	no mask backing, so the plan is always selector-backed
+parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.with_row_selection_policy	method	intentional_divergence	src/parquet/arrow/row_selection.cr	mask cursor/RowSelectionPolicy not ported, so the plan is always selector-backed
 parquet/src/arrow/arrow_reader/read_plan.rs::method::ReadPlanBuilder.with_selection	method	ported	src/parquet/arrow/read_plan.cr	ReadPlanBuilder#with_selection
-parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskRunIter<'_>.next	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskRunIter<'a>.new	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskSelection.borrowed_selectors	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskSelection.cached_count	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskSelection.clone	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskSelection.count	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskSelection.into_mask	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskSelection.into_selectors	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskSelection.mask	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskSelection.new	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskSelection.selectors	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskSelection.with_count	method	missing	-	auto-generated
+parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskRunIter<'_>.next	method	ported	src/parquet/arrow/row_selection.cr	MaskRunIter#next
+parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskRunIter<'a>.new	method	ported	src/parquet/arrow/row_selection.cr	MaskRunIter#initialize
+parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskSelection.borrowed_selectors	method	ported	src/parquet/arrow/row_selection.cr	MaskSelection#borrowed_selectors
+parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskSelection.cached_count	method	ported	src/parquet/arrow/row_selection.cr	MaskSelection#cached_count
+parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskSelection.clone	method	ported	src/parquet/arrow/row_selection.cr	MaskSelection#dup (resets the RLE cache, as upstream Clone)
+parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskSelection.count	method	ported	src/parquet/arrow/row_selection.cr	MaskSelection#count
+parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskSelection.into_mask	method	ported	src/parquet/arrow/row_selection.cr	MaskSelection#into_mask
+parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskSelection.into_selectors	method	ported	src/parquet/arrow/row_selection.cr	MaskSelection#into_selectors
+parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskSelection.mask	method	ported	src/parquet/arrow/row_selection.cr	MaskSelection#mask
+parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskSelection.new	method	ported	src/parquet/arrow/row_selection.cr	MaskSelection#initialize
+parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskSelection.selectors	method	ported	src/parquet/arrow/row_selection.cr	MaskSelection#selectors (cached RLE form)
+parquet/src/arrow/arrow_reader/selection/boolean.rs::method::MaskSelection.with_count	method	ported	src/parquet/arrow/row_selection.cr	MaskSelection.with_count
 parquet/src/arrow/arrow_reader/selection/cursor.rs::method::LoadedRowRanges.end_containing	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/selection/cursor.rs::method::LoadedRowRanges.from_selection	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/selection/cursor.rs::method::LoadedRowRanges.ranges	method	missing	-	auto-generated
@@ -1148,45 +1148,45 @@ parquet/src/arrow/arrow_reader/selection/cursor.rs::method::MaskCursor.next_chun
 parquet/src/arrow/arrow_reader/selection/cursor.rs::method::MaskCursor.next_mask_chunk	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/selection/cursor.rs::method::MaskCursor.next_mask_chunk_non_empty	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/selection/cursor.rs::method::RowSelectionCursor.new_all	method	ported	src/parquet/arrow/read_plan.cr	RowSelectionCursor.new_all
-parquet/src/arrow/arrow_reader/selection/cursor.rs::method::RowSelectionCursor.new_mask_from_buffer	method	intentional_divergence	src/parquet/arrow/read_plan.cr	mask cursor not ported (selector backing only)
-parquet/src/arrow/arrow_reader/selection/cursor.rs::method::RowSelectionCursor.new_mask_from_selectors	method	intentional_divergence	src/parquet/arrow/read_plan.cr	mask cursor not ported (selector backing only)
+parquet/src/arrow/arrow_reader/selection/cursor.rs::method::RowSelectionCursor.new_mask_from_buffer	method	intentional_divergence	src/parquet/arrow/row_selection.cr	bitmap backing is ported; the mask cursor itself is deferred
+parquet/src/arrow/arrow_reader/selection/cursor.rs::method::RowSelectionCursor.new_mask_from_selectors	method	intentional_divergence	src/parquet/arrow/row_selection.cr	bitmap backing is ported; the mask cursor itself is deferred
 parquet/src/arrow/arrow_reader/selection/cursor.rs::method::RowSelectionCursor.new_selectors	method	ported	src/parquet/arrow/read_plan.cr	RowSelectionCursor.new_selectors
 parquet/src/arrow/arrow_reader/selection/cursor.rs::method::RowSelectionPolicy.default	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/selection/cursor.rs::method::SelectorsCursor.is_empty	method	ported	src/parquet/arrow/read_plan.cr	RowSelectionCursor::SelectorsCursor#empty?
 parquet/src/arrow/arrow_reader/selection/cursor.rs::method::SelectorsCursor.next_selector	method	ported	src/parquet/arrow/read_plan.cr	RowSelectionCursor::SelectorsCursor#next_selector
 parquet/src/arrow/arrow_reader/selection/cursor.rs::method::SelectorsCursor.return_selector	method	ported	src/parquet/arrow/read_plan.cr	RowSelectionCursor::SelectorsCursor#return_selector
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.and_then	method	intentional_divergence	src/parquet/arrow/row_selection.cr	selection algebra (and_then/intersection/union) is deferred with the read plan
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.as_mask	method	intentional_divergence	src/parquet/arrow/row_selection.cr	only the selector (RLE) backing is modelled; the bitmap backing is not ported
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.auto_selection_strategy	method	intentional_divergence	src/parquet/arrow/row_selection.cr	only the selector (RLE) backing is modelled
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.and_then	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#and_then (RowSelectionAlgebra.and_then)
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.as_mask	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#as_mask
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.auto_selection_strategy	method	intentional_divergence	src/parquet/arrow/row_selection.cr	deferred with the mask cursor (RowSelectionPolicy)
 parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.eq	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#==
 parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.expand_to_batch_boundaries	method	intentional_divergence	src/parquet/arrow/row_selection.cr	deferred with the cached array readers/read plan
 parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.fmt	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#to_s
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from	method	ported	src/parquet/arrow/row_selection.cr	RowSelection.new(selectors) (normalizing)
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_boolean_buffer	method	intentional_divergence	src/parquet/arrow/row_selection.cr	only the selector (RLE) backing is modelled; the bitmap backing is not ported
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from	method	ported	src/parquet/arrow/row_selection.cr	RowSelection.new(selectors) / RowSelection.from(mask)
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_boolean_buffer	method	ported	src/parquet/arrow/row_selection.cr	RowSelection.from_boolean_buffer
 parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_consecutive_ranges	method	ported	src/parquet/arrow/row_selection.cr	RowSelection.from_consecutive_ranges(ranges, total_rows)
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_filters	method	intentional_divergence	src/parquet/arrow/row_selection.cr	only the selector (RLE) backing is modelled (needs the bitmap path)
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_iter	method	ported	src/parquet/arrow/row_selection.cr	RowSelection.new(selectors) (adjacent combining)
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_mask_selection	method	intentional_divergence	src/parquet/arrow/row_selection.cr	only the selector (RLE) backing is modelled
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_selectors	method	ported	src/parquet/arrow/row_selection.cr	RowSelection.new(selectors)
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.intersection	method	intentional_divergence	src/parquet/arrow/row_selection.cr	selection algebra (and_then/intersection/union) is deferred with the read plan
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.into_inner	method	intentional_divergence	src/parquet/arrow/row_selection.cr	no internal Mask/Selectors enum: selections are always selector-backed
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.into_selectors_vec	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#to_a (Enumerable)
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_filters	method	ported	src/parquet/arrow/row_selection.cr	RowSelection.from_filters
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_iter	method	ported	src/parquet/arrow/row_selection.cr	RowSelection.new(selectors) (adjacent combining); RowSelection.concat for Vec<RowSelection>
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_mask_selection	method	ported	src/parquet/arrow/row_selection.cr	RowSelection.from_mask_selection (public, upstream private)
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.from_selectors	method	ported	src/parquet/arrow/row_selection.cr	RowSelection.from_selectors (public, upstream private)
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.intersection	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#intersection (RowSelectionAlgebra.intersection)
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.into_inner	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#inner (public getter)
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.into_selectors_vec	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#into_selectors_vec
 parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.iter	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#each
 parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.limit	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#limit
 parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.offset	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#offset
 parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.row_count	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#row_count
 parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.row_ranges_for_selected_pages	method	intentional_divergence	src/parquet/arrow/row_selection.cr	page-level range scanning is deferred with the read plan
 parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.scan_ranges	method	intentional_divergence	src/parquet/arrow/row_selection.cr	page-level range scanning is deferred with the read plan
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.selectors	method	missing	-	auto-generated
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.selectors	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#to_a (Enumerable)
 parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.selects_any	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#selects_any?
 parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.skipped_row_count	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#skipped_row_count
 parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.split_off	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#split_off
 parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.total_row_count	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#total_row_count
 parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.trim	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#trim
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.union	method	intentional_divergence	src/parquet/arrow/row_selection.cr	selection algebra (and_then/intersection/union) is deferred with the read plan
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelectionInner.default	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::Vec<RowSelector>.from	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/selection/mod.rs::method::VecDeque<RowSelector>.from	method	missing	-	auto-generated
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelection.union	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#union (RowSelectionAlgebra.union)
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::RowSelectionInner.default	method	ported	src/parquet/arrow/row_selection.cr	RowSelection.empty (selectors backing)
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::Vec<RowSelector>.from	method	ported	src/parquet/arrow/row_selection.cr	RowSelection#into_selectors_vec
+parquet/src/arrow/arrow_reader/selection/mod.rs::method::VecDeque<RowSelector>.from	method	intentional_divergence	src/parquet/arrow/row_selection.cr	no VecDeque variants; use into_selectors_vec
 parquet/src/arrow/arrow_reader/selection/selector.rs::method::RowSelector.select	method	ported	src/parquet/arrow/row_selection.cr	RowSelector.select
 parquet/src/arrow/arrow_reader/selection/selector.rs::method::RowSelector.skip	method	ported	src/parquet/arrow/row_selection.cr	RowSelector.skip
 parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.arrow_field	method	missing	-	auto-generated
