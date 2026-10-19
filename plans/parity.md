@@ -79,8 +79,12 @@ little-endian layout.
   (`src/parquet/arrow/read_plan.cr`) and
   `ParquetRecordBatchReaderBuilder#with_row_filter`, which eagerly evaluates
   each predicate over its own projection in `build` and folds the result into
-  the plan's selection with `and_then`. The arrow array readers are now all
-  ported: `NullArrayReader`
+  the plan's selection with `and_then`; statistics pruning is ported too:
+  `StatisticsConverter` (`src/parquet/arrow/statistics.cr`) converts row-group
+  statistics and data-page statistics (from the page index) into arrow arrays
+  for every supported arrow type, including null/NaN/distinct counts, row
+  counts, min/max exactness and the dictionary/Decimal/Float16 conversions.
+  The arrow array readers are now all ported: `NullArrayReader`
   (arrow-cr now has `Arrow::NullArray`), `FixedLenByteArrayReader`
   (`FixedSizeBinary`, `Decimal32/64/128/256` and `Interval(YearMonth|DayTime)`
   targets; only `Float16` needs an arrow-cr half-float array because Crystal has
@@ -96,11 +100,10 @@ little-endian layout.
   embedded `Dictionary(..)` field actually reaches the array reader builder and
   the upstream `arrow_reader` `test_dictionary_preservation` end-to-end test
   passes.
-  **Next up:** statistics pruning (`arrow_reader/statistics.rs`:
-  `StatisticsConverter` + the page-statistics helpers, the last piece of the
-  filter item), then the mask cursor (`selection/cursor.rs`:
+  **Next up:** the mask cursor (`selection/cursor.rs`:
   `RowSelectionPolicy`/`MaskCursor`/`LoadedRowRanges`) and page pruning
-  (`row_ranges_for_selected_pages`/`scan_ranges` in `selection/ranges.rs`).
+  (`row_ranges_for_selected_pages`/`scan_ranges` in `selection/ranges.rs`),
+  then row-group selection (`with_row_groups`) and reader metrics.
   Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
@@ -962,12 +965,12 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow row filter`; gates green
-  (`make lint`, `make test` -> 1206 examples, 0 failures). Next feature:
-  `statistics.rs` (`StatisticsConverter`), then the mask cursor and page
-  pruning. Note `make install` now requires the sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 2123 `ported`, 219 `intentional_divergence`,
-  15 skipped, 1158 `missing` (of 3515 rows).
+- Last commit: `port: arrow statistics converter`; gates green
+  (`make lint`, `make test` -> 1235 examples, 0 failures). Next feature: the
+  mask cursor and page pruning. Note `make install` now requires the sibling
+  checkout `../arrow-cr`.
+- Progress by counts (ledger): 2142 `ported`, 219 `intentional_divergence`,
+  15 skipped, 1139 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1601,9 +1604,12 @@ Chunk status by area:
       `with_row_selection`/`with_offset`/`with_limit`) and the row filter
       (`src/parquet/arrow/filter.cr` + `ReadPlanBuilder#with_predicate` +
       `with_row_filter`, see `spec/parquet/arrow/row_filter_spec.cr`).
-      Remaining: the mask cursor/`RowSelectionPolicy` (`selection/cursor.rs`,
-      `loaded_row_ranges`), page pruning (`selection/ranges.rs`), row-group
-      selection, `statistics.rs`, `metrics.rs`, and `arrow/push_decoder/`.
+      Statistics pruning is ported too (`StatisticsConverter` in
+      `src/parquet/arrow/statistics.cr`, with `spec/parquet/arrow/
+      statistics_spec.cr`). Remaining: the mask cursor/`RowSelectionPolicy`
+      (`selection/cursor.rs`, `loaded_row_ranges`), page pruning
+      (`selection/ranges.rs`), row-group selection, `metrics.rs`, and
+      `arrow/push_decoder/`.
 - [ ] `arrow/arrow_writer/` (`ArrowWriter`, `levels.rs`, `byte_array.rs`),
       `arrow/mod.rs` (`ProjectionMask`, `ARROW_SCHEMA_META_KEY` plumbing,
       `apply_schema`), and `arrow/buffer/`.
@@ -1826,9 +1832,9 @@ Chunk status by area:
 - Arrow interop, batch reader: `ParquetRecordBatchReaderBuilder` takes a
   `File::FileReader` (upstream any `ChunkReader`) and reads **all** row groups
   (`with_row_groups`/`RowGroupSelection` is not modelled); row selection,
-  offset/limit plans and `RowFilter` are ported, while `statistics.rs`,
-  `metrics.rs`, bloom filters, `RowSelectionPolicy`/the mask cursor, page
-  pruning and page-index policies are not. `ArrowReaderOptions`
+  offset/limit plans, `RowFilter` and `StatisticsConverter` are ported, while
+  `metrics.rs`, bloom-filter lookups, `RowSelectionPolicy`/the mask cursor,
+  page pruning and page-index policies are not. `ArrowReaderOptions`
   models only `skip_arrow_metadata` and the supplied arrow schema (no
   page-index/encoding-statistics policies, decryption properties or virtual
   columns), and the supplied-schema field-metadata mismatch message renders
@@ -1888,6 +1894,46 @@ Chunk status by area:
   `filters_to_boolean_buffer` is implemented but only reached when the prior
   selection is mask-backed). `with_max_predicate_cache_size` remains a no-op,
   exactly as upstream notes for the sync reader (arrow-rs#8000).
+- Arrow interop, statistics (`arrow_reader/statistics.rs`): `StatisticsConverter`
+  (`try_new`/`from_column_index`/`parquet_column_index`/`arrow_field`/
+  `with_missing_null_counts_as_zero`), the row-group extractors
+  (`row_group_mins`/`maxes`/`is_min|max_value_exact`/`null_counts`/
+  `nan_counts`/`distinct_counts`/`row_counts`) and the data-page extractors
+  (`data_page_mins`/`maxes`/`null_counts`/`nan_counts`/`row_counts`) are
+  ported. Divergences: the upstream module-private free functions
+  (`min_statistics`, `max_statistics`, `min|max_page_statistics`,
+  `null|nan_counts_page_statistics`, `from_bytes_to_*`, the
+  `make_stats_iterator!` adapters) live in `StatisticsExtractors` (a module
+  named `Statistics` would shadow `Parquet::Statistics`); the per-type iterator
+  structs are replaced by extracting a canonical `StatValue`
+  (`Bool|Int32|Int64|Float32|Float64|Bytes`) and building the arrow array from
+  it, which behaves the same (the Date64 physical-type split, decimal
+  width/sign-extension, Rust `as` casts for `UInt32`/`UInt64`, `try_from`
+  narrowing for `Int8/16`/`UInt8/16`, null on invalid UTF-8 and
+  `FixedSizeBinary` width mismatches are all preserved); `usize` counts are
+  `Int32`; the `IntoIterator` parameters are `Enumerable`/`Array` and
+  `row_group_row_counts`/`data_page_row_counts` return a nilable
+  `PrimitiveArray(UInt64)`; `Float16` uses arrow-cr's `Arrow::Float16` and
+  `i256` is `Arrow::I256`; the page null/NaN-count helpers append one value per
+  count instead of upstream's `len`-sized validity (identical when a chunk's
+  counts match its page count); decimal precision/scale are carried by
+  `with_data_type` rather than `with_precision_and_scale` validation.
+  `data_page_*` for `Date64` returns nulls (as upstream) while `row_group_*`
+  scales INT32 days to milliseconds. Testing note: the upstream tests live in
+  `parquet/tests/arrow_reader/statistics.rs` and build fixtures with
+  `ArrowWriter`, so `spec/parquet/arrow/statistics_spec.cr` writes the same
+  shapes with `SerializedFileWriter` (one row per batch when a page row-count
+  limit is requested, unsigned/decimal converted types where the writer's
+  min/max ordering needs them, one value per row group where signed-vs-unsigned
+  byte ordering would otherwise change min/max).
+- Writer bug found while porting statistics: `GenericColumnWriter` tested
+  nilable min/max values by truthiness (`if min`, `if (min = ...) && (max =
+  ...)`), so a BOOLEAN column whose minimum is `false` wrote no min/max
+  statistics; `ColumnIndex` thrift serialization had the same bug
+  (`value ? to_le_slice(value) : Bytes.new(0)`), writing an empty BOOLEAN min
+  into the page index, which made the page index undecodable. Both now test
+  against `nil`, and the statistics spec covers boolean row-group and
+  data-page statistics.
 - Arrow interop, skipping: `ColumnReaderImpl#skip_records` (like upstream) only
   consults the classic definition-level decoder, so with the arrow
   `DefinitionLevelBuffer` in use every skipped level is treated as a value. Skip

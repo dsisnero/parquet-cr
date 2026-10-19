@@ -174,8 +174,10 @@ module Parquet
           num_levels = Math.max(def_levels.len, rep_levels.len)
           num_levels = values.size if num_levels == 0
 
-          @column_metrics.min_column_value = Writer.update_min(@descr, min, @column_metrics.min_column_value) if min
-          @column_metrics.max_column_value = Writer.update_max(@descr, max, @column_metrics.max_column_value) if max
+          # `min`/`max` are nilable `T`, so they must be tested against nil: a
+          # BOOLEAN `false` would otherwise be treated as absent.
+          @column_metrics.min_column_value = Writer.update_min(@descr, min, @column_metrics.min_column_value) unless min.nil?
+          @column_metrics.max_column_value = Writer.update_max(@descr, max, @column_metrics.max_column_value) unless max.nil?
 
           @column_metrics.column_distinct_count = @encoder.num_values == 0 ? distinct_count : nil
 
@@ -466,14 +468,18 @@ module Parquet
             @page_metrics.num_page_nans = nan_count
           end
 
-          page_statistics =
-            if (min = values_data.min_value) && (max = values_data.max_value)
-              @column_metrics.min_column_value = Writer.update_min(@descr, min, @column_metrics.min_column_value)
-              @column_metrics.max_column_value = Writer.update_max(@descr, max, @column_metrics.max_column_value)
-              if @column_props.statistics_enabled == File::Properties::EnabledStatistics::Page
-                ValueStatistics(T).new(min, max, nil, @page_metrics.num_page_nulls, false).with_nan_count(values_data.nan_count)
-              end
+          # `min`/`max` are nilable `T`, so test against nil rather than
+          # truthiness: a BOOLEAN `false` is a valid minimum.
+          min_value = values_data.min_value
+          max_value = values_data.max_value
+          page_statistics = nil.as(ValueStatistics(T)?)
+          unless min_value.nil? || max_value.nil?
+            @column_metrics.min_column_value = Writer.update_min(@descr, min_value, @column_metrics.min_column_value)
+            @column_metrics.max_column_value = Writer.update_max(@descr, max_value, @column_metrics.max_column_value)
+            if @column_props.statistics_enabled == File::Properties::EnabledStatistics::Page
+              page_statistics = ValueStatistics(T).new(min_value, max_value, nil, @page_metrics.num_page_nulls, false).with_nan_count(values_data.nan_count)
             end
+          end
 
           update_column_offset_index(page_statistics, values_data.variable_length_bytes)
           @column_metrics.update_from_page_metrics(@page_metrics)

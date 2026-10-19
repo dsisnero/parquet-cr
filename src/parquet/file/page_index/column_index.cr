@@ -314,15 +314,17 @@ module Parquet
           prot.write_field_begin(::Parquet::Thrift::FieldType::List, 2_i16, last_field_id)
           prot.write_list_begin(::Parquet::Thrift::ElementType::Binary, len)
           len.times do |i|
+            # `value` is nilable, so test against nil: a BOOLEAN `false` is a
+            # valid min/max value.
             value = min_value(i)
-            ::Parquet::Thrift.write_thrift_value(prot, value ? FromBytes.to_le_slice(value) : Bytes.new(0))
+            ::Parquet::Thrift.write_thrift_value(prot, value.nil? ? Bytes.new(0) : FromBytes.to_le_slice(value))
           end
 
           prot.write_field_begin(::Parquet::Thrift::FieldType::List, 3_i16, 2_i16)
           prot.write_list_begin(::Parquet::Thrift::ElementType::Binary, len)
           len.times do |i|
             value = max_value(i)
-            ::Parquet::Thrift.write_thrift_value(prot, value ? FromBytes.to_le_slice(value) : Bytes.new(0))
+            ::Parquet::Thrift.write_thrift_value(prot, value.nil? ? Bytes.new(0) : FromBytes.to_le_slice(value))
           end
 
           last_field_id = ::Parquet::Thrift.write_thrift_field(prot, @column_index.boundary_order, 4_i16, 3_i16)

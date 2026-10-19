@@ -1189,25 +1189,25 @@ parquet/src/arrow/arrow_reader/selection/mod.rs::method::Vec<RowSelector>.from	m
 parquet/src/arrow/arrow_reader/selection/mod.rs::method::VecDeque<RowSelector>.from	method	intentional_divergence	src/parquet/arrow/row_selection.cr	no VecDeque variants; use into_selectors_vec
 parquet/src/arrow/arrow_reader/selection/selector.rs::method::RowSelector.select	method	ported	src/parquet/arrow/row_selection.cr	RowSelector.select
 parquet/src/arrow/arrow_reader/selection/selector.rs::method::RowSelector.skip	method	ported	src/parquet/arrow/row_selection.cr	RowSelector.skip
-parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.arrow_field	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.data_page_maxes	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.data_page_mins	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.data_page_nan_counts	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.data_page_null_counts	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.data_page_row_counts	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.from_column_index	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.make_null_array	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.parquet_column_index	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.row_group_distinct_counts	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.row_group_is_max_value_exact	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.row_group_is_min_value_exact	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.row_group_maxes	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.row_group_mins	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.row_group_nan_counts	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.row_group_null_counts	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.row_group_row_counts	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.try_new	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.with_missing_null_counts_as_zero	method	missing	-	auto-generated
+parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.arrow_field	method	ported	src/parquet/arrow/statistics.cr	StatisticsConverter#arrow_field
+parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.data_page_maxes	method	ported	src/parquet/arrow/statistics.cr	StatisticsConverter#data_page_maxes
+parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.data_page_mins	method	ported	src/parquet/arrow/statistics.cr	StatisticsConverter#data_page_mins
+parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.data_page_nan_counts	method	ported	src/parquet/arrow/statistics.cr	StatisticsConverter#data_page_nan_counts
+parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.data_page_null_counts	method	ported	src/parquet/arrow/statistics.cr	StatisticsConverter#data_page_null_counts
+parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.data_page_row_counts	method	ported	src/parquet/arrow/statistics.cr	StatisticsConverter#data_page_row_counts
+parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.from_column_index	method	ported	src/parquet/arrow/statistics.cr	StatisticsConverter.from_column_index
+parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.make_null_array	method	ported	src/parquet/arrow/statistics.cr	private null-array fallbacks (Arrow.new_null_array)
+parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.parquet_column_index	method	ported	src/parquet/arrow/statistics.cr	StatisticsConverter#parquet_column_index
+parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.row_group_distinct_counts	method	ported	src/parquet/arrow/statistics.cr	StatisticsConverter#row_group_distinct_counts
+parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.row_group_is_max_value_exact	method	ported	src/parquet/arrow/statistics.cr	StatisticsConverter#row_group_is_max_value_exact
+parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.row_group_is_min_value_exact	method	ported	src/parquet/arrow/statistics.cr	StatisticsConverter#row_group_is_min_value_exact
+parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.row_group_maxes	method	ported	src/parquet/arrow/statistics.cr	StatisticsConverter#row_group_maxes
+parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.row_group_mins	method	ported	src/parquet/arrow/statistics.cr	StatisticsConverter#row_group_mins
+parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.row_group_nan_counts	method	ported	src/parquet/arrow/statistics.cr	StatisticsConverter#row_group_nan_counts
+parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.row_group_null_counts	method	ported	src/parquet/arrow/statistics.cr	StatisticsConverter#row_group_null_counts
+parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.row_group_row_counts	method	ported	src/parquet/arrow/statistics.cr	StatisticsConverter#row_group_row_counts (nilable result)
+parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.try_new	method	ported	src/parquet/arrow/statistics.cr	StatisticsConverter.try_new
+parquet/src/arrow/arrow_reader/statistics.rs::method::StatisticsConverter<'a>.with_missing_null_counts_as_zero	method	ported	src/parquet/arrow/statistics.cr	StatisticsConverter#with_missing_null_counts_as_zero
 parquet/src/arrow/arrow_writer/byte_array.rs::const::MAX_INLINE_VIEW_LEN	const	missing	-	auto-generated
 parquet/src/arrow/arrow_writer/byte_array.rs::method::ByteArrayEncoder.compresses_against_previous_value	method	missing	-	auto-generated
 parquet/src/arrow/arrow_writer/byte_array.rs::method::ByteArrayEncoder.count_values_within_byte_budget_gather	method	missing	-	auto-generated
