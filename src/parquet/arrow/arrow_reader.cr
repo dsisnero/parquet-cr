@@ -27,7 +27,8 @@ require "../file/metadata"
 #   loaded row ranges upstream either, but
 #   `ReadPlanBuilder#with_loaded_row_ranges` is available); bloom-filter lookups
 #   and page-index/column-index policies are not modelled, and reader metrics
-#   are collected but only the (deferred) predicate cache increments them;
+#   are collected but only the predicate cache (used by the push decoder, not
+#   the sync reader) increments them;
 # - `RowGroupPlan` is a public mutable class carrying a `Kind` (upstream is a
 #   `pub(crate)` enum whose `set_*` methods reassign `self`), `with_row_groups`
 #   takes an `Enumerable(Int32)` and `RowGroupSelection#selection` is a nilable

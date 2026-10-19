@@ -14,7 +14,7 @@ require "../../spec_helper"
 # Divergences: `usize` counts are `Int32`, byte ranges are `Range(UInt64,
 # UInt64)`, the `ColumnChunkData` enum is an abstract class with `Dense`/
 # `Sparse` subclasses, and `fetch_ranges` takes an explicit `batch_size`
-# (upstream also takes a `cache_mask`, which is not ported).
+# (upstream takes it from the reader's configuration).
 private alias PArrow = Parquet::Arrow
 private alias BytesCR = Parquet::File::BytesChunkReader
 private alias Metadata = Parquet::File::Metadata
@@ -62,7 +62,7 @@ private def fill_from(
   selection : RowSelection? = nil,
   batch_size : Int32 = 1024,
 ) : InMemoryRowGroup
-  fetch = group.fetch_ranges(projection, selection, batch_size)
+  fetch = group.fetch_ranges(projection, selection, batch_size, nil)
   chunks = fetch.ranges.map { |range| bytes[range.begin.to_i32, (range.end - range.begin).to_i32] }
   group.fill_column_chunks(projection, fetch.page_start_offsets, chunks)
   group
@@ -113,7 +113,7 @@ describe Parquet::Arrow::InMemoryRowGroup do
     group = row_group_shell(reader)
     projection = leaf_projection(reader, [0, 1])
 
-    fetch = group.fetch_ranges(projection, nil, 1024)
+    fetch = group.fetch_ranges(projection, nil, 1024, nil)
     fetch.page_start_offsets.should be_nil
 
     columns = reader.metadata.row_group(0)
@@ -134,7 +134,7 @@ describe Parquet::Arrow::InMemoryRowGroup do
     batch_size = 50
 
     group = row_group_shell(reader)
-    fetch = group.fetch_ranges(projection, selection, batch_size)
+    fetch = group.fetch_ranges(projection, selection, batch_size, nil)
 
     chunk_start, chunk_length = reader.metadata.row_group(0).column(0).byte_range
     fetch.page_start_offsets.should_not be_nil
@@ -166,7 +166,7 @@ describe Parquet::Arrow::InMemoryRowGroup do
     projection = leaf_projection(reader, [0])
 
     selection = RowSelection.new([RowSelector.skip(2), RowSelector.select(2)])
-    fetch = group.fetch_ranges(projection, selection, 1024)
+    fetch = group.fetch_ranges(projection, selection, 1024, nil)
     fetch.page_start_offsets.should be_nil
 
     start, length = reader.metadata.row_group(0).column(0).byte_range

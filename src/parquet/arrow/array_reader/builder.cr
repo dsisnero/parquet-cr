@@ -14,25 +14,62 @@ require "./map_array"
 require "./fixed_size_list_array"
 require "./null_array"
 require "./fixed_len_byte_array"
+require "./row_group_cache"
+require "./cached_array_reader"
 
 # Ported from `parquet/src/arrow/array_reader/builder.rs`
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
 #
-# Ports `ArrayReaderBuilder`: it walks a `ParquetField` tree (produced by the
-# Parquet → Arrow schema conversion) and builds the matching `ArrayReader`s over
-# the row groups, propagating the projection mask and the selective-padding
-# threshold (`def_level` of the nearest enclosing list/map) down to the leaves.
+# Ports `ArrayReaderBuilder` (and `CacheOptionsBuilder`/`CacheOptions`): it walks
+# a `ParquetField` tree (produced by the Parquet → Arrow schema conversion) and
+# builds the matching `ArrayReader`s over the row groups, propagating the
+# projection mask and the selective-padding threshold (`def_level` of the
+# nearest enclosing list/map) down to the leaves. Leaves selected by the cache
+# options are wrapped in a `CachedArrayReader`, which serves them from (or
+# inserts them into) a shared `RowGroupCache`.
 #
-# Divergences (none of the corresponding infrastructure is ported yet):
-# - no reader metrics (`ArrowReaderMetrics`), cache options/`CachedArrayReader`
-#   and no virtual columns (`RowNumber`/`RowGroupIndex`), so `ParquetFieldType`
-#   only has primitive/group fields;
+# Divergences:
+# - no virtual columns (`RowNumber`/`RowGroupIndex`), so `ParquetFieldType` only
+#   has primitive/group fields, and there is no `with_parquet_metadata` (it only
+#   feeds those virtual columns);
 # - not-yet-ported leaf readers raise `NYIError` instead of being built:
 #   INT96 (the numeric primitive reader does not model `Int96`);
 # - `usize` counts are `Int32`, and the per-field `ReaderArgs` struct is replaced
 #   by three method parameters (`field`, `mask`, `padding_threshold`).
 module Parquet
   module Arrow
+    # Builder for `CacheOptions` (upstream `CacheOptionsBuilder`).
+    class CacheOptionsBuilder
+      # Projection mask to apply to the cache.
+      getter projection_mask : ProjectionMask
+      # Cache to use for storing row group data.
+      getter cache : RowGroupCache
+
+      def initialize(@projection_mask : ProjectionMask, @cache : RowGroupCache)
+      end
+
+      # Returns new cache options for producing (populating) the cache.
+      def producer : CacheOptions
+        CacheOptions.new(@projection_mask, @cache, CacheRole::Producer)
+      end
+
+      # Returns new cache options for consuming (reading) the cache.
+      def consumer : CacheOptions
+        CacheOptions.new(@projection_mask, @cache, CacheRole::Consumer)
+      end
+    end
+
+    # Cache options containing the projection mask, cache, and role (upstream
+    # `CacheOptions`).
+    class CacheOptions
+      getter projection_mask : ProjectionMask
+      getter cache : RowGroupCache
+      getter role : CacheRole
+
+      def initialize(@projection_mask : ProjectionMask, @cache : RowGroupCache, @role : CacheRole)
+      end
+    end
+
     # Builds `ArrayReader`s from the parquet schema, a projection mask and the row
     # groups (upstream `ArrayReaderBuilder`).
     class ArrayReaderBuilder
@@ -42,17 +79,26 @@ module Parquet
       # Reader metrics, shared with the readers built by this builder (upstream
       # passes `&ArrowReaderMetrics` to `new`).
       getter metrics : ArrowReaderMetrics
+      # Optional cache options for the array readers.
+      getter cache_options : CacheOptions?
 
       def initialize(
         @row_groups : RowGroups,
         @batch_size : Int32 = DEFAULT_BATCH_SIZE,
         @metrics : ArrowReaderMetrics = ArrowReaderMetrics.disabled,
       )
+        @cache_options = nil
       end
 
       # Sets the batch size hint used to pre-allocate internal buffers.
       def with_batch_size(batch_size : Int32) : self
         @batch_size = batch_size
+        self
+      end
+
+      # Adds cache options to the builder.
+      def with_cache_options(cache_options : CacheOptions?) : self
+        @cache_options = cache_options
         self
       end
 
@@ -72,7 +118,20 @@ module Parquet
                                padding_threshold : Int16?) : ArrayReader?
         case field.field_type
         when ParquetFieldType::Primitive
-          build_primitive_reader(field, mask, padding_threshold)
+          reader = build_primitive_reader(field, mask, padding_threshold)
+          return nil unless reader
+
+          cache_options = @cache_options
+          return reader unless cache_options
+
+          col_idx = field.field_type.as(ParquetFieldType::Primitive).col_idx
+          if cache_options.projection_mask.leaf_included?(col_idx)
+            CachedArrayReader.new(
+              reader, cache_options.cache, col_idx, cache_options.role, @metrics
+            )
+          else
+            reader
+          end
         else
           case field.arrow_type.kind
           when .map?

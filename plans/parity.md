@@ -96,8 +96,8 @@ little-endian layout.
   only their rows) and a `FileRowGroups` restricted to the chosen indices.
   Reader metrics are ported as well: `ArrowReaderMetrics` (disabled/enabled with
   shared atomic counters, `with_metrics` on the builder and the metrics threaded
-  into `ArrayReaderBuilder`); only the deferred predicate cache increments them,
-  so synchronous reads report zero, as upstream. The projection layer also has
+  into `ArrayReaderBuilder`); only the predicate cache increments them, so
+  synchronous reads report zero, as upstream. The projection layer also has
   `ProjectionMask#without_nested_types` (drops leaves of nested structs, lists
   and maps; `nil` when nothing flat remains) with its four upstream tests. The
   arrow array readers are now all ported: `NullArrayReader`
@@ -139,8 +139,14 @@ little-endian layout.
   `FilterInfo`/`CacheInfo` states: each predicate is evaluated over its own
   projection with its own data request, the column chunks are reused by later
   predicates and the output stage, and `has_predicates` keeps the frontier from
-  skipping row groups that a filter could still select from); only the predicate
-  cache is deferred.
+  skipping row groups that a filter could still select from). The predicate
+  cache is ported too (`RowGroupCache`/`CachedArrayReader`/`CacheOptions` in
+  `src/parquet/arrow/array_reader/{row_group_cache,cached_array_reader}.cr`):
+  a column selected by both the filter and the output projection is decoded once
+  per row group and the output stage is served from the cache
+  (`with_max_predicate_cache_size` sizes it, `0` disables it, and
+  `InMemoryRowGroup#fetch_ranges` expands cached columns' selections to batch
+  boundaries).
   `InMemoryRowGroup` — the in-memory column-chunk source the push
   decoder is built on — is ported too (`src/parquet/arrow/in_memory_row_group.cr`:
   `fetch_ranges` (whole chunks, or only the pages a row selection needs when an
@@ -148,14 +154,12 @@ little-endian layout.
   with dense/sparse `ColumnChunkData`, and `RowGroups` over
   `SerializedPageReader`s), together with the `RowGroupMetaData#columns` and
   `ColumnChunkMetaData#byte_range` helpers it needs.
-  **Next up:** the rest of the deferred `arrow/push_decoder/` surface — the
-  predicate cache (`with_max_predicate_cache_size`, `RowGroupCache`/
-  `CachedArrayReader`, `cache_mask` in `InMemoryRowGroup#fetch_ranges`) and the
-  `LoadedRowRanges` page-pruning path (`prepare_selection_for_page_skipping`)
-  it enables, plus the generic `ArrowReaderBuilder<I>` refactor upstream
-  shares with the sync/async builders — then `parquet-variant-compute`, virtual
-  columns (blocked on arrow-cr canonical extension types) and the arrow writer
-  (needs `column/page_store.rs`).
+  **Next up:** the remaining deferred `arrow/push_decoder/` surface — the
+  `LoadedRowRanges` page-pruning path (`prepare_selection_for_page_skipping`,
+  which the cache's batch-boundary expansion enables) — plus the generic
+  `ArrowReaderBuilder<I>` refactor upstream shares with the sync/async builders,
+  then `parquet-variant-compute`, virtual columns (blocked on arrow-cr canonical
+  extension types) and the arrow writer (needs `column/page_store.rs`).
   Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
@@ -500,9 +504,10 @@ little-endian layout.
     leaf, plus reading the 8 all-null rows), and adds the unprojected/absent
     field fallbacks, list and map fixtures (`list_columns.parquet`,
     `nested_maps.snappy.parquet`), the batch-size hint, and the fixed-length
-    byte array path (`fixed_length_decimal.parquet`). Not ported: reader
-    metrics, cache options/`CachedArrayReader`, virtual columns (so upstream's
-    `test_create_array_reader_with_row_numbers` is skipped), and the INT96 leaf
+    byte array path (`fixed_length_decimal.parquet`), and the cache-option
+    wiring (`with_cache_options` populating a `RowGroupCache` for cached leaves,
+    nothing for an empty cache mask). Not ported: virtual columns (so upstream's
+    `test_create_array_reader_with_row_numbers` is skipped) and the INT96 leaf
     path (which raises `NYIError`); dictionary-typed byte array columns route to
     `make_byte_array_dictionary_reader` for both BYTE_ARRAY and
     FIXED_LEN_BYTE_ARRAY, but the user-facing way to request a dictionary arrow
@@ -1018,14 +1023,14 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow push decoder row filters`; gates green
-  (`make lint`, `make test` -> 1365 examples, 0 failures). Next feature: the
-  predicate cache (`with_max_predicate_cache_size`, `RowGroupCache`/
-  `CachedArrayReader`, `cache_mask`) with the `LoadedRowRanges` page-pruning path
-  it enables, plus the generic `ArrowReaderBuilder<I>` refactor. Note
-  `make install` now requires the sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 2292 `ported`, 203 `intentional_divergence`,
-  15 skipped, 1005 `missing` (of 3515 rows).
+- Last commit: `port: arrow predicate cache`; gates green
+  (`make lint`, `make test` -> 1381 examples, 0 failures). Next feature: the
+  `LoadedRowRanges` page-pruning path
+  (`prepare_selection_for_page_skipping`) in the push decoder, then the generic
+  `ArrowReaderBuilder<I>` refactor. Note `make install` now requires the sibling
+  checkout `../arrow-cr`.
+- Progress by counts (ledger): 2320 `ported`, 203 `intentional_divergence`,
+  15 skipped, 977 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1692,10 +1697,13 @@ Chunk status by area:
       `SerializedPageReader`s; see `spec/parquet/arrow/
       in_memory_row_group_spec.cr`) and the push decoder's core including
       row-group-local selections, adaptive scans (`try_next_reader`/
-      `peek_next_row_group`/`into_builder`) and row filters (`with_row_filter`
-      with `FilterInfo`/`CacheInfo`; `src/parquet/arrow/push_decoder.cr`,
-      see `spec/parquet/arrow/push_decoder_spec.cr`). Remaining: the push
-      decoder's predicate cache, virtual columns and the arrow
+      `peek_next_row_group`/`into_builder`), row filters (`with_row_filter`
+      with `FilterInfo`/`CacheInfo`) and the predicate cache
+      (`RowGroupCache`/`CachedArrayReader`/`CacheOptions`; see
+      `spec/parquet/arrow/push_decoder_spec.cr`,
+      `spec/parquet/arrow/cached_array_reader_spec.cr` and
+      `spec/parquet/arrow/row_group_cache_spec.cr`). Remaining: the push
+      decoder's `LoadedRowRanges` page pruning, virtual columns and the arrow
       writer.
 - [ ] `arrow/arrow_writer/` (`ArrowWriter`, `levels.rs`, `byte_array.rs`),
       `arrow/mod.rs` (`ProjectionMask`, `ARROW_SCHEMA_META_KEY` plumbing,
@@ -1905,13 +1913,41 @@ Chunk status by area:
   `try_extend_nulls` (which raise on error in Crystal instead of returning
   `Result`) for the null-list blocks and an empty batch returns a zero-length
   fixed-size list over an empty child.
-- Arrow interop, array reader builder: `ArrayReaderBuilder` drops the reader
-  metrics, cache options (`CachedArrayReader`/`RowGroupCache`) and virtual
+- Arrow interop, array reader builder: `ArrayReaderBuilder` takes the reader
+  metrics and optional cache options (`with_cache_options`, wrapping every leaf
+  selected by the cache projection in a `CachedArrayReader`), but drops virtual
   columns (`ParquetFieldType` only models primitive/group fields in this port),
   and the per-field `ReaderArgs` struct is replaced by explicit
   `(field, mask, padding_threshold)` parameters. `INT96` (the only leaf reader
   not ported, because the numeric primitive reader does not model it) raises
   `NYIError`.
+- Arrow interop, predicate cache (`array_reader/row_group_cache.rs` +
+  `array_reader/cached_array_reader.rs`): `BatchID`/`CacheKey` are structs,
+  `RowGroupCache` a class keyed by `(column_idx, batch_id)` with the upstream
+  insert/evict accounting, and `CachedArrayReader` wraps an `ArrayReader` with a
+  `CacheRole` (`Producer` inserts into the shared cache, `Consumer` removes
+  batches once consumed) plus a per-reader local cache so `consume_batch` still
+  works after eviction. `CacheOptionsBuilder`/`CacheOptions` (in
+  `array_reader/builder.cr`) carry the projection, cache and role. Divergences:
+  upstream shares the cache as `Arc<RwLock<RowGroupCache>>` because its reader is
+  multi-threaded; Crystal fibers share the cache object directly, so
+  `CacheOptions`/`CachedArrayReader` hold the `RowGroupCache` itself. Byte
+  accounting uses `Arrow::ArrayBase#array_memory_size` for every type instead of
+  `get_array_memory_size_for_cache`'s `Utf8View` special case (that workaround
+  exists because StringView arrays share buffers, which arrow-cr's
+  `buffer_memory_size` already accounts for). Upstream's `assert_eq!` on the
+  skipped row count and on a duplicate insert raise `GeneralError`/are documented
+  instead; the positions and caches the upstream unit tests read directly
+  (`outer_position`, `inner_position`, `local_cache`, `batch_size`,
+  `current_cache_size`) are exposed as getters because Crystal specs cannot
+  reach private state. `read_records`'s parameter is `batch_size` (upstream
+  `num_records`) to match the `ArrayReader` interface. `get_def_levels`/
+  `get_rep_levels` return `nil` like upstream ("we don't allow nullable parent
+  for now"), which is why upstream — and the port — exclude nested leaves from
+  the cache projection. Tests: `spec/parquet/arrow/row_group_cache_spec.cr` (the
+  two upstream cache tests) and `spec/parquet/arrow/cached_array_reader_spec.cr`
+  (all ten upstream `CachedArrayReader` tests, with the upstream
+  `MockArrayReader`), plus the `ArrayReaderBuilder#with_cache_options` wiring.
 - Arrow interop, null columns: `NullArrayReader` follows upstream in fixing the
   record reader to INT32 (a Null column carries no non-null values); skipping an
   all-null column is not supported because the shared skip path treats each
@@ -2009,10 +2045,12 @@ Chunk status by area:
   `ParquetRecordBatchReaderBuilder#with_metrics` stores the metrics (exposed by a
   `metrics` getter, upstream `pub(crate)`) and threads them into
   `ArrayReaderBuilder.new(row_groups, batch_size, metrics)` (upstream
-  `new(row_groups, &metrics)`), where they would be handed to the predicate
-  cache. Only `CachedArrayReader` increments the counters upstream, and the
-  predicate cache is not ported, so synchronous reads report zero — the same as
-  upstream's synchronous reader (arrow-rs#8000). Upstream's metric tests live in
+  `new(row_groups, &metrics)`), which hands them to the predicate cache. Only
+  `CachedArrayReader` increments the counters upstream, and the synchronous
+  reader does not use the cache, so synchronous reads report zero — the same as
+  upstream (arrow-rs#8000); the push decoder's cached leaves do report counts
+  (`spec/parquet/arrow/push_decoder_spec.cr` asserts 400 inner / 149 cache reads
+  for a cached filter column). Upstream's metric tests live in
   `tests/arrow_reader/predicate_cache.rs` and need the async reader, so
   `spec/parquet/arrow/metrics_spec.cr` characterizes the API, counter sharing
   and wiring instead.
@@ -2023,9 +2061,10 @@ Chunk status by area:
   chunk ranges when there is no selection or no offset index, otherwise the
   page ranges that `RowSelection#scan_ranges` selects (prepending the
   dictionary-page range when the first page does not start at the chunk start)
-  plus each column's page start offsets; it does not model upstream's
-  `cache_mask` batch-boundary expansion (the predicate cache is deferred), so
-  `batch_size` is accepted for signature parity only. `fill_column_chunks`
+  plus each column's page start offsets; for columns selected by `cache_mask`
+  it scans the selection expanded to batch boundaries
+  (`expand_to_batch_boundaries`), so a cache miss can fetch a full batch from
+  the retained sparse chunks. `fill_column_chunks`
   assembles dense `ColumnChunkData::Dense (offset, data)` or sparse
   `ColumnChunkData::Sparse (length, [{page offset, bytes}])` chunks. Divergences:
   `usize` → `Int32`, byte ranges are `Range(UInt64, UInt64)`, `FetchRanges` is a
@@ -2106,33 +2145,35 @@ Chunk status by area:
   matching rows have been accumulated and later row groups are never requested.
   `CacheInfo` (the cache projection computed by upstream's
   `compute_cache_projection`/`_inner`/`exclude_nested_columns_from_cache`, which
-  are ported) accompanies each `FilterInfo`.
+  are ported) accompanies each `FilterInfo` together with one `RowGroupCache`
+  per row group; the predicate array reader is built with the producer cache
+  options, the output array reader with the consumer ones, and
+  `DataRequestBuilder#with_cache_projection` feeds the filter-stage
+  `fetch_ranges` `cache_mask`, so a column that is both filtered and projected is
+  decoded once per row group (the final output request deliberately does not
+  call `with_cache_projection`, as upstream comments).
   Divergences: `usize` → `Int32`, the state/build-result enums are sealed class
   hierarchies, `RowGroupNextState` replaces upstream's `NextState`, `inspect`
   results are exceptions (Crystal has no `Result`, so `build`/`try_new_decoder`
   and `into_builder` raise where upstream returns `Err`), `QueuedRowGroups#dup`
   copies rather than moves the global selection, `RowGroupFrontier`'s
   copy constructor is `protected` (Crystal cannot call a private constructor
-  with an explicit receiver), and `ParquetPushDecoderBuilder` is not the generic
-  `ArrowReaderBuilder<I>` (the refactor is deferred). Two upstream mechanisms
-  stay unported, both around the predicate cache: (1) page pruning —
-  `RowGroupReaderBuilder` does not apply `prepare_selection_for_page_skipping`
-  for the output or the predicate stage (page pruning happens in `fetch_ranges`,
-  which takes no `cache_mask`), so the push decoder never builds a
-  `LoadedRowRanges`; (2) the cache itself — `CacheInfo` carries only the cache
-  projection and nothing reads it
-  (`DataRequestBuilder#with_cache_projection` stores it and is otherwise a
-  no-op), so decoding matches upstream with the cache disabled and
-  `with_max_predicate_cache_size` is accepted for API parity (upstream's 100MB
-  default) without effect. `RemainingRowGroups` carries the `::Arrow::Schema`
-  only for `into_parts`.
+  with an explicit receiver), `StartData`/`WaitingOnData` default `cache_info` to
+  `nil` instead of spelling out `None`, and `ParquetPushDecoderBuilder` is not
+  the generic `ArrowReaderBuilder<I>` (the refactor is deferred). One upstream
+  mechanism stays unported: page pruning — `RowGroupReaderBuilder` does not apply
+  `prepare_selection_for_page_skipping` for the output or the predicate stage,
+  so the push decoder never builds a `LoadedRowRanges` (`fetch_ranges` itself
+  does implement page pruning and the `cache_mask` expansion).
+  `RemainingRowGroups` carries the `::Arrow::Schema` only for `into_parts`.
   Tests: `spec/parquet/arrow/push_decoder_spec.cr` covers the decoder, row
-  groups/selections, adaptive scans and row filters (single/multiple predicates,
+  groups/selections, adaptive scans, row filters (single/multiple predicates,
   page reuse, empty filters, filters with a row selection, offset+limit, the
   predicate-limit short-circuit, row-group-local selections with a filter, and
-  both filter-based `into_builder` tests). Deferred: the predicate cache
-  (`RowGroupCache`/`CachedArrayReader`/`CacheOptions`, so `cache_mask`-based
-  cache projections) and the `LoadedRowRanges` page-pruning path. Upstream's
+  both filter-based `into_builder` tests) and the predicate cache (the filter
+  column is decoded once and the output is served from the cache; with
+  `with_max_predicate_cache_size(0)` nothing is cached and the cache metrics stay
+  at zero). Deferred: the `LoadedRowRanges` page-pruning path. Upstream's
   `test_decoder_size` (a `size_of` assertion) is not ported; the port's
   projection tests assert metadata-derived chunk ranges instead of upstream's
   hardcoded ones (its fixture writes BYTE_ARRAY, not StringView).

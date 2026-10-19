@@ -12,10 +12,8 @@ require "../../spec_helper"
 # strings, two 200-row row groups, 100-row data pages, written in 50-row
 # batches). The port writes the same shape with `SerializedFileWriter`.
 #
-# Deferred in this slice (documented in `plans/parity.md`): the predicate cache
-# (`with_max_predicate_cache_size`, `RowGroupCache`/`CachedArrayReader`), so the
-# filter-stage requests are built exactly as upstream builds them with the cache
-# disabled.
+# Deferred in this slice (documented in `plans/parity.md`): the page-pruning
+# path (`prepare_selection_for_page_skipping`).
 private alias PArrow = Parquet::Arrow
 private alias BytesCR = Parquet::File::BytesChunkReader
 private alias FWriter = Parquet::File::SerializedFileWriter
@@ -145,6 +143,23 @@ private def push_ranges_to_decoder(decoder : ParquetPushDecoder, bytes : Bytes,
                                    ranges : Array(Range(UInt64, UInt64))) : Nil
   data = ranges.map { |range| bytes[range.begin.to_i32, (range.end - range.begin).to_i32] }
   decoder.push_ranges(ranges, data)
+end
+
+# Drains a decoder, supplying every requested range from `bytes`, and returns
+# the batches it produced.
+private def drain_decoder(decoder : ParquetPushDecoder, bytes : Bytes) : Array(Arrow::RecordBatch)
+  batches = [] of Arrow::RecordBatch
+  loop do
+    result = decoder.try_decode
+    if result.needs_data?
+      push_ranges_to_decoder(decoder, bytes, result.ranges)
+    elsif result.data?
+      batches << result.data
+    else
+      break
+    end
+  end
+  batches
 end
 
 # The byte range of one column chunk (upstream tests hardcode these; the port
@@ -561,10 +576,9 @@ end
 # Ported from `parquet/src/arrow/push_decoder/mod.rs`
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
 #
-# Deferred (documented in `plans/parity.md`): the row-filter variants
-# (`test_into_builder_installs_filter_between_row_groups`,
-# `test_into_builder_preserves_local_selections_with_row_filter`), which need
-# `with_row_filter` and the predicate cache in the push path.
+# Deferred (documented in `plans/parity.md`): the page-pruning path
+# (`prepare_selection_for_page_skipping`), which the upstream reader wires in
+# alongside these adaptive-scan APIs.
 #
 # Divergence: upstream asserts hardcoded byte ranges. The port's fixture writes
 # column "c" as BYTE_ARRAY instead of StringView, so page and chunk sizes
@@ -876,16 +890,10 @@ describe Parquet::Arrow::ParquetPushDecoder do
 end
 
 # Row filters in the push path (`with_row_filter`, `FilterInfo`/`CacheInfo`,
-# `has_predicates`).
+# `has_predicates`), with the predicate cache enabled by default.
 #
 # Ported from `parquet/src/arrow/push_decoder/{mod,reader_builder/filter}.rs`
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
-#
-# Deferred (documented in `plans/parity.md`): the predicate cache
-# (`RowGroupCache`/`CachedArrayReader`/`CacheOptions`), so
-# `with_max_predicate_cache_size` is accepted but has no effect and the
-# cache-projection expansion of the filter-stage requests (`cache_mask`) is a
-# no-op — equivalent to upstream with the cache disabled.
 private def threshold_predicate(
   mask : Parquet::Arrow::ProjectionMask,
   column : Int32,
@@ -1307,6 +1315,79 @@ describe Parquet::Arrow::ParquetPushDecoder do
       reader1 = expect_reader(decoder.try_next_reader)
       drain_reader(reader1).each { |batch| check_rows(batch, 251, 149) }
       expect_reader_finished(decoder.try_next_reader)
+    end
+  end
+end
+
+# The predicate cache (`RowGroupCache`/`CachedArrayReader`/`CacheOptions`).
+#
+# Ported from `parquet/src/arrow/array_reader/{row_group_cache,cached_array_reader}.rs`
+# and `parquet/src/arrow/push_decoder/reader_builder/{filter,mod}.rs`
+# (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
+#
+# Upstream exercises the cache end-to-end through the async row-filter tests
+# (`tests/arrow_reader/predicate_cache.rs` and
+# `tests/arrow_reader/row_filter/async.rs::test_cached_mask_reads_sparse_pages_without_error`),
+# which need the not-yet-ported async reader. The port characterizes the same
+# behavior through the push decoder: a column used by both the filter and the
+# output projection is decoded once per row group and the output stage is served
+# from the cache; `with_max_predicate_cache_size(0)` disables the cache and the
+# column is decoded again for the output.
+describe Parquet::Arrow::ParquetPushDecoder do
+  describe "predicate cache" do
+    it "decodes the filter column once and serves the output from the cache" do
+      bytes = test_file_bytes
+      metadata = test_metadata(bytes)
+      schema_descr = metadata.file_metadata.schema_descr
+      metrics = Parquet::Arrow::ArrowReaderMetrics.enabled
+
+      predicate = threshold_predicate(
+        Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0]), 0, 250_i64
+      )
+
+      decoder = ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        # "a" is both filtered and projected, so it is cached.
+        .with_projection(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0]))
+        .with_row_filter(Parquet::Arrow::RowFilter.new([predicate] of Parquet::Arrow::ArrowPredicate))
+        .with_batch_size(8)
+        .with_metrics(metrics)
+        .build
+
+      rows = drain_decoder(decoder, bytes).flat_map { |batch| int64_values(batch, 0) }
+      rows.should eq((251...400).map(&.to_i64))
+
+      # Both row groups are filtered (200 rows each) and every output row comes
+      # from the cache.
+      (metrics.records_read_from_inner || 0).should eq(400)
+      (metrics.records_read_from_cache || 0).should eq(149)
+    end
+
+    it "does not use the cache when it is disabled" do
+      bytes = test_file_bytes
+      metadata = test_metadata(bytes)
+      schema_descr = metadata.file_metadata.schema_descr
+      metrics = Parquet::Arrow::ArrowReaderMetrics.enabled
+
+      predicate = threshold_predicate(
+        Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0]), 0, 250_i64
+      )
+
+      decoder = ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        .with_projection(Parquet::Arrow::ProjectionMask.leaves(schema_descr, [0]))
+        .with_row_filter(Parquet::Arrow::RowFilter.new([predicate] of Parquet::Arrow::ArrowPredicate))
+        .with_batch_size(8)
+        .with_max_predicate_cache_size(0)
+        .with_metrics(metrics)
+        .build
+
+      rows = drain_decoder(decoder, bytes).flat_map { |batch| int64_values(batch, 0) }
+      rows.should eq((251...400).map(&.to_i64))
+
+      # With the cache disabled no reader is wrapped, so nothing is read
+      # through the cache and the cache metrics stay at zero (upstream behaves
+      # the same: only `CachedArrayReader` updates them).
+      (metrics.records_read_from_cache || 0).should eq(0)
+      (metrics.records_read_from_inner || 0).should eq(0)
     end
   end
 end

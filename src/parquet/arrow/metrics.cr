@@ -8,10 +8,9 @@ require "../errors"
 # `with_metrics`; copies of the metrics share the same counters (upstream keeps
 # them in an `Arc`).
 #
-# Note: only the predicate cache (`CachedArrayReader`, not ported yet) increments
-# these counters, so a synchronous read leaves them at zero — exactly as
-# upstream, where the synchronous reader does not use the cache either
-# (arrow-rs#8000).
+# Note: only the predicate cache (`CachedArrayReader`) increments these
+# counters, so a synchronous read leaves them at zero — exactly as upstream,
+# where the synchronous reader does not use the cache either (arrow-rs#8000).
 #
 # Divergences: `usize` counters are `Int32` (updated atomically, as upstream);
 # the `Disabled`/`Enabled(Arc<..>)` enum is a class holding an optional inner

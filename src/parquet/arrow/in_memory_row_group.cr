@@ -19,8 +19,8 @@ require "./mod"
 # Divergences: `usize` counts/offsets are `Int32`, byte ranges are
 # `Range(UInt64, UInt64)`, `FetchRanges` is a struct, the `ColumnChunkData` enum
 # is an abstract `ChunkReader` with `Dense`/`Sparse` subclasses, `fetch_ranges`
-# takes an explicit `batch_size` and no `cache_mask` (the predicate cache is not
-# ported), and `fill_column_chunks` takes an `Enumerable(Bytes)`.
+# takes an explicit `batch_size`, and `fill_column_chunks` takes an
+# `Enumerable(Bytes)`.
 module Parquet
   module Arrow
     # An in-memory column chunk (upstream `ColumnChunkData`).
@@ -143,6 +143,10 @@ module Parquet
       # Returns the byte ranges to fetch for the columns specified in
       # `projection` and `selection` (upstream `fetch_ranges`).
       #
+      # `cache_mask` indicates which columns, if any, are being cached by
+      # `RowGroupCache`. The `selection` for cached columns is expanded to batch
+      # boundaries to simplify accounting for what data is cached.
+      #
       # When a selection and an offset index are available, only the pages that
       # contain selected rows are fetched (plus the dictionary page when the
       # first page does not start at the beginning of the column chunk).
@@ -151,10 +155,12 @@ module Parquet
         projection : ProjectionMask,
         selection : RowSelection?,
         batch_size : Int32,
+        cache_mask : ProjectionMask?,
       ) : FetchRanges
         row_group = @metadata.row_group(@row_group_idx)
 
         if (sel = selection) && (page_index = @page_index)
+          expanded_selection = sel.expand_to_batch_boundaries(batch_size, @row_count)
           page_start_offsets = [] of Array(UInt64)
 
           ranges = [] of Range(UInt64, UInt64)
@@ -178,7 +184,12 @@ module Parquet
             if first = locations.first?
               column_ranges << (start.to_u64...(first.offset.to_u64)) unless first.offset.to_u64 == start.to_u64
             end
-            column_ranges.concat(sel.scan_ranges(locations))
+            # Expand the selection to batch boundaries for cached columns (see
+            # the doc comment for this function).
+            use_expanded = cache_mask.try(&.leaf_included?(idx)) || false
+            column_ranges.concat(
+              (use_expanded ? expanded_selection : sel).scan_ranges(locations)
+            )
 
             page_start_offsets << column_ranges.map(&.begin)
             ranges.concat(column_ranges)

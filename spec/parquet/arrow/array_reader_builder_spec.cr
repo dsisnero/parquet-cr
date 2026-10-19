@@ -5,9 +5,10 @@ require "../../spec_helper"
 # `ArrayReaderBuilder` that turns a `ParquetField` + projection mask into an
 # `ArrayReader` over `RowGroups`.
 #
-# Divergences (see `plans/parity.md`): no reader metrics, cache options or
-# virtual columns yet, so upstream's `test_create_array_reader_with_row_numbers`
-# is not ported.
+# Divergences (see `plans/parity.md`): no virtual columns yet, so upstream's
+# `test_create_array_reader_with_row_numbers` is not ported; the cache-options
+# wiring has no upstream unit test (it is exercised end-to-end through the async
+# reader), so it is characterized here.
 private alias PArrow = Parquet::Arrow
 private alias BytesCR = Parquet::File::BytesChunkReader
 
@@ -127,5 +128,41 @@ describe Parquet::Arrow::ArrayReaderBuilder do
     array.len.should be > 0
     array.column(0).as(Arrow::PrimitiveArray(Int128)).data_type
       .should eq(Arrow::DataType.decimal128(25, 2))
+  end
+
+  it "wraps cached leaves so their batches land in the cache" do
+    reader_file = file_reader("alltypes_plain.parquet")
+    file_metadata = reader_file.metadata.file_metadata
+    mask = PArrow::ProjectionMask.leaves(file_metadata.schema_descr, [0])
+    cache = PArrow::RowGroupCache.new(1024, 100 * 1024 * 1024)
+    options = PArrow::CacheOptionsBuilder.new(mask, cache).producer
+
+    reader = builder_for(reader_file)
+      .with_cache_options(options)
+      .build_array_reader(root_field(reader_file), mask)
+
+    reader.next_batch(1024).len.should eq(8)
+
+    # The decoded leaf batch was inserted into the shared cache.
+    cache.get(0, PArrow::BatchID.new(0)).should_not be_nil
+  end
+
+  it "does not cache leaves outside the cache mask" do
+    reader_file = file_reader("alltypes_plain.parquet")
+    file_metadata = reader_file.metadata.file_metadata
+    mask = PArrow::ProjectionMask.leaves(file_metadata.schema_descr, [0])
+    cache = PArrow::RowGroupCache.new(1024, 100 * 1024 * 1024)
+    # An empty cache mask (as `compute_cache_projection` builds when the cache
+    # is disabled) leaves every leaf reader unwrapped.
+    options = PArrow::CacheOptionsBuilder.new(
+      PArrow::ProjectionMask.none(file_metadata.schema_descr.num_columns), cache
+    ).producer
+
+    reader = builder_for(reader_file)
+      .with_cache_options(options)
+      .build_array_reader(root_field(reader_file), mask)
+
+    reader.next_batch(1024).len.should eq(8)
+    cache.get(0, PArrow::BatchID.new(0)).should be_nil
   end
 end

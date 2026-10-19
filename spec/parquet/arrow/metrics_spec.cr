@@ -6,9 +6,9 @@ require "../../spec_helper"
 # `with_metrics`.
 #
 # Upstream's metric tests live in `parquet/tests/arrow_reader/predicate_cache.rs`,
-# which needs the async reader and the predicate cache (`CachedArrayReader`).
-# Both are deferred here, and upstream's synchronous reader never increments the
-# counters either (only the cache wrapper does; see arrow-rs#8000), so the
+# which needs the async reader; they are deferred with it, and upstream's
+# synchronous reader never increments the counters either (only the predicate
+# cache wrapper used by the push decoder does; see arrow-rs#8000), so the
 # wiring tests characterize the API shape, the shared counters and the fact
 # that a synchronous read leaves them at zero.
 #

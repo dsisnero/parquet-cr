@@ -785,11 +785,11 @@ parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_
 parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.new	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#initialize(row_groups, batch_size)
 parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.num_rows	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#num_rows
 parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.with_batch_size	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#with_batch_size
-parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.with_cache_options	method	intentional_divergence	src/parquet/arrow/array_reader/builder.cr	row-group caching (`CachedArrayReader`/`RowGroupCache`) is not ported
+parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.with_cache_options	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#with_cache_options (wraps cached leaves in CachedArrayReader)
 parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.with_parquet_metadata	method	intentional_divergence	src/parquet/arrow/array_reader/builder.cr	metadata is not needed: only virtual columns use it, and they are not ported
-parquet/src/arrow/array_reader/builder.rs::method::CacheOptionsBuilder<'a>.consumer	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/builder.rs::method::CacheOptionsBuilder<'a>.new	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/builder.rs::method::CacheOptionsBuilder<'a>.producer	method	missing	-	auto-generated
+parquet/src/arrow/array_reader/builder.rs::method::CacheOptionsBuilder<'a>.consumer	method	ported	src/parquet/arrow/array_reader/builder.cr	CacheOptionsBuilder#consumer
+parquet/src/arrow/array_reader/builder.rs::method::CacheOptionsBuilder<'a>.new	method	ported	src/parquet/arrow/array_reader/builder.cr	CacheOptionsBuilder#initialize(projection_mask, cache)
+parquet/src/arrow/array_reader/builder.rs::method::CacheOptionsBuilder<'a>.producer	method	ported	src/parquet/arrow/array_reader/builder.cr	CacheOptionsBuilder#producer
 parquet/src/arrow/array_reader/builder.rs::method::ReaderArgs<'a>.with_field	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/builder.rs::method::ReaderArgs<'a>.with_padding_threshold	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/byte_array.rs::method::ByteArrayColumnValueDecoder<I>.new	method	missing	-	auto-generated
@@ -865,26 +865,26 @@ parquet/src/arrow/array_reader/byte_view_array.rs::method::ByteViewArrayReader.m
 parquet/src/arrow/array_reader/byte_view_array.rs::method::ByteViewArrayReader.new	method	ported	src/parquet/arrow/array_reader/byte_view_array.cr	ByteViewArrayReader#initialize(pages, data_type, desc, batch_size, padding_threshold)
 parquet/src/arrow/array_reader/byte_view_array.rs::method::ByteViewArrayReader.read_records	method	ported	src/parquet/arrow/array_reader/byte_view_array.cr	ByteViewArrayReader#read_records
 parquet/src/arrow/array_reader/byte_view_array.rs::method::ByteViewArrayReader.skip_records	method	ported	src/parquet/arrow/array_reader/byte_view_array.cr	ByteViewArrayReader#skip_records
-parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.as_any	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.cleanup_consumed_batches	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.consume_batch	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.fetch_batch	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.get_batch_id_from_position	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.get_data_type	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.get_def_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.get_rep_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.max_def_level	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.new	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.read_records	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.skip_records	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/cached_array_reader.rs::method::MockArrayReader.as_any	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/cached_array_reader.rs::method::MockArrayReader.consume_batch	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/cached_array_reader.rs::method::MockArrayReader.get_data_type	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/cached_array_reader.rs::method::MockArrayReader.get_def_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/cached_array_reader.rs::method::MockArrayReader.get_rep_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/cached_array_reader.rs::method::MockArrayReader.new	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/cached_array_reader.rs::method::MockArrayReader.read_records	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/cached_array_reader.rs::method::MockArrayReader.skip_records	method	missing	-	auto-generated
+parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.as_any	method	intentional_divergence	src/parquet/arrow/array_reader/cached_array_reader.cr	`as_any` not modelled (Crystal `is_a?`)
+parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.cleanup_consumed_batches	method	ported	src/parquet/arrow/array_reader/cached_array_reader.cr	CachedArrayReader#cleanup_consumed_batches
+parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.consume_batch	method	ported	src/parquet/arrow/array_reader/cached_array_reader.cr	CachedArrayReader#consume_batch (filter/concat selected batches)
+parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.fetch_batch	method	ported	src/parquet/arrow/array_reader/cached_array_reader.cr	CachedArrayReader#fetch_batch (shared + local cache insert)
+parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.get_batch_id_from_position	method	ported	src/parquet/arrow/array_reader/cached_array_reader.cr	CachedArrayReader#batch_id_from_position
+parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.get_data_type	method	ported	src/parquet/arrow/array_reader/cached_array_reader.cr	CachedArrayReader#data_type (delegates to inner)
+parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.get_def_levels	method	ported	src/parquet/arrow/array_reader/cached_array_reader.cr	CachedArrayReader#def_levels (always nil: no nullable parent)
+parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.get_rep_levels	method	ported	src/parquet/arrow/array_reader/cached_array_reader.cr	CachedArrayReader#rep_levels (always nil)
+parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.max_def_level	method	ported	src/parquet/arrow/array_reader/cached_array_reader.cr	CachedArrayReader#max_def_level (delegates to inner)
+parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.new	method	ported	src/parquet/arrow/array_reader/cached_array_reader.cr	CachedArrayReader#initialize(inner, cache, column_idx, role, metrics)
+parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.read_records	method	ported	src/parquet/arrow/array_reader/cached_array_reader.cr	CachedArrayReader#read_records (local cache, then shared cache, then inner)
+parquet/src/arrow/array_reader/cached_array_reader.rs::method::CachedArrayReader.skip_records	method	ported	src/parquet/arrow/array_reader/cached_array_reader.cr	CachedArrayReader#skip_records (batch-aligned false selections)
+parquet/src/arrow/array_reader/cached_array_reader.rs::method::MockArrayReader.as_any	method	intentional_divergence	spec/parquet/arrow/cached_array_reader_spec.cr	`as_any` not modelled (Crystal `is_a?`)
+parquet/src/arrow/array_reader/cached_array_reader.rs::method::MockArrayReader.consume_batch	method	ported	spec/parquet/arrow/cached_array_reader_spec.cr	MockArrayReader#consume_batch
+parquet/src/arrow/array_reader/cached_array_reader.rs::method::MockArrayReader.get_data_type	method	ported	spec/parquet/arrow/cached_array_reader_spec.cr	MockArrayReader#data_type
+parquet/src/arrow/array_reader/cached_array_reader.rs::method::MockArrayReader.get_def_levels	method	intentional_divergence	spec/parquet/arrow/cached_array_reader_spec.cr	mock relies on the ArrayReader default (nil)
+parquet/src/arrow/array_reader/cached_array_reader.rs::method::MockArrayReader.get_rep_levels	method	intentional_divergence	spec/parquet/arrow/cached_array_reader_spec.cr	mock relies on the ArrayReader default (nil)
+parquet/src/arrow/array_reader/cached_array_reader.rs::method::MockArrayReader.new	method	ported	spec/parquet/arrow/cached_array_reader_spec.cr	MockArrayReader#initialize(data)
+parquet/src/arrow/array_reader/cached_array_reader.rs::method::MockArrayReader.read_records	method	ported	spec/parquet/arrow/cached_array_reader_spec.cr	MockArrayReader#read_records
+parquet/src/arrow/array_reader/cached_array_reader.rs::method::MockArrayReader.skip_records	method	ported	spec/parquet/arrow/cached_array_reader_spec.cr	MockArrayReader#skip_records
 parquet/src/arrow/array_reader/empty_array.rs::method::EmptyArrayReader.as_any	method	intentional_divergence	src/parquet/arrow/array_reader.cr	`as_any` not modelled (Crystal `is_a?`)
 parquet/src/arrow/array_reader/empty_array.rs::method::EmptyArrayReader.consume_batch	method	ported	src/parquet/arrow/array_reader.cr	EmptyArrayReader#consume_batch
 parquet/src/arrow/array_reader/empty_array.rs::method::EmptyArrayReader.get_data_type	method	ported	src/parquet/arrow/array_reader.cr	EmptyArrayReader#data_type
@@ -971,11 +971,11 @@ parquet/src/arrow/array_reader/primitive_array.rs::method::PrimitiveArrayReader<
 parquet/src/arrow/array_reader/primitive_array.rs::method::PrimitiveArrayReader<T>.skip_records	method	ported	src/parquet/arrow/array_reader/primitive_array.cr	PrimitiveArrayReader#skip_records
 parquet/src/arrow/array_reader/primitive_array.rs::method::Vec<Int96>.into_buffer	method	missing	-	INT96 view conversion; INT96 array reader deferred
 parquet/src/arrow/array_reader/primitive_array.rs::method::Vec<bool>.into_buffer	method	ported	src/parquet/arrow/array_reader/primitive_array.cr	build_array(Array(Bool)) -> BooleanArray via BooleanBuffer
-parquet/src/arrow/array_reader/row_group_cache.rs::method::RowGroupCache.batch_size	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/row_group_cache.rs::method::RowGroupCache.get	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/row_group_cache.rs::method::RowGroupCache.insert	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/row_group_cache.rs::method::RowGroupCache.new	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/row_group_cache.rs::method::RowGroupCache.remove	method	missing	-	auto-generated
+parquet/src/arrow/array_reader/row_group_cache.rs::method::RowGroupCache.batch_size	method	ported	src/parquet/arrow/array_reader/row_group_cache.cr	RowGroupCache#batch_size
+parquet/src/arrow/array_reader/row_group_cache.rs::method::RowGroupCache.get	method	ported	src/parquet/arrow/array_reader/row_group_cache.cr	RowGroupCache#get(column_idx, batch_id)
+parquet/src/arrow/array_reader/row_group_cache.rs::method::RowGroupCache.insert	method	ported	src/parquet/arrow/array_reader/row_group_cache.cr	RowGroupCache#insert (returns false when over max_cache_bytes)
+parquet/src/arrow/array_reader/row_group_cache.rs::method::RowGroupCache.new	method	ported	src/parquet/arrow/array_reader/row_group_cache.cr	RowGroupCache#initialize(batch_size, max_cache_bytes)
+parquet/src/arrow/array_reader/row_group_cache.rs::method::RowGroupCache.remove	method	ported	src/parquet/arrow/array_reader/row_group_cache.cr	RowGroupCache#remove (returns whether an entry was evicted)
 parquet/src/arrow/array_reader/row_group_index.rs::method::RowGroupIndexReader.as_any	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/row_group_index.rs::method::RowGroupIndexReader.consume_batch	method	missing	-	auto-generated
 parquet/src/arrow/array_reader/row_group_index.rs::method::RowGroupIndexReader.get_data_type	method	missing	-	auto-generated
@@ -1027,7 +1027,7 @@ parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.parquet_sch
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.schema	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#schema
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_batch_size	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_batch_size
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_limit	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_limit
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_max_predicate_cache_size	method	intentional_divergence	src/parquet/arrow/arrow_reader.cr	sync reader ignores the cache size (upstream does too); the push decoder builder accepts it but no predicate cache is ported
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_max_predicate_cache_size	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	sync reader ignores the cache size (upstream does too, arrow-rs#8000); ParquetPushDecoderBuilder#with_max_predicate_cache_size drives RowGroupCache
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_metrics	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_metrics + ArrayReaderBuilder#metrics
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_offset	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_offset
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_projection	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_projection
@@ -1459,7 +1459,7 @@ parquet/src/arrow/in_memory_row_group.rs::method::ColumnChunkData.get_read	metho
 parquet/src/arrow/in_memory_row_group.rs::method::ColumnChunkData.len	method	ported	src/parquet/arrow/in_memory_row_group.cr	ColumnChunkData#len
 parquet/src/arrow/in_memory_row_group.rs::method::ColumnChunkIterator.next	method	ported	src/parquet/arrow/in_memory_row_group.cr	ColumnChunkIterator#next
 parquet/src/arrow/in_memory_row_group.rs::method::InMemoryRowGroup<'_>.column_chunks	method	ported	src/parquet/arrow/in_memory_row_group.cr	InMemoryRowGroup#column_chunks (SerializedPageReader + crypto context)
-parquet/src/arrow/in_memory_row_group.rs::method::InMemoryRowGroup<'_>.fetch_ranges	method	ported	src/parquet/arrow/in_memory_row_group.cr	InMemoryRowGroup#fetch_ranges (whole chunks or page-pruned ranges)
+parquet/src/arrow/in_memory_row_group.rs::method::InMemoryRowGroup<'_>.fetch_ranges	method	ported	src/parquet/arrow/in_memory_row_group.cr	InMemoryRowGroup#fetch_ranges(projection, selection, batch_size, cache_mask) (page-pruned ranges, cache columns expanded to batch boundaries)
 parquet/src/arrow/in_memory_row_group.rs::method::InMemoryRowGroup<'_>.fill_column_chunks	method	ported	src/parquet/arrow/in_memory_row_group.cr	InMemoryRowGroup#fill_column_chunks (dense/sparse)
 parquet/src/arrow/in_memory_row_group.rs::method::InMemoryRowGroup<'_>.metadata	method	ported	src/parquet/arrow/in_memory_row_group.cr	InMemoryRowGroup#metadata
 parquet/src/arrow/in_memory_row_group.rs::method::InMemoryRowGroup<'_>.num_rows	method	ported	src/parquet/arrow/in_memory_row_group.cr	InMemoryRowGroup#num_rows
@@ -1506,13 +1506,13 @@ parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequest.neede
 parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequest.try_into_in_memory_row_group	method	ported	src/parquet/arrow/push_decoder.cr	inlined: fill_column_chunks + clear_ranges
 parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequestBuilder<'a>.build	method	ported	src/parquet/arrow/push_decoder.cr	inlined
 parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequestBuilder<'a>.new	method	ported	src/parquet/arrow/push_decoder.cr	inlined (no builder)
-parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequestBuilder<'a>.with_cache_projection	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	accepted and stored on DataRequestBuilder; the cache-mask expansion is a no-op without the predicate cache
+parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequestBuilder<'a>.with_cache_projection	method	ported	src/parquet/arrow/push_decoder.cr	DataRequestBuilder#with_cache_projection -> InMemoryRowGroup#fetch_ranges cache_mask
 parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequestBuilder<'a>.with_column_chunks	method	ported	src/parquet/arrow/push_decoder.cr	DataRequestBuilder#with_column_chunks
 parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequestBuilder<'a>.with_selection	method	ported	src/parquet/arrow/push_decoder.cr	selection comes from the read plan
-parquet/src/arrow/push_decoder/reader_builder/filter.rs::method::CacheInfo.builder	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	predicate cache not ported (`RowGroupCache`); CacheInfo carries only the cache projection
-parquet/src/arrow/push_decoder/reader_builder/filter.rs::method::CacheInfo.new	method	ported	src/parquet/arrow/push_decoder.cr	CacheInfo#initialize(cache_projection) (no RowGroupCache argument)
+parquet/src/arrow/push_decoder/reader_builder/filter.rs::method::CacheInfo.builder	method	ported	src/parquet/arrow/push_decoder.cr	CacheInfo#builder -> CacheOptionsBuilder (producer/consumer)
+parquet/src/arrow/push_decoder/reader_builder/filter.rs::method::CacheInfo.new	method	ported	src/parquet/arrow/push_decoder.cr	CacheInfo#initialize(cache_projection, row_group_cache)
 parquet/src/arrow/push_decoder/reader_builder/filter.rs::method::FilterInfo.advance	method	ported	src/parquet/arrow/push_decoder.cr	FilterInfo#advance (FilterAdvanceResult::Continue/Done)
-parquet/src/arrow/push_decoder/reader_builder/filter.rs::method::FilterInfo.cache_builder	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	predicate cache not ported
+parquet/src/arrow/push_decoder/reader_builder/filter.rs::method::FilterInfo.cache_builder	method	ported	src/parquet/arrow/push_decoder.cr	FilterInfo#cache_builder (producer options for the predicate array reader)
 parquet/src/arrow/push_decoder/reader_builder/filter.rs::method::FilterInfo.cache_projection	method	ported	src/parquet/arrow/push_decoder.cr	FilterInfo#cache_projection
 parquet/src/arrow/push_decoder/reader_builder/filter.rs::method::FilterInfo.current	method	ported	src/parquet/arrow/push_decoder.cr	FilterInfo#current
 parquet/src/arrow/push_decoder/reader_builder/filter.rs::method::FilterInfo.current_mut	method	ported	src/parquet/arrow/push_decoder.cr	one #current serves upstream current/current_mut (Crystal has no mutable borrow)
@@ -1531,8 +1531,8 @@ parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowBudget.rows_aft
 parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowBudget.selected_row_limit	method	ported	src/parquet/arrow/push_decoder.cr	RowBudget#selected_row_limit drives the predicate limit (PredicateOptions#with_limit)
 parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.buffered_bytes	method	ported	src/parquet/arrow/push_decoder.cr	RowGroupReaderBuilder#buffered_bytes
 parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.clear_all_ranges	method	ported	src/parquet/arrow/push_decoder.cr	RowGroupReaderBuilder#clear_all_ranges
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.compute_cache_projection	method	ported	src/parquet/arrow/push_decoder.cr	RowGroupReaderBuilder#compute_cache_projection (result stored in CacheInfo, unused without the cache)
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.compute_cache_projection_inner	method	ported	src/parquet/arrow/push_decoder.cr	RowGroupReaderBuilder#compute_cache_projection_inner
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.compute_cache_projection	method	ported	src/parquet/arrow/push_decoder.cr	RowGroupReaderBuilder#compute_cache_projection (feeds CacheInfo/RowGroupCache)
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.compute_cache_projection_inner	method	ported	src/parquet/arrow/push_decoder.cr	RowGroupReaderBuilder#compute_cache_projection_inner (nil when the cache is disabled)
 parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.exclude_nested_columns_from_cache	method	ported	src/parquet/arrow/push_decoder.cr	RowGroupReaderBuilder#exclude_nested_columns_from_cache
 parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.has_active_row_group	method	ported	src/parquet/arrow/push_decoder.cr	RowGroupReaderBuilder#has_active_row_group?
 parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.into_parts	method	ported	src/parquet/arrow/push_decoder.cr	RowGroupReaderBuilder#into_parts
