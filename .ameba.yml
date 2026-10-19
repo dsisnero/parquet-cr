@@ -59,6 +59,7 @@ Metrics/CyclomaticComplexity:
     - src/parquet/arrow/row_selection/algebra.cr
     - src/parquet/arrow/read_plan.cr
     - src/parquet/arrow/statistics.cr
+    - src/parquet/arrow/row_selection/ranges.cr
     - src/parquet/column/writer/writer.cr
     - src/parquet_variant/variant.cr
     - src/parquet_variant/variant/debug.cr

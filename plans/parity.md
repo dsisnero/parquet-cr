@@ -84,7 +84,13 @@ little-endian layout.
   statistics and data-page statistics (from the page index) into arrow arrays
   for every supported arrow type, including null/NaN/distinct counts, row
   counts, min/max exactness and the dictionary/Decimal/Float16 conversions.
-  The arrow array readers are now all ported: `NullArrayReader`
+  Both selection cursor strategies are ported too: `RowSelectionPolicy`
+  (selectors/mask/auto) with `RowSelectionStrategy` resolution,
+  `MaskCursor`/`MaskChunk`/`LoadedRowRanges`, `expand_to_batch_boundaries`,
+  page pruning (`RowSelection#scan_ranges`/`#row_ranges_for_selected_pages`)
+  and the reader's `read_mask_batch` path, so dense selections are decoded as
+  mask chunks and filtered once per output batch. The arrow array readers are
+  now all ported: `NullArrayReader`
   (arrow-cr now has `Arrow::NullArray`), `FixedLenByteArrayReader`
   (`FixedSizeBinary`, `Decimal32/64/128/256` and `Interval(YearMonth|DayTime)`
   targets; only `Float16` needs an arrow-cr half-float array because Crystal has
@@ -100,10 +106,9 @@ little-endian layout.
   embedded `Dictionary(..)` field actually reaches the array reader builder and
   the upstream `arrow_reader` `test_dictionary_preservation` end-to-end test
   passes.
-  **Next up:** the mask cursor (`selection/cursor.rs`:
-  `RowSelectionPolicy`/`MaskCursor`/`LoadedRowRanges`) and page pruning
-  (`row_ranges_for_selected_pages`/`scan_ranges` in `selection/ranges.rs`),
-  then row-group selection (`with_row_groups`) and reader metrics.
+  **Next up:** row-group selection (`with_row_groups`/`RowGroupSelection` and
+  the reader's row-group plan), then reader metrics (`metrics.rs`) and
+  `arrow/push_decoder/`.
   Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
@@ -965,12 +970,12 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow statistics converter`; gates green
-  (`make lint`, `make test` -> 1235 examples, 0 failures). Next feature: the
-  mask cursor and page pruning. Note `make install` now requires the sibling
-  checkout `../arrow-cr`.
-- Progress by counts (ledger): 2142 `ported`, 219 `intentional_divergence`,
-  15 skipped, 1139 `missing` (of 3515 rows).
+- Last commit: `port: arrow mask cursor and page pruning`; gates green
+  (`make lint`, `make test` -> 1256 examples, 0 failures). Next feature:
+  row-group selection, then reader metrics. Note `make install` now requires
+  the sibling checkout `../arrow-cr`.
+- Progress by counts (ledger): 2162 `ported`, 208 `intentional_divergence`,
+  15 skipped, 1130 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1606,10 +1611,12 @@ Chunk status by area:
       `with_row_filter`, see `spec/parquet/arrow/row_filter_spec.cr`).
       Statistics pruning is ported too (`StatisticsConverter` in
       `src/parquet/arrow/statistics.cr`, with `spec/parquet/arrow/
-      statistics_spec.cr`). Remaining: the mask cursor/`RowSelectionPolicy`
-      (`selection/cursor.rs`, `loaded_row_ranges`), page pruning
-      (`selection/ranges.rs`), row-group selection, `metrics.rs`, and
-      `arrow/push_decoder/`.
+      statistics_spec.cr`), as are both selection cursor strategies
+      (`selection/cursor.rs`: `RowSelectionPolicy`, `MaskCursor`,
+      `LoadedRowRanges`), page pruning (`selection/ranges.rs`) and the reader's
+      `read_mask_batch` path (see `spec/parquet/arrow/
+      row_selection_cursor_spec.cr`). Remaining: row-group selection,
+      `metrics.rs`, and `arrow/push_decoder/`.
 - [ ] `arrow/arrow_writer/` (`ArrowWriter`, `levels.rs`, `byte_array.rs`),
       `arrow/mod.rs` (`ProjectionMask`, `ARROW_SCHEMA_META_KEY` plumbing,
       `apply_schema`), and `arrow/buffer/`.
@@ -1865,18 +1872,31 @@ Chunk status by area:
   mask's sub-byte offset); the `trim`/`last_set_bit_position` scan is per-bit
   (upstream scans bytes backwards) and `boolean_mask_from_selectors` fills
   through `BooleanBufferBuilder#append_n` (same bits); the upstream
-  `panic!`s are `GeneralError`s with the same messages; `scan_ranges`/
-  `row_ranges_for_selected_pages` (page pruning, `selection/ranges.rs`) and
-  `expand_to_batch_boundaries`/`auto_selection_strategy` (the mask cursor) are
-  still deferred; `from_consecutive_ranges` raises
+  `panic!`s are `GeneralError`s with the same messages; page pruning
+  (`scan_ranges`/`row_ranges_for_selected_pages`, in `row_selection/ranges.cr`)
+  returns `UInt64` byte ranges (page offsets are `i64` on disk) and `Int32` row
+  indices, and `expand_to_batch_boundaries`/`auto_selection_strategy` are
+  ported (the strategy enum lives in `row_selection.cr`, upstream
+  `selection/cursor.rs`); `from_consecutive_ranges` raises
   `GeneralError("out of order")` where upstream panics.
-- Arrow interop, read plan: the plan is always selector-backed (the bitmap
-  backing exists, but the `RowSelectionPolicy`/mask cursor is not ported), has
-  no loaded-row-ranges/page pruning and no row-group selection. `ReadPlan`
-  exposes its cursor directly instead of `row_selection_cursor_mut`, and
-  `usize` counts/offsets/limits are `Int32`. `ReadPlanBuilder#dup` is a shallow
-  copy (`build` never mutates the selection), and `BooleanArray#take_n_true`
-  lives in `read_plan.cr` because arrow-cr does not provide it.
+- Arrow interop, read plan: both cursor strategies are modelled
+  (`RowSelectionPolicy`/`RowSelectionStrategy`, `MaskCursor`/`MaskChunk`,
+  `LoadedRowRanges`, `build_cursor`), selected per plan from the selection's
+  density (default `Auto(32)`, as upstream). Divergences: `RowSelectionPolicy`
+  is a struct with a `Kind` plus the `Auto` threshold (`SELECTORS`/`MASK`
+  constants, `auto(threshold)`, `default`), `RowSelectionStrategy` lives in
+  `row_selection.cr`, `usize` counts/offsets are `Int32`, `ReadPlan` exposes
+  its cursor directly instead of `row_selection_cursor_mut`,
+  `with_loaded_row_ranges` is public (upstream `pub(crate)`) and
+  `LoadedRowRanges#ranges` is a public getter (upstream `#[cfg(test)]`),
+  `MaskCursor#next_chunk`'s debug assertions are `GeneralError`s,
+  `ReadPlanBuilder#dup` is a shallow copy (`build` never mutates the
+  selection), and `BooleanArray#take_n_true` lives in `read_plan.cr` because
+  arrow-cr does not provide it. Page pruning is only wired through the plan
+  (the sync reader never computes loaded row ranges upstream either); the
+  reader's `read_mask_batch` combines chunk masks with
+  `FilterMaskAccumulator` and filters once per output batch with the upstream
+  error messages.
 - Arrow interop, row filter (`filter.rs` + `ReadPlanBuilder::with_predicate`
   + `ArrowReaderBuilder::with_row_filter`): `ArrowPredicate` is an abstract
   class with `projection`/`evaluate`; `ArrowPredicateFn` adapts a

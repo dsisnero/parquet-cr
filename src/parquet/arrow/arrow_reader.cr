@@ -23,10 +23,11 @@ require "../file/metadata"
 # the final array reader.
 #
 # Divergences (none of the corresponding infrastructure is ported yet):
-# - the read plan is always selector-backed (no `RowSelectionPolicy`/mask
-#   cursor), there is no row-group selection and no page pruning; statistics
-#   pruning (`StatisticsConverter`), reader metrics, bloom-filter lookups and
-#   page-index/column-index policies are not modelled;
+# - there is no row-group selection (`with_row_groups`); page pruning is not
+#   wired into the reader (the sync reader does not compute loaded row ranges
+#   upstream either, but `ReadPlanBuilder#with_loaded_row_ranges` is available);
+#   statistics pruning (`StatisticsConverter`), reader metrics, bloom-filter
+#   lookups and page-index/column-index policies are not modelled;
 # - the builder takes a `File::FileReader` (upstream takes any `ChunkReader`),
 #   `ArrowReaderOptions`/`ArrowReaderMetadata`, and no encryption properties;
 #   because the port's `RowGroups` implementation (`FileRowGroups`) needs a
@@ -187,6 +188,7 @@ module Parquet
         @offset : Int32? = nil,
         @limit : Int32? = nil,
         @row_filter : RowFilter? = nil,
+        @row_selection_policy : RowSelectionPolicy = RowSelectionPolicy.default,
       )
       end
 
@@ -243,6 +245,17 @@ module Parquet
         self
       end
 
+      # Configures the policy used to materialize the row selection (upstream
+      # `with_row_selection_policy`).
+      #
+      # Defaults to `RowSelectionPolicy.default` (auto, threshold 32): dense
+      # selections are read through a mask cursor, sparse ones through a
+      # selector queue.
+      def with_row_selection_policy(policy : RowSelectionPolicy) : self
+        @row_selection_policy = policy
+        self
+      end
+
       # Provides a `RowFilter` to skip decoding rows (upstream
       # `with_row_filter`).
       #
@@ -269,7 +282,9 @@ module Parquet
         batch_size = 0 if batch_size < 0
 
         row_groups = FileRowGroups.new(@input)
-        plan_builder = ReadPlanBuilder.new(batch_size).with_selection(@row_selection)
+        plan_builder = ReadPlanBuilder.new(batch_size)
+          .with_selection(@row_selection)
+          .with_row_selection_policy(@row_selection_policy)
 
         # Update the selection based on any filters, decoding only each
         # predicate's projection.
@@ -330,7 +345,9 @@ module Parquet
         return nil if batch_size == 0
 
         cursor = @read_plan.cursor
-        if selectors = cursor.as?(RowSelectionCursor::SelectorsCursor)
+        if mask = cursor.as?(RowSelectionCursor::MaskCursor)
+          return read_mask_batch(mask, batch_size)
+        elsif selectors = cursor.as?(RowSelectionCursor::SelectorsCursor)
           read_records = 0
           while read_records < batch_size && !selectors.empty?
             front = selectors.next_selector
@@ -379,6 +396,107 @@ module Parquet
         array = array_reader.consume_batch
         struct_array = array.as(::Arrow::StructArray)
         ::Arrow::RecordBatch.from(struct_array)
+      end
+
+      # Reads one logical mask batch, potentially spanning multiple loaded
+      # ranges (upstream `read_mask_batch`).
+      #
+      # Each `MaskCursor` chunk is safe to decode because it stays within loaded
+      # pages. Gaps are crossed with `ArrayReader#skip_records`, while decoded
+      # arrays and their mask fragments remain buffered. Once `batch_size`
+      # selected rows have accumulated, the underlying batch is consumed and
+      # filtered once with the combined mask.
+      private def read_mask_batch(
+        mask_cursor : RowSelectionCursor::MaskCursor,
+        batch_size : Int32,
+      ) : ::Arrow::RecordBatch?
+        selected_rows = 0
+        filter_mask = FilterMaskAccumulator.new
+
+        while selected_rows < batch_size && !mask_cursor.empty?
+          chunk = mask_cursor.next_chunk(batch_size - selected_rows)
+
+          if chunk.initial_skip > 0
+            skipped = @array_reader.skip_records(chunk.initial_skip)
+            if skipped != chunk.initial_skip
+              raise general_err!(
+                "failed to skip rows, expected #{chunk.initial_skip}, got #{skipped}"
+              )
+            end
+          end
+
+          mask = mask_cursor.mask_values_for(chunk)
+          read = @array_reader.read_records(chunk.chunk_rows)
+          if read == 0
+            raise general_err!("reached end of column while expecting #{chunk.chunk_rows} rows")
+          end
+          if read != chunk.chunk_rows
+            raise general_err!(
+              "insufficient rows read from array reader - expected #{chunk.chunk_rows}, got #{read}"
+            )
+          end
+
+          filter_mask.append(mask.values)
+          selected_rows += chunk.selected_rows
+        end
+
+        return nil if selected_rows == 0
+
+        mask =
+          if combined = filter_mask.finish
+            combined
+          else
+            raise general_err!("Internal Error: decoded Mask batch has no filter values")
+          end
+        batch = consume_record_batch(@array_reader)
+        filtered_batch = ::Arrow.filter_record_batch(batch, ::Arrow::BooleanArray.new(mask))
+        if filtered_batch.num_rows != selected_rows
+          raise general_err!(
+            "filtered rows mismatch selection - expected #{selected_rows}, got #{filtered_batch.num_rows}"
+          )
+        end
+
+        filtered_batch
+      end
+    end
+
+    # Accumulates filter masks for decoded chunks in one logical output batch
+    # (upstream `FilterMaskAccumulator`; public here because Crystal has no
+    # module-private types).
+    #
+    # The first chunk keeps its `BooleanBuffer` without copying; a second chunk
+    # promotes the accumulator to a `BooleanBufferBuilder`, and later chunks are
+    # appended to it. The combined mask lines up with the rows the array reader
+    # buffered across the decoded chunks, so consuming the buffered batch and
+    # filtering it with the accumulated mask yields the output.
+    class FilterMaskAccumulator
+      def initialize
+        @single = nil.as(::Arrow::BooleanBuffer?)
+        @combined = nil.as(::Arrow::BooleanBufferBuilder?)
+      end
+
+      # Appends one chunk's mask.
+      def append(mask : ::Arrow::BooleanBuffer) : Nil
+        if single = @single
+          builder = ::Arrow::BooleanBufferBuilder.new(single.len + mask.len)
+          builder.append_buffer(single)
+          builder.append_buffer(mask)
+          @single = nil
+          @combined = builder
+        elsif builder = @combined
+          builder.append_buffer(mask)
+        else
+          @single = mask
+        end
+      end
+
+      # Returns the combined mask, or nil when nothing was appended.
+      def finish : ::Arrow::BooleanBuffer?
+        if builder = @combined
+          builder.finish
+        else
+          @single
+        end
       end
     end
   end

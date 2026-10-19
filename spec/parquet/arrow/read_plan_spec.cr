@@ -5,16 +5,20 @@ require "../../spec_helper"
 # ef1fa157977633f0ba21aa921f9ef3d5c669235b): `ReadPlanBuilder`,
 # `LimitedReadPlanBuilder`, `ReadPlan` and the selector cursor.
 #
-# Divergences: no row predicates (`with_predicate`), no row-selection policy
-# (mask vs selectors) and no loaded-row-ranges/page pruning, so every plan is
-# selector-backed.
+# Divergences: `usize` counts are `Int32`. The plan's helpers default to
+# `RowSelectionPolicy::SELECTORS` so these examples keep exercising the selector
+# cursor and the offset/limit transforms; the auto policy, the mask cursor and
+# loaded-row-ranges are covered by `row_selection_cursor_spec.cr`.
 private alias PArrow = Parquet::Arrow
 private alias RowSelector = Parquet::Arrow::RowSelector
 private alias RowSelection = Parquet::Arrow::RowSelection
 
 private def plan_builder(selection : RowSelection?, row_count : Int32,
                          offset : Int32? = nil, limit : Int32? = nil) : PArrow::ReadPlanBuilder
-  limited = PArrow::ReadPlanBuilder.new(1024).with_selection(selection).limited(row_count)
+  limited = PArrow::ReadPlanBuilder.new(1024)
+    .with_selection(selection)
+    .with_row_selection_policy(PArrow::RowSelectionPolicy::SELECTORS)
+    .limited(row_count)
   limited = limited.with_offset(offset) if offset
   limited = limited.with_limit(limit) if limit
   limited.build_limited

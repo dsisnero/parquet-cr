@@ -1,6 +1,7 @@
 require "arrow-cr"
 require "../errors"
 require "./row_selection/algebra"
+require "./row_selection/ranges"
 
 # Ported from `parquet/src/arrow/arrow_reader/selection/` (apache/arrow-rs
 # 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b): `selector.rs` (the
@@ -24,13 +25,24 @@ require "./row_selection/algebra"
 # Divergences: `usize` counts are `Int32`; the cached `OnceLock`s are plain
 # nilable instance variables (Crystal has no interior mutability requirement for
 # a single-threaded cache); `RowSelection#iter` is `#each` (`Enumerable`), and
-# `into_selectors`/`into_inner` leave the receiver usable; `scan_ranges`/
-# `row_ranges_for_selected_pages`/`expand_to_batch_boundaries`/
-# `auto_selection_strategy` are deferred with page pruning and the mask cursor;
-# the mask algebra is bit-at-a-time (the upstream word kernels are an
-# optimization only); `RowSelection` is not `Send`/`Sync`-constrained.
+# `into_selectors`/`into_inner` leave the receiver usable; page pruning
+# (`scan_ranges`/`row_ranges_for_selected_pages`, in `row_selection/ranges.cr`)
+# returns `UInt64` byte ranges because page offsets are `i64` on disk, and
+# `row_ranges_for_selected_pages`/`expand_to_batch_boundaries` use `Int32` row
+# indices; `RowSelectionStrategy` lives here rather than in the cursor file; the
+# mask algebra is bit-at-a-time (the upstream word kernels are an optimization
+# only); `RowSelection` is not `Send`/`Sync`-constrained.
 module Parquet
   module Arrow
+    # Fully resolved strategy for materializing a `RowSelection` during
+    # execution (upstream `selection/cursor.rs` `RowSelectionStrategy`).
+    enum RowSelectionStrategy
+      # Use a queue of `RowSelector` values.
+      Selectors
+      # Use a boolean mask to materialize the selection.
+      Mask
+    end
+
     # A run-length encoded selection of rows (upstream `RowSelector`).
     struct RowSelector
       # The number of rows in this run.
@@ -697,6 +709,94 @@ module Parquet
         RowSelectionAlgebra.union(self, other)
       end
 
+      # Given an offset index, returns the byte ranges of all data pages
+      # selected by `self` (upstream `RowSelection::scan_ranges`).
+      #
+      # This is useful for determining what byte ranges to fetch from
+      # underlying storage. Ranges are not combined or coalesced: that is left
+      # to the IO subsystem.
+      def scan_ranges(
+        page_locations : Array(::Parquet::File::PageIndex::PageLocation),
+      ) : Array(Range(UInt64, UInt64))
+        RowSelectionRanges.scan_ranges(runs, page_locations)
+      end
+
+      # Returns the complete row ranges of the pages selected by `#scan_ranges`
+      # (upstream `RowSelection::row_ranges_for_selected_pages`).
+      def row_ranges_for_selected_pages(
+        page_locations : Array(::Parquet::File::PageIndex::PageLocation),
+        total_rows : Int32,
+      ) : Array(Range(Int32, Int32))
+        selected_pages = scan_ranges(page_locations)
+        row_ranges = [] of Range(Int32, Int32)
+        selected_index = 0
+
+        page_locations.each_with_index do |page, index|
+          break if selected_index >= selected_pages.size
+
+          selected_page = selected_pages[selected_index]
+          next unless selected_page.begin == page.offset.to_u64
+
+          selected_index += 1
+          end_ =
+            if next_page = page_locations[index + 1]?
+              next_page.first_row_index.to_i32
+            else
+              total_rows
+            end
+          row_ranges << (page.first_row_index.to_i32...end_)
+        end
+
+        row_ranges
+      end
+
+      # Expands the selection to align with batch boundaries (upstream
+      # `RowSelection::expand_to_batch_boundaries`).
+      #
+      # This is needed when using cached array readers to ensure that the cached
+      # data covers full batches.
+      def expand_to_batch_boundaries(batch_size : Int32, total_rows : Int32) : RowSelection
+        return dup if batch_size == 0
+
+        RowSelectionRanges.expand_to_batch_boundaries(runs, batch_size, total_rows)
+      end
+
+      # Chooses between the mask and selector cursor strategies for this
+      # selection (upstream `RowSelection::auto_selection_strategy`).
+      #
+      # A mask is preferred when `total_rows < run_count * threshold`; for a
+      # mask-backed selection the run count is never materialized (it is probed
+      # only as far as needed).
+      def auto_selection_strategy(threshold : Int32) : RowSelectionStrategy
+        inner = @inner
+        if inner.is_a?(RowSelectionInner::Mask)
+          mask = inner.mask.mask
+          total_rows = mask.len
+          return RowSelectionStrategy::Mask if total_rows == 0
+
+          # A mask is preferred when total_rows < run_count * threshold, so only
+          # scan until the first run count that can make the inequality true.
+          min_mask_runs = threshold > 0 ? total_rows // threshold + 1 : nil
+          if min_runs = min_mask_runs
+            return SelectionMasks.has_at_least_runs?(mask, min_runs) ? RowSelectionStrategy::Mask : RowSelectionStrategy::Selectors
+          end
+          return RowSelectionStrategy::Selectors
+        end
+
+        total_rows = 0
+        effective_count = 0
+        inner.as(RowSelectionInner::Selectors).selectors.each do |selector|
+          next unless selector.row_count > 0
+
+          total_rows += selector.row_count
+          effective_count += 1
+        end
+
+        return RowSelectionStrategy::Mask if effective_count == 0
+
+        total_rows.to_i64 < effective_count.to_i64 * threshold.to_i64 ? RowSelectionStrategy::Mask : RowSelectionStrategy::Selectors
+      end
+
       # Copies the selection, dropping a bitmap-backed selector cache
       # (upstream `Clone`).
       def dup : RowSelection
@@ -769,6 +869,16 @@ module Parquet
           result << selector
         end
         result
+      end
+
+      # The RLE runs of either backing, materializing a mask's cache.
+      private def runs : Array(RowSelector)
+        inner = @inner
+        if inner.is_a?(RowSelectionInner::Mask)
+          inner.mask.selectors
+        else
+          inner.as(RowSelectionInner::Selectors).selectors
+        end
       end
 
       # Upstream's mixed-backing `PartialEq`: the selector runs must line up
