@@ -116,10 +116,16 @@ little-endian layout.
   embedded `Dictionary(..)` field actually reaches the array reader builder and
   the upstream `arrow_reader` `test_dictionary_preservation` end-to-end test
   passes.
+  On the variant side, `parquet-variant-json`'s Variant → JSON direction is
+  ported (`src/parquet_variant_json/`: `Variant#to_json`/`#to_json_string`/
+  `#to_json_value`, base64 binary, chrono-compatible RFC 3339 timestamps,
+  trimmed time fractions, object/list conversion); the JSON → Variant
+  direction is deferred (it needs `VariantBuilderExt`/`ObjectFieldBuilder`).
   **Next up:** `arrow/push_decoder/` (which needs the generic
   `ArrowReaderBuilder<I>` refactor that upstream shares between the sync, async
-  and push builders), then virtual columns (blocked on arrow-cr canonical
-  extension types) and the arrow writer (needs `column/page_store.rs`).
+  and push builders), then `parquet-variant-json`'s JSON → Variant direction,
+  virtual columns (blocked on arrow-cr canonical extension types) and the arrow
+  writer (needs `column/page_store.rs`).
   Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
@@ -726,9 +732,10 @@ little-endian layout.
      - **Blocked by design**: `async_reader`/`async_writer`/`object_store`
        suffix fetchers (Rust tokio/futures; the fiber mapping decision has to be
        recorded first).
-     - **Actionable without arrow** (pick one next): `parquet-variant-json`
-       (`serde_json` → `JSON::Any`, no arrow dependency), and the `column/mod.rs`
-       glue that Phase 2.2 still lists as pending.
+     - **Actionable without arrow** (pick one next): the `column/mod.rs` glue
+       that Phase 2.2 still lists as pending. `parquet-variant-json`'s
+       Variant → JSON direction is ported; its JSON → Variant direction is
+       deferred with `VariantBuilderExt`.
 - Remaining `missing` ledger rows are dominated by deferred areas (arrow,
   variant-compute, benches/examples), `HeapSize`/`memory_size` (intentional
   divergence), and auto-generated `data_type` trait impls (`as_any`/`set_data`/
@@ -981,13 +988,13 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow projection without nested types`; gates green
-  (`make lint`, `make test` -> 1275 examples, 0 failures). Next feature:
-  `arrow/push_decoder/` (a large module: its gate needs the generic
+- Last commit: `port: parquet-variant-json variant to json`; gates green
+  (`make lint`, `make test` -> 1295 examples, 0 failures). Next feature:
+  `arrow/push_decoder/` (a large module: it needs the generic
   `ArrowReaderBuilder` refactor first). Note `make install` now requires the
   sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 2180 `ported`, 206 `intentional_divergence`,
-  15 skipped, 1114 `missing` (of 3515 rows).
+- Progress by counts (ledger): 2185 `ported`, 208 `intentional_divergence`,
+  15 skipped, 1107 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1434,7 +1441,14 @@ Chunk status by area:
   `VariantBuilderExt`/`ObjectFieldBuilder` are intentional divergences (Crystal
   copies substrings; explicit `abandon`; builder handles all types directly).
 - [ ] `parquet-variant-compute`.
-- [ ] `parquet-variant-json`.
+- [~] `parquet-variant-json`: the Variant → JSON direction is ported
+  (`src/parquet_variant_json/variant_to_json.cr` + `formatting.cr`:
+  `Variant#to_json`/`#to_json_string`/`#to_json_value`, `Formatting`'s
+  date/RFC 3339/trimmed-time/base64/float helpers, object + list converters, and
+  all 20 upstream `to_json.rs` test groups in
+  `spec/parquet_variant/json_spec.cr`). Deferred: `JsonToVariant`/`append_json`
+  (`from_json.rs`), which need `VariantBuilderExt`/`ObjectFieldBuilder`.
+
 
 ### 3.2 Geospatial
 
@@ -2420,6 +2434,24 @@ Chunk status by area:
   `f64::min`/`max` are explicit helpers (Crystal's propagate NaN);
   `WraparoundInterval#split` is `protected`; `From<(f64,f64)>`/`From<Interval>`
   are `WraparoundInterval.new(lo, hi)`/`.from_interval`.
+- `parquet-variant-json` (Variant → JSON): lives in `src/parquet_variant_json/`
+  (`ParquetVariantJson` module), required from `src/parquet-cr.cr`; the upstream
+  `VariantToJson` extension trait becomes `ParquetVariant::Variant#to_json`
+  (also Crystal's `Object#to_json(IO)` hook), `#to_json_string` and
+  `#to_json_value`. Divergences: `serde_json::Value` is `JSON::Any` (numbers are
+  `Int64`/`Float64`, so a `u64` above `Int64::MAX` becomes a `Float64`),
+  `arrow_schema::ArrowError` is `Parquet::ArrowError` ("Invalid float value" /
+  "Invalid double value" for non-finite floats), chrono's
+  `NaiveDate`/`NaiveDateTime`/`NaiveTime` are `Time`/`Time::Span`, and
+  `Formatting` reproduces chrono's `to_rfc3339` (shortest 0/3/6/9 fraction +
+  `+HH:MM`) and Rust's `Display` float spelling (`0` rather than `0.0`;
+  Crystal's exponent form is kept for magnitudes Crystal prints in scientific
+  notation). Upstream's `test_decimal_precision_behavior` equality between the
+  parsed string and `to_json_value` is relaxed by one ULP for values above
+  2^53: serde_json's float parser multiplies by powers of ten (matching
+  `integer as f64 / divisor as f64`) while Crystal's parser is correctly
+  rounded. The JSON → Variant direction (`JsonToVariant`/`append_json`) is
+  deferred with `VariantBuilderExt`/`ObjectFieldBuilder`.
 - `chunk_reader`: `BytesChunkReader#get_read`/`get_bytes` and
   `FileChunkReader#get_bytes` raise the upstream `EOF` messages
   ("Expected to read ... while file has length ..."); `FileChunkReader` reads

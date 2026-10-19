@@ -290,13 +290,13 @@ parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToUuidArrowRowBu
 parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToUuidArrowRowBuilder<'a>.append_value	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToUuidArrowRowBuilder<'a>.finish	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToUuidArrowRowBuilder<'a>.new	method	missing	-	auto-generated
-parquet-variant-json/src/from_json.rs::method::JsonToVariantTest<'_>.run	method	missing	-	auto-generated
-parquet-variant-json/src/from_json.rs::method::T.append_json	method	missing	-	auto-generated
-parquet-variant-json/src/to_json.rs::const::DATE_FORMAT	const	missing	-	auto-generated
-parquet-variant-json/src/to_json.rs::method::JsonTest.run	method	missing	-	auto-generated
-parquet-variant-json/src/to_json.rs::method::Variant<'_, '_>.to_json	method	missing	-	auto-generated
-parquet-variant-json/src/to_json.rs::method::Variant<'_, '_>.to_json_string	method	missing	-	auto-generated
-parquet-variant-json/src/to_json.rs::method::Variant<'_, '_>.to_json_value	method	missing	-	auto-generated
+parquet-variant-json/src/from_json.rs::method::JsonToVariantTest<'_>.run	method	intentional_divergence	spec/parquet_variant/json_spec.cr	from_json tests deferred with `from_json` (needs VariantBuilderExt)
+parquet-variant-json/src/from_json.rs::method::T.append_json	method	intentional_divergence	-	JSON -> Variant deferred (needs VariantBuilderExt/ObjectFieldBuilder)
+parquet-variant-json/src/to_json.rs::const::DATE_FORMAT	const	ported	src/parquet_variant_json/formatting.cr	Formatting::DATE_FORMAT
+parquet-variant-json/src/to_json.rs::method::JsonTest.run	method	ported	spec/parquet_variant/json_spec.cr	check_json_test (spec helper)
+parquet-variant-json/src/to_json.rs::method::Variant<'_, '_>.to_json	method	ported	src/parquet_variant_json/variant_to_json.cr	Variant#to_json(io)
+parquet-variant-json/src/to_json.rs::method::Variant<'_, '_>.to_json_string	method	ported	src/parquet_variant_json/variant_to_json.cr	Variant#to_json_string
+parquet-variant-json/src/to_json.rs::method::Variant<'_, '_>.to_json_value	method	ported	src/parquet_variant_json/variant_to_json.cr	Variant#to_json_value (JSON::Any)
 parquet-variant/benches/variant_builder.rs::method::RandomStringGenerator.new	method	missing	-	auto-generated
 parquet-variant/benches/variant_builder.rs::method::RandomStringGenerator.next	method	missing	-	auto-generated
 parquet-variant/benches/variant_validation.rs::const::SUFFIXES	const	missing	-	auto-generated
