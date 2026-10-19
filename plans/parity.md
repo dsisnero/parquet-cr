@@ -97,8 +97,10 @@ little-endian layout.
   Reader metrics are ported as well: `ArrowReaderMetrics` (disabled/enabled with
   shared atomic counters, `with_metrics` on the builder and the metrics threaded
   into `ArrayReaderBuilder`); only the deferred predicate cache increments them,
-  so synchronous reads report zero, as upstream. The arrow array readers are now
-  all ported: `NullArrayReader`
+  so synchronous reads report zero, as upstream. The projection layer also has
+  `ProjectionMask#without_nested_types` (drops leaves of nested structs, lists
+  and maps; `nil` when nothing flat remains) with its four upstream tests. The
+  arrow array readers are now all ported: `NullArrayReader`
   (arrow-cr now has `Arrow::NullArray`), `FixedLenByteArrayReader`
   (`FixedSizeBinary`, `Decimal32/64/128/256` and `Interval(YearMonth|DayTime)`
   targets; only `Float16` needs an arrow-cr half-float array because Crystal has
@@ -114,8 +116,10 @@ little-endian layout.
   embedded `Dictionary(..)` field actually reaches the array reader builder and
   the upstream `arrow_reader` `test_dictionary_preservation` end-to-end test
   passes.
-  **Next up:** `arrow/push_decoder/`, `ProjectionMask::without_nested_types`
-  and the remaining arrow-writer work (which needs `column/page_store.rs`).
+  **Next up:** `arrow/push_decoder/` (which needs the generic
+  `ArrowReaderBuilder<I>` refactor that upstream shares between the sync, async
+  and push builders), then virtual columns (blocked on arrow-cr canonical
+  extension types) and the arrow writer (needs `column/page_store.rs`).
   Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
@@ -977,12 +981,13 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow reader metrics`; gates green
-  (`make lint`, `make test` -> 1271 examples, 0 failures). Next feature:
-  `arrow/push_decoder/`. Note `make install` now requires the sibling checkout
-  `../arrow-cr`.
-- Progress by counts (ledger): 2179 `ported`, 206 `intentional_divergence`,
-  15 skipped, 1115 `missing` (of 3515 rows).
+- Last commit: `port: arrow projection without nested types`; gates green
+  (`make lint`, `make test` -> 1275 examples, 0 failures). Next feature:
+  `arrow/push_decoder/` (a large module: its gate needs the generic
+  `ArrowReaderBuilder` refactor first). Note `make install` now requires the
+  sibling checkout `../arrow-cr`.
+- Progress by counts (ledger): 2180 `ported`, 206 `intentional_divergence`,
+  15 skipped, 1114 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1541,8 +1546,9 @@ Chunk status by area:
         `spec/parquet/arrow/schema_spec.cr`).
   - [x] `arrow/mod.rs` `ProjectionMask` (`all`, `none`, `leaves`, `roots`,
         `columns`, `leaf_included?`, `union`, `intersect`) and `parquet_column`
-        (`src/parquet/arrow/mod.cr`, `spec/parquet/arrow/projection_spec.cr`);
-        `without_nested_types` is a follow-up (used by `push_decoder`/selection).
+        (`src/parquet/arrow/mod.cr`, `spec/parquet/arrow/projection_spec.cr`),
+        including `without_nested_types` (public here; upstream `pub(crate)`)
+        with its four upstream tests.
   - [x] `arrow/schema/primitive.rs` `convert_primitive`/`apply_hint`/
         `from_parquet` (`src/parquet/arrow/schema/primitive.cr`,
         `spec/parquet/arrow/primitive_spec.cr`).
@@ -1624,11 +1630,11 @@ Chunk status by area:
       `read_mask_batch` path (see `spec/parquet/arrow/
       row_selection_cursor_spec.cr`), and row-group selection
       (`RowGroupSelection`/`RowGroupPlan` + `with_row_groups`, see
-      `spec/parquet/arrow/row_group_selection_spec.cr`) and reader metrics
+      `spec/parquet/arrow/row_group_selection_spec.cr`), reader metrics
       (`ArrowReaderMetrics` + `with_metrics`, see
-      `spec/parquet/arrow/metrics_spec.cr`). Remaining: `arrow/push_decoder/`,
-      `ProjectionMask::without_nested_types`, virtual columns and the arrow
-      writer.
+      `spec/parquet/arrow/metrics_spec.cr`) and
+      `ProjectionMask#without_nested_types`. Remaining: `arrow/push_decoder/`,
+      virtual columns and the arrow writer.
 - [ ] `arrow/arrow_writer/` (`ArrowWriter`, `levels.rs`, `byte_array.rs`),
       `arrow/mod.rs` (`ProjectionMask`, `ARROW_SCHEMA_META_KEY` plumbing,
       `apply_schema`), and `arrow/buffer/`.
@@ -1781,7 +1787,9 @@ Chunk status by area:
   Upstream's `{:?}` error formatting is approximated with the underlying
   message. `ProjectionMask` exposes its `mask` and a `leaves_with_mask`
   constructor (upstream keeps the field private; its tests construct it
-  in-crate) and `leaf_included` → `leaf_included?`; `convert_primitive`'s
+  in-crate), has the upstream-derived `==` (`Option<Vec<bool>>` equality) and
+  `leaf_included` → `leaf_included?`, and `without_nested_types` is public
+  (upstream `pub(crate)`); `convert_primitive`'s
   `apply_hint`/`from_parquet` are private module methods, and the physical/logical
   dispatch is a `case` over `LogicalType` subclasses plus the `ConvertedType`
   fallback with `arrow_err!`/`general_err!` where upstream has `arrow_err!`/

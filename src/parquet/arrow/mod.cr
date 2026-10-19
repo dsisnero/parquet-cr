@@ -22,6 +22,12 @@ module Parquet
       def initialize(@mask : Array(Bool)? = nil)
       end
 
+      # Upstream `#[derive(PartialEq, Eq)]`: masks are equal when their per-leaf
+      # masks are equal (`nil` = all).
+      def ==(other : ProjectionMask) : Bool
+        @mask == other.mask
+      end
+
       # Creates a mask which selects all columns.
       def self.all : ProjectionMask
         new(nil)
@@ -106,6 +112,44 @@ module Parquet
           @mask = self_mask.map_with_index { |value, i| value && other_mask[i] }
         end
         nil
+      end
+
+      # Returns a new mask that excludes any leaf columns that are part of a
+      # nested type, such as a struct, list or map (upstream
+      # `without_nested_types`).
+      #
+      # Even a one-leaf group is nested: caching it would drop its parent
+      # definition levels. Returns nil when no non-nested column is selected.
+      #
+      # Divergence: upstream is `pub(crate)` (used by `push_decoder` and the
+      # selection machinery); it is public here so the ported tests can reach
+      # it without an in-crate test module.
+      def without_nested_types(schema : Schema::SchemaDescriptor) : ProjectionMask?
+        num_leaves = schema.num_columns
+        num_roots = schema.schema.get_fields.size
+
+        # Count how many leaves each root column has.
+        root_leaf_counts = Array(Int32).new(num_roots, 0)
+        (0...num_leaves).each do |leaf_idx|
+          root_idx = schema.get_column_root_idx(leaf_idx)
+          root_leaf_counts[root_idx] += 1
+        end
+
+        # Keep only top-level primitive columns.
+        included_leaves = [] of Int32
+        (0...num_leaves).each do |leaf_idx|
+          next unless leaf_included?(leaf_idx)
+
+          root = schema.get_column_root(leaf_idx)
+          root_idx = schema.get_column_root_idx(leaf_idx)
+          if root_leaf_counts[root_idx] == 1 && root.primitive?
+            included_leaves << leaf_idx
+          end
+        end
+
+        return nil if included_leaves.empty?
+
+        ProjectionMask.leaves(schema, included_leaves)
       end
     end
 

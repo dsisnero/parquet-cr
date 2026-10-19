@@ -6,8 +6,8 @@ require "../../spec_helper"
 # `parquet/src/arrow/schema/primitive.rs` (`convert_primitive` + its tests)
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
 #
-# `ProjectionMask::without_nested_types` and its tests are a follow-up
-# (`push_decoder`/selection use it); everything else on the mask is here.
+# `ProjectionMask::without_nested_types` (upstream `pub(crate)`, used by
+# `push_decoder`/selection) is public here with its four upstream tests.
 private alias PArrow = Parquet::Arrow
 private alias PSchema = Parquet::Schema
 private alias PType = Parquet::Type
@@ -176,6 +176,99 @@ describe Parquet::Arrow do
     field.name.should eq("b")
 
     PArrow.parquet_column(schema, arrow_schema, "missing").should be_nil
+  end
+
+  it "keeps every leaf of a flat schema (upstream test_projection_mask_without_nested_no_nested)" do
+    schema = parse_parquet_schema(<<-SCHEMA)
+      message test_schema {
+        OPTIONAL INT32 a;
+        OPTIONAL INT32 b;
+        REQUIRED DOUBLE d;
+      }
+      SCHEMA
+
+    # All columns are non-nested, but `without_nested_types` still returns a new
+    # mask rather than the catch-all mask.
+    PArrow::ProjectionMask.all.without_nested_types(schema)
+      .should eq(PArrow::ProjectionMask.leaves(schema, [0, 1, 2]))
+
+    mask = PArrow::ProjectionMask.leaves(schema, [1, 2])
+    mask.without_nested_types(schema).should eq(mask.dup)
+  end
+
+  it "drops leaves of nested structs and lists (upstream test_projection_mask_without_nested_nested)" do
+    schema = parse_parquet_schema(<<-SCHEMA)
+      message test_schema {
+        OPTIONAL INT32 a;
+        OPTIONAL group b {
+          REQUIRED INT32 b1;
+          OPTIONAL INT64 b2;
+        }
+        OPTIONAL group c (LIST) {
+          REPEATED group list {
+            OPTIONAL INT32 element;
+          }
+        }
+        REQUIRED DOUBLE d;
+      }
+      SCHEMA
+
+    # All leaves -> a, d.
+    PArrow::ProjectionMask.all.without_nested_types(schema)
+      .should eq(PArrow::ProjectionMask.leaves(schema, [0, 4]))
+
+    # b1 is nested (a one-leaf group still drops its parent definition levels).
+    PArrow::ProjectionMask.leaves(schema, [1]).without_nested_types(schema).should be_nil
+
+    # b2, d -> d.
+    PArrow::ProjectionMask.leaves(schema, [1, 4]).without_nested_types(schema)
+      .should eq(PArrow::ProjectionMask.leaves(schema, [4]))
+
+    # The list element is nested.
+    PArrow::ProjectionMask.leaves(schema, [3]).without_nested_types(schema).should be_nil
+  end
+
+  it "drops every leaf of a map-only schema (upstream test_projection_mask_without_nested_map_only)" do
+    schema = parse_parquet_schema(<<-SCHEMA)
+      message test_schema {
+        required group my_map (MAP) {
+          repeated group key_value {
+            required binary key (STRING);
+            optional int32 value;
+          }
+        }
+      }
+      SCHEMA
+
+    PArrow::ProjectionMask.all.without_nested_types(schema).should be_nil
+    PArrow::ProjectionMask.leaves(schema, [0]).without_nested_types(schema).should be_nil
+    PArrow::ProjectionMask.leaves(schema, [1]).without_nested_types(schema).should be_nil
+  end
+
+  it "keeps flat columns next to a map (upstream test_projection_mask_without_nested_map_with_non_nested)" do
+    schema = parse_parquet_schema(<<-SCHEMA)
+      message test_schema {
+        REQUIRED INT32 a;
+        required group my_map (MAP) {
+          repeated group key_value {
+            required binary key (STRING);
+            optional int32 value;
+          }
+        }
+        REQUIRED INT32 b;
+      }
+      SCHEMA
+
+    # All leaves -> a, b.
+    PArrow::ProjectionMask.all.without_nested_types(schema)
+      .should eq(PArrow::ProjectionMask.leaves(schema, [0, 3]))
+
+    # key, value, b -> b.
+    PArrow::ProjectionMask.leaves(schema, [1, 2, 3]).without_nested_types(schema)
+      .should eq(PArrow::ProjectionMask.leaves(schema, [3]))
+
+    # key, value -> none.
+    PArrow::ProjectionMask.leaves(schema, [1, 2]).without_nested_types(schema).should be_nil
   end
 
   it "rejects nested arrow fields in parquet_column" do

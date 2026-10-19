@@ -1474,7 +1474,7 @@ parquet/src/arrow/mod.rs::method::ProjectionMask.leaves	method	ported	src/parque
 parquet/src/arrow/mod.rs::method::ProjectionMask.none	method	ported	src/parquet/arrow/mod.cr	ProjectionMask.none
 parquet/src/arrow/mod.rs::method::ProjectionMask.roots	method	ported	src/parquet/arrow/mod.cr	ProjectionMask.roots
 parquet/src/arrow/mod.rs::method::ProjectionMask.union	method	ported	src/parquet/arrow/mod.cr	ProjectionMask#union (mutates self)
-parquet/src/arrow/mod.rs::method::ProjectionMask.without_nested_types	method	missing	-	follow-up: used by push_decoder/selection
+parquet/src/arrow/mod.rs::method::ProjectionMask.without_nested_types	method	ported	src/parquet/arrow/mod.cr	ProjectionMask#without_nested_types (public; upstream pub(crate))
 parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.buffered_bytes	method	missing	-	auto-generated
 parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.clear_all_ranges	method	missing	-	auto-generated
 parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.into_builder	method	missing	-	auto-generated
