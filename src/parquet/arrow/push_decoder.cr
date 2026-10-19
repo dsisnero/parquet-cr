@@ -94,6 +94,107 @@ module Parquet
       end
     end
 
+    # Row groups and selections that have not yet been handed to the row-group
+    # reader (upstream `QueuedRowGroups`).
+    #
+    # Divergence: upstream's `Global(vec)`/`PerRowGroup(vec)` enum is a
+    # `Kind`-tagged class.
+    class QueuedRowGroups
+      enum Kind
+        # One selection cursor spans all queued row groups.
+        Global
+        # Selections are already relative to their respective row groups.
+        PerRowGroup
+      end
+
+      getter kind : Kind
+      @row_groups : Array(Int32)
+      @selection : RowSelection?
+      @selections : Array(RowGroupSelection)
+
+      def initialize(
+        @kind : Kind,
+        @row_groups : Array(Int32) = [] of Int32,
+        @selection : RowSelection? = nil,
+        @selections : Array(RowGroupSelection) = [] of RowGroupSelection,
+      )
+      end
+
+      # Validates and queues a row-group plan (upstream `QueuedRowGroups::try_new`).
+      def self.try_new(
+        metadata : File::Metadata::ParquetMetaData,
+        plan : RowGroupPlan,
+      ) : QueuedRowGroups
+        if plan.per_row_group?
+          plan.selections.each do |row_group|
+            row_count = metadata.row_group_num_rows(row_group.row_group_index)
+            if selection = row_group.selection
+              selection_rows = selection.total_row_count
+              if selection_rows > row_count
+                raise general_err!(
+                  "Row selection for row group #{row_group.row_group_index} contains " \
+                  "#{selection_rows} rows, but the row group has #{row_count}"
+                )
+              end
+            end
+          end
+          new(Kind::PerRowGroup, selections: plan.selections.dup)
+        elsif plan.conflicting?
+          raise RowGroupPlan.conflict_error
+        else
+          row_groups = plan.row_groups || (0...metadata.num_row_groups).to_a
+          new(Kind::Global, row_groups: row_groups.dup, selection: plan.selection)
+        end
+      end
+
+      # The index of the next queued row group, if any.
+      def front : Int32?
+        if @kind.global?
+          @row_groups.first?
+        else
+          @selections.first?.try(&.row_group_index)
+        end
+      end
+
+      # Number of queued row groups.
+      def size : Int32
+        @kind.global? ? @row_groups.size : @selections.size
+      end
+
+      def empty? : Bool
+        size == 0
+      end
+
+      def clear : Nil
+        if @kind.global?
+          @row_groups.clear
+          @selection = nil
+        else
+          @selections.clear
+        end
+        nil
+      end
+
+      # Whether a shared global selection has no selected rows left.
+      def global_selection_exhausted? : Bool
+        return false unless @kind.global?
+
+        selection = @selection
+        !selection.nil? && selection.row_count == 0
+      end
+
+      # Removes the front row group and returns its local selection.
+      def pop_front_selection(row_count : Int32) : RowSelection?
+        if @kind.global?
+          @row_groups.shift
+          @selection.try(&.split_off(row_count))
+        else
+          row_group = @selections.shift
+          row_group.selection
+        end
+      end
+    end
+
     # The row groups and rows still to be decoded (upstream
     # `RemainingRowGroups`).
     class RemainingRowGroups
@@ -114,8 +215,7 @@ module Parquet
 
       def initialize(
         @metadata : File::Metadata::ParquetMetaData,
-        @row_groups : Array(Int32),
-        @selection : RowSelection?,
+        @queued : QueuedRowGroups,
         @budget : RowBudget,
         @batch_size : Int32,
         @projection : ProjectionMask,
@@ -151,7 +251,7 @@ module Parquet
       # Number of row groups remaining (not including the one currently being
       # decoded).
       def row_groups_remaining : Int32
-        @row_groups.size
+        @queued.size
       end
 
       # Returns a `ParquetRecordBatchReader` for the next row group, or the byte
@@ -233,18 +333,18 @@ module Parquet
       # `RowGroupFrontier#next_readable_row_group`).
       private def next_readable_row_group : Tuple(Int32, Int32, RowSelection?)?
         loop do
-          return nil if @row_groups.empty?
+          return nil if @queued.empty?
 
-          selection = @selection
-          if @budget.exhausted? || (selection && selection.row_count == 0)
-            @row_groups.clear
-            @selection = nil
+          if @budget.exhausted? || @queued.global_selection_exhausted?
+            @queued.clear
             return nil
           end
 
-          row_group_idx = @row_groups.shift
-          row_count = @metadata.row_group(row_group_idx).num_rows.to_i32
-          local_selection = selection.try(&.split_off(row_count))
+          row_group_idx = @queued.front
+          return nil unless row_group_idx
+
+          row_count = @metadata.row_group_num_rows(row_group_idx).to_i32
+          local_selection = @queued.pop_front_selection(row_count)
           selected_rows = local_selection.try(&.row_count) || row_count
           next if selected_rows == 0
 
@@ -433,6 +533,17 @@ module Parquet
         self
       end
 
+      # Selects rows within each row group, in the supplied order (upstream
+      # `with_row_group_selections`).
+      #
+      # Row-group-local selections are in row-group coordinates and may repeat
+      # row groups. They are mutually exclusive with `with_row_groups` and
+      # `with_row_selection`; mixing them is an error reported by `build`.
+      def with_row_group_selections(selections : Array(RowGroupSelection)) : self
+        @row_group_plan.set_row_group_selections(selections)
+        self
+      end
+
       # Selects rows across the concatenated selected row groups.
       def with_row_selection(selection : RowSelection) : self
         @row_group_plan.set_row_selection(selection)
@@ -477,13 +588,12 @@ module Parquet
 
       # Builds the decoder (upstream `build`).
       def build : ParquetPushDecoder
-        row_groups, selection = @row_group_plan.into_global
-        queued = row_groups || (0...@metadata.num_row_groups).to_a
+        # Validates per-row-group selections and rejects conflicting plans.
+        queued = QueuedRowGroups.try_new(@metadata, @row_group_plan)
 
         remaining = RemainingRowGroups.new(
           @metadata,
-          queued.dup,
-          selection,
+          queued,
           RowBudget.new(@offset, @limit),
           @batch_size,
           @projection,

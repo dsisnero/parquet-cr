@@ -328,3 +328,166 @@ describe Parquet::Arrow::ParquetPushDecoder do
     expect_finished(decoder.try_decode)
   end
 end
+
+private alias RowGroupSelection = Parquet::Arrow::RowGroupSelection
+
+private def prefetch_test_file(decoder : ParquetPushDecoder, bytes : Bytes) : Nil
+  decoder.push_range(0_u64...bytes.size.to_u64, bytes)
+end
+
+describe "ParquetPushDecoder row-group-local selections" do
+  it "uses local coordinates and preserves the supplied order (upstream test_decoder_row_group_local_selections)" do
+    bytes = test_file_bytes
+    metadata = test_metadata(bytes)
+
+    # A bitmap selection covering local rows 25..45 of row group 1 (the bitmap
+    # is shorter than the row group, so later rows are skipped).
+    bitmap = Arrow::BooleanBuffer.from_slice(
+      Array(Bool).new(45) { |row| row >= 25 }
+    )
+    rle = RowSelection.new([RowSelector.skip(190), RowSelector.select(10)])
+
+    decoder = ParquetPushDecoderBuilder.try_new_decoder(metadata)
+      .with_row_group_selections([
+        RowGroupSelection.new(1, RowSelection.from_boolean_buffer(bitmap)),
+        RowGroupSelection.new(0, rle),
+      ])
+      .build
+    prefetch_test_file(decoder, bytes)
+
+    check_rows(expect_data(decoder.try_decode), 225, 20)
+    check_rows(expect_data(decoder.try_decode), 190, 10)
+    expect_finished(decoder.try_decode)
+  end
+
+  it "applies offset and limit across local selections (upstream test_row_group_local_selections_respect_offset_and_limit)" do
+    bytes = test_file_bytes
+    decoder = ParquetPushDecoderBuilder.try_new_decoder(test_metadata(bytes))
+      .with_row_group_selections([
+        RowGroupSelection.new(1),
+        RowGroupSelection.new(0),
+      ])
+      .with_offset(195)
+      .with_limit(10)
+      .build
+    prefetch_test_file(decoder, bytes)
+
+    check_rows(expect_data(decoder.try_decode), 395, 5)
+    check_rows(expect_data(decoder.try_decode), 0, 5)
+    expect_finished(decoder.try_decode)
+  end
+
+  it "allows duplicate row groups (upstream test_row_group_local_selections_allow_duplicate_row_groups)" do
+    bytes = test_file_bytes
+    decoder = ParquetPushDecoderBuilder.try_new_decoder(test_metadata(bytes))
+      .with_row_group_selections([
+        RowGroupSelection.new(0),
+        RowGroupSelection.new(0),
+      ])
+      .build
+    prefetch_test_file(decoder, bytes)
+
+    check_rows(expect_data(decoder.try_decode), 0, 200)
+    check_rows(expect_data(decoder.try_decode), 0, 200)
+    expect_finished(decoder.try_decode)
+  end
+
+  it "skips trailing rows of a short local selection (upstream test_short_row_group_local_selection_skips_trailing_rows)" do
+    bytes = test_file_bytes
+    decoder = ParquetPushDecoderBuilder.try_new_decoder(test_metadata(bytes))
+      .with_row_group_selections([
+        RowGroupSelection.new(1, RowSelection.new([
+          RowSelector.skip(5),
+          RowSelector.select(3),
+        ])),
+      ])
+      .build
+    prefetch_test_file(decoder, bytes)
+
+    check_rows(expect_data(decoder.try_decode), 205, 3)
+    expect_finished(decoder.try_decode)
+  end
+
+  it "reads nothing for an empty local selection list (upstream test_empty_row_group_local_selections_read_nothing)" do
+    bytes = test_file_bytes
+    decoder = ParquetPushDecoderBuilder.try_new_decoder(test_metadata(bytes))
+      .with_row_group_selections([] of RowGroupSelection)
+      .build
+
+    expect_finished(decoder.try_decode)
+  end
+
+  it "replaces earlier local configuration (upstream test_row_group_local_selection_replaces_previous_configuration)" do
+    bytes = test_file_bytes
+    decoder = ParquetPushDecoderBuilder.try_new_decoder(test_metadata(bytes))
+      .with_row_group_selections([RowGroupSelection.new(0)])
+      .with_row_group_selections([RowGroupSelection.new(1)])
+      .build
+    prefetch_test_file(decoder, bytes)
+
+    check_rows(expect_data(decoder.try_decode), 200, 200)
+    expect_finished(decoder.try_decode)
+  end
+
+  it "keeps legacy row groups and selections composable (upstream test_legacy_row_groups_and_row_selection_remain_composable)" do
+    bytes = test_file_bytes
+    decoder = ParquetPushDecoderBuilder.try_new_decoder(test_metadata(bytes))
+      .with_row_groups([1])
+      .with_row_selection(RowSelection.new([RowSelector.skip(25), RowSelector.select(20)]))
+      .build
+    prefetch_test_file(decoder, bytes)
+
+    check_rows(expect_data(decoder.try_decode), 225, 20)
+    expect_finished(decoder.try_decode)
+  end
+
+  it "is mutually exclusive with the legacy configuration (upstream test_row_group_local_selection_is_mutually_exclusive_with_legacy_configuration)" do
+    bytes = test_file_bytes
+    metadata = test_metadata(bytes)
+    message = "with_row_group_selections cannot be combined with with_row_groups or with_row_selection"
+
+    conflict = ->(builder : ParquetPushDecoderBuilder) do
+      expect_raises(Parquet::GeneralError, message) { builder.build }
+    end
+
+    conflict.call(
+      ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        .with_row_groups([0])
+        .with_row_group_selections([RowGroupSelection.new(0)])
+    )
+    conflict.call(
+      ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        .with_row_group_selections([RowGroupSelection.new(0)])
+        .with_row_groups([0])
+    )
+    conflict.call(
+      ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        .with_row_selection(RowSelection.new([RowSelector.select(1)]))
+        .with_row_group_selections([RowGroupSelection.new(0)])
+    )
+    conflict.call(
+      ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        .with_row_group_selections([RowGroupSelection.new(0)])
+        .with_row_selection(RowSelection.new([RowSelector.select(1)]))
+    )
+  end
+
+  it "validates the row group and selection length at build (upstream test_row_group_local_selection_validates_row_group_and_length_at_build)" do
+    bytes = test_file_bytes
+    metadata = test_metadata(bytes)
+
+    expect_raises(Parquet::GeneralError, /Row selection for row group 0 contains 201 rows, but the row group has 200/) do
+      ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        .with_row_group_selections([
+          RowGroupSelection.new(0, RowSelection.new([RowSelector.select(201)])),
+        ])
+        .build
+    end
+
+    expect_raises(Parquet::GeneralError, /Row group index 2 out of bounds for file with 2 row groups/) do
+      ParquetPushDecoderBuilder.try_new_decoder(metadata)
+        .with_row_group_selections([RowGroupSelection.new(2)])
+        .build
+    end
+  end
+end

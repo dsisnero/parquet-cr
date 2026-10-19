@@ -1500,7 +1500,7 @@ parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.new_wit
 parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.try_new_decoder	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoderBuilder.try_new_decoder
 parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.try_new_decoder_with_options	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoderBuilder.try_new_decoder_with_options
 parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.with_buffers	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoderBuilder#with_buffers
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.with_row_group_selections	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	row-group-local selections deferred
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.with_row_group_selections	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoderBuilder#with_row_group_selections
 parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequest.get_chunks	method	ported	src/parquet/arrow/push_decoder.cr	inlined: PushBuffers#get_bytes per range
 parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequest.needed_ranges	method	ported	src/parquet/arrow/push_decoder.cr	inlined: ranges not covered by PushBuffers
 parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequest.try_into_in_memory_row_group	method	ported	src/parquet/arrow/push_decoder.cr	inlined: fill_column_chunks + clear_ranges
@@ -1544,13 +1544,13 @@ parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuil
 parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.take_state	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	not needed (atomic per-row-group build)
 parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.try_build	method	ported	src/parquet/arrow/push_decoder.cr	RemainingRowGroups#try_next_reader
 parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.try_transition	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	only the no-filter StartData/WaitingOnData path is ported
-parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.clear	method	ported	src/parquet/arrow/push_decoder.cr	inlined (array clear)
-parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.front	method	ported	src/parquet/arrow/push_decoder.cr	inlined (array front)
-parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.global_selection_is_exhausted	method	ported	src/parquet/arrow/push_decoder.cr	inlined (row_count == 0)
+parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.clear	method	ported	src/parquet/arrow/push_decoder.cr	QueuedRowGroups#clear
+parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.front	method	ported	src/parquet/arrow/push_decoder.cr	QueuedRowGroups#front
+parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.global_selection_is_exhausted	method	ported	src/parquet/arrow/push_decoder.cr	QueuedRowGroups#global_selection_exhausted?
 parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.into_plan	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	only needed by into_builder (deferred)
-parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.len	method	ported	src/parquet/arrow/push_decoder.cr	inlined (array size)
-parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.pop_front_selection	method	ported	src/parquet/arrow/push_decoder.cr	inlined (RowSelection#split_off)
-parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.try_new	method	ported	src/parquet/arrow/push_decoder.cr	RowGroupPlan#into_global + queue in build
+parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.len	method	ported	src/parquet/arrow/push_decoder.cr	QueuedRowGroups#size
+parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.pop_front_selection	method	ported	src/parquet/arrow/push_decoder.cr	QueuedRowGroups#pop_front_selection
+parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.try_new	method	ported	src/parquet/arrow/push_decoder.cr	QueuedRowGroups.try_new (validates index + selection length)
 parquet/src/arrow/push_decoder/remaining.rs::method::RemainingRowGroups.buffered_bytes	method	ported	src/parquet/arrow/push_decoder.cr	RemainingRowGroups#buffered_bytes
 parquet/src/arrow/push_decoder/remaining.rs::method::RemainingRowGroups.clear_all_ranges	method	ported	src/parquet/arrow/push_decoder.cr	RemainingRowGroups#clear_all_ranges
 parquet/src/arrow/push_decoder/remaining.rs::method::RemainingRowGroups.into_parts	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	into_builder deferred
@@ -2592,7 +2592,7 @@ parquet/src/file/metadata/mod.rs::method::ParquetMetaData.num_row_groups	method	
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.page_index	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.page_index_for_row_group	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.row_group	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
-parquet/src/file/metadata/mod.rs::method::ParquetMetaData.row_group_num_rows	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
+parquet/src/file/metadata/mod.rs::method::ParquetMetaData.row_group_num_rows	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData#row_group_num_rows (bounds-checked with the upstream message)
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.row_groups	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.set_page_index	method	ported	src/parquet/file/metadata/parquet_metadata.cr	upstream pub(crate); public here
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.with_file_decryptor	method	ported	src/parquet/file/metadata/parquet_metadata.cr	upstream pub(crate); public here

@@ -91,8 +91,15 @@ module Parquet
           @row_groups.size
         end
 
+        # The number of rows in row group `i` (upstream `row_group_num_rows`).
         def row_group_num_rows(i : Int32) : Int64
-          @row_groups[i].num_rows
+          row_group = @row_groups[i]?
+          unless row_group
+            raise general_err!(
+              "Row group index #{i} out of bounds for file with #{num_row_groups} row groups"
+            )
+          end
+          row_group.num_rows
         end
 
         # Converts this metadata into a `ParquetMetaDataBuilder`.
