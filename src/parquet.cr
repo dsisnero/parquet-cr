@@ -107,6 +107,7 @@ require "./parquet/arrow/array_reader/null_array"
 require "./parquet/arrow/array_reader/builder"
 require "./parquet/arrow/arrow_reader"
 require "./parquet/arrow/in_memory_row_group"
+require "./parquet/arrow/push_decoder"
 require "./parquet/arrow/statistics"
 
 module Parquet

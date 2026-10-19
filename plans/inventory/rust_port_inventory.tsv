@@ -1475,40 +1475,40 @@ parquet/src/arrow/mod.rs::method::ProjectionMask.none	method	ported	src/parquet/
 parquet/src/arrow/mod.rs::method::ProjectionMask.roots	method	ported	src/parquet/arrow/mod.cr	ProjectionMask.roots
 parquet/src/arrow/mod.rs::method::ProjectionMask.union	method	ported	src/parquet/arrow/mod.cr	ProjectionMask#union (mutates self)
 parquet/src/arrow/mod.rs::method::ProjectionMask.without_nested_types	method	ported	src/parquet/arrow/mod.cr	ProjectionMask#without_nested_types (public; upstream pub(crate))
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.buffered_bytes	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.clear_all_ranges	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.into_builder	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.is_at_row_group_boundary	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.peek_next_row_group	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.push_data	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.row_groups_remaining	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.transition	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.try_next_batch	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.try_next_reader	method	missing	-	auto-generated
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.buffered_bytes	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoder#buffered_bytes
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.clear_all_ranges	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoder#clear_all_ranges
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.into_builder	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	into_builder (adaptive scans) deferred
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.is_at_row_group_boundary	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoder#is_at_row_group_boundary
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.peek_next_row_group	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	peek_next_row_group deferred
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.push_data	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoder#push_ranges
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.row_groups_remaining	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoder#row_groups_remaining
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.transition	method	ported	src/parquet/arrow/push_decoder.cr	the state transitions are inlined in try_decode
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.try_next_batch	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoder#try_decode (merged with the transition loop)
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetDecoderState.try_next_reader	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	try_next_reader (per-row-group readers) deferred; try_decode covers batch decoding
 parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoder.buffered_bytes	method	missing	-	auto-generated
 parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoder.clear_all_ranges	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoder.into_builder	method	missing	-	auto-generated
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoder.into_builder	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	deferred (adaptive scans)
 parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoder.is_at_row_group_boundary	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoder.peek_next_row_group	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoder.push_range	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoder.push_ranges	method	missing	-	auto-generated
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoder.peek_next_row_group	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	deferred
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoder.push_range	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoder#push_range
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoder.push_ranges	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoder#push_ranges
 parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoder.row_groups_remaining	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoder.try_decode	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoder.try_next_reader	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.build	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.new_with_metadata	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.try_new_decoder	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.try_new_decoder_with_options	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.with_buffers	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.with_row_group_selections	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequest.get_chunks	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequest.needed_ranges	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequest.try_into_in_memory_row_group	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequestBuilder<'a>.build	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequestBuilder<'a>.new	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequestBuilder<'a>.with_cache_projection	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequestBuilder<'a>.with_column_chunks	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequestBuilder<'a>.with_selection	method	missing	-	auto-generated
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoder.try_decode	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoder#try_decode
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoder.try_next_reader	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	deferred
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.build	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoderBuilder#build
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.new_with_metadata	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoderBuilder.new_with_metadata
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.try_new_decoder	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoderBuilder.try_new_decoder
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.try_new_decoder_with_options	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoderBuilder.try_new_decoder_with_options
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.with_buffers	method	ported	src/parquet/arrow/push_decoder.cr	ParquetPushDecoderBuilder#with_buffers
+parquet/src/arrow/push_decoder/mod.rs::method::ParquetPushDecoderBuilder.with_row_group_selections	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	row-group-local selections deferred
+parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequest.get_chunks	method	ported	src/parquet/arrow/push_decoder.cr	inlined: PushBuffers#get_bytes per range
+parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequest.needed_ranges	method	ported	src/parquet/arrow/push_decoder.cr	inlined: ranges not covered by PushBuffers
+parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequest.try_into_in_memory_row_group	method	ported	src/parquet/arrow/push_decoder.cr	inlined: fill_column_chunks + clear_ranges
+parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequestBuilder<'a>.build	method	ported	src/parquet/arrow/push_decoder.cr	inlined
+parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequestBuilder<'a>.new	method	ported	src/parquet/arrow/push_decoder.cr	inlined (no builder)
+parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequestBuilder<'a>.with_cache_projection	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	predicate cache deferred
+parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequestBuilder<'a>.with_column_chunks	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	filters deferred
+parquet/src/arrow/push_decoder/reader_builder/data.rs::method::DataRequestBuilder<'a>.with_selection	method	ported	src/parquet/arrow/push_decoder.cr	selection comes from the read plan
 parquet/src/arrow/push_decoder/reader_builder/filter.rs::method::CacheInfo.builder	method	missing	-	auto-generated
 parquet/src/arrow/push_decoder/reader_builder/filter.rs::method::CacheInfo.new	method	missing	-	auto-generated
 parquet/src/arrow/push_decoder/reader_builder/filter.rs::method::FilterInfo.advance	method	missing	-	auto-generated
@@ -1521,51 +1521,51 @@ parquet/src/arrow/push_decoder/reader_builder/filter.rs::method::FilterInfo.is_l
 parquet/src/arrow/push_decoder/reader_builder/filter.rs::method::FilterInfo.new	method	missing	-	auto-generated
 parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::NextState.again	method	missing	-	auto-generated
 parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::NextState.result	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowBudget.advance	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowBudget.apply_to_plan	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowBudget.is_exhausted	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowBudget.limit	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowBudget.new	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowBudget.offset	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowBudget.rows_after	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowBudget.selected_row_limit	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.buffered_bytes	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.clear_all_ranges	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.compute_cache_projection	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.compute_cache_projection_inner	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.exclude_nested_columns_from_cache	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.has_active_row_group	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.into_parts	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.is_finished	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.new	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.next_row_group	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.push_data	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.row_group_offset_index	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.take_state	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.try_build	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.try_transition	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.clear	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.front	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.global_selection_is_exhausted	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.into_plan	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.len	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.pop_front_selection	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.try_new	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::RemainingRowGroups.buffered_bytes	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::RemainingRowGroups.clear_all_ranges	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::RemainingRowGroups.into_parts	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::RemainingRowGroups.is_at_row_group_boundary	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::RemainingRowGroups.new	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::RemainingRowGroups.peek_next_row_group	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::RemainingRowGroups.push_data	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::RemainingRowGroups.row_groups_remaining	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::RemainingRowGroups.try_next_reader	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::RowGroupFrontier.clear_remaining	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::RowGroupFrontier.new	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::RowGroupFrontier.next_readable_row_group	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::RowGroupFrontier.peek_next_row_group	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::RowGroupFrontier.plan_selected_row_group	method	missing	-	auto-generated
-parquet/src/arrow/push_decoder/remaining.rs::method::RowGroupFrontier.update_budget_after_row_group	method	missing	-	auto-generated
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowBudget.advance	method	ported	src/parquet/arrow/push_decoder.cr	RowBudget#advance
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowBudget.apply_to_plan	method	ported	src/parquet/arrow/push_decoder.cr	inlined in RemainingRowGroups#try_next_reader
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowBudget.is_exhausted	method	ported	src/parquet/arrow/push_decoder.cr	RowBudget#exhausted?
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowBudget.limit	method	ported	src/parquet/arrow/push_decoder.cr	RowBudget#limit
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowBudget.new	method	ported	src/parquet/arrow/push_decoder.cr	RowBudget#initialize
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowBudget.offset	method	ported	src/parquet/arrow/push_decoder.cr	RowBudget#offset
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowBudget.rows_after	method	ported	src/parquet/arrow/push_decoder.cr	RowBudget#rows_after
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowBudget.selected_row_limit	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	only used by predicate early termination (filters deferred)
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.buffered_bytes	method	ported	src/parquet/arrow/push_decoder.cr	RemainingRowGroups#buffered_bytes
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.clear_all_ranges	method	ported	src/parquet/arrow/push_decoder.cr	RemainingRowGroups#clear_all_ranges
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.compute_cache_projection	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	predicate cache deferred
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.compute_cache_projection_inner	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	predicate cache deferred
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.exclude_nested_columns_from_cache	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	predicate cache deferred
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.has_active_row_group	method	ported	src/parquet/arrow/push_decoder.cr	RemainingRowGroups#at_row_group_boundary?
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.into_parts	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	into_builder deferred
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.is_finished	method	ported	src/parquet/arrow/push_decoder.cr	RemainingRowGroups#at_row_group_boundary?
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.new	method	ported	src/parquet/arrow/push_decoder.cr	folded into RemainingRowGroups#initialize
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.next_row_group	method	ported	src/parquet/arrow/push_decoder.cr	RemainingRowGroups#next_readable_row_group
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.push_data	method	ported	src/parquet/arrow/push_decoder.cr	RemainingRowGroups#push_data
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.row_group_offset_index	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	page pruning for loaded ranges deferred
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.take_state	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	not needed (atomic per-row-group build)
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.try_build	method	ported	src/parquet/arrow/push_decoder.cr	RemainingRowGroups#try_next_reader
+parquet/src/arrow/push_decoder/reader_builder/mod.rs::method::RowGroupReaderBuilder.try_transition	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	only the no-filter StartData/WaitingOnData path is ported
+parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.clear	method	ported	src/parquet/arrow/push_decoder.cr	inlined (array clear)
+parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.front	method	ported	src/parquet/arrow/push_decoder.cr	inlined (array front)
+parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.global_selection_is_exhausted	method	ported	src/parquet/arrow/push_decoder.cr	inlined (row_count == 0)
+parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.into_plan	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	only needed by into_builder (deferred)
+parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.len	method	ported	src/parquet/arrow/push_decoder.cr	inlined (array size)
+parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.pop_front_selection	method	ported	src/parquet/arrow/push_decoder.cr	inlined (RowSelection#split_off)
+parquet/src/arrow/push_decoder/remaining.rs::method::QueuedRowGroups.try_new	method	ported	src/parquet/arrow/push_decoder.cr	RowGroupPlan#into_global + queue in build
+parquet/src/arrow/push_decoder/remaining.rs::method::RemainingRowGroups.buffered_bytes	method	ported	src/parquet/arrow/push_decoder.cr	RemainingRowGroups#buffered_bytes
+parquet/src/arrow/push_decoder/remaining.rs::method::RemainingRowGroups.clear_all_ranges	method	ported	src/parquet/arrow/push_decoder.cr	RemainingRowGroups#clear_all_ranges
+parquet/src/arrow/push_decoder/remaining.rs::method::RemainingRowGroups.into_parts	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	into_builder deferred
+parquet/src/arrow/push_decoder/remaining.rs::method::RemainingRowGroups.is_at_row_group_boundary	method	ported	src/parquet/arrow/push_decoder.cr	RemainingRowGroups#at_row_group_boundary?
+parquet/src/arrow/push_decoder/remaining.rs::method::RemainingRowGroups.new	method	ported	src/parquet/arrow/push_decoder.cr	RemainingRowGroups#initialize
+parquet/src/arrow/push_decoder/remaining.rs::method::RemainingRowGroups.peek_next_row_group	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	deferred
+parquet/src/arrow/push_decoder/remaining.rs::method::RemainingRowGroups.push_data	method	ported	src/parquet/arrow/push_decoder.cr	RemainingRowGroups#push_data
+parquet/src/arrow/push_decoder/remaining.rs::method::RemainingRowGroups.row_groups_remaining	method	ported	src/parquet/arrow/push_decoder.cr	RemainingRowGroups#row_groups_remaining
+parquet/src/arrow/push_decoder/remaining.rs::method::RemainingRowGroups.try_next_reader	method	ported	src/parquet/arrow/push_decoder.cr	RemainingRowGroups#try_next_reader (no filters/local selections)
+parquet/src/arrow/push_decoder/remaining.rs::method::RowGroupFrontier.clear_remaining	method	ported	src/parquet/arrow/push_decoder.cr	inlined (queue cleared when exhausted)
+parquet/src/arrow/push_decoder/remaining.rs::method::RowGroupFrontier.new	method	ported	src/parquet/arrow/push_decoder.cr	folded into RemainingRowGroups#initialize
+parquet/src/arrow/push_decoder/remaining.rs::method::RowGroupFrontier.next_readable_row_group	method	ported	src/parquet/arrow/push_decoder.cr	RemainingRowGroups#next_readable_row_group
+parquet/src/arrow/push_decoder/remaining.rs::method::RowGroupFrontier.peek_next_row_group	method	intentional_divergence	src/parquet/arrow/push_decoder.cr	deferred
+parquet/src/arrow/push_decoder/remaining.rs::method::RowGroupFrontier.plan_selected_row_group	method	ported	src/parquet/arrow/push_decoder.cr	inlined in next_readable_row_group (no predicates)
+parquet/src/arrow/push_decoder/remaining.rs::method::RowGroupFrontier.update_budget_after_row_group	method	ported	src/parquet/arrow/push_decoder.cr	budget advanced inline
 parquet/src/arrow/record_reader/buffer.rs::method::Vec<T>.pad_nulls	method	ported	src/parquet/arrow/record_reader/buffer.cr	ArrayValuesBuffer#pad_nulls (scalar iter_set_bits_rev)
 parquet/src/arrow/record_reader/buffer.rs::method::Vec<T>.reserve_exact	method	ported	src/parquet/arrow/record_reader/buffer.cr	ArrayValuesBuffer#reserve_exact
 parquet/src/arrow/record_reader/buffer.rs::method::Vec<T>.with_capacity	method	ported	src/parquet/arrow/record_reader/buffer.cr	ArrayValuesBuffer.with_capacity(capacity, default)

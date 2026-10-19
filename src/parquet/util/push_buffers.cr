@@ -68,6 +68,28 @@ module Parquet
         @ranges.clear
         @buffers.clear
       end
+
+      # The total length of all buffered ranges.
+      def buffered_bytes : UInt64
+        @ranges.sum(0_u64) { |range| range.end - range.begin }
+      end
+
+      # Clears the buffered ranges (and their data) that exactly match one of
+      # `ranges_to_clear` (upstream `clear_ranges`).
+      def clear_ranges(ranges_to_clear : Enumerable(Range(UInt64, UInt64))) : Nil
+        to_clear = ranges_to_clear.to_a
+        new_ranges = [] of Range(UInt64, UInt64)
+        new_buffers = [] of Bytes
+        @ranges.each_with_index do |range, idx|
+          next if to_clear.any? { |candidate| candidate.begin == range.begin && candidate.end == range.end }
+
+          new_ranges << range
+          new_buffers << @buffers[idx]
+        end
+        @ranges = new_ranges
+        @buffers = new_buffers
+        nil
+      end
     end
   end
 end
