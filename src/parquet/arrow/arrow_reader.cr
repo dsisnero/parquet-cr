@@ -23,11 +23,14 @@ require "../file/metadata"
 # the final array reader.
 #
 # Divergences (none of the corresponding infrastructure is ported yet):
-# - there is no row-group selection (`with_row_groups`); page pruning is not
-#   wired into the reader (the sync reader does not compute loaded row ranges
-#   upstream either, but `ReadPlanBuilder#with_loaded_row_ranges` is available);
-#   statistics pruning (`StatisticsConverter`), reader metrics, bloom-filter
-#   lookups and page-index/column-index policies are not modelled;
+# - page pruning is not wired into the reader (the sync reader does not compute
+#   loaded row ranges upstream either, but
+#   `ReadPlanBuilder#with_loaded_row_ranges` is available); reader metrics,
+#   bloom-filter lookups and page-index/column-index policies are not modelled;
+# - `RowGroupPlan` is a public mutable class carrying a `Kind` (upstream is a
+#   `pub(crate)` enum whose `set_*` methods reassign `self`), `with_row_groups`
+#   takes an `Enumerable(Int32)` and `RowGroupSelection#selection` is a nilable
+#   getter;
 # - the builder takes a `File::FileReader` (upstream takes any `ChunkReader`),
 #   `ArrowReaderOptions`/`ArrowReaderMetadata`, and no encryption properties;
 #   because the port's `RowGroups` implementation (`FileRowGroups`) needs a
@@ -170,6 +173,150 @@ module Parquet
       end
     end
 
+    # A row group and its optional row-group-local `RowSelection`
+    # (upstream `RowGroupSelection`).
+    #
+    # A row-group-local selection is relative to the rows in this row group: an
+    # offset of 100 refers to the row at offset 100 within the row group, not
+    # within the parquet file. A nil selection reads the entire row group, and
+    # omitting a row group skips it. Entries are decoded in the supplied order.
+    class RowGroupSelection
+      # The index of the row group this selection applies to.
+      getter row_group_index : Int32
+      # The row-group-local selection, or nil to read the whole row group.
+      getter selection : RowSelection?
+
+      def initialize(@row_group_index : Int32, @selection : RowSelection? = nil)
+      end
+
+      def ==(other : RowGroupSelection) : Bool
+        @row_group_index == other.row_group_index && @selection == other.selection
+      end
+    end
+
+    # Row-selection configuration shared by the arrow reader builders
+    # (upstream `RowGroupPlan`).
+    #
+    # Divergence: upstream is a `pub(crate)` enum whose `set_*` methods reassign
+    # `self`; this is a public mutable class carrying a `Kind` (the `Global`
+    # payload is `row_groups`/`selection`, the `PerRowGroup` payload is
+    # `selections`).
+    class RowGroupPlan
+      enum Kind
+        # First select `row_groups`, if provided, and then apply `selection`
+        # across the concatenated rows from those row groups. Formed by
+        # `with_row_groups` and `with_row_selection`.
+        Global
+        # Apply each row-group-local selection independently, in the order
+        # supplied (formed by `set_row_group_selections`).
+        PerRowGroup
+        # Mutually exclusive global and per-row-group configuration was
+        # supplied; reported as an error when the reader is built.
+        Conflicting
+      end
+
+      getter kind : Kind
+      # The selected row groups (`Global` only).
+      getter row_groups : Array(Int32)?
+      # The global row selection (`Global` only).
+      getter selection : RowSelection?
+      # The per-row-group selections (`PerRowGroup` only).
+      getter selections : Array(RowGroupSelection)
+
+      def initialize(
+        @kind : Kind = Kind::Global,
+        @row_groups : Array(Int32)? = nil,
+        @selection : RowSelection? = nil,
+        @selections : Array(RowGroupSelection) = [] of RowGroupSelection,
+      )
+      end
+
+      # A plan that selects row groups globally (upstream `Global`).
+      def self.global(
+        row_groups : Array(Int32)? = nil,
+        selection : RowSelection? = nil,
+      ) : RowGroupPlan
+        new(Kind::Global, row_groups, selection)
+      end
+
+      # A plan with per-row-group selections (upstream `PerRowGroup`).
+      def self.per_row_group(selections : Array(RowGroupSelection)) : RowGroupPlan
+        new(Kind::PerRowGroup, nil, nil, selections)
+      end
+
+      # A plan with conflicting configuration (upstream `Conflicting`).
+      def self.conflicting : RowGroupPlan
+        new(Kind::Conflicting)
+      end
+
+      def global? : Bool
+        @kind.global?
+      end
+
+      def per_row_group? : Bool
+        @kind.per_row_group?
+      end
+
+      def conflicting? : Bool
+        @kind.conflicting?
+      end
+
+      # Sets the selected row groups (upstream `set_row_groups`).
+      # ameba:disable Naming/AccessorMethodName
+      def set_row_groups(new_row_groups : Array(Int32)) : Nil
+        if global?
+          @row_groups = new_row_groups
+        elsif per_row_group?
+          @kind = Kind::Conflicting
+        end
+      end
+
+      # Sets the global row selection (upstream `set_row_selection`).
+      # ameba:disable Naming/AccessorMethodName
+      def set_row_selection(new_selection : RowSelection) : Nil
+        if global?
+          @selection = new_selection
+        elsif per_row_group?
+          @kind = Kind::Conflicting
+        end
+      end
+
+      # Sets the per-row-group selections (upstream `set_row_group_selections`).
+      # ameba:disable Naming/AccessorMethodName
+      def set_row_group_selections(new_selections : Array(RowGroupSelection)) : Nil
+        if global?
+          if @row_groups.nil? && @selection.nil?
+            @kind = Kind::PerRowGroup
+            @selections = new_selections
+          else
+            @kind = Kind::Conflicting
+          end
+        elsif per_row_group?
+          @selections = new_selections
+        end
+      end
+
+      # The error reported when global and per-row-group configuration are mixed
+      # (upstream `RowGroupPlan::conflict_error`).
+      def self.conflict_error : Parquet::GeneralError
+        general_err!(
+          "with_row_group_selections cannot be combined with with_row_groups or with_row_selection"
+        )
+      end
+
+      # Resolves the plan into the synchronous reader's configuration (upstream
+      # `into_global`).
+      def into_global : Tuple(Array(Int32)?, RowSelection?)
+        if global?
+          {@row_groups, @selection}
+        elsif per_row_group?
+          raise general_err!("Row-group-local selections are not supported by the synchronous reader")
+        else
+          raise RowGroupPlan.conflict_error
+        end
+      end
+    end
+
     # Builds a `ParquetRecordBatchReader`
     # (upstream `ParquetRecordBatchReaderBuilder`).
     class ParquetRecordBatchReaderBuilder
@@ -184,7 +331,7 @@ module Parquet
         @fields : ParquetField?,
         @batch_size : Int32 = ArrayReaderBuilder::DEFAULT_BATCH_SIZE,
         @projection : ProjectionMask = ProjectionMask.all,
-        @row_selection : RowSelection? = nil,
+        @row_group_plan : RowGroupPlan = RowGroupPlan.global,
         @offset : Int32? = nil,
         @limit : Int32? = nil,
         @row_filter : RowFilter? = nil,
@@ -228,8 +375,24 @@ module Parquet
 
       # Only reads the rows selected by `selection` (upstream
       # `with_row_selection`).
+      #
+      # The selection applies across the concatenated rows of the selected row
+      # groups. Combining this with a per-row-group plan is an error reported by
+      # `build`.
       def with_row_selection(selection : RowSelection) : self
-        @row_selection = selection
+        @row_group_plan.set_row_selection(selection)
+        self
+      end
+
+      # Only reads the given row groups, in the supplied order (upstream
+      # `with_row_groups`).
+      #
+      # Row-group filtering is applied before `with_row_selection`,
+      # `with_offset` and `with_limit`, which all count rows of the selected row
+      # groups. Combining this with a per-row-group plan is an error reported by
+      # `build`.
+      def with_row_groups(row_groups : Enumerable(Int32)) : self
+        @row_group_plan.set_row_groups(row_groups.to_a)
         self
       end
 
@@ -281,9 +444,10 @@ module Parquet
         batch_size = row_count < @batch_size ? row_count.to_i32 : @batch_size
         batch_size = 0 if batch_size < 0
 
-        row_groups = FileRowGroups.new(@input)
+        row_group_indices, selection = @row_group_plan.into_global
+        row_groups = FileRowGroups.new(@input, row_group_indices)
         plan_builder = ReadPlanBuilder.new(batch_size)
-          .with_selection(@row_selection)
+          .with_selection(selection)
           .with_row_selection_policy(@row_selection_policy)
 
         # Update the selection based on any filters, decoding only each
@@ -302,7 +466,7 @@ module Parquet
         array_reader = ArrayReaderBuilder.new(row_groups, batch_size)
           .build_array_reader(@fields, @projection)
 
-        limited = plan_builder.limited(@metadata.file_metadata.num_rows.to_i32)
+        limited = plan_builder.limited(row_groups.num_rows.to_i32)
         limited = limited.with_offset(@offset) if @offset
         limited = limited.with_limit(@limit) if @limit
 

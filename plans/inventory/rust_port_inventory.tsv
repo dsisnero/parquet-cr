@@ -1032,7 +1032,7 @@ parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_metric
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_offset	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_offset
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_projection	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_projection
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_filter	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_row_filter (predicates evaluated in build)
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_groups	method	intentional_divergence	src/parquet/arrow/arrow_reader.cr	row-group selection is not ported (all row groups are read)
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_groups	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_row_groups (FileRowGroups honours the index list)
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_selection	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_row_selection
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_selection_policy	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_row_selection_policy
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderMetadata.load	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderMetadata.load(reader, options)
@@ -1068,7 +1068,7 @@ parquet/src/arrow/arrow_reader/mod.rs::method::ParquetRecordBatchReader.next	met
 parquet/src/arrow/arrow_reader/mod.rs::method::ParquetRecordBatchReader.next_inner	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReader#next_batch
 parquet/src/arrow/arrow_reader/mod.rs::method::ParquetRecordBatchReader.schema	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReader#schema
 parquet/src/arrow/arrow_reader/mod.rs::method::ParquetRecordBatchReader.try_new	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReader.try_new(reader, batch_size)
-parquet/src/arrow/arrow_reader/mod.rs::method::ParquetRecordBatchReader.try_new_with_row_groups	method	intentional_divergence	src/parquet/arrow/arrow_reader.cr	low-level RowGroups entry point not exposed yet (no RowSelection)
+parquet/src/arrow/arrow_reader/mod.rs::method::ParquetRecordBatchReader.try_new_with_row_groups	method	intentional_divergence	src/parquet/arrow/arrow_reader.cr	low-level RowGroups entry point still not exposed (needs `FieldLevels` construction)
 parquet/src/arrow/arrow_reader/mod.rs::method::ParquetRecordBatchReaderBuilder<T>.build	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#build
 parquet/src/arrow/arrow_reader/mod.rs::method::ParquetRecordBatchReaderBuilder<T>.get_row_group_column_bloom_filter	method	intentional_divergence	src/parquet/arrow/arrow_reader.cr	bloom filters are not ported
 parquet/src/arrow/arrow_reader/mod.rs::method::ParquetRecordBatchReaderBuilder<T>.new_with_metadata	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder.new_with_metadata(reader, metadata)
@@ -1082,14 +1082,14 @@ parquet/src/arrow/arrow_reader/mod.rs::method::ReaderRowGroups<T>.column_chunks	
 parquet/src/arrow/arrow_reader/mod.rs::method::ReaderRowGroups<T>.metadata	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::method::ReaderRowGroups<T>.num_rows	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::method::ReaderRowGroups<T>.row_groups	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/mod.rs::method::RowGroupPlan.conflict_error	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/mod.rs::method::RowGroupPlan.into_global	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/mod.rs::method::RowGroupPlan.set_row_group_selections	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/mod.rs::method::RowGroupPlan.set_row_groups	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/mod.rs::method::RowGroupPlan.set_row_selection	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/mod.rs::method::RowGroupSelection.new	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/mod.rs::method::RowGroupSelection.row_group_index	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/mod.rs::method::RowGroupSelection.selection	method	missing	-	auto-generated
+parquet/src/arrow/arrow_reader/mod.rs::method::RowGroupPlan.conflict_error	method	ported	src/parquet/arrow/arrow_reader.cr	RowGroupPlan.conflict_error
+parquet/src/arrow/arrow_reader/mod.rs::method::RowGroupPlan.into_global	method	ported	src/parquet/arrow/arrow_reader.cr	RowGroupPlan#into_global
+parquet/src/arrow/arrow_reader/mod.rs::method::RowGroupPlan.set_row_group_selections	method	ported	src/parquet/arrow/arrow_reader.cr	RowGroupPlan#set_row_group_selections
+parquet/src/arrow/arrow_reader/mod.rs::method::RowGroupPlan.set_row_groups	method	ported	src/parquet/arrow/arrow_reader.cr	RowGroupPlan#set_row_groups
+parquet/src/arrow/arrow_reader/mod.rs::method::RowGroupPlan.set_row_selection	method	ported	src/parquet/arrow/arrow_reader.cr	RowGroupPlan#set_row_selection
+parquet/src/arrow/arrow_reader/mod.rs::method::RowGroupSelection.new	method	ported	src/parquet/arrow/arrow_reader.cr	RowGroupSelection#initialize
+parquet/src/arrow/arrow_reader/mod.rs::method::RowGroupSelection.row_group_index	method	ported	src/parquet/arrow/arrow_reader.cr	RowGroupSelection#row_group_index
+parquet/src/arrow/arrow_reader/mod.rs::method::RowGroupSelection.selection	method	ported	src/parquet/arrow/arrow_reader.cr	RowGroupSelection#selection
 parquet/src/arrow/arrow_reader/mod.rs::method::SyncReader<T>.fmt	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::method::TestOptions.default	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::method::TestOptions.fmt	method	missing	-	auto-generated

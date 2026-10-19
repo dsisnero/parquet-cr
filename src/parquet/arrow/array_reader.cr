@@ -81,23 +81,35 @@ module Parquet
       abstract def metadata : File::Metadata::ParquetMetaData
     end
 
-    # `RowGroups` over a file reader (upstream `impl RowGroups for
-    # Arc<dyn FileReader>`).
+    # `RowGroups` over a file reader (upstream `ReaderRowGroups`).
+    #
+    # `row_group_indices` restricts the reader to the given row groups, in the
+    # supplied order (upstream `ArrowReaderBuilder::with_row_groups`); `nil`
+    # reads every row group.
     class FileRowGroups < RowGroups
-      def initialize(@file_reader : File::FileReader)
+      def initialize(@file_reader : File::FileReader, @row_group_indices : Array(Int32)? = nil)
       end
 
       def num_rows : Int64
-        @file_reader.metadata.file_metadata.num_rows
+        if indices = @row_group_indices
+          indices.sum(0_i64) { |idx| @file_reader.metadata.row_group(idx).num_rows }
+        else
+          @file_reader.metadata.file_metadata.num_rows
+        end
       end
 
       def column_chunks(i : Int32) : Column::PageIterator
-        File::FilePageIterator.new(i, @file_reader)
+        if indices = @row_group_indices
+          File::FilePageIterator.with_row_groups(i, indices.each, @file_reader)
+        else
+          File::FilePageIterator.new(i, @file_reader)
+        end
       end
 
       def row_groups : Iterator(File::Metadata::RowGroupMetaData)
         metadata = @file_reader.metadata
-        (0...metadata.num_row_groups).map { |idx| metadata.row_group(idx).as(File::Metadata::RowGroupMetaData) }.each
+        indices = @row_group_indices || (0...metadata.num_row_groups).to_a
+        indices.map { |idx| metadata.row_group(idx).as(File::Metadata::RowGroupMetaData) }.each
       end
 
       def metadata : File::Metadata::ParquetMetaData
