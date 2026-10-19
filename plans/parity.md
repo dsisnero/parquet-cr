@@ -93,8 +93,12 @@ little-endian layout.
   as well: `RowGroupSelection`/`RowGroupPlan` (`Global`/`PerRowGroup`/
   `Conflicting`), `ParquetRecordBatchReaderBuilder#with_row_groups` (row groups
   are read in the supplied order and offset/limit/selection/filters all count
-  only their rows) and a `FileRowGroups` restricted to the chosen indices. The
-  arrow array readers are now all ported: `NullArrayReader`
+  only their rows) and a `FileRowGroups` restricted to the chosen indices.
+  Reader metrics are ported as well: `ArrowReaderMetrics` (disabled/enabled with
+  shared atomic counters, `with_metrics` on the builder and the metrics threaded
+  into `ArrayReaderBuilder`); only the deferred predicate cache increments them,
+  so synchronous reads report zero, as upstream. The arrow array readers are now
+  all ported: `NullArrayReader`
   (arrow-cr now has `Arrow::NullArray`), `FixedLenByteArrayReader`
   (`FixedSizeBinary`, `Decimal32/64/128/256` and `Interval(YearMonth|DayTime)`
   targets; only `Float16` needs an arrow-cr half-float array because Crystal has
@@ -110,9 +114,8 @@ little-endian layout.
   embedded `Dictionary(..)` field actually reaches the array reader builder and
   the upstream `arrow_reader` `test_dictionary_preservation` end-to-end test
   passes.
-  **Next up:** reader metrics (`metrics.rs`), then `arrow/push_decoder/`,
-  `ProjectionMask::without_nested_types` and the remaining arrow-writer work
-  (which needs `column/page_store.rs`).
+  **Next up:** `arrow/push_decoder/`, `ProjectionMask::without_nested_types`
+  and the remaining arrow-writer work (which needs `column/page_store.rs`).
   Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`/`-json`, the arrow-only CLIs,
@@ -974,11 +977,12 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: arrow row-group selection`; gates green
-  (`make lint`, `make test` -> 1266 examples, 0 failures). Next feature: reader
-  metrics. Note `make install` now requires the sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 2171 `ported`, 207 `intentional_divergence`,
-  15 skipped, 1122 `missing` (of 3515 rows).
+- Last commit: `port: arrow reader metrics`; gates green
+  (`make lint`, `make test` -> 1271 examples, 0 failures). Next feature:
+  `arrow/push_decoder/`. Note `make install` now requires the sibling checkout
+  `../arrow-cr`.
+- Progress by counts (ledger): 2179 `ported`, 206 `intentional_divergence`,
+  15 skipped, 1115 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1620,8 +1624,11 @@ Chunk status by area:
       `read_mask_batch` path (see `spec/parquet/arrow/
       row_selection_cursor_spec.cr`), and row-group selection
       (`RowGroupSelection`/`RowGroupPlan` + `with_row_groups`, see
-      `spec/parquet/arrow/row_group_selection_spec.cr`). Remaining:
-      `metrics.rs` and `arrow/push_decoder/`.
+      `spec/parquet/arrow/row_group_selection_spec.cr`) and reader metrics
+      (`ArrowReaderMetrics` + `with_metrics`, see
+      `spec/parquet/arrow/metrics_spec.cr`). Remaining: `arrow/push_decoder/`,
+      `ProjectionMask::without_nested_types`, virtual columns and the arrow
+      writer.
 - [ ] `arrow/arrow_writer/` (`ArrowWriter`, `levels.rs`, `byte_array.rs`),
       `arrow/mod.rs` (`ProjectionMask`, `ARROW_SCHEMA_META_KEY` plumbing,
       `apply_schema`), and `arrow/buffer/`.
@@ -1843,8 +1850,8 @@ Chunk status by area:
   and `Interval(MonthDayNano)` is NYI as upstream.
 - Arrow interop, batch reader: `ParquetRecordBatchReaderBuilder` takes a
   `File::FileReader` (upstream any `ChunkReader`); row selection, row-group
-  selection, offset/limit plans, `RowFilter` and `StatisticsConverter` are
-  ported, while `metrics.rs`, bloom-filter lookups and page-index policies are
+  selection, offset/limit plans, `RowFilter`, `StatisticsConverter` and reader
+  metrics are ported, while bloom-filter lookups and page-index policies are
   not. `ArrowReaderOptions`
   models only `skip_arrow_metadata` and the supplied arrow schema (no
   page-index/encoding-statistics policies, decryption properties or virtual
@@ -1919,6 +1926,22 @@ Chunk status by area:
   builder never sets them). The upstream reader test that also checks virtual
   row-number columns is ported values-only, since virtual columns remain
   deferred.
+- Arrow interop, reader metrics (`metrics.rs`): `ArrowReaderMetrics`
+  (`disabled`/`enabled`, `records_read_from_inner`/`records_read_from_cache`
+  returning nil when disabled, `increment_*`) is a class holding an optional
+  inner class (upstream `Disabled`/`Enabled(Arc<..>)` enum); `#dup` shares the
+  inner counters like cloning the upstream `Arc`, counters are `Atomic(Int32)`
+  (`usize` → `Int32`), and `increment_*` are public (upstream `pub(crate)`).
+  `ParquetRecordBatchReaderBuilder#with_metrics` stores the metrics (exposed by a
+  `metrics` getter, upstream `pub(crate)`) and threads them into
+  `ArrayReaderBuilder.new(row_groups, batch_size, metrics)` (upstream
+  `new(row_groups, &metrics)`), where they would be handed to the predicate
+  cache. Only `CachedArrayReader` increments the counters upstream, and the
+  predicate cache is not ported, so synchronous reads report zero — the same as
+  upstream's synchronous reader (arrow-rs#8000). Upstream's metric tests live in
+  `tests/arrow_reader/predicate_cache.rs` and need the async reader, so
+  `spec/parquet/arrow/metrics_spec.cr` characterizes the API, counter sharing
+  and wiring instead.
 - Arrow interop, row filter (`filter.rs` + `ReadPlanBuilder::with_predicate`
   + `ArrowReaderBuilder::with_row_filter`): `ArrowPredicate` is an abstract
   class with `projection`/`evaluate`; `ArrowPredicateFn` adapts a

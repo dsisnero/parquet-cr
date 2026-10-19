@@ -1,6 +1,7 @@
 require "arrow-cr"
 require "../../errors"
 require "../array_reader"
+require "../metrics"
 require "../schema/complex"
 require "./primitive_array"
 require "./byte_array"
@@ -38,7 +39,15 @@ module Parquet
       # Upstream `DEFAULT_BATCH_SIZE`.
       DEFAULT_BATCH_SIZE = 1024
 
-      def initialize(@row_groups : RowGroups, @batch_size : Int32 = DEFAULT_BATCH_SIZE)
+      # Reader metrics, shared with the readers built by this builder (upstream
+      # passes `&ArrowReaderMetrics` to `new`).
+      getter metrics : ArrowReaderMetrics
+
+      def initialize(
+        @row_groups : RowGroups,
+        @batch_size : Int32 = DEFAULT_BATCH_SIZE,
+        @metrics : ArrowReaderMetrics = ArrowReaderMetrics.disabled,
+      )
       end
 
       # Sets the batch size hint used to pre-allocate internal buffers.

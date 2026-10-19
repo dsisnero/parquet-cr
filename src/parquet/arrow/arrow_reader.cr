@@ -25,8 +25,9 @@ require "../file/metadata"
 # Divergences (none of the corresponding infrastructure is ported yet):
 # - page pruning is not wired into the reader (the sync reader does not compute
 #   loaded row ranges upstream either, but
-#   `ReadPlanBuilder#with_loaded_row_ranges` is available); reader metrics,
-#   bloom-filter lookups and page-index/column-index policies are not modelled;
+#   `ReadPlanBuilder#with_loaded_row_ranges` is available); bloom-filter lookups
+#   and page-index/column-index policies are not modelled, and reader metrics
+#   are collected but only the (deferred) predicate cache increments them;
 # - `RowGroupPlan` is a public mutable class carrying a `Kind` (upstream is a
 #   `pub(crate)` enum whose `set_*` methods reassign `self`), `with_row_groups`
 #   takes an `Enumerable(Int32)` and `RowGroupSelection#selection` is a nilable
@@ -336,8 +337,12 @@ module Parquet
         @limit : Int32? = nil,
         @row_filter : RowFilter? = nil,
         @row_selection_policy : RowSelectionPolicy = RowSelectionPolicy.default,
+        @metrics : ArrowReaderMetrics = ArrowReaderMetrics.disabled,
       )
       end
+
+      # The reader metrics (upstream builder field is `pub(crate)`).
+      getter metrics : ArrowReaderMetrics
 
       # Creates a builder from a file reader (upstream `try_new`).
       def self.try_new(reader : File::FileReader) : ParquetRecordBatchReaderBuilder
@@ -419,6 +424,15 @@ module Parquet
         self
       end
 
+      # Configures metrics collection during reading (upstream `with_metrics`).
+      #
+      # `ArrowReaderMetrics` copies share their counters, so keep a copy and
+      # inspect it after reading.
+      def with_metrics(metrics : ArrowReaderMetrics) : self
+        @metrics = metrics
+        self
+      end
+
       # Provides a `RowFilter` to skip decoding rows (upstream
       # `with_row_filter`).
       #
@@ -457,13 +471,13 @@ module Parquet
             # Break early if we have ruled out all rows.
             break unless plan_builder.selects_any?
 
-            predicate_reader = ArrayReaderBuilder.new(row_groups, batch_size)
+            predicate_reader = ArrayReaderBuilder.new(row_groups, batch_size, @metrics)
               .build_array_reader(@fields, predicate.projection)
             plan_builder = plan_builder.with_predicate(predicate_reader, predicate)
           end
         end
 
-        array_reader = ArrayReaderBuilder.new(row_groups, batch_size)
+        array_reader = ArrayReaderBuilder.new(row_groups, batch_size, @metrics)
           .build_array_reader(@fields, @projection)
 
         limited = plan_builder.limited(row_groups.num_rows.to_i32)

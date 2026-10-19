@@ -1010,13 +1010,13 @@ parquet/src/arrow/arrow_reader/filter.rs::method::RowFilter.fmt	method	ported	sr
 parquet/src/arrow/arrow_reader/filter.rs::method::RowFilter.into_predicates	method	intentional_divergence	src/parquet/arrow/filter.cr	no consuming variant; the `predicates` getter is returned by reference
 parquet/src/arrow/arrow_reader/filter.rs::method::RowFilter.new	method	ported	src/parquet/arrow/filter.cr	RowFilter#initialize(Array(ArrowPredicate)) + splat overload
 parquet/src/arrow/arrow_reader/filter.rs::method::RowFilter.predicates	method	ported	src/parquet/arrow/filter.cr	RowFilter#predicates
-parquet/src/arrow/arrow_reader/metrics.rs::method::ArrowReaderMetrics.disabled	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/metrics.rs::method::ArrowReaderMetrics.enabled	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/metrics.rs::method::ArrowReaderMetrics.increment_cache_reads	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/metrics.rs::method::ArrowReaderMetrics.increment_inner_reads	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/metrics.rs::method::ArrowReaderMetrics.records_read_from_cache	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/metrics.rs::method::ArrowReaderMetrics.records_read_from_inner	method	missing	-	auto-generated
-parquet/src/arrow/arrow_reader/metrics.rs::method::ArrowReaderMetricsInner.new	method	missing	-	auto-generated
+parquet/src/arrow/arrow_reader/metrics.rs::method::ArrowReaderMetrics.disabled	method	ported	src/parquet/arrow/metrics.cr	ArrowReaderMetrics.disabled
+parquet/src/arrow/arrow_reader/metrics.rs::method::ArrowReaderMetrics.enabled	method	ported	src/parquet/arrow/metrics.cr	ArrowReaderMetrics.enabled
+parquet/src/arrow/arrow_reader/metrics.rs::method::ArrowReaderMetrics.increment_cache_reads	method	ported	src/parquet/arrow/metrics.cr	ArrowReaderMetrics#increment_cache_reads
+parquet/src/arrow/arrow_reader/metrics.rs::method::ArrowReaderMetrics.increment_inner_reads	method	ported	src/parquet/arrow/metrics.cr	ArrowReaderMetrics#increment_inner_reads
+parquet/src/arrow/arrow_reader/metrics.rs::method::ArrowReaderMetrics.records_read_from_cache	method	ported	src/parquet/arrow/metrics.cr	ArrowReaderMetrics#records_read_from_cache
+parquet/src/arrow/arrow_reader/metrics.rs::method::ArrowReaderMetrics.records_read_from_inner	method	ported	src/parquet/arrow/metrics.cr	ArrowReaderMetrics#records_read_from_inner
+parquet/src/arrow/arrow_reader/metrics.rs::method::ArrowReaderMetricsInner.new	method	ported	src/parquet/arrow/metrics.cr	ArrowReaderMetrics::Inner#initialize
 parquet/src/arrow/arrow_reader/mod.rs::const::BATCH_SIZE	const	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::const::DEFAULT_BATCH_SIZE	const	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::const::MESSAGE_TYPE	const	missing	-	auto-generated
@@ -1028,7 +1028,7 @@ parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.schema	meth
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_batch_size	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_batch_size
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_limit	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_limit
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_max_predicate_cache_size	method	intentional_divergence	src/parquet/arrow/arrow_reader.cr	the sync reader ignores the predicate cache size (upstream does too, see arrow-rs#8000)
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_metrics	method	intentional_divergence	src/parquet/arrow/arrow_reader.cr	reader metrics are not ported
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_metrics	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_metrics + ArrayReaderBuilder#metrics
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_offset	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_offset
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_projection	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_projection
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderBuilder<T>.with_row_filter	method	ported	src/parquet/arrow/arrow_reader.cr	ParquetRecordBatchReaderBuilder#with_row_filter (predicates evaluated in build)
