@@ -122,10 +122,17 @@ little-endian layout.
   trimmed time fractions, object/list conversion, and `append_json` for
   JSON → Variant), built on the newly ported `VariantBuilderExt`/
   `ObjectFieldBuilder` (`src/parquet_variant/builder/ext.cr`).
-  **Next up:** `arrow/push_decoder/` (which needs the generic
-  `ArrowReaderBuilder<I>` refactor that upstream shares between the sync, async
-  and push builders), then `parquet-variant-compute`, virtual columns (blocked
-  on arrow-cr canonical extension types) and the arrow writer (needs
+  `InMemoryRowGroup` — the in-memory column-chunk source the push decoder is
+  built on — is ported too (`src/parquet/arrow/in_memory_row_group.cr`:
+  `fetch_ranges` (whole chunks, or only the pages a row selection needs when an
+  offset index is available, including the dictionary page), `fill_column_chunks`
+  with dense/sparse `ColumnChunkData`, and `RowGroups` over
+  `SerializedPageReader`s), together with the `RowGroupMetaData#columns` and
+  `ColumnChunkMetaData#byte_range` helpers it needs.
+  **Next up:** the rest of `arrow/push_decoder/` (the decoder state machine,
+  budget and `try_decode`/`peek_next_row_group`/`into_builder`, on top of the
+  ported `InMemoryRowGroup`), then `parquet-variant-compute`, virtual columns
+  (blocked on arrow-cr canonical extension types) and the arrow writer (needs
   `column/page_store.rs`).
   Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
@@ -989,13 +996,12 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: parquet-variant-json json to variant`; gates green
-  (`make lint`, `make test` -> 1311 examples, 0 failures). Next feature:
-  `arrow/push_decoder/` (a large module: it needs the generic
-  `ArrowReaderBuilder` refactor first). Note `make install` now requires the
-  sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 2194 `ported`, 199 `intentional_divergence`,
-  15 skipped, 1107 `missing` (of 3515 rows).
+- Last commit: `port: arrow in-memory row group`; gates green
+  (`make lint`, `make test` -> 1318 examples, 0 failures). Next feature: the
+  rest of `arrow/push_decoder/` (on top of the ported `InMemoryRowGroup`). Note
+  `make install` now requires the sibling checkout `../arrow-cr`.
+- Progress by counts (ledger): 2205 `ported`, 199 `intentional_divergence`,
+  15 skipped, 1096 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1655,9 +1661,13 @@ Chunk status by area:
       (`RowGroupSelection`/`RowGroupPlan` + `with_row_groups`, see
       `spec/parquet/arrow/row_group_selection_spec.cr`), reader metrics
       (`ArrowReaderMetrics` + `with_metrics`, see
-      `spec/parquet/arrow/metrics_spec.cr`) and
-      `ProjectionMask#without_nested_types`. Remaining: `arrow/push_decoder/`,
-      virtual columns and the arrow writer.
+      `spec/parquet/arrow/metrics_spec.cr`),
+      `ProjectionMask#without_nested_types`, and `InMemoryRowGroup`
+      (`src/parquet/arrow/in_memory_row_group.cr`: `fetch_ranges`/
+      `fill_column_chunks`, dense/sparse `ColumnChunkData`, `RowGroups` over
+      `SerializedPageReader`s; see `spec/parquet/arrow/
+      in_memory_row_group_spec.cr`). Remaining: the `arrow/push_decoder/`
+      state machine, virtual columns and the arrow writer.
 - [ ] `arrow/arrow_writer/` (`ArrowWriter`, `levels.rs`, `byte_array.rs`),
       `arrow/mod.rs` (`ProjectionMask`, `ARROW_SCHEMA_META_KEY` plumbing,
       `apply_schema`), and `arrow/buffer/`.
@@ -1977,6 +1987,25 @@ Chunk status by area:
   `tests/arrow_reader/predicate_cache.rs` and need the async reader, so
   `spec/parquet/arrow/metrics_spec.cr` characterizes the API, counter sharing
   and wiring instead.
+- Arrow interop, in-memory row groups (`in_memory_row_group.rs`):
+  `InMemoryRowGroup` is a `RowGroups` source over caller-supplied bytes
+  (row count, per-column `ColumnChunkData?` slots, the row group's
+  `RowGroupPageIndex`, index and metadata). `fetch_ranges` returns whole column
+  chunk ranges when there is no selection or no offset index, otherwise the
+  page ranges that `RowSelection#scan_ranges` selects (prepending the
+  dictionary-page range when the first page does not start at the chunk start)
+  plus each column's page start offsets; it does not model upstream's
+  `cache_mask` batch-boundary expansion (the predicate cache is deferred), so
+  `batch_size` is accepted for signature parity only. `fill_column_chunks`
+  assembles dense `ColumnChunkData::Dense (offset, data)` or sparse
+  `ColumnChunkData::Sparse (length, [{page offset, bytes}])` chunks. Divergences:
+  `usize` → `Int32`, byte ranges are `Range(UInt64, UInt64)`, `FetchRanges` is a
+  struct, `ColumnChunkData` is an abstract `ChunkReader` with `Dense`/`Sparse`
+  subclasses, and the sparse lookup is a linear scan (upstream binary search)
+  raising the upstream message for unknown offsets. Upstream has no dedicated
+  tests for this module; the port characterizes dense/sparse fetching, page
+  pruning with a real offset index, the unfetched-column error, and decoding the
+  selected rows from memory (cross-checked against the file reader).
 - Arrow interop, row filter (`filter.rs` + `ReadPlanBuilder::with_predicate`
   + `ArrowReaderBuilder::with_row_filter`): `ArrowPredicate` is an abstract
   class with `projection`/`evaluate`; `ArrowPredicateFn` adapts a

@@ -45,6 +45,11 @@ module Parquet
           @columns[i]
         end
 
+        # The column chunks of this row group (upstream `columns`).
+        def columns : Array(ColumnChunkMetaData)
+          @columns
+        end
+
         def columns_mut : Array(ColumnChunkMetaData)
           @columns
         end

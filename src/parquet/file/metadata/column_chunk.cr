@@ -190,6 +190,13 @@ module Parquet
         end
 
         # Returns a builder for column chunk metadata.
+        # The `(start, length)` byte range of this column chunk, including its
+        # dictionary page when present (upstream `byte_range`).
+        def byte_range : Tuple(Int64, Int64)
+          start = @dictionary_page_offset || @data_page_offset
+          {start, @total_compressed_size}
+        end
+
         def self.builder(column_descr : Parquet::Schema::ColumnDescriptor) : ColumnChunkMetaDataBuilder
           ColumnChunkMetaDataBuilder.new(column_descr)
         end

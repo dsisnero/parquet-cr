@@ -1453,17 +1453,17 @@ parquet/src/arrow/decoder/delta_byte_array.rs::method::DeltaByteArrayDecoder.ski
 parquet/src/arrow/decoder/dictionary_index.rs::method::DictIndexDecoder.new	method	ported	src/parquet/arrow/decoders.cr	DictIndexDecoder#initialize (validates bit width)
 parquet/src/arrow/decoder/dictionary_index.rs::method::DictIndexDecoder.read	method	ported	src/parquet/arrow/decoders.cr	DictIndexDecoder#read (yields index chunks)
 parquet/src/arrow/decoder/dictionary_index.rs::method::DictIndexDecoder.skip	method	ported	src/parquet/arrow/decoders.cr	DictIndexDecoder#skip
-parquet/src/arrow/in_memory_row_group.rs::method::ColumnChunkData.get	method	missing	-	auto-generated
-parquet/src/arrow/in_memory_row_group.rs::method::ColumnChunkData.get_bytes	method	missing	-	auto-generated
-parquet/src/arrow/in_memory_row_group.rs::method::ColumnChunkData.get_read	method	missing	-	auto-generated
-parquet/src/arrow/in_memory_row_group.rs::method::ColumnChunkData.len	method	missing	-	auto-generated
-parquet/src/arrow/in_memory_row_group.rs::method::ColumnChunkIterator.next	method	missing	-	auto-generated
-parquet/src/arrow/in_memory_row_group.rs::method::InMemoryRowGroup<'_>.column_chunks	method	missing	-	auto-generated
-parquet/src/arrow/in_memory_row_group.rs::method::InMemoryRowGroup<'_>.fetch_ranges	method	missing	-	auto-generated
-parquet/src/arrow/in_memory_row_group.rs::method::InMemoryRowGroup<'_>.fill_column_chunks	method	missing	-	auto-generated
-parquet/src/arrow/in_memory_row_group.rs::method::InMemoryRowGroup<'_>.metadata	method	missing	-	auto-generated
-parquet/src/arrow/in_memory_row_group.rs::method::InMemoryRowGroup<'_>.num_rows	method	missing	-	auto-generated
-parquet/src/arrow/in_memory_row_group.rs::method::InMemoryRowGroup<'_>.row_groups	method	missing	-	auto-generated
+parquet/src/arrow/in_memory_row_group.rs::method::ColumnChunkData.get	method	ported	src/parquet/arrow/in_memory_row_group.cr	ColumnChunkData#get (Dense/Sparse)
+parquet/src/arrow/in_memory_row_group.rs::method::ColumnChunkData.get_bytes	method	ported	src/parquet/arrow/in_memory_row_group.cr	ColumnChunkData#get_bytes
+parquet/src/arrow/in_memory_row_group.rs::method::ColumnChunkData.get_read	method	ported	src/parquet/arrow/in_memory_row_group.cr	ColumnChunkData#get_read
+parquet/src/arrow/in_memory_row_group.rs::method::ColumnChunkData.len	method	ported	src/parquet/arrow/in_memory_row_group.cr	ColumnChunkData#len
+parquet/src/arrow/in_memory_row_group.rs::method::ColumnChunkIterator.next	method	ported	src/parquet/arrow/in_memory_row_group.cr	ColumnChunkIterator#next
+parquet/src/arrow/in_memory_row_group.rs::method::InMemoryRowGroup<'_>.column_chunks	method	ported	src/parquet/arrow/in_memory_row_group.cr	InMemoryRowGroup#column_chunks (SerializedPageReader + crypto context)
+parquet/src/arrow/in_memory_row_group.rs::method::InMemoryRowGroup<'_>.fetch_ranges	method	ported	src/parquet/arrow/in_memory_row_group.cr	InMemoryRowGroup#fetch_ranges (whole chunks or page-pruned ranges)
+parquet/src/arrow/in_memory_row_group.rs::method::InMemoryRowGroup<'_>.fill_column_chunks	method	ported	src/parquet/arrow/in_memory_row_group.cr	InMemoryRowGroup#fill_column_chunks (dense/sparse)
+parquet/src/arrow/in_memory_row_group.rs::method::InMemoryRowGroup<'_>.metadata	method	ported	src/parquet/arrow/in_memory_row_group.cr	InMemoryRowGroup#metadata
+parquet/src/arrow/in_memory_row_group.rs::method::InMemoryRowGroup<'_>.num_rows	method	ported	src/parquet/arrow/in_memory_row_group.cr	InMemoryRowGroup#num_rows
+parquet/src/arrow/in_memory_row_group.rs::method::InMemoryRowGroup<'_>.row_groups	method	ported	src/parquet/arrow/in_memory_row_group.cr	InMemoryRowGroup#row_groups
 parquet/src/arrow/mod.rs::const::ARROW_SCHEMA_META_KEY	const	ported	src/parquet/arrow/schema.cr	Parquet::Arrow::ARROW_SCHEMA_META_KEY
 parquet/src/arrow/mod.rs::const::PARQUET_FIELD_ID_META_KEY	const	ported	src/parquet/arrow/schema.cr	Parquet::Arrow::PARQUET_FIELD_ID_META_KEY
 parquet/src/arrow/mod.rs::method::ProjectionMask.all	method	ported	src/parquet/arrow/mod.cr	ProjectionMask.all
@@ -2478,7 +2478,7 @@ parquet/src/file/metadata/memory.rs::method::usize.heap_size	method	missing	-	au
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.bloom_filter_length	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.bloom_filter_offset	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.builder	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
-parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.byte_range	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
+parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.byte_range	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData#byte_range
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.column_descr	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.column_descr_ptr	method	missing	-	auto-generated
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.column_index_length	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
@@ -2610,7 +2610,7 @@ parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.take_page_index
 parquet/src/file/metadata/mod.rs::method::ParquetMetaDataBuilder.take_row_groups	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::RowGroupMetaData.builder	method	ported	src/parquet/file/metadata/row_group.cr	RowGroupMetaData
 parquet/src/file/metadata/mod.rs::method::RowGroupMetaData.column	method	ported	src/parquet/file/metadata/row_group.cr	RowGroupMetaData
-parquet/src/file/metadata/mod.rs::method::RowGroupMetaData.columns	method	ported	src/parquet/file/metadata/row_group.cr	RowGroupMetaData
+parquet/src/file/metadata/mod.rs::method::RowGroupMetaData.columns	method	ported	src/parquet/file/metadata/row_group.cr	RowGroupMetaData#columns
 parquet/src/file/metadata/mod.rs::method::RowGroupMetaData.columns_mut	method	ported	src/parquet/file/metadata/row_group.cr	RowGroupMetaData
 parquet/src/file/metadata/mod.rs::method::RowGroupMetaData.compressed_size	method	ported	src/parquet/file/metadata/row_group.cr	RowGroupMetaData
 parquet/src/file/metadata/mod.rs::method::RowGroupMetaData.file_offset	method	ported	src/parquet/file/metadata/row_group.cr	RowGroupMetaData
