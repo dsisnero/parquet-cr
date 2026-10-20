@@ -344,8 +344,27 @@ module ParquetVariantCompute
       shred : Bool,
     ) : RowBuilder
       case data_type.kind
-      when .struct?, .list?, .large_list?, .list_view?, .large_list_view?,
-           .fixed_size_list?, .map?, .union?, .dictionary?, .run_end_encoded?
+      when .struct?
+        fields = data_type.fields
+        unless fields
+          raise ParquetVariant::InvalidArgumentError.new("Missing struct fields for #{data_type}")
+        end
+        return StructRowBuilder.new(fields, cast_options, capacity, shred)
+      when .list?
+        return list_row_builder(data_type, cast_options, capacity, shred, Int32, view: false)
+      when .large_list?
+        return list_row_builder(data_type, cast_options, capacity, shred, Int64, view: false)
+      when .list_view?
+        return list_row_builder(data_type, cast_options, capacity, shred, Int32, view: true)
+      when .large_list_view?
+        return list_row_builder(data_type, cast_options, capacity, shred, Int64, view: true)
+      when .fixed_size_list?
+        field = element_field(data_type)
+        size = data_type.size || 0
+        return FixedSizeListRowBuilder.new(
+          field, field.data_type, size, cast_options, capacity, shred
+        )
+      when .map?, .union?, .dictionary?, .run_end_encoded?
         raise nyi_err!(
           "The #{data_type} variant-to-arrow row builder is not ported yet"
         )
@@ -402,6 +421,248 @@ module ParquetVariantCompute
       row_builder.with_cast_error do |variant|
         "Failed to cast to #{prefix}(precision=#{precision}, scale=#{scale}) " \
         "from variant #{variant.debug_string}"
+      end
+    end
+
+    # The element field of a list-like data type.
+    private def self.element_field(data_type : ::Arrow::DataType) : ::Arrow::Field
+      field = data_type.field
+      unless field
+        raise ParquetVariant::InvalidArgumentError.new("Missing element field for #{data_type}")
+      end
+      field
+    end
+
+    # Builds a list-like row builder.
+    private def self.list_row_builder(
+      data_type : ::Arrow::DataType,
+      cast_options : ::Arrow::CastOptions,
+      capacity : Int32,
+      shred : Bool,
+      offset_type : O.class,
+      view : Bool,
+    ) : RowBuilder forall O
+      field = element_field(data_type)
+      ListRowBuilder(O).new(field, field.data_type, cast_options, capacity, shred, view)
+    end
+
+    # Builds a list array from variant list values (upstream
+    # `VariantToListArrowRowBuilder`).
+    #
+    # Divergence: upstream has one type per (offset width, view) combination;
+    # the port uses one generic class with a `view` flag.
+    class ListRowBuilder(O) < RowBuilder
+      @field : ::Arrow::Field
+      @offsets : Array(O)
+      @element_builder : RowBuilder
+      @nulls : ::Arrow::NullBufferBuilder
+      @cast_options : ::Arrow::CastOptions
+      @current_offset : O
+      @view : Bool
+
+      def initialize(
+        @field : ::Arrow::Field,
+        element_data_type : ::Arrow::DataType,
+        @cast_options : ::Arrow::CastOptions,
+        capacity : Int32,
+        shred : Bool,
+        @view : Bool,
+      )
+        @offsets = [O.zero]
+        @element_builder = VariantToArrow.make_typed_row_builder(
+          element_data_type, @cast_options, capacity, shred
+        )
+        @nulls = ::Arrow::NullBufferBuilder.new(capacity)
+        @current_offset = O.zero
+      end
+
+      def append_null : Nil
+        @offsets << @current_offset
+        @nulls.append_null
+      end
+
+      def append_value(value : ParquetVariant::Variant) : Bool
+        list = extract_list(value)
+        if list.nil?
+          append_null
+          return false
+        end
+
+        list.iter.each do |element|
+          @element_builder.append_value(element)
+          @current_offset += 1
+        end
+        @offsets << @current_offset
+        @nulls.append_non_null
+        true
+      end
+
+      def finish : ::Arrow::ArrayBase
+        element_array = @element_builder.finish
+        field = ::Arrow::Field.new(@field.name, element_array.data_type, @field.nullable?)
+        nulls = @nulls.finish
+
+        if @view
+          sizes = (1...@offsets.size).map { |i| @offsets[i] - @offsets[i - 1] }
+          views = @offsets[0...(@offsets.size - 1)]
+          ::Arrow::GenericListViewArray(O).new(
+            field,
+            ::Arrow::ScalarBuffer(O).from(views),
+            ::Arrow::ScalarBuffer(O).from(sizes),
+            element_array,
+            nulls,
+          )
+        else
+          ::Arrow::GenericListArray(O).new(
+            field,
+            ::Arrow::OffsetBuffer(O).new(::Arrow::ScalarBuffer(O).from(@offsets)),
+            element_array,
+            nulls,
+          )
+        end
+      end
+
+      private def extract_list(value : ParquetVariant::Variant) : ParquetVariant::VariantList?
+        TypeConversion.cast_with_options(value, @cast_options) do |variant|
+          variant.as_list
+        end
+      rescue ParquetVariant::CastError
+        raise ParquetVariant::CastError.new(
+          "Failed to extract list from variant #{value.debug_string}"
+        )
+      end
+    end
+
+    # Builds a fixed-size list array from variant list values (upstream
+    # `VariantToFixedSizeListArrowRowBuilder`).
+    class FixedSizeListRowBuilder < RowBuilder
+      @field : ::Arrow::Field
+      @list_size : Int32
+      @element_builder : RowBuilder
+      @nulls : ::Arrow::NullBufferBuilder
+      @cast_options : ::Arrow::CastOptions
+      @shred : Bool
+
+      def initialize(
+        @field : ::Arrow::Field,
+        element_data_type : ::Arrow::DataType,
+        @list_size : Int32,
+        @cast_options : ::Arrow::CastOptions,
+        capacity : Int32,
+        @shred : Bool,
+      )
+        @element_builder = VariantToArrow.make_typed_row_builder(
+          element_data_type, @cast_options, capacity, @shred
+        )
+        @nulls = ::Arrow::NullBufferBuilder.new(capacity)
+      end
+
+      def append_null : Nil
+        @list_size.times { @element_builder.append_null }
+        @nulls.append_null
+      end
+
+      def append_value(value : ParquetVariant::Variant) : Bool
+        list = extract_list(value)
+        if list.nil?
+          append_null
+          return false
+        end
+
+        if list.len != @list_size
+          # A wrong size is a null in safe mode (outside shredding) and an error
+          # otherwise.
+          if @cast_options.safe? && !@shred
+            append_null
+            return false
+          end
+          raise ParquetVariant::CastError.new(
+            "Expected fixed size list of size #{@list_size}, got size #{list.len}"
+          )
+        end
+
+        list.iter.each { |element| @element_builder.append_value(element) }
+        @nulls.append_non_null
+        true
+      end
+
+      def finish : ::Arrow::ArrayBase
+        element_array = @element_builder.finish
+        field = ::Arrow::Field.new(@field.name, element_array.data_type, @field.nullable?)
+        ::Arrow::FixedSizeListArray.try_new(
+          field, @list_size, element_array, @nulls.finish
+        )
+      end
+
+      private def extract_list(value : ParquetVariant::Variant) : ParquetVariant::VariantList?
+        TypeConversion.cast_with_options(value, @cast_options) do |variant|
+          variant.as_list
+        end
+      rescue ParquetVariant::CastError
+        raise ParquetVariant::CastError.new(
+          "Failed to extract list from variant #{value.debug_string}"
+        )
+      end
+    end
+
+    # Builds a struct array from variant object values (upstream
+    # `StructVariantToArrowRowBuilder`).
+    class StructRowBuilder < RowBuilder
+      @fields : ::Arrow::Fields
+      @field_builders : Array(RowBuilder)
+      @nulls : ::Arrow::NullBufferBuilder
+      @cast_options : ::Arrow::CastOptions
+
+      def initialize(
+        @fields : ::Arrow::Fields,
+        @cast_options : ::Arrow::CastOptions,
+        capacity : Int32,
+        shred : Bool,
+      )
+        @field_builders = @fields.map do |field|
+          VariantToArrow.make_typed_row_builder(
+            field.data_type, @cast_options, capacity, false
+          )
+        end
+        @nulls = ::Arrow::NullBufferBuilder.new(capacity)
+      end
+
+      def append_null : Nil
+        @field_builders.each(&.append_null)
+        @nulls.append_null
+      end
+
+      def append_value(value : ParquetVariant::Variant) : Bool
+        object = extract_object(value)
+        if object.nil?
+          append_null
+          return false
+        end
+
+        @fields.each_with_index do |field, index|
+          if field_value = object.get(field.name)
+            @field_builders[index].append_value(field_value)
+          else
+            @field_builders[index].append_null
+          end
+        end
+        @nulls.append_non_null
+        true
+      end
+
+      def finish : ::Arrow::ArrayBase
+        children = @field_builders.map(&.finish)
+        ::Arrow::StructArray.try_new(@fields, children, @nulls.finish)
+      end
+
+      private def extract_object(value : ParquetVariant::Variant) : ParquetVariant::VariantObject?
+        TypeConversion.cast_with_options(value, @cast_options) do |variant|
+          variant.as_object
+        end
+      rescue ParquetVariant::CastError
+        raise ParquetVariant::CastError.new(
+          "Failed to extract struct from variant #{value.debug_string}"
+        )
       end
     end
 

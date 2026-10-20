@@ -197,11 +197,14 @@ little-endian layout.
   (µs/ns and NTZ), strings (Utf8/LargeUtf8/Utf8View), binary
   (Binary/LargeBinary/BinaryView), UUIDs and the Null storage type — with
   upstream's cast semantics (safe mode nulls a failed cast, strict mode raises).
-  **Next up:** the composite `variant_to_arrow` row builders (list/struct/map/
-  union/encoded/path/binary-variant), then `shred_variant` (and the shredding
-  schema), `variant_get`, the arrow ⇄ variant casts, virtual columns (blocked on
-  arrow-cr canonical extension types) and the arrow writer (needs
-  `column/page_store.rs`).
+  The list-like and struct row builders are ported too (list, large list, list
+  view, large list view, fixed-size list — with the wrong-size safe/strict
+  behavior — and struct, with missing fields as nulls).
+  **Next up:** the remaining `variant_to_arrow` builders (map, union,
+  dictionary/run-end-encoded, variant-path and binary-variant), then
+  `shred_variant` (and the shredding schema), `variant_get`, the arrow ⇄ variant
+  casts, virtual columns (blocked on arrow-cr canonical extension types) and the
+  arrow writer (needs `column/page_store.rs`).
   Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`'s shredding/get/cast kernels, the arrow-only CLIs,
@@ -1069,14 +1072,15 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: parquet-variant-compute variant to arrow`; gates green
-  (`make lint`, `make test` -> 1467 examples, 0 failures). Next feature: the
-  composite `variant_to_arrow` row builders, then `shred_variant`,
-  `variant_get` and the arrow ⇄ variant casts, virtual columns (blocked on
-  arrow-cr canonical extension types) and the arrow writer. Note `make install`
-  now requires the sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 2448 `ported`, 206 `intentional_divergence`,
-  15 skipped, 846 `missing` (of 3515 rows).
+- Last commit: `port: parquet-variant-compute list and struct builders`; gates
+  green (`make lint`, `make test` -> 1474 examples, 0 failures). Next feature:
+  the remaining `variant_to_arrow` builders (map/union/encoded/path/
+  binary-variant), then `shred_variant`, `variant_get` and the arrow ⇄ variant
+  casts, virtual columns (blocked on arrow-cr canonical extension types) and the
+  arrow writer. Note `make install` now requires the sibling checkout
+  `../arrow-cr`.
+- Progress by counts (ledger): 2464 `ported`, 209 `intentional_divergence`,
+  15 skipped, 827 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1574,13 +1578,17 @@ Chunk status by area:
   three binary types, UUIDs and Null), with upstream's safe/strict cast
   semantics and error texts; `spec/parquet_variant_compute/
   variant_to_arrow_spec.cr` ports four of the five upstream `variant_to_arrow`
-  unit tests and characterizes the other target types. Remaining: the composite
-  and encoded row builders (list/large-list/list-view/fixed-size-list, struct,
-  map, union, dictionary/run-end-encoded, variant-path and binary-variant, plus
-  `Decimal256`), then `variant_get` on top of them, `shred_variant` (and the
-  shredding schema), the composite `typed_value` reads it enables,
-  `cast_to_variant`/`arrow_to_variant`, and the `type_conversion`
-  exponent-notation path.
+  unit tests and characterizes the other target types. The list-like and struct
+  builders followed: `ListRowBuilder(O)` (list/large list/list view/large list
+  view, one generic class with a `view` flag), `FixedSizeListRowBuilder` and
+  `StructRowBuilder`, with the wrong-size and non-list/non-object safe/strict
+  behavior; the deferred upstream
+  `strict_cast_allows_variant_null_for_list_and_struct_builders` test is ported.
+  Remaining: the map, union, dictionary/run-end-encoded, variant-path and
+  binary-variant row builders (and `Decimal256`), then `variant_get` on top of
+  them, `shred_variant` (and the shredding schema), the composite `typed_value`
+  reads it enables, `cast_to_variant`/`arrow_to_variant`, and the
+  `type_conversion` exponent-notation path.
 - [x] `parquet-variant-json` — both directions:
   `src/parquet_variant_json/variant_to_json.cr` + `formatting.cr`
   (`Variant#to_json`/`#to_json_string`/`#to_json_value`, `Formatting`'s
@@ -2846,9 +2854,13 @@ Chunk status by area:
   `ValueRowBuilder(B, T)` for the macro-generated builders, uses `Int32` for
   capacities, raises (`CastError`/`InvalidArgumentError`/`NYIError`) where
   upstream returns `Result`, and reuses the data type for decimal
-  precision/scale and timestamp timezones instead of builder setters. Still
-  deferred: the composite/encoded `variant_to_arrow` builders, `shred_variant`
-  and the shredding schema, `variant_get`/`GetOptions`, `cast_to_variant` and
+  precision/scale and timestamp timezones instead of builder setters. The list
+  builders collapse upstream's four `(offset width, view)` types into one
+  generic `ListRowBuilder(O)` with a `view` flag, and upstream's
+  `ListElementBuilder` keeps only its typed mode (the shredded mode arrives with
+  `shred_variant`). Still deferred: the map/union/dictionary/run-end-encoded/
+  variant-path/binary-variant `variant_to_arrow` builders, `shred_variant` and
+  the shredding schema, `variant_get`/`GetOptions`, `cast_to_variant` and
   `arrow_to_variant`.
 - `chunk_reader`: `BytesChunkReader#get_read`/`get_bytes` and
   `FileChunkReader#get_bytes` raise the upstream `EOF` messages

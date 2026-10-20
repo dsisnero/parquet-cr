@@ -233,10 +233,10 @@ parquet-variant-compute/src/variant_get.rs::method::GetOptions<'a>.new	method	mi
 parquet-variant-compute/src/variant_get.rs::method::GetOptions<'a>.new_with_path	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_get.rs::method::GetOptions<'a>.with_as_type	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_get.rs::method::GetOptions<'a>.with_cast_options	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_to_arrow.rs::method::ArrayVariantToArrowRowBuilder<'a>.append_null	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_to_arrow.rs::method::ArrayVariantToArrowRowBuilder<'a>.append_value	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_to_arrow.rs::method::ArrayVariantToArrowRowBuilder<'a>.finish	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_to_arrow.rs::method::ArrayVariantToArrowRowBuilder<'a>.try_new	method	missing	-	auto-generated
+parquet-variant-compute/src/variant_to_arrow.rs::method::ArrayVariantToArrowRowBuilder<'a>.append_null	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	make_typed_row_builder (list dispatch) -> ListRowBuilder/FixedSizeListRowBuilder#append_null
+parquet-variant-compute/src/variant_to_arrow.rs::method::ArrayVariantToArrowRowBuilder<'a>.append_value	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	make_typed_row_builder (list dispatch) -> ListRowBuilder/FixedSizeListRowBuilder#append_value
+parquet-variant-compute/src/variant_to_arrow.rs::method::ArrayVariantToArrowRowBuilder<'a>.finish	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	make_typed_row_builder (list dispatch) -> ListRowBuilder/FixedSizeListRowBuilder#finish
+parquet-variant-compute/src/variant_to_arrow.rs::method::ArrayVariantToArrowRowBuilder<'a>.try_new	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	make_typed_row_builder (list dispatch) -> ListRowBuilder/FixedSizeListRowBuilder#try_new
 parquet-variant-compute/src/variant_to_arrow.rs::method::EncodedVariantToArrowRowBuilder<'a>.append_null	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_to_arrow.rs::method::EncodedVariantToArrowRowBuilder<'a>.append_value	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_to_arrow.rs::method::EncodedVariantToArrowRowBuilder<'a>.finish	method	missing	-	auto-generated
@@ -244,9 +244,9 @@ parquet-variant-compute/src/variant_to_arrow.rs::method::EncodedVariantToArrowRo
 parquet-variant-compute/src/variant_to_arrow.rs::method::FakeNullBuilder.append_null	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	NullRowBuilder#append_null
 parquet-variant-compute/src/variant_to_arrow.rs::method::FakeNullBuilder.append_value	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	NullRowBuilder#append_value
 parquet-variant-compute/src/variant_to_arrow.rs::method::FakeNullBuilder.finish	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	NullRowBuilder#finish
-parquet-variant-compute/src/variant_to_arrow.rs::method::ListElementBuilder<'_>.append_null	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_to_arrow.rs::method::ListElementBuilder<'_>.append_value	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_to_arrow.rs::method::ListElementBuilder<'_>.finish	method	missing	-	auto-generated
+parquet-variant-compute/src/variant_to_arrow.rs::method::ListElementBuilder<'_>.append_null	method	intentional_divergence	src/parquet_variant_compute/variant_to_arrow.cr	only the typed mode is modelled (element builders are RowBuilders); the shredded mode comes with shred_variant
+parquet-variant-compute/src/variant_to_arrow.rs::method::ListElementBuilder<'_>.append_value	method	intentional_divergence	src/parquet_variant_compute/variant_to_arrow.cr	only the typed mode is modelled (element builders are RowBuilders); the shredded mode comes with shred_variant
+parquet-variant-compute/src/variant_to_arrow.rs::method::ListElementBuilder<'_>.finish	method	intentional_divergence	src/parquet_variant_compute/variant_to_arrow.cr	only the typed mode is modelled (element builders are RowBuilders); the shredded mode comes with shred_variant
 parquet-variant-compute/src/variant_to_arrow.rs::method::MapVariantToArrowRowBuilder<'a>.append_null	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_to_arrow.rs::method::MapVariantToArrowRowBuilder<'a>.append_value	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_to_arrow.rs::method::MapVariantToArrowRowBuilder<'a>.finish	method	missing	-	auto-generated
@@ -254,10 +254,10 @@ parquet-variant-compute/src/variant_to_arrow.rs::method::MapVariantToArrowRowBui
 parquet-variant-compute/src/variant_to_arrow.rs::method::PrimitiveVariantToArrowRowBuilder<'_>.append_null	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	RowBuilder/ValueRowBuilder#append_null (primitive builders)
 parquet-variant-compute/src/variant_to_arrow.rs::method::PrimitiveVariantToArrowRowBuilder<'_>.append_value	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	RowBuilder/ValueRowBuilder#append_value (primitive builders)
 parquet-variant-compute/src/variant_to_arrow.rs::method::PrimitiveVariantToArrowRowBuilder<'_>.finish	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	RowBuilder/ValueRowBuilder#finish (primitive builders)
-parquet-variant-compute/src/variant_to_arrow.rs::method::StructVariantToArrowRowBuilder<'a>.append_null	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_to_arrow.rs::method::StructVariantToArrowRowBuilder<'a>.append_value	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_to_arrow.rs::method::StructVariantToArrowRowBuilder<'a>.finish	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_to_arrow.rs::method::StructVariantToArrowRowBuilder<'a>.try_new	method	missing	-	auto-generated
+parquet-variant-compute/src/variant_to_arrow.rs::method::StructVariantToArrowRowBuilder<'a>.append_null	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	StructRowBuilder#append_null
+parquet-variant-compute/src/variant_to_arrow.rs::method::StructVariantToArrowRowBuilder<'a>.append_value	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	StructRowBuilder#append_value
+parquet-variant-compute/src/variant_to_arrow.rs::method::StructVariantToArrowRowBuilder<'a>.finish	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	StructRowBuilder#finish
+parquet-variant-compute/src/variant_to_arrow.rs::method::StructVariantToArrowRowBuilder<'a>.try_new	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	StructRowBuilder#try_new
 parquet-variant-compute/src/variant_to_arrow.rs::method::UnionVariantToArrowRowBuilder<'a>.append_null	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_to_arrow.rs::method::UnionVariantToArrowRowBuilder<'a>.append_to_child	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_to_arrow.rs::method::UnionVariantToArrowRowBuilder<'a>.append_value	method	missing	-	auto-generated
@@ -278,14 +278,14 @@ parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToDecimalArrowRo
 parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToDecimalArrowRowBuilder<'a, T>.append_value	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	VariantToArrow.decimal + ValueRowBuilder#append_value
 parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToDecimalArrowRowBuilder<'a, T>.finish	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	VariantToArrow.decimal + ValueRowBuilder#finish
 parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToDecimalArrowRowBuilder<'a, T>.new	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	VariantToArrow.decimal (data-type-carried precision/scale)
-parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToFixedSizeListArrowRowBuilder<'a>.append_null	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToFixedSizeListArrowRowBuilder<'a>.append_value	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToFixedSizeListArrowRowBuilder<'a>.finish	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToFixedSizeListArrowRowBuilder<'a>.try_new	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToListArrowRowBuilder<'a, O, IS_VIEW>.append_null	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToListArrowRowBuilder<'a, O, IS_VIEW>.append_value	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToListArrowRowBuilder<'a, O, IS_VIEW>.finish	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToListArrowRowBuilder<'a, O, IS_VIEW>.try_new	method	missing	-	auto-generated
+parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToFixedSizeListArrowRowBuilder<'a>.append_null	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	FixedSizeListRowBuilder#append_null
+parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToFixedSizeListArrowRowBuilder<'a>.append_value	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	FixedSizeListRowBuilder#append_value
+parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToFixedSizeListArrowRowBuilder<'a>.finish	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	FixedSizeListRowBuilder#finish
+parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToFixedSizeListArrowRowBuilder<'a>.try_new	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	FixedSizeListRowBuilder#try_new
+parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToListArrowRowBuilder<'a, O, IS_VIEW>.append_null	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	ListRowBuilder(O) with a `view` flag#append_null
+parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToListArrowRowBuilder<'a, O, IS_VIEW>.append_value	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	ListRowBuilder(O) with a `view` flag#append_value
+parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToListArrowRowBuilder<'a, O, IS_VIEW>.finish	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	ListRowBuilder(O) with a `view` flag#finish
+parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToListArrowRowBuilder<'a, O, IS_VIEW>.try_new	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	ListRowBuilder(O) with a `view` flag#try_new
 parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToUuidArrowRowBuilder<'a>.append_null	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	UUID ValueRowBuilder#append_null
 parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToUuidArrowRowBuilder<'a>.append_value	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	UUID ValueRowBuilder#append_value
 parquet-variant-compute/src/variant_to_arrow.rs::method::VariantToUuidArrowRowBuilder<'a>.finish	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	UUID ValueRowBuilder#finish
