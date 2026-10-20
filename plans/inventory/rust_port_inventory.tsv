@@ -115,11 +115,11 @@ parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedVariantRo
 parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedVariantRowBuilder<'_>.append_value	method	missing	-	auto-generated
 parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedVariantRowBuilder<'_>.finish	method	missing	-	auto-generated
 parquet-variant-compute/src/shred_variant.rs::method::VariantValue<'a>.from	method	missing	-	auto-generated
-parquet-variant-compute/src/type_conversion.rs::const::KIND	const	missing	-	auto-generated
-parquet-variant-compute/src/type_conversion.rs::method::Decimal128Type.shred_variant	method	missing	-	auto-generated
-parquet-variant-compute/src/type_conversion.rs::method::Decimal256Type.shred_variant	method	missing	-	auto-generated
-parquet-variant-compute/src/type_conversion.rs::method::Decimal32Type.shred_variant	method	missing	-	auto-generated
-parquet-variant-compute/src/type_conversion.rs::method::Decimal64Type.shred_variant	method	missing	-	auto-generated
+parquet-variant-compute/src/type_conversion.rs::const::KIND	const	intentional_divergence	src/parquet_variant_compute/type_conversion.cr	no `DecimalCastTarget` trait: the target kind is a compile-time type test in `decimal_to_num`
+parquet-variant-compute/src/type_conversion.rs::method::Decimal128Type.shred_variant	method	ported	src/parquet_variant_compute/type_conversion.cr	TypeConversion.shred_unscaled_decimal128
+parquet-variant-compute/src/type_conversion.rs::method::Decimal256Type.shred_variant	method	intentional_divergence	src/parquet_variant_compute/type_conversion.cr	Decimal256/I256 is not modelled in the port
+parquet-variant-compute/src/type_conversion.rs::method::Decimal32Type.shred_variant	method	ported	src/parquet_variant_compute/type_conversion.cr	TypeConversion.shred_unscaled_decimal32 (+ convert_exact_decimal)
+parquet-variant-compute/src/type_conversion.rs::method::Decimal64Type.shred_variant	method	ported	src/parquet_variant_compute/type_conversion.cr	TypeConversion.shred_unscaled_decimal64
 parquet-variant-compute/src/unshred_variant.rs::method::DecimalUnshredRowBuilder<'a, A, V>.append_row	method	ported	src/parquet_variant_compute/unshred_variant.cr	UnshredRowBuilder::PrimitiveRowBuilder#append_row (reuses typed_value_to_variant)
 parquet-variant-compute/src/unshred_variant.rs::method::DecimalUnshredRowBuilder<'a, A, V>.new	method	ported	src/parquet_variant_compute/unshred_variant.cr	UnshredRowBuilder::PrimitiveRowBuilder#initialize
 parquet-variant-compute/src/unshred_variant.rs::method::ListUnshredVariantBuilder<'a, L>.append_row	method	ported	src/parquet_variant_compute/unshred_variant.cr	UnshredRowBuilder::ListRowBuilder#append_row
