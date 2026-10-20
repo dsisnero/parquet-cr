@@ -258,6 +258,12 @@ private def object_variant(fields : Array(Tuple(String, Variant))) : Variant
   Variant.new(metadata, value)
 end
 
+private def metadata_column(values : Array(Bytes)) : Arrow::ArrayBase
+  builder = Arrow::BinaryViewBuilder.new
+  values.each { |value| builder.append_value(value) }
+  builder.finish
+end
+
 private def int64_item : Arrow::Field
   Arrow::Field.new("item", Arrow::DataType.int64, true)
 end
@@ -384,17 +390,132 @@ describe ParquetVariantCompute::VariantToArrow do
     error.message.not_nil!.should contain "Failed to extract struct from variant"
   end
 
-  it "keeps map, union and encoded targets deferred" do
+  it "keeps the union builder deferred" do
     union_fields = Arrow::UnionFields.new([
       {1_i8, Arrow::Field.new("child", Arrow::DataType.int32, true)},
     ] of Tuple(Int8, Arrow::Field))
-    [
-      Arrow::DataType.dictionary(Arrow::DataType.int32, Arrow::DataType.utf8),
-      Arrow::DataType.union(union_fields, Arrow::UnionMode::Dense),
-    ].each do |data_type|
-      expect_raises(Parquet::NYIError) do
-        V2A.make_typed_row_builder(data_type, safe, 1, false)
-      end
+
+    expect_raises(Parquet::NYIError) do
+      V2A.make_typed_row_builder(
+        Arrow::DataType.union(union_fields, Arrow::UnionMode::Dense), safe, 1, false
+      )
     end
+  end
+end
+
+# Map, encoded (dictionary/run-end-encoded), variant-path and binary-variant
+# builders.
+private def map_type(key_type : Arrow::DataType, value_type : Arrow::DataType) : Arrow::DataType
+  entries = Arrow::Field.new(
+    Arrow::Field::MAP_ENTRIES_FIELD_DEFAULT_NAME,
+    Arrow::DataType.struct(Arrow::Fields.new([
+      Arrow::Field.new(Arrow::Field::MAP_KEY_FIELD_DEFAULT_NAME, key_type, false),
+      Arrow::Field.new(Arrow::Field::MAP_VALUE_FIELD_DEFAULT_NAME, value_type, true),
+    ])),
+    false,
+  )
+  Arrow::DataType.map(entries, false)
+end
+
+describe ParquetVariantCompute::VariantToArrow do
+  it "builds map arrays from variant objects" do
+    builder = V2A.make_typed_row_builder(
+      map_type(Arrow::DataType.utf8, Arrow::DataType.int64), safe, 3, false
+    )
+    builder.append_value(
+      object_variant([{"a", Variant.from(1_i64)}, {"b", Variant.from(2_i64)}])
+    ).should be_true
+    builder.append_null
+    builder.append_value(object_variant([] of Tuple(String, Variant))).should be_true
+
+    array = builder.finish.as(Arrow::MapArray)
+    array.len.should eq 3
+    array.nulls.not_nil!.null?(1).should be_true
+    entries = array.entries
+    entries.len.should eq 2
+    entries.column(0).as(Arrow::StringArray).value(0).should eq "a"
+    entries.column(0).as(Arrow::StringArray).value(1).should eq "b"
+    entries.column(1).as(Arrow::PrimitiveArray(Int64)).value(1).should eq 2
+  end
+
+  it "rejects non-object map values and unrepresentable keys" do
+    safe_builder = V2A.make_typed_row_builder(
+      map_type(Arrow::DataType.utf8, Arrow::DataType.int64), safe, 1, false
+    )
+    safe_builder.append_value(Variant.from(5_i64)).should be_false
+    safe_builder.finish.as(Arrow::MapArray).nulls.not_nil!.null?(0).should be_true
+
+    strict_builder = V2A.make_typed_row_builder(
+      map_type(Arrow::DataType.utf8, Arrow::DataType.int64), strict, 1, false
+    )
+    error = expect_raises(ParquetVariant::CastError) do
+      strict_builder.append_value(Variant.from(5_i64))
+    end
+    error.message.not_nil!.should contain "Failed to extract object from variant"
+
+    key_builder = V2A.make_typed_row_builder(
+      map_type(Arrow::DataType.int32, Arrow::DataType.int64), safe, 1, false
+    )
+    error = expect_raises(ParquetVariant::CastError) do
+      key_builder.append_value(object_variant([{"a", Variant.from(1_i64)}]))
+    end
+    error.message.not_nil!.should contain "Failed to cast map key"
+  end
+
+  it "builds dictionary-encoded arrays" do
+    data_type = Arrow::DataType.dictionary(Arrow::DataType.int32, Arrow::DataType.int64)
+    builder = V2A.make_typed_row_builder(data_type, safe, 3, false)
+    builder.append_value(Variant.from(1_i64)).should be_true
+    builder.append_value(Variant.from(2_i64)).should be_true
+    builder.append_value(Variant.from(1_i64)).should be_true
+    builder.append_null
+
+    array = builder.finish
+    array.data_type.should eq data_type
+    dictionary = array.as(Arrow::DictionaryArray(Int32))
+    dictionary.len.should eq 4
+    dictionary.nulls.not_nil!.null?(3).should be_true
+    dictionary.values.as(Arrow::PrimitiveArray(Int64)).len.should eq 2
+  end
+
+  it "extracts a variant path" do
+    # Build the object explicitly so its metadata bytes are available.
+    metadata_builder = ParquetVariant::VariantBuilder.new
+    object_builder = metadata_builder.new_object
+    object_builder.insert("a", Variant.from(5_i64))
+    object_builder.finish
+    metadata, value = metadata_builder.finish
+    object = Variant.new(metadata, value)
+
+    builder = V2A.make_row_builder(
+      metadata_column([metadata]),
+      ParquetVariant::VariantPath.parse("a"),
+      Arrow::DataType.int64,
+      safe,
+      2,
+    )
+    builder.append_value(object).should be_true
+    builder.append_value(object_variant([{"b", Variant.from(6_i64)}])).should be_false
+    array = builder.finish.as(Arrow::PrimitiveArray(Int64))
+    array.value(0).should eq 5
+    array.nulls.not_nil!.null?(1).should be_true
+  end
+
+  it "builds an unshredded variant array when no target type is requested" do
+    metadata_builder = ParquetVariant::VariantBuilder.new
+    metadata_builder.append_value(Variant.from(1_i64))
+    metadata, _value = metadata_builder.finish
+    builder = V2A.make_row_builder(
+      metadata_column([metadata, metadata]), ParquetVariant::VariantPath.parse(""), nil, safe, 2
+    )
+
+    builder.append_value(Variant.from(1_i64))
+    builder.append_null
+    struct_array = builder.finish.as(Arrow::StructArray)
+
+    variant_array = PVC::VariantArray.try_new(struct_array)
+    variant_array.len.should eq 2
+    variant_array.value(0).should eq Variant.from(1_i64)
+    variant_array.is_null(1).should be_true
   end
 end

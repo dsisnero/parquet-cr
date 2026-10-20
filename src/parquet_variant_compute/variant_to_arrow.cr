@@ -337,6 +337,7 @@ module ParquetVariantCompute
     #
     # Only primitive targets are ported so far; the composite and encoded
     # builders are deferred (see the module comment).
+    # ameba:disable Metrics/CyclomaticComplexity
     def self.make_typed_row_builder(
       data_type : ::Arrow::DataType,
       cast_options : ::Arrow::CastOptions,
@@ -364,7 +365,27 @@ module ParquetVariantCompute
         return FixedSizeListRowBuilder.new(
           field, field.data_type, size, cast_options, capacity, shred
         )
-      when .map?, .union?, .dictionary?, .run_end_encoded?
+      when .map?
+        entries_field = data_type.field
+        unless entries_field
+          raise ParquetVariant::InvalidArgumentError.new("Missing map entries field for #{data_type}")
+        end
+        return MapRowBuilder.new(
+          entries_field, data_type.is_sorted || false, cast_options, capacity, shred
+        )
+      when .dictionary?
+        value_type = data_type.value
+        unless value_type
+          raise ParquetVariant::InvalidArgumentError.new("Missing dictionary value type for #{data_type}")
+        end
+        return EncodedRowBuilder.new(data_type, value_type, cast_options, capacity)
+      when .run_end_encoded?
+        values_field = data_type.field2
+        unless values_field
+          raise ParquetVariant::InvalidArgumentError.new("Missing run-end values field for #{data_type}")
+        end
+        return EncodedRowBuilder.new(data_type, values_field.data_type, cast_options, capacity)
+      when .union?
         raise nyi_err!(
           "The #{data_type} variant-to-arrow row builder is not ported yet"
         )
@@ -421,6 +442,231 @@ module ParquetVariantCompute
       row_builder.with_cast_error do |variant|
         "Failed to cast to #{prefix}(precision=#{precision}, scale=#{scale}) " \
         "from variant #{variant.debug_string}"
+      end
+    end
+
+    # Creates a row builder with optional path extraction (upstream
+    # `make_variant_to_arrow_row_builder`).
+    #
+    # With no target type the builder produces an unshredded variant array (as a
+    # struct array); otherwise it produces the requested type, wrapped in a path
+    # extractor when `path` is not empty.
+    def self.make_row_builder(
+      metadata : ::Arrow::ArrayBase,
+      path : ParquetVariant::VariantPath,
+      data_type : ::Arrow::DataType?,
+      cast_options : ::Arrow::CastOptions,
+      capacity : Int32,
+    ) : RowBuilder
+      builder =
+        if target = data_type
+          make_typed_row_builder(target, cast_options, capacity, false)
+        else
+          BinaryVariantRowBuilder.new(metadata, capacity)
+        end
+
+      return builder if path.path.empty?
+
+      PathRowBuilder.new(builder, path)
+    end
+
+    # Builds the values array and casts it to an encoded (dictionary or
+    # run-end-encoded) target (upstream `EncodedVariantToArrowRowBuilder`).
+    class EncodedRowBuilder < RowBuilder
+      @data_type : ::Arrow::DataType
+      @cast_options : ::Arrow::CastOptions
+      @values_builder : RowBuilder
+
+      def initialize(
+        @data_type : ::Arrow::DataType,
+        value_type : ::Arrow::DataType,
+        @cast_options : ::Arrow::CastOptions,
+        capacity : Int32,
+      )
+        @values_builder = VariantToArrow.make_typed_row_builder(
+          value_type, @cast_options, capacity, false
+        )
+      end
+
+      def append_null : Nil
+        @values_builder.append_null
+      end
+
+      def append_value(value : ParquetVariant::Variant) : Bool
+        @values_builder.append_value(value)
+      end
+
+      def finish : ::Arrow::ArrayBase
+        values = @values_builder.finish
+        ::Arrow.cast_with_options(values, @data_type, @cast_options)
+      end
+    end
+
+    # Extracts a variant path before delegating (upstream
+    # `VariantPathRowBuilder`).
+    class PathRowBuilder < RowBuilder
+      @builder : RowBuilder
+      @path : ParquetVariant::VariantPath
+
+      def initialize(@builder : RowBuilder, @path : ParquetVariant::VariantPath)
+      end
+
+      def append_null : Nil
+        @builder.append_null
+      end
+
+      def append_value(value : ParquetVariant::Variant) : Bool
+        if extracted = value.get_path(@path)
+          @builder.append_value(extracted)
+        else
+          @builder.append_null
+          false
+        end
+      end
+
+      def finish : ::Arrow::ArrayBase
+        @builder.finish
+      end
+    end
+
+    # Builds an unshredded variant array when no target type is requested
+    # (upstream `VariantToBinaryVariantArrowRowBuilder`).
+    class BinaryVariantRowBuilder < RowBuilder
+      @metadata : ::Arrow::ArrayBase
+      @value_builder : VariantValueArrayBuilder
+      @nulls : ::Arrow::NullBufferBuilder
+
+      def initialize(@metadata : ::Arrow::ArrayBase, capacity : Int32)
+        @value_builder = VariantValueArrayBuilder.new(capacity)
+        @nulls = ::Arrow::NullBufferBuilder.new(capacity)
+      end
+
+      def append_null : Nil
+        @value_builder.append_null
+        @nulls.append_null
+      end
+
+      def append_value(value : ParquetVariant::Variant) : Bool
+        @value_builder.append_value(value)
+        @nulls.append_non_null
+        true
+      end
+
+      def finish : ::Arrow::ArrayBase
+        # Value nulls are only appended alongside parent nulls, so the
+        # non-nullable `value` annotation is always valid here.
+        variant_array = VariantArray.from_parts_unshredded(
+          @metadata, @value_builder.build, @nulls.finish
+        )
+        variant_array.inner
+      end
+    end
+
+    # Builds a `MapArray` from variant objects (upstream
+    # `MapVariantToArrowRowBuilder`).
+    class MapRowBuilder < RowBuilder
+      @entries_field : ::Arrow::Field
+      @key_field : ::Arrow::Field
+      @value_field : ::Arrow::Field
+      @ordered : Bool
+      @key_builder : RowBuilder
+      @value_builder : RowBuilder
+      @offsets : Array(Int32)
+      @current_offset : Int32
+      @nulls : ::Arrow::NullBufferBuilder
+      @cast_options : ::Arrow::CastOptions
+
+      def initialize(
+        @entries_field : ::Arrow::Field,
+        @ordered : Bool,
+        @cast_options : ::Arrow::CastOptions,
+        capacity : Int32,
+        shred : Bool,
+      )
+        entry_fields = @entries_field.data_type.fields
+        unless entry_fields
+          raise ParquetVariant::InvalidArgumentError.new(
+            "Map entries must be Struct, got #{@entries_field.data_type}"
+          )
+        end
+        unless entry_fields.len == 2
+          raise ParquetVariant::InvalidArgumentError.new(
+            "Map entries must have exactly two fields (key, value), got #{entry_fields.len}"
+          )
+        end
+
+        @key_field = entry_fields[0]
+        @value_field = entry_fields[1]
+        @key_builder = VariantToArrow.make_typed_row_builder(
+          @key_field.data_type, @cast_options, capacity, shred
+        )
+        @value_builder = VariantToArrow.make_typed_row_builder(
+          @value_field.data_type, @cast_options, capacity, shred
+        )
+        @offsets = [0]
+        @current_offset = 0
+        @nulls = ::Arrow::NullBufferBuilder.new(capacity)
+      end
+
+      def append_null : Nil
+        @offsets << @current_offset
+        @nulls.append_null
+      end
+
+      def append_value(value : ParquetVariant::Variant) : Bool
+        object = extract_object(value)
+        if object.nil?
+          append_null
+          return false
+        end
+
+        object.iter.each do |(key, field_value)|
+          # Map keys cannot be null, so a failed key conversion is an error even
+          # in safe mode.
+          unless @key_builder.append_value(ParquetVariant::Variant.from(key))
+            raise ParquetVariant::CastError.new(
+              "Failed to cast map key #{key.inspect} to #{@key_field.data_type}"
+            )
+          end
+          @value_builder.append_value(field_value)
+          @current_offset += 1
+        end
+        @offsets << @current_offset
+        @nulls.append_non_null
+        true
+      end
+
+      def finish : ::Arrow::ArrayBase
+        keys = @key_builder.finish
+        values = @value_builder.finish
+
+        entry_fields = ::Arrow::Fields.new([
+          ::Arrow::Field.new(@key_field.name, keys.data_type, @key_field.nullable?),
+          ::Arrow::Field.new(@value_field.name, values.data_type, @value_field.nullable?),
+        ])
+        entries = ::Arrow::StructArray.try_new(
+          entry_fields, [keys, values] of ::Arrow::ArrayBase, nil
+        )
+        entries_field = ::Arrow::Field.new(
+          @entries_field.name, ::Arrow::DataType.struct(entry_fields), @entries_field.nullable?
+        )
+        ::Arrow::MapArray.try_new(
+          entries_field,
+          ::Arrow::OffsetBuffer.new(::Arrow::ScalarBuffer(Int32).from(@offsets)),
+          entries,
+          @nulls.finish,
+          @ordered,
+        )
+      end
+
+      private def extract_object(value : ParquetVariant::Variant) : ParquetVariant::VariantObject?
+        TypeConversion.cast_with_options(value, @cast_options) do |variant|
+          variant.as_object
+        end
+      rescue ParquetVariant::CastError
+        raise ParquetVariant::CastError.new(
+          "Failed to extract object from variant #{value.debug_string}"
+        )
       end
     end
 
