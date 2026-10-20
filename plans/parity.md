@@ -191,10 +191,17 @@ little-endian layout.
   and precision-loss rejections), `variant_to_boolean`, and the decimal unscaled
   conversions for Decimal32/64/128 (`variant_to_unscaled_decimal` plus the
   exact-only shredded variant).
-  **Next up:** the `variant_to_arrow` row builders, then `shred_variant` (and
-  the shredding schema), `variant_get`, the arrow ⇄ variant casts, virtual
-  columns (blocked on arrow-cr canonical extension types) and the arrow writer
-  (needs `column/page_store.rs`).
+  The `variant_to_arrow` row builders are started too (`VariantToArrow` in
+  `variant_to_arrow.cr`): every primitive target — booleans, ints, unsigned ints,
+  half/single/double floats, Decimal32/64/128, dates, times of day, timestamps
+  (µs/ns and NTZ), strings (Utf8/LargeUtf8/Utf8View), binary
+  (Binary/LargeBinary/BinaryView), UUIDs and the Null storage type — with
+  upstream's cast semantics (safe mode nulls a failed cast, strict mode raises).
+  **Next up:** the composite `variant_to_arrow` row builders (list/struct/map/
+  union/encoded/path/binary-variant), then `shred_variant` (and the shredding
+  schema), `variant_get`, the arrow ⇄ variant casts, virtual columns (blocked on
+  arrow-cr canonical extension types) and the arrow writer (needs
+  `column/page_store.rs`).
   Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`'s shredding/get/cast kernels, the arrow-only CLIs,
@@ -1062,14 +1069,14 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: parquet-variant-compute type conversion`; gates green
-  (`make lint`, `make test` -> 1457 examples, 0 failures). Next feature: the
-  `variant_to_arrow` row builders, then `shred_variant`, `variant_get` and the
-  arrow ⇄ variant casts, virtual columns (blocked on arrow-cr canonical
-  extension types) and the arrow writer. Note `make install` now requires the
-  sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 2431 `ported`, 206 `intentional_divergence`,
-  15 skipped, 863 `missing` (of 3515 rows).
+- Last commit: `port: parquet-variant-compute variant to arrow`; gates green
+  (`make lint`, `make test` -> 1467 examples, 0 failures). Next feature: the
+  composite `variant_to_arrow` row builders, then `shred_variant`,
+  `variant_get` and the arrow ⇄ variant casts, virtual columns (blocked on
+  arrow-cr canonical extension types) and the arrow writer. Note `make install`
+  now requires the sibling checkout `../arrow-cr`.
+- Progress by counts (ledger): 2448 `ported`, 206 `intentional_divergence`,
+  15 skipped, 846 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1558,11 +1565,22 @@ Chunk status by area:
   `variant_to_unscaled_decimal`/`shred_variant_to_unscaled_decimal` for
   Decimal32/64/128; its spec
   (`spec/parquet_variant_compute/type_conversion_spec.cr`) characterizes each
-  conversion family (upstream has no unit tests for this module). Remaining:
-  the `variant_to_arrow` row builders (and `variant_get` on top of them),
-  `shred_variant` (and the shredding schema), the composite `typed_value` reads
-  it enables, `cast_to_variant`/`arrow_to_variant`, and the `Decimal256`/
-  exponent-notation paths.
+  conversion family (upstream has no unit tests for this module). The
+  `variant_to_arrow` row builders are started (`variant_to_arrow.cr`, module
+  `VariantToArrow`): `RowBuilder`/`ValueRowBuilder` plus
+  `make_primitive_row_builder`/`make_typed_row_builder` cover every primitive
+  target (booleans, ints, unsigned ints, half/single/double floats,
+  Decimal32/64/128, dates, times, µs/ns and NTZ timestamps, the three string and
+  three binary types, UUIDs and Null), with upstream's safe/strict cast
+  semantics and error texts; `spec/parquet_variant_compute/
+  variant_to_arrow_spec.cr` ports four of the five upstream `variant_to_arrow`
+  unit tests and characterizes the other target types. Remaining: the composite
+  and encoded row builders (list/large-list/list-view/fixed-size-list, struct,
+  map, union, dictionary/run-end-encoded, variant-path and binary-variant, plus
+  `Decimal256`), then `variant_get` on top of them, `shred_variant` (and the
+  shredding schema), the composite `typed_value` reads it enables,
+  `cast_to_variant`/`arrow_to_variant`, and the `type_conversion`
+  exponent-notation path.
 - [x] `parquet-variant-json` — both directions:
   `src/parquet_variant_json/variant_to_json.cr` + `formatting.cr`
   (`Variant#to_json`/`#to_json_string`/`#to_json_value`, `Formatting`'s
@@ -2823,9 +2841,15 @@ Chunk status by area:
   `DecimalCastTarget` trait, reimplements `single_float_to_decimal` (rounds half
   away from zero, rejects magnitudes above 2^53) and `parse_decimal` (plain
   decimal strings only, no exponent notation), and does not model `Decimal256`/
-  `I256` (its conversions are deferred). Still deferred:
-  `shred_variant` and the shredding schema, the `variant_to_arrow` row builders,
-  `variant_get`/`GetOptions`, `cast_to_variant` and `arrow_to_variant`.
+  `I256` (its conversions are deferred). `VariantToArrow` collapses upstream's
+  builder enums into a `RowBuilder` hierarchy with one generic
+  `ValueRowBuilder(B, T)` for the macro-generated builders, uses `Int32` for
+  capacities, raises (`CastError`/`InvalidArgumentError`/`NYIError`) where
+  upstream returns `Result`, and reuses the data type for decimal
+  precision/scale and timestamp timezones instead of builder setters. Still
+  deferred: the composite/encoded `variant_to_arrow` builders, `shred_variant`
+  and the shredding schema, `variant_get`/`GetOptions`, `cast_to_variant` and
+  `arrow_to_variant`.
 - `chunk_reader`: `BytesChunkReader#get_read`/`get_bytes` and
   `FileChunkReader#get_bytes` raise the upstream `EOF` messages
   ("Expected to read ... while file has length ..."); `FileChunkReader` reads

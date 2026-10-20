@@ -5,12 +5,14 @@
 # Ported so far (see `plans/parity.md`): the `VariantArray` (unshredded and
 # shredded, with `ShreddingState` and the `arrow.parquet.variant` extension
 # type), `VariantArrayBuilder`/`VariantValueArrayBuilder`, the JSON kernels
-# `json_to_variant`/`variant_to_json` and `unshred_variant`, plus the
+# `json_to_variant`/`variant_to_json` and `unshred_variant`, the
 # `TypeConversion` layer that casts a single variant value to a typed Arrow
-# value. Deferred: the `variant_to_arrow` row builders, `shred_variant` (and the
-# shredding schema), `variant_get`/`GetOptions` and the
-# `cast_to_variant`/`arrow_to_variant` conversions.
+# value, and the primitive `VariantToArrow` row builders. Deferred: the
+# composite `variant_to_arrow` row builders, `shred_variant` (and the shredding
+# schema), `variant_get`/`GetOptions` and the `cast_to_variant`/`arrow_to_variant`
+# conversions.
 require "./parquet_variant_compute/type_conversion"
+require "./parquet_variant_compute/variant_to_arrow"
 require "./parquet_variant_compute/variant_array"
 require "./parquet_variant_compute/variant_array_builder"
 require "./parquet_variant_compute/variant_value_array_builder"
