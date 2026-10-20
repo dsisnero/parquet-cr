@@ -145,39 +145,39 @@ parquet-variant-compute/src/unshred_variant.rs::method::ValueOnlyUnshredVariantB
 parquet-variant-compute/src/variant_array.rs::const::NAME	const	ported	src/parquet_variant_compute/variant_array.cr	VariantType::NAME
 parquet-variant-compute/src/variant_array.rs::method::&'a VariantArray.into_iter	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#iter (and VariantArrayIter)
 parquet-variant-compute/src/variant_array.rs::method::ArrayRef.from	method	intentional_divergence	src/parquet_variant_compute/variant_array.cr	Arrow::StructArray is an Arrow::ArrayBase, so `#into_inner` needs no conversion
-parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.data_type	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.from_parts	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.inner	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.into_inner	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.is_empty	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.is_null	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.is_valid	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.len	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.nulls	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.offset	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.perfectly_shredded	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.shredding_state	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.try_new	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.typed_value_column	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.value_column	method	missing	-	auto-generated
+parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.data_type	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddedVariantFieldArray#data_type
+parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.from_parts	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddedVariantFieldArray#from_parts
+parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.inner	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddedVariantFieldArray#inner
+parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.into_inner	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddedVariantFieldArray#into_inner
+parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.is_empty	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddedVariantFieldArray#is_empty
+parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.is_null	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddedVariantFieldArray#is_null
+parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.is_valid	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddedVariantFieldArray#is_valid
+parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.len	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddedVariantFieldArray#len
+parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.nulls	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddedVariantFieldArray#nulls
+parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.offset	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddedVariantFieldArray#offset
+parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.perfectly_shredded	method	intentional_divergence	src/parquet_variant_compute/variant_array.cr	test-only constructor; the spec builds the shredded struct directly
+parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.shredding_state	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddedVariantFieldArray#shredding_state
+parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.try_new	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddedVariantFieldArray#try_new
+parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.typed_value_column	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddedVariantFieldArray#typed_value_column
+parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.value_column	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddedVariantFieldArray#value_column
 parquet-variant-compute/src/variant_array.rs::method::ShreddingState.new	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddingState#initialize(value, typed_value)
 parquet-variant-compute/src/variant_array.rs::method::ShreddingState.slice	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddingState#slice
 parquet-variant-compute/src/variant_array.rs::method::ShreddingState.try_from	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddingState.from_struct
 parquet-variant-compute/src/variant_array.rs::method::ShreddingState.typed_value_column	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddingState#typed_value
 parquet-variant-compute/src/variant_array.rs::method::ShreddingState.value_column	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddingState#value
 parquet-variant-compute/src/variant_array.rs::method::StructArray.from	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#into_inner
-parquet-variant-compute/src/variant_array.rs::method::StructArrayBuilder.build	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::StructArrayBuilder.new	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::StructArrayBuilder.with_field	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::StructArrayBuilder.with_field_ref	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::StructArrayBuilder.with_nulls	method	missing	-	auto-generated
+parquet-variant-compute/src/variant_array.rs::method::StructArrayBuilder.build	method	ported	src/parquet_variant_compute/variant_array.cr	StructArrayBuilder#build
+parquet-variant-compute/src/variant_array.rs::method::StructArrayBuilder.new	method	ported	src/parquet_variant_compute/variant_array.cr	StructArrayBuilder#initialize
+parquet-variant-compute/src/variant_array.rs::method::StructArrayBuilder.with_field	method	ported	src/parquet_variant_compute/variant_array.cr	StructArrayBuilder#with_field
+parquet-variant-compute/src/variant_array.rs::method::StructArrayBuilder.with_field_ref	method	ported	src/parquet_variant_compute/variant_array.cr	StructArrayBuilder#with_field_ref
+parquet-variant-compute/src/variant_array.rs::method::StructArrayBuilder.with_nulls	method	ported	src/parquet_variant_compute/variant_array.cr	StructArrayBuilder#with_nulls
 parquet-variant-compute/src/variant_array.rs::method::VariantArray.data_type	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#data_type
 parquet-variant-compute/src/variant_array.rs::method::VariantArray.eq	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#== (delegates to Arrow::ArrayBase#==)
 parquet-variant-compute/src/variant_array.rs::method::VariantArray.field	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#field (adds the VariantType extension metadata)
 parquet-variant-compute/src/variant_array.rs::method::VariantArray.from_iter	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray.from_iter (optional and non-optional variants)
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.from_parts	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.from_parts_unshredded	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.from_parts_with_nullable_value	method	missing	-	auto-generated
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.from_parts	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray.from_parts (public: no crate-private visibility)
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.from_parts_unshredded	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray.from_parts_unshredded
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.from_parts_with_nullable_value	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray.from_parts_with_nullable_value (private)
 parquet-variant-compute/src/variant_array.rs::method::VariantArray.inner	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#inner
 parquet-variant-compute/src/variant_array.rs::method::VariantArray.into_inner	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#into_inner
 parquet-variant-compute/src/variant_array.rs::method::VariantArray.is_empty	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#is_empty?
@@ -187,11 +187,11 @@ parquet-variant-compute/src/variant_array.rs::method::VariantArray.iter	method	p
 parquet-variant-compute/src/variant_array.rs::method::VariantArray.len	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#len
 parquet-variant-compute/src/variant_array.rs::method::VariantArray.metadata_column	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#metadata_column
 parquet-variant-compute/src/variant_array.rs::method::VariantArray.nulls	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#nulls
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.perfectly_shredded	method	missing	-	auto-generated
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.perfectly_shredded	method	intentional_divergence	src/parquet_variant_compute/variant_array.cr	test-only constructor; the spec builds the shredded struct directly
 parquet-variant-compute/src/variant_array.rs::method::VariantArray.shredding_state	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#shredding_state
 parquet-variant-compute/src/variant_array.rs::method::VariantArray.slice	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#slice
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.try_new	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray.try_new (unshredded validation; shredded rows deferred)
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.try_value	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#try_value (shredded typed_value rows raise NYIError)
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.try_new	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray.try_new (canonicalizes shredding types, lenient all-null value column)
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.try_value	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#try_value (unshredded + primitive/binary/temporal/decimal typed_value; composite raises NYIError)
 parquet-variant-compute/src/variant_array.rs::method::VariantArray.typed_value_column	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#typed_value_column
 parquet-variant-compute/src/variant_array.rs::method::VariantArray.value	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#value (raises instead of panicking)
 parquet-variant-compute/src/variant_array.rs::method::VariantArray.value_column	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#value_column

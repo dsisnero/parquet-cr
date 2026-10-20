@@ -169,14 +169,18 @@ little-endian layout.
   the push decoder's `ParquetPushDecoderBuilder` (input `PushDecoderInput`),
   matching upstream's `ArrowReaderBuilder<SyncReader<T>>` /
   `ArrowReaderBuilder<PushDecoderInput>` aliases.
-  `parquet-variant-compute` has started: the unshredded `VariantArray`/
+  `parquet-variant-compute`'s array layer is complete: `VariantArray`/
   `VariantArrayBuilder` (with the `arrow.parquet.variant` extension type and
-  `ShreddingState`) and the JSON kernels `json_to_variant`/`variant_to_json` are
-  ported (`src/parquet_variant_compute/`).
-  **Next up:** the rest of `parquet-variant-compute` (shredding +
-  `variant_get`, then the arrow ⇄ variant casts), virtual columns
-  (blocked on arrow-cr canonical extension types) and the arrow writer (needs
-  `column/page_store.rs`).
+  `ShreddingState`), the JSON kernels `json_to_variant`/`variant_to_json`, and
+  shredded arrays — `typed_value` interpretation for the primitive/binary/
+  string/temporal/decimal types, the lenient all-null `value` column,
+  shredding-type canonicalization (decimal narrowing + `arrow.uuid` tagging),
+  `ShreddedVariantFieldArray` and `StructArrayBuilder`
+  (`src/parquet_variant_compute/`).
+  **Next up:** the shredding kernels (`shred_variant`/`unshred_variant` — which
+  also unblock composite `typed_value` reads) and `variant_get`, then the
+  arrow ⇄ variant casts, virtual columns (blocked on arrow-cr canonical
+  extension types) and the arrow writer (needs `column/page_store.rs`).
   Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`'s shredding/get/cast kernels, the arrow-only CLIs,
@@ -1044,15 +1048,14 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: parquet-variant-compute variant arrays`; gates green
-  (`make lint`, `make test` -> 1411 examples, 0 failures). Next feature: the
-  shredding half of `parquet-variant-compute` (`shred_variant`/
-  `unshred_variant` + `typed_value` interpretation), then `variant_get` and the
-  arrow ⇄ variant casts, virtual columns (blocked on arrow-cr canonical
+- Last commit: `port: parquet-variant-compute shredded arrays`; gates green
+  (`make lint`, `make test` -> 1428 examples, 0 failures). Next feature: the
+  shredding kernels (`shred_variant`/`unshred_variant`), then `variant_get` and
+  the arrow ⇄ variant casts, virtual columns (blocked on arrow-cr canonical
   extension types) and the arrow writer. Note `make install` now requires the
   sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 2372 `ported`, 202 `intentional_divergence`,
-  15 skipped, 926 `missing` (of 3515 rows).
+- Progress by counts (ledger): 2394 `ported`, 204 `intentional_divergence`,
+  15 skipped, 902 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1498,8 +1501,8 @@ Chunk status by area:
   zero-copy `Variant` byte/model APIs, Rust `Drop`-based rollback, and
   `VariantBuilderExt`/`ObjectFieldBuilder` are intentional divergences (Crystal
   copies substrings; explicit `abandon`; builder handles all types directly).
-- [~] `parquet-variant-compute`: the **unshredded** half of
-  `src/parquet_variant_compute/` is ported — `VariantArray` (with
+- [~] `parquet-variant-compute`: the **array layer** of
+  `src/parquet_variant_compute/` is ported. Unshredded: `VariantArray` (with
   `ShreddingState` and the `arrow.parquet.variant` `VariantType` extension
   type: `try_new` validation, `value`/`try_value`, columns, `field`, `slice`,
   nulls, `iter` via `VariantArrayIter` with `next_back`/`size`, logical
@@ -1507,15 +1510,27 @@ Chunk status by area:
   `append_null(s)`/`extend` plus `VariantBuilderExt` and `JsonToVariant`, and
   `ArrayBuilderState` for the per-row offsets/nulls), and the JSON kernels
   `json_to_variant` (String/LargeString/StringView inputs) and
-  `variant_to_json`. Specs:
-  `spec/parquet_variant_compute/{variant_array,variant_array_builder,from_json,to_json}_spec.cr`
+  `variant_to_json`. Shredded: `typed_value` interpretation
+  (`typed_value_to_variant`: Null/Boolean, Binary/LargeBinary/BinaryView,
+  Utf8/LargeUtf8/Utf8View, Int8/16/32/64, Float16/32/64, Decimal32/64/128,
+  Date32, Time64(µs), Timestamp(µs/ns, with or without timezone); composite
+  types raise `NYIError` until the shredding kernels land), the lenient read
+  that synthesizes an all-null `value` column, shredding-type canonicalization
+  (`canonicalize_and_verify_data_type`/`_field`, `canonicalize_shredded_types`:
+  dead decimal-width narrowing and `arrow.uuid` tagging of untagged
+  `FixedSizeBinary(16)` leaves), `ShreddedVariantFieldArray` and
+  `StructArrayBuilder`. Specs:
+  `spec/parquet_variant_compute/{variant_array,variant_array_builder,shredded_variant_array,from_json,to_json}_spec.cr`
   port the corresponding upstream tests (value access, iteration, from-iter,
-  equality, builder nulls/objects/lists, the three JSON input types and the
-  JSON write-back round trip). Remaining: shredding (`shred_variant`/
-  `unshred_variant`, `ShreddedVariantFieldArray`, the shredding schema and
-  `typed_value` interpretation), `variant_get`/`GetOptions`, `cast_to_variant`,
-  `variant_to_arrow`/`arrow_to_variant`, `type_conversion` and
-  `VariantValueArrayBuilder`.
+  equality, builder nulls/objects/lists, the three JSON input types, the JSON
+  write-back round trip, the shredded-array validations, `read_missing_value_column`,
+  the UUID-tagging tests, the list-like canonicalization tests, the binary
+  roundtrips and the four invalid-timestamp/decimal cast errors), plus
+  characterization of the typed_value types upstream does not unit test.
+  Remaining: `shred_variant`/`unshred_variant` (and the shredding schema), the
+  composite `typed_value` reads they enable, `variant_get`/`GetOptions`,
+  `cast_to_variant`, `variant_to_arrow`/`arrow_to_variant`, `type_conversion`
+  and `VariantValueArrayBuilder`.
 - [x] `parquet-variant-json` — both directions:
   `src/parquet_variant_json/variant_to_json.cr` + `formatting.cr`
   (`Variant#to_json`/`#to_json_string`/`#to_json_value`, `Formatting`'s
@@ -2753,11 +2768,17 @@ Chunk status by area:
   `VariantArrayBuilder` builds the final `BinaryViewArray`s with
   `Arrow::BinaryViewBuilder` per row instead of upstream's raw-buffer
   `binary_view_array_from_buffers` (same values, different buffer sharing).
-  Deferred with the shredding chunk: `typed_value` interpretation (reading a
-  shredded row raises `NYIError`), `ShreddedVariantFieldArray`, the
-  `StructArrayBuilder` extension, the lenient read that synthesizes an all-null
-  `value`, `VariantValueArrayBuilder`, `shred_variant`/`unshred_variant`,
-  `variant_get`/`GetOptions`, `cast_to_variant`, `variant_to_arrow`/
+  Shredded arrays are supported: `typed_value` interpretation covers the
+  types with a direct variant counterpart (composite types raise `NYIError`
+  until `unshred_variant` lands, as upstream's `try_value` does), the lenient
+  read synthesizes an all-null `value` column, and
+  `canonicalize_and_verify_data_type` (public here so the ported test can call
+  it) narrows decimals and tags untagged `FixedSizeBinary(16)` leaves with the
+  `arrow.uuid` extension. Canonicalization copies fields with a copied
+  `Metadata` because the port's `Field#with_*` helpers mutate (upstream clones
+  an `Arc<Field>` with immutable metadata). Still deferred:
+  `VariantValueArrayBuilder`, `shred_variant`/`unshred_variant`, the shredding
+  schema, `variant_get`/`GetOptions`, `cast_to_variant`, `variant_to_arrow`/
   `arrow_to_variant` and `type_conversion`.
 - `chunk_reader`: `BytesChunkReader#get_read`/`get_bytes` and
   `FileChunkReader#get_bytes` raise the upstream `EOF` messages
