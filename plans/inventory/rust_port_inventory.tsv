@@ -142,9 +142,9 @@ parquet-variant-compute/src/unshred_variant.rs::method::UnshredVariantRowBuilder
 parquet-variant-compute/src/unshred_variant.rs::method::UnshredVariantRowBuilder<'a>.try_new_opt	method	missing	-	auto-generated
 parquet-variant-compute/src/unshred_variant.rs::method::ValueOnlyUnshredVariantBuilder<'a>.append_row	method	missing	-	auto-generated
 parquet-variant-compute/src/unshred_variant.rs::method::ValueOnlyUnshredVariantBuilder<'a>.new	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::const::NAME	const	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::&'a VariantArray.into_iter	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::ArrayRef.from	method	missing	-	auto-generated
+parquet-variant-compute/src/variant_array.rs::const::NAME	const	ported	src/parquet_variant_compute/variant_array.cr	VariantType::NAME
+parquet-variant-compute/src/variant_array.rs::method::&'a VariantArray.into_iter	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#iter (and VariantArrayIter)
+parquet-variant-compute/src/variant_array.rs::method::ArrayRef.from	method	intentional_divergence	src/parquet_variant_compute/variant_array.cr	Arrow::StructArray is an Arrow::ArrayBase, so `#into_inner` needs no conversion
 parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.data_type	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.from_parts	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.inner	method	missing	-	auto-generated
@@ -160,64 +160,64 @@ parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.
 parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.try_new	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.typed_value_column	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_array.rs::method::ShreddedVariantFieldArray.value_column	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::ShreddingState.new	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::ShreddingState.slice	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::ShreddingState.try_from	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::ShreddingState.typed_value_column	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::ShreddingState.value_column	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::StructArray.from	method	missing	-	auto-generated
+parquet-variant-compute/src/variant_array.rs::method::ShreddingState.new	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddingState#initialize(value, typed_value)
+parquet-variant-compute/src/variant_array.rs::method::ShreddingState.slice	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddingState#slice
+parquet-variant-compute/src/variant_array.rs::method::ShreddingState.try_from	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddingState.from_struct
+parquet-variant-compute/src/variant_array.rs::method::ShreddingState.typed_value_column	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddingState#typed_value
+parquet-variant-compute/src/variant_array.rs::method::ShreddingState.value_column	method	ported	src/parquet_variant_compute/variant_array.cr	ShreddingState#value
+parquet-variant-compute/src/variant_array.rs::method::StructArray.from	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#into_inner
 parquet-variant-compute/src/variant_array.rs::method::StructArrayBuilder.build	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_array.rs::method::StructArrayBuilder.new	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_array.rs::method::StructArrayBuilder.with_field	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_array.rs::method::StructArrayBuilder.with_field_ref	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_array.rs::method::StructArrayBuilder.with_nulls	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.data_type	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.eq	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.field	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.from_iter	method	missing	-	auto-generated
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.data_type	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#data_type
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.eq	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#== (delegates to Arrow::ArrayBase#==)
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.field	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#field (adds the VariantType extension metadata)
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.from_iter	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray.from_iter (optional and non-optional variants)
 parquet-variant-compute/src/variant_array.rs::method::VariantArray.from_parts	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_array.rs::method::VariantArray.from_parts_unshredded	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_array.rs::method::VariantArray.from_parts_with_nullable_value	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.inner	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.into_inner	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.is_empty	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.is_null	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.is_valid	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.iter	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.len	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.metadata_column	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.nulls	method	missing	-	auto-generated
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.inner	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#inner
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.into_inner	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#into_inner
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.is_empty	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#is_empty?
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.is_null	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#is_null
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.is_valid	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#is_valid
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.iter	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#iter
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.len	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#len
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.metadata_column	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#metadata_column
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.nulls	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#nulls
 parquet-variant-compute/src/variant_array.rs::method::VariantArray.perfectly_shredded	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.shredding_state	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.slice	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.try_new	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.try_value	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.typed_value_column	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.value	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArray.value_column	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArrayIter<'_>.next_back	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArrayIter<'a>.new	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArrayIter<'a>.next	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArrayIter<'a>.size_hint	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantArrayIter<'a>.value_opt	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantType.deserialize_metadata	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantType.metadata	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantType.serialize_metadata	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantType.supports_data_type	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantType.try_new	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array.rs::method::VariantType.validate	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array_builder.rs::method::ArrayBuilderState<'_>.finish	method	missing	-	auto-generated
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.shredding_state	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#shredding_state
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.slice	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#slice
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.try_new	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray.try_new (unshredded validation; shredded rows deferred)
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.try_value	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#try_value (shredded typed_value rows raise NYIError)
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.typed_value_column	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#typed_value_column
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.value	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#value (raises instead of panicking)
+parquet-variant-compute/src/variant_array.rs::method::VariantArray.value_column	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArray#value_column
+parquet-variant-compute/src/variant_array.rs::method::VariantArrayIter<'_>.next_back	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArrayIter#next_back (plain method; Crystal iterators are not double-ended)
+parquet-variant-compute/src/variant_array.rs::method::VariantArrayIter<'a>.new	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArrayIter#initialize
+parquet-variant-compute/src/variant_array.rs::method::VariantArrayIter<'a>.next	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArrayIter#next
+parquet-variant-compute/src/variant_array.rs::method::VariantArrayIter<'a>.size_hint	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArrayIter#size
+parquet-variant-compute/src/variant_array.rs::method::VariantArrayIter<'a>.value_opt	method	ported	src/parquet_variant_compute/variant_array.cr	VariantArrayIter#value_opt (private)
+parquet-variant-compute/src/variant_array.rs::method::VariantType.deserialize_metadata	method	ported	src/parquet_variant_compute/variant_array.cr	VariantType.deserialize_metadata
+parquet-variant-compute/src/variant_array.rs::method::VariantType.metadata	method	ported	src/parquet_variant_compute/variant_array.cr	VariantType#metadata
+parquet-variant-compute/src/variant_array.rs::method::VariantType.serialize_metadata	method	ported	src/parquet_variant_compute/variant_array.cr	VariantType#serialize_metadata
+parquet-variant-compute/src/variant_array.rs::method::VariantType.supports_data_type	method	ported	src/parquet_variant_compute/variant_array.cr	VariantType.supports_data_type / #supports_data_type
+parquet-variant-compute/src/variant_array.rs::method::VariantType.try_new	method	ported	src/parquet_variant_compute/variant_array.cr	VariantType.try_new
+parquet-variant-compute/src/variant_array.rs::method::VariantType.validate	method	ported	src/parquet_variant_compute/variant_array.cr	VariantType.validate
+parquet-variant-compute/src/variant_array_builder.rs::method::ArrayBuilderState<'_>.finish	method	ported	src/parquet_variant_compute/variant_array_builder.cr	ArrayBuilderState#finish (records offsets + non-null)
 parquet-variant-compute/src/variant_array_builder.rs::method::ValueArrayBuilderState<'_>.finish	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array_builder.rs::method::VariantArrayBuilder.append_null	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array_builder.rs::method::VariantArrayBuilder.append_nulls	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array_builder.rs::method::VariantArrayBuilder.append_value	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array_builder.rs::method::VariantArrayBuilder.append_variant	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array_builder.rs::method::VariantArrayBuilder.build	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array_builder.rs::method::VariantArrayBuilder.extend	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array_builder.rs::method::VariantArrayBuilder.new	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array_builder.rs::method::VariantArrayBuilder.parent_state	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array_builder.rs::method::VariantArrayBuilder.try_new_list	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_array_builder.rs::method::VariantArrayBuilder.try_new_object	method	missing	-	auto-generated
+parquet-variant-compute/src/variant_array_builder.rs::method::VariantArrayBuilder.append_null	method	ported	src/parquet_variant_compute/variant_array_builder.cr	VariantArrayBuilder#append_null
+parquet-variant-compute/src/variant_array_builder.rs::method::VariantArrayBuilder.append_nulls	method	ported	src/parquet_variant_compute/variant_array_builder.cr	VariantArrayBuilder#append_nulls
+parquet-variant-compute/src/variant_array_builder.rs::method::VariantArrayBuilder.append_value	method	ported	src/parquet_variant_compute/variant_array_builder.cr	VariantArrayBuilder#append_value (VariantBuilderExt)
+parquet-variant-compute/src/variant_array_builder.rs::method::VariantArrayBuilder.append_variant	method	ported	src/parquet_variant_compute/variant_array_builder.cr	VariantArrayBuilder#append_variant
+parquet-variant-compute/src/variant_array_builder.rs::method::VariantArrayBuilder.build	method	ported	src/parquet_variant_compute/variant_array_builder.cr	VariantArrayBuilder#build (BinaryViewBuilder columns + struct nulls)
+parquet-variant-compute/src/variant_array_builder.rs::method::VariantArrayBuilder.extend	method	ported	src/parquet_variant_compute/variant_array_builder.cr	VariantArrayBuilder#extend
+parquet-variant-compute/src/variant_array_builder.rs::method::VariantArrayBuilder.new	method	ported	src/parquet_variant_compute/variant_array_builder.cr	VariantArrayBuilder#initialize(row_capacity)
+parquet-variant-compute/src/variant_array_builder.rs::method::VariantArrayBuilder.parent_state	method	ported	src/parquet_variant_compute/variant_array_builder.cr	VariantArrayBuilder#parent_state (private)
+parquet-variant-compute/src/variant_array_builder.rs::method::VariantArrayBuilder.try_new_list	method	ported	src/parquet_variant_compute/variant_array_builder.cr	VariantArrayBuilder#try_new_list
+parquet-variant-compute/src/variant_array_builder.rs::method::VariantArrayBuilder.try_new_object	method	ported	src/parquet_variant_compute/variant_array_builder.cr	VariantArrayBuilder#try_new_object
 parquet-variant-compute/src/variant_array_builder.rs::method::VariantValueArrayBuilder.append_null	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_array_builder.rs::method::VariantValueArrayBuilder.append_value	method	missing	-	auto-generated
 parquet-variant-compute/src/variant_array_builder.rs::method::VariantValueArrayBuilder.build	method	missing	-	auto-generated
