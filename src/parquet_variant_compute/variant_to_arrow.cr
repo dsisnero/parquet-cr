@@ -386,8 +386,12 @@ module ParquetVariantCompute
         end
         return EncodedRowBuilder.new(data_type, values_field.data_type, cast_options, capacity)
       when .union?
-        raise nyi_err!(
-          "The #{data_type} variant-to-arrow row builder is not ported yet"
+        union_fields = data_type.union_fields
+        unless union_fields
+          raise ParquetVariant::InvalidArgumentError.new("Missing union fields for #{data_type}")
+        end
+        return UnionRowBuilder.new(
+          union_fields, data_type.union_mode || ::Arrow::UnionMode::Sparse, cast_options, capacity
         )
       end
 
@@ -442,6 +446,298 @@ module ParquetVariantCompute
       row_builder.with_cast_error do |variant|
         "Failed to cast to #{prefix}(precision=#{precision}, scale=#{scale}) " \
         "from variant #{variant.debug_string}"
+      end
+    end
+
+    # Builds a `UnionArray` from variant values (upstream
+    # `UnionVariantToArrowRowBuilder`).
+    #
+    # Each value is dispatched to the union field that most exactly represents
+    # its runtime type (see `union_child_rank`), with ties broken by declaration
+    # order. Unions have no top-level null buffer, so null rows — and, in safe
+    # mode, values no field can represent — become a null in the `Null` child if
+    # the union declares one, otherwise in the first child.
+    class UnionRowBuilder < RowBuilder
+      # One union child and its running length (upstream `UnionChildBuilder`).
+      class ChildBuilder
+        getter type_id : Int8
+        getter builder : RowBuilder
+        property len : Int32
+
+        def initialize(@type_id : Int8, @builder : RowBuilder)
+          @len = 0
+        end
+      end
+
+      @fields : ::Arrow::UnionFields
+      @mode : ::Arrow::UnionMode
+      @children : Array(ChildBuilder)
+      @type_ids : Array(Int8)
+      @offsets : Array(Int32)
+      @null_child : Int32
+      @cast_options : ::Arrow::CastOptions
+
+      def initialize(
+        @fields : ::Arrow::UnionFields,
+        @mode : ::Arrow::UnionMode,
+        @cast_options : ::Arrow::CastOptions,
+        capacity : Int32,
+      )
+        if @fields.empty?
+          raise ParquetVariant::InvalidArgumentError.new(
+            "Casting Variant to a union requires at least one union field"
+          )
+        end
+
+        @children = [] of ChildBuilder
+        @null_child = 0
+        found_null = false
+        @fields.each_with_index do |(type_id, field), index|
+          # Nullability is schema metadata and does not override safe-cast
+          # behavior, which may append null for an unrepresentable value.
+          @children << ChildBuilder.new(
+            type_id,
+            VariantToArrow.make_typed_row_builder(field.data_type, @cast_options, capacity, false),
+          )
+          if field.data_type.kind.null? && !found_null
+            @null_child = index
+            found_null = true
+          end
+        end
+        @type_ids = [] of Int8
+        @offsets = [] of Int32
+      end
+
+      def append_null : Nil
+        append_to_child(@null_child, nil)
+      end
+
+      def append_value(value : ParquetVariant::Variant) : Bool
+        # `Variant::Null` becomes null even in strict mode, like in the other
+        # builders.
+        if value.is_a?(ParquetVariant::Variant::Null)
+          append_null
+          return false
+        end
+
+        index = select_child(value)
+        if index
+          append_to_child(index, value)
+        elsif @cast_options.safe?
+          append_null
+          false
+        else
+          raise ParquetVariant::CastError.new(
+            "Failed to cast variant #{value.debug_string} to union: no field can represent it"
+          )
+        end
+      end
+
+      def finish : ::Arrow::ArrayBase
+        type_ids = [] of Int8
+        fields = [] of ::Arrow::Field
+        arrays = [] of ::Arrow::ArrayBase
+
+        @children.each_with_index do |child, index|
+          array = child.builder.finish
+          type_ids << child.type_id
+          field = @fields[index][1]
+          fields << ::Arrow::Field.new(field.name, array.data_type, field.nullable?, field.metadata)
+          arrays << array
+        end
+
+        union_fields = ::Arrow::UnionFields.try_new(type_ids, fields)
+        offsets = @mode.dense? ? ::Arrow::ScalarBuffer(Int32).from(@offsets) : nil
+        ::Arrow::UnionArray.try_new(
+          union_fields,
+          ::Arrow::ScalarBuffer(Int8).from(@type_ids),
+          offsets,
+          arrays,
+        )
+      end
+
+      # The best-ranked child for `value` (first wins ties).
+      private def select_child(value : ParquetVariant::Variant) : Int32?
+        best_rank : Int32? = nil
+        best_index : Int32? = nil
+
+        @children.each_with_index do |_child, index|
+          field = @fields[index][1]
+          rank = VariantToArrow.union_child_rank(value, field.data_type)
+          next unless rank
+          next if (current_best = best_rank) && current_best <= rank
+
+          best_rank = rank
+          best_index = index
+        end
+        best_index
+      end
+
+      private def append_to_child(index : Int32, value : ParquetVariant::Variant?) : Bool
+        child = @children[index]
+        @type_ids << child.type_id
+
+        if @mode.dense?
+          @offsets << child.len
+          child.len += 1
+          if value
+            child.builder.append_value(value)
+          else
+            child.builder.append_null
+            false
+          end
+        else
+          appended = false
+          @children.each_with_index do |candidate, candidate_index|
+            if value && candidate_index == index
+              appended = candidate.builder.append_value(value)
+            else
+              candidate.builder.append_null
+            end
+          end
+          appended
+        end
+      end
+    end
+
+    # Ranks how exactly a union child of type `data_type` can represent a
+    # variant value: 0 is the value's natural Arrow type, higher ranks are
+    # lossless widenings, and `nil` means the child cannot represent the value
+    # losslessly (upstream `union_child_rank`).
+    #
+    # Divergence: `Decimal256` children are never selected (`I256` is not
+    # modelled).
+    # ameba:disable Metrics/CyclomaticComplexity
+    def self.union_child_rank(
+      value : ParquetVariant::Variant,
+      data_type : ::Arrow::DataType,
+    ) : Int32?
+      kind = data_type.kind
+
+      # Encoded children rank like their value type.
+      if kind.dictionary?
+        inner = data_type.value
+        return inner ? union_child_rank(value, inner) : nil
+      elsif kind.run_end_encoded?
+        inner = data_type.field2
+        return inner ? union_child_rank(value, inner.data_type) : nil
+      end
+
+      case value
+      when ParquetVariant::Variant::BooleanTrue, ParquetVariant::Variant::BooleanFalse
+        return 0 if kind.boolean?
+      when ParquetVariant::Variant::Int8
+        return 0 if kind.int8?
+        return 1 if kind.int16?
+        return 2 if kind.int32?
+        return 3 if kind.int64?
+      when ParquetVariant::Variant::Int16
+        return 0 if kind.int16?
+        return 1 if kind.int32?
+        return 2 if kind.int64?
+      when ParquetVariant::Variant::Int32
+        return 0 if kind.int32?
+        return 1 if kind.int64?
+      when ParquetVariant::Variant::Int64
+        return 0 if kind.int64?
+      when ParquetVariant::Variant::Float
+        return 0 if kind.float32?
+        return 1 if kind.float64?
+      when ParquetVariant::Variant::Double
+        return 0 if kind.float64?
+      when ParquetVariant::Variant::Decimal4
+        return decimal_rank(value, data_type, [0, 1, 2, 3])
+      when ParquetVariant::Variant::Decimal8
+        return decimal_rank(value, data_type, [nil, 0, 1, 2])
+      when ParquetVariant::Variant::Decimal16
+        return decimal_rank(value, data_type, [nil, nil, 0, 1])
+      when ParquetVariant::Variant::Date
+        return 0 if kind.date32?
+        return 1 if kind.date64?
+      when ParquetVariant::Variant::TimestampMicros
+        return 0 if kind.timestamp? && data_type.timezone && data_type.time_unit == ::Arrow::TimeUnit::Microsecond
+        return 1 if kind.timestamp? && data_type.timezone && data_type.time_unit == ::Arrow::TimeUnit::Nanosecond
+      when ParquetVariant::Variant::TimestampNanos
+        return 0 if kind.timestamp? && data_type.timezone && data_type.time_unit == ::Arrow::TimeUnit::Nanosecond
+      when ParquetVariant::Variant::TimestampNtzMicros
+        return 0 if kind.timestamp? && data_type.timezone.nil? && data_type.time_unit == ::Arrow::TimeUnit::Microsecond
+        return 1 if kind.timestamp? && data_type.timezone.nil? && data_type.time_unit == ::Arrow::TimeUnit::Nanosecond
+      when ParquetVariant::Variant::TimestampNtzNanos
+        return 0 if kind.timestamp? && data_type.timezone.nil? && data_type.time_unit == ::Arrow::TimeUnit::Nanosecond
+      when ParquetVariant::Variant::Time
+        return 0 if kind.time64? && data_type.time_unit == ::Arrow::TimeUnit::Microsecond
+        return 1 if kind.time64? && data_type.time_unit == ::Arrow::TimeUnit::Nanosecond
+      when ParquetVariant::Variant::String, ParquetVariant::Variant::ShortString
+        return 0 if kind.utf8? || kind.large_utf8? || kind.utf8_view?
+      when ParquetVariant::Variant::Binary
+        return 0 if kind.binary? || kind.large_binary? || kind.binary_view?
+      when ParquetVariant::Variant::Uuid
+        return 0 if kind.fixed_size_binary? && data_type.byte_width == 16
+      when ParquetVariant::Variant::Object
+        return 0 if kind.struct?
+        return 1 if kind.map?
+      when ParquetVariant::Variant::List
+        list = value.as_list
+        return nil unless list
+
+        if kind.fixed_size_list?
+          return 0 if list.len == (data_type.size || -1)
+        end
+        return 0 if kind.list?
+        return 1 if kind.large_list?
+        return 2 if kind.list_view?
+        return 3 if kind.large_list_view?
+      end
+
+      nil
+    end
+
+    # The rank of a decimal variant among the decimal child kinds, or `nil` when
+    # the value does not fit the child's precision/scale.
+    private def self.decimal_rank(
+      value : ParquetVariant::Variant,
+      data_type : ::Arrow::DataType,
+      ranks : Array(Int32?),
+    ) : Int32?
+      kind = data_type.kind
+      index =
+        if kind.decimal32?
+          0
+        elsif kind.decimal64?
+          1
+        elsif kind.decimal128?
+          2
+        elsif kind.decimal256?
+          3
+        else
+          return nil
+        end
+
+      rank = ranks[index]
+      return nil unless rank
+      return nil unless variant_fits_decimal?(value, data_type)
+
+      rank
+    end
+
+    # Whether `value` fits the precision/scale of a decimal `data_type`
+    # (upstream `variant_fits_decimal`).
+    private def self.variant_fits_decimal?(
+      value : ParquetVariant::Variant,
+      data_type : ::Arrow::DataType,
+    ) : Bool
+      precision = (data_type.precision || 0_u8).to_i32
+      scale = (data_type.scale || 0_i8).to_i32
+      kind = data_type.kind
+      if kind.decimal32?
+        !TypeConversion.unscaled_decimal32(value, precision, scale).nil?
+      elsif kind.decimal64?
+        !TypeConversion.unscaled_decimal64(value, precision, scale).nil?
+      elsif kind.decimal128?
+        !TypeConversion.unscaled_decimal128(value, precision, scale).nil?
+      else
+        # `Decimal256`/`I256` is not modelled.
+        false
       end
     end
 

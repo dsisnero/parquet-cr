@@ -390,14 +390,86 @@ describe ParquetVariantCompute::VariantToArrow do
     error.message.not_nil!.should contain "Failed to extract struct from variant"
   end
 
-  it "keeps the union builder deferred" do
+  it "builds dense unions with the best-ranked child" do
     union_fields = Arrow::UnionFields.new([
-      {1_i8, Arrow::Field.new("child", Arrow::DataType.int32, true)},
+      {1_i8, Arrow::Field.new("i64", Arrow::DataType.int64, true)},
+      {2_i8, Arrow::Field.new("i32", Arrow::DataType.int32, true)},
+      {3_i8, Arrow::Field.new("text", Arrow::DataType.utf8, true)},
     ] of Tuple(Int8, Arrow::Field))
+    data_type = Arrow::DataType.union(union_fields, Arrow::UnionMode::Dense)
 
-    expect_raises(Parquet::NYIError) do
+    builder = V2A.make_typed_row_builder(data_type, safe, 4, false)
+    builder.append_value(Variant.from(5_i32)).should be_true
+    builder.append_value(Variant.from(6_i8)).should be_true
+    builder.append_value(Variant.from("x")).should be_true
+    builder.append_null
+
+    array = builder.finish.as(Arrow::UnionArray)
+    array.len.should eq 4
+    # Int32 and Int8 both fit Int32 (rank 0/2) better than Int64 (rank 1/3).
+    array.type_ids[0].should eq 2
+    array.type_ids[1].should eq 2
+    array.type_ids[2].should eq 3
+    # A null row lands in the first child.
+    array.type_ids[3].should eq 1
+    array.offsets.not_nil![0].should eq 0
+    array.child(2_i8).as(Arrow::PrimitiveArray(Int32)).value(0).should eq 5
+  end
+
+  it "prefers a Null child for null rows and supports sparse unions" do
+    union_fields = Arrow::UnionFields.new([
+      {1_i8, Arrow::Field.new("i32", Arrow::DataType.int32, true)},
+      {2_i8, Arrow::Field.new("n", Arrow::DataType.null, true)},
+    ] of Tuple(Int8, Arrow::Field))
+    data_type = Arrow::DataType.union(union_fields, Arrow::UnionMode::Sparse)
+
+    builder = V2A.make_typed_row_builder(data_type, safe, 2, false)
+    builder.append_value(Variant::Null.new).should be_false
+    builder.append_value(Variant.from(1_i32)).should be_true
+
+    array = builder.finish.as(Arrow::UnionArray)
+    array.len.should eq 2
+    array.type_ids[0].should eq 2
+    array.type_ids[1].should eq 1
+    array.offsets.should be_nil
+    # Sparse children are aligned with the union rows.
+    array.child(1_i8).as(Arrow::PrimitiveArray(Int32)).len.should eq 2
+    array.child(1_i8).nulls.not_nil!.null?(0).should be_true
+  end
+
+  it "uses the first Null child and preserves child metadata" do
+    fields = Arrow::UnionFields.new([
+      {1_i8, Arrow::Field.new("first", Arrow::DataType.null, true).with_metadata({"tag" => "kept"})},
+      {2_i8, Arrow::Field.new("second", Arrow::DataType.null, true)},
+    ] of Tuple(Int8, Arrow::Field))
+    builder = V2A.make_typed_row_builder(Arrow::DataType.union(fields, Arrow::UnionMode::Dense), safe, 1, false)
+    builder.append_null
+    array = builder.finish.as(Arrow::UnionArray)
+    array.type_ids[0].should eq 1
+    array.data_type.union_fields.not_nil![0][1].metadata.get("tag").should eq "kept"
+  end
+
+  it "handles unrepresentable union values and empty unions" do
+    union_fields = Arrow::UnionFields.new([
+      {1_i8, Arrow::Field.new("i32", Arrow::DataType.int32, true)},
+    ] of Tuple(Int8, Arrow::Field))
+    data_type = Arrow::DataType.union(union_fields, Arrow::UnionMode::Dense)
+
+    safe_builder = V2A.make_typed_row_builder(data_type, safe, 1, false)
+    safe_builder.append_value(Variant.from("x")).should be_false
+    safe_array = safe_builder.finish.as(Arrow::UnionArray)
+    safe_array.type_ids[0].should eq 1
+    safe_array.child(1_i8).nulls.not_nil!.null?(0).should be_true
+
+    strict_builder = V2A.make_typed_row_builder(data_type, strict, 1, false)
+    error = expect_raises(ParquetVariant::CastError) do
+      strict_builder.append_value(Variant.from("x"))
+    end
+    error.message.not_nil!.should contain "to union: no field can represent it"
+
+    expect_raises(ParquetVariant::InvalidArgumentError) do
       V2A.make_typed_row_builder(
-        Arrow::DataType.union(union_fields, Arrow::UnionMode::Dense), safe, 1, false
+        Arrow::DataType.union(Arrow::UnionFields.empty, Arrow::UnionMode::Dense), safe, 1, false
       )
     end
   end

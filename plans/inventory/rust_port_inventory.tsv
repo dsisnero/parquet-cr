@@ -258,12 +258,12 @@ parquet-variant-compute/src/variant_to_arrow.rs::method::StructVariantToArrowRow
 parquet-variant-compute/src/variant_to_arrow.rs::method::StructVariantToArrowRowBuilder<'a>.append_value	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	StructRowBuilder#append_value
 parquet-variant-compute/src/variant_to_arrow.rs::method::StructVariantToArrowRowBuilder<'a>.finish	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	StructRowBuilder#finish
 parquet-variant-compute/src/variant_to_arrow.rs::method::StructVariantToArrowRowBuilder<'a>.try_new	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	StructRowBuilder#try_new
-parquet-variant-compute/src/variant_to_arrow.rs::method::UnionVariantToArrowRowBuilder<'a>.append_null	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_to_arrow.rs::method::UnionVariantToArrowRowBuilder<'a>.append_to_child	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_to_arrow.rs::method::UnionVariantToArrowRowBuilder<'a>.append_value	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_to_arrow.rs::method::UnionVariantToArrowRowBuilder<'a>.finish	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_to_arrow.rs::method::UnionVariantToArrowRowBuilder<'a>.select_child	method	missing	-	auto-generated
-parquet-variant-compute/src/variant_to_arrow.rs::method::UnionVariantToArrowRowBuilder<'a>.try_new	method	missing	-	auto-generated
+parquet-variant-compute/src/variant_to_arrow.rs::method::UnionVariantToArrowRowBuilder<'a>.append_null	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	UnionRowBuilder#append_null (lands in the Null child or the first one)
+parquet-variant-compute/src/variant_to_arrow.rs::method::UnionVariantToArrowRowBuilder<'a>.append_to_child	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	UnionRowBuilder#append_to_child (dense offsets, sparse alignment)
+parquet-variant-compute/src/variant_to_arrow.rs::method::UnionVariantToArrowRowBuilder<'a>.append_value	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	UnionRowBuilder#append_value (rank selection, safe/strict)
+parquet-variant-compute/src/variant_to_arrow.rs::method::UnionVariantToArrowRowBuilder<'a>.finish	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	UnionRowBuilder#finish (rebuild UnionFields, dense offsets)
+parquet-variant-compute/src/variant_to_arrow.rs::method::UnionVariantToArrowRowBuilder<'a>.select_child	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	UnionRowBuilder#select_child / VariantToArrow.union_child_rank
+parquet-variant-compute/src/variant_to_arrow.rs::method::UnionVariantToArrowRowBuilder<'a>.try_new	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	UnionRowBuilder#initialize (child builders, null child, dense offsets)
 parquet-variant-compute/src/variant_to_arrow.rs::method::VariantPathRowBuilder<'_>.append_null	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	PathRowBuilder (Variant#get_path)
 parquet-variant-compute/src/variant_to_arrow.rs::method::VariantPathRowBuilder<'_>.append_value	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	PathRowBuilder (Variant#get_path)
 parquet-variant-compute/src/variant_to_arrow.rs::method::VariantPathRowBuilder<'_>.finish	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	PathRowBuilder (Variant#get_path)

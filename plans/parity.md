@@ -201,12 +201,12 @@ little-endian layout.
   view, large list view, fixed-size list — with the wrong-size safe/strict
   behavior — and struct, with missing fields as nulls).
   The map, dictionary/run-end-encoded, variant-path and binary-variant builders
-  are ported as well, so only the union builder is left in
-  `variant_to_arrow`.
-  **Next up:** the union `variant_to_arrow` builder, then `shred_variant` (and
-  the shredding schema), `variant_get`, the arrow ⇄ variant casts, virtual
-  columns (blocked on arrow-cr canonical extension types) and the arrow writer
-  (needs `column/page_store.rs`).
+  are ported as well, and the union builder completes `variant_to_arrow`
+  (`UnionRowBuilder` with upstream's child-ranking table, the Null-child
+  fallback and dense/sparse layouts).
+  **Next up:** `shred_variant` (and the shredding schema), then `variant_get`,
+  the arrow ⇄ variant casts, virtual columns (blocked on arrow-cr canonical
+  extension types) and the arrow writer (needs `column/page_store.rs`).
   Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
   (`parquet-variant-compute`'s shredding/get/cast kernels, the arrow-only CLIs,
@@ -1074,14 +1074,14 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: parquet-variant-compute map and encoded builders`; gates
-  green (`make lint`, `make test` -> 1479 examples, 0 failures). Next feature:
-  the union `variant_to_arrow` builder, then `shred_variant`, `variant_get` and
-  the arrow ⇄ variant casts, virtual columns (blocked on arrow-cr canonical
-  extension types) and the arrow writer. Note `make install` now requires the
-  sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 2479 `ported`, 209 `intentional_divergence`,
-  15 skipped, 812 `missing` (of 3515 rows).
+- Last commit: `port: parquet-variant-compute union builder`; gates green
+  (`make lint`, `make test` -> 1482 examples, 0 failures). Next feature:
+  `shred_variant` (and the shredding schema), then `variant_get`, the arrow ⇄
+  variant casts, virtual columns (blocked on arrow-cr canonical extension types)
+  and the arrow writer. Note `make install` now requires the sibling checkout
+  `../arrow-cr`.
+- Progress by counts (ledger): 2485 `ported`, 209 `intentional_divergence`,
+  15 skipped, 806 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1591,10 +1591,15 @@ Chunk status by area:
   and binary-variant (`BinaryVariantRowBuilder`, an unshredded `VariantArray`)
   builders, plus the top-level `make_row_builder` (path extraction and the
   no-target-type variant output); the spec covers map values/null rows/key
-  errors, dictionary encoding, path extraction and the variant output. Remaining:
-  the union row builder (and `Decimal256`), then `variant_get` on top of these,
-  `shred_variant` (and the shredding schema), the composite `typed_value` reads
-  it enables, `cast_to_variant`/`arrow_to_variant`, and the `type_conversion`
+  errors, dictionary encoding, path extraction and the variant output. The union
+  builder completes the module (`UnionRowBuilder`: the child-ranking table
+  (`union_child_rank`/`decimal_rank`/`variant_fits_decimal?`), the Null-child
+  fallback for nulls and unrepresentable values, and dense offsets vs sparse
+  alignment; the spec covers rank selection, the Null child, sparse mode, the
+  safe/strict split and empty unions). Remaining: `Decimal256` union/primitive
+  children, then `variant_get` on top of these builders, `shred_variant` (and the
+  shredding schema), the composite `typed_value` reads it enables,
+  `cast_to_variant`/`arrow_to_variant`, and the `type_conversion`
   exponent-notation path.
 - [x] `parquet-variant-json` — both directions:
   `src/parquet_variant_json/variant_to_json.cr` + `formatting.cr`
@@ -2868,8 +2873,9 @@ Chunk status by area:
   `shred_variant`), the path extractor wraps any `RowBuilder` instead of nesting
   the builder enum, and the binary-variant output returns the `VariantArray`'s
   inner `StructArray` (`VariantArray` is not an `Arrow::ArrayBase` in the port).
-  Still deferred: the union `variant_to_arrow` builder, `shred_variant` and the
-  shredding schema, `variant_get`/`GetOptions`, `cast_to_variant` and
+  `UnionRowBuilder` keeps the upstream ranking table but never selects a
+  `Decimal256` child (`I256` is not modelled). Still deferred: `shred_variant`
+  and the shredding schema, `variant_get`/`GetOptions`, `cast_to_variant` and
   `arrow_to_variant`.
 - `chunk_reader`: `BytesChunkReader#get_read`/`get_bytes` and
   `FileChunkReader#get_bytes` raise the upstream `EOF` messages
