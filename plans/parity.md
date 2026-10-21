@@ -212,12 +212,20 @@ little-endian layout.
   specs cover every supported scalar type, all five list layouts, nested
   objects/lists, UUID annotations, exact decimals and shred/unshred roundtrips.
   Composite `typed_value` reads still go through `unshred_variant`, as upstream.
-  **Next up:** `variant_get`/`GetOptions`, then the arrow ⇄ variant casts,
-  virtual columns (blocked on arrow-cr canonical extension types) and the
+  `variant_get`/`GetOptions` is complete too (`variant_get.cr`): paths walk
+  shredded objects and all four variable-size list layouts, use binary
+  fallbacks for the remaining path, reuse perfectly matching typed arrays and
+  union ancestor null masks. Typed scalar/composite/encoded output uses the
+  existing row builders; an explicit Variant extension request unshreds its
+  output, and shredded Variant output remains NYI as upstream. Specs were
+  ported first with recorded red-green cycles for the missing API, shredded
+  paths, list traversal and extension validation.
+  **Next up:** the Arrow → Variant casts (`cast_to_variant`/`arrow_to_variant`),
+  then virtual columns (blocked on arrow-cr canonical extension types) and the
   arrow writer (needs `column/page_store.rs`).
   Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
-  (`parquet-variant-compute`'s get/cast kernels, the arrow-only CLIs,
+  (`parquet-variant-compute`'s Arrow → Variant cast kernels, the arrow-only CLIs,
   `column/page_store.rs`, the arrow writer). Done so far:
   - `parquet-variant` (`src/parquet_variant/`): `VariantPath`/
     `VariantPathElement` + dot/bracket parser (`path.cr`); `utils` helpers
@@ -1082,16 +1090,16 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: parquet-variant-compute shredding`; gates green:
-  `make lint`, `make test` (1540 examples, 0 failures), no-codegen build and the
-  scoped parity inventory check. In this sandbox, tests use
-  `CRYSTAL_CACHE_DIR=/private/tmp/parquet-cr-crystal-cache` so the compiler can
-  write its cache. Previous feature: `d3c93b8` (union builder).
-  Next feature: `variant_get`/`GetOptions`, then the arrow ⇄ variant casts,
-  virtual columns (blocked on arrow-cr canonical extension types) and the arrow
-  writer. `make install` requires the sibling checkout `../arrow-cr`.
-- Progress by counts (ledger): 2523 `ported`, 206 `intentional_divergence`,
-  17 skipped, 769 `missing` (of 3515 rows).
+- Last commit: `port: parquet-variant-compute variant get`; gates green:
+  `make lint`, `make test` (1603 examples, 0 failures), no-codegen build and the
+  scoped parity inventory check. The 63 new specs were ported tests-first with
+  red-green cycles. Previous feature: `be7fcc1` (shredding).
+  Next feature: the Arrow → Variant casts (`cast_to_variant`/`arrow_to_variant`),
+  then virtual columns (blocked on arrow-cr canonical extension types) and the
+  arrow writer. `make install` requires the sibling checkout `../arrow-cr`.
+  In this sandbox, tests use `CRYSTAL_CACHE_DIR=/private/tmp/parquet-cr-crystal-cache`.
+- Progress by counts (ledger): 2527 `ported`, 206 `intentional_divergence`,
+  17 skipped, 765 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1607,7 +1615,7 @@ Chunk status by area:
   fallback for nulls and unrepresentable values, and dense offsets vs sparse
   alignment; the spec covers rank selection, the Null child, sparse mode, the
   safe/strict split and empty unions). Remaining: `Decimal256` union/primitive
-  children, `variant_get`/`GetOptions`, `cast_to_variant`/`arrow_to_variant`, and
+  children, `cast_to_variant`/`arrow_to_variant`, and
   the `type_conversion` exponent-notation path. Composite `typed_value` reads
   require `unshred_variant`, matching upstream.
 - [x] `parquet-variant-compute` shredding — `shred_variant.cr` implements the
@@ -1620,6 +1628,18 @@ Chunk status by area:
   matrix also fixes shared `TypeConversion.cast_with_options` treating `false`
   as failure; direct binary-column reads now dispatch on array classes so
   concrete `BinaryViewArray` arguments compile.
+- [x] `parquet-variant-compute` path extraction — `variant_get.cr` implements
+  `GetOptions`, `variant_get`, shredded path traversal, per-row fallback,
+  perfect typed-array reuse with null masking, recursive struct extraction,
+  typed null/missing-path output and explicit unshredded Variant output.
+  `variant_get_spec.cr` ports upstream path, scalar, list, struct, decimal,
+  dictionary/run-end, map, union and mask behaviors as table/macro specs,
+  plus invalid-extension and materialization-error characterizations. Red-green
+  evidence: missing `GetOptions`, six shredded-path failures, nine list failures/
+  errors, then an invalid-extension error; each was fixed before the next step.
+  The kernel shares the row builders' existing Decimal256/decimal-exponent
+  limitations; shredded Variant output remains NYI and fixed-size list indexing
+  is absent from shredded traversal, matching the pinned source.
 - [x] `parquet-variant-json` — both directions:
   `src/parquet_variant_json/variant_to_json.cr` + `formatting.cr`
   (`Variant#to_json`/`#to_json_string`/`#to_json_value`, `Formatting`'s
@@ -2901,7 +2921,15 @@ Chunk status by area:
   raise `InvalidArgumentError` instead of upstream's panic. Error bodies use
   Crystal's type/path rendering. Counts are `Int32` and errors raise. Composite
   typed values must be unshredded before `VariantArray#value`, as upstream.
-  Still deferred: `variant_get`/`GetOptions`, `cast_to_variant` and `arrow_to_variant`.
+  `variant_get` uses a value `GetOptions` struct, `ShreddingState | PathStep`
+  for upstream's three-way path step, Int32 counts/indices, and raising APIs.
+  Variant output is the storage `Arrow::StructArray`. Perfect matches preserve
+  array identity when no parent mask is needed; masked matches rebuild only
+  ArrayData nulls. Safe materialization errors map to nulls and strict ones
+  propagate. Invalid Variant extension tags are treated as concrete requests,
+  bridging the custom extension's Parquet error hierarchy. The existing target
+  limitations of `VariantToArrow` apply (Decimal256 and decimal exponent parsing).
+  Still deferred: `cast_to_variant` and `arrow_to_variant`.
 - `chunk_reader`: `BytesChunkReader#get_read`/`get_bytes` and
   `FileChunkReader#get_bytes` raise the upstream `EOF` messages
   ("Expected to read ... while file has length ..."); `FileChunkReader` reads
