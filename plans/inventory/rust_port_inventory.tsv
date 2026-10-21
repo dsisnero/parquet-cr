@@ -78,43 +78,43 @@ parquet-variant-compute/src/arrow_to_variant.rs::method::StructArrowToVariantBui
 parquet-variant-compute/src/arrow_to_variant.rs::method::StructArrowToVariantBuilder<'a>.new	method	missing	-	auto-generated
 parquet-variant-compute/src/arrow_to_variant.rs::method::UnionArrowToVariantBuilder<'a>.append_row	method	missing	-	auto-generated
 parquet-variant-compute/src/arrow_to_variant.rs::method::UnionArrowToVariantBuilder<'a>.new	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::const::NULL_VALUES	const	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::&DataType.into_shredding_field	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::(&DataType, bool).into_shredding_field	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::(DataType, bool).into_shredding_field	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::DataType.into_shredding_field	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::FieldRef.into_shredding_field	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::GenericListArray<O>.value_offsets	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::GenericListArray<O>.value_size	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::GenericListViewArray<O>.value_offsets	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::GenericListViewArray<O>.value_size	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::NullValue.append_to	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::ShreddedSchemaBuilder.build	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::ShreddedSchemaBuilder.new	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::ShreddedSchemaBuilder.with_path	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::ShreddingField.new	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::ShreddingField.null	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::VariantSchemaNode.default	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::VariantSchemaNode.insert_path	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::VariantSchemaNode.insert_path_elements	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::VariantSchemaNode.to_shredding_field	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::VariantSchemaNode.to_shredding_type	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedArrayVariantRowBuilder<'a>.append_null	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedArrayVariantRowBuilder<'a>.append_value	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedArrayVariantRowBuilder<'a>.finish	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedArrayVariantRowBuilder<'a>.try_new	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedObjectVariantRowBuilder<'a>.append_null	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedObjectVariantRowBuilder<'a>.append_value	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedObjectVariantRowBuilder<'a>.finish	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedObjectVariantRowBuilder<'a>.try_new	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedPrimitiveVariantRowBuilder<'a>.append_null	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedPrimitiveVariantRowBuilder<'a>.append_value	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedPrimitiveVariantRowBuilder<'a>.finish	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedPrimitiveVariantRowBuilder<'a>.new	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedVariantRowBuilder<'_>.append_null	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedVariantRowBuilder<'_>.append_value	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedVariantRowBuilder<'_>.finish	method	missing	-	auto-generated
-parquet-variant-compute/src/shred_variant.rs::method::VariantValue<'a>.from	method	missing	-	auto-generated
+parquet-variant-compute/src/shred_variant.rs::const::NULL_VALUES	const	skipped	spec/parquet_variant_compute/shred_variant_spec.cr	test-only constant; NullValue.each covers every mode
+parquet-variant-compute/src/shred_variant.rs::method::&DataType.into_shredding_field	method	ported	src/parquet_variant_compute/shred_variant.cr	ShreddingField.from overloads for DataType, tuple and Arrow::Field (owned values; no borrow traits)
+parquet-variant-compute/src/shred_variant.rs::method::(&DataType, bool).into_shredding_field	method	ported	src/parquet_variant_compute/shred_variant.cr	ShreddingField.from overloads for DataType, tuple and Arrow::Field (owned values; no borrow traits)
+parquet-variant-compute/src/shred_variant.rs::method::(DataType, bool).into_shredding_field	method	ported	src/parquet_variant_compute/shred_variant.cr	ShreddingField.from overloads for DataType, tuple and Arrow::Field (owned values; no borrow traits)
+parquet-variant-compute/src/shred_variant.rs::method::DataType.into_shredding_field	method	ported	src/parquet_variant_compute/shred_variant.cr	ShreddingField.from overloads for DataType, tuple and Arrow::Field (owned values; no borrow traits)
+parquet-variant-compute/src/shred_variant.rs::method::FieldRef.into_shredding_field	method	ported	src/parquet_variant_compute/shred_variant.cr	ShreddingField.from overloads for DataType, tuple and Arrow::Field (owned values; no borrow traits)
+parquet-variant-compute/src/shred_variant.rs::method::GenericListArray<O>.value_offsets	method	ported	spec/parquet_variant_compute/shred_variant_spec.cr	list offsets/sizes checked through Arrow list array accessors and roundtrip specs
+parquet-variant-compute/src/shred_variant.rs::method::GenericListArray<O>.value_size	method	ported	spec/parquet_variant_compute/shred_variant_spec.cr	list offsets/sizes checked through Arrow list array accessors and roundtrip specs
+parquet-variant-compute/src/shred_variant.rs::method::GenericListViewArray<O>.value_offsets	method	ported	spec/parquet_variant_compute/shred_variant_spec.cr	list offsets/sizes checked through Arrow list array accessors and roundtrip specs
+parquet-variant-compute/src/shred_variant.rs::method::GenericListViewArray<O>.value_size	method	ported	spec/parquet_variant_compute/shred_variant_spec.cr	list offsets/sizes checked through Arrow list array accessors and roundtrip specs
+parquet-variant-compute/src/shred_variant.rs::method::NullValue.append_to	method	ported	src/parquet_variant_compute/shred_variant.cr	Shredding schema and builders; raising API, Int32 counts; see shred_variant_spec.cr
+parquet-variant-compute/src/shred_variant.rs::method::ShreddedSchemaBuilder.build	method	ported	src/parquet_variant_compute/shred_variant.cr	Shredding schema and builders; raising API, Int32 counts; see shred_variant_spec.cr
+parquet-variant-compute/src/shred_variant.rs::method::ShreddedSchemaBuilder.new	method	ported	src/parquet_variant_compute/shred_variant.cr	Shredding schema and builders; raising API, Int32 counts; see shred_variant_spec.cr
+parquet-variant-compute/src/shred_variant.rs::method::ShreddedSchemaBuilder.with_path	method	ported	src/parquet_variant_compute/shred_variant.cr	Shredding schema and builders; raising API, Int32 counts; see shred_variant_spec.cr
+parquet-variant-compute/src/shred_variant.rs::method::ShreddingField.new	method	ported	src/parquet_variant_compute/shred_variant.cr	Shredding schema and builders; raising API, Int32 counts; see shred_variant_spec.cr
+parquet-variant-compute/src/shred_variant.rs::method::ShreddingField.null	method	ported	src/parquet_variant_compute/shred_variant.cr	Shredding schema and builders; raising API, Int32 counts; see shred_variant_spec.cr
+parquet-variant-compute/src/shred_variant.rs::method::VariantSchemaNode.default	method	ported	src/parquet_variant_compute/shred_variant.cr	VariantSchemaNode tree; sorted field names; insert_path recursively replaces leaves
+parquet-variant-compute/src/shred_variant.rs::method::VariantSchemaNode.insert_path	method	ported	src/parquet_variant_compute/shred_variant.cr	VariantSchemaNode tree; sorted field names; insert_path recursively replaces leaves
+parquet-variant-compute/src/shred_variant.rs::method::VariantSchemaNode.insert_path_elements	method	ported	src/parquet_variant_compute/shred_variant.cr	VariantSchemaNode tree; sorted field names; insert_path recursively replaces leaves
+parquet-variant-compute/src/shred_variant.rs::method::VariantSchemaNode.to_shredding_field	method	ported	src/parquet_variant_compute/shred_variant.cr	VariantSchemaNode tree; sorted field names; insert_path recursively replaces leaves
+parquet-variant-compute/src/shred_variant.rs::method::VariantSchemaNode.to_shredding_type	method	ported	src/parquet_variant_compute/shred_variant.cr	VariantSchemaNode tree; sorted field names; insert_path recursively replaces leaves
+parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedArrayVariantRowBuilder<'a>.append_null	method	ported	src/parquet_variant_compute/shred_variant.cr	ShredVariant::ValueRowBuilder; common value/null buffers with a list-mode flag
+parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedArrayVariantRowBuilder<'a>.append_value	method	ported	src/parquet_variant_compute/shred_variant.cr	ShredVariant::ValueRowBuilder; common value/null buffers with a list-mode flag
+parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedArrayVariantRowBuilder<'a>.finish	method	ported	src/parquet_variant_compute/shred_variant.cr	ShredVariant::ValueRowBuilder; common value/null buffers with a list-mode flag
+parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedArrayVariantRowBuilder<'a>.try_new	method	ported	src/parquet_variant_compute/shred_variant.cr	ShredVariant::ValueRowBuilder; common value/null buffers with a list-mode flag
+parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedObjectVariantRowBuilder<'a>.append_null	method	ported	src/parquet_variant_compute/shred_variant.cr	ShredVariant::ObjectRowBuilder (ordered Hash children; residual object uses original metadata)
+parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedObjectVariantRowBuilder<'a>.append_value	method	ported	src/parquet_variant_compute/shred_variant.cr	ShredVariant::ObjectRowBuilder (ordered Hash children; residual object uses original metadata)
+parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedObjectVariantRowBuilder<'a>.finish	method	ported	src/parquet_variant_compute/shred_variant.cr	ShredVariant::ObjectRowBuilder (ordered Hash children; residual object uses original metadata)
+parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedObjectVariantRowBuilder<'a>.try_new	method	ported	src/parquet_variant_compute/shred_variant.cr	ShredVariant::ObjectRowBuilder (ordered Hash children; residual object uses original metadata)
+parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedPrimitiveVariantRowBuilder<'a>.append_null	method	ported	src/parquet_variant_compute/shred_variant.cr	ShredVariant::ValueRowBuilder; common value/null buffers with a list-mode flag
+parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedPrimitiveVariantRowBuilder<'a>.append_value	method	ported	src/parquet_variant_compute/shred_variant.cr	ShredVariant::ValueRowBuilder; common value/null buffers with a list-mode flag
+parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedPrimitiveVariantRowBuilder<'a>.finish	method	ported	src/parquet_variant_compute/shred_variant.cr	ShredVariant::ValueRowBuilder; common value/null buffers with a list-mode flag
+parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedPrimitiveVariantRowBuilder<'a>.new	method	ported	src/parquet_variant_compute/shred_variant.cr	ShredVariant::ValueRowBuilder; common value/null buffers with a list-mode flag
+parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedVariantRowBuilder<'_>.append_null	method	ported	src/parquet_variant_compute/shred_variant.cr	ShredVariant::RowBuilder class hierarchy (Rust enum dispatch absorbed by virtual methods)
+parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedVariantRowBuilder<'_>.append_value	method	ported	src/parquet_variant_compute/shred_variant.cr	ShredVariant::RowBuilder class hierarchy (Rust enum dispatch absorbed by virtual methods)
+parquet-variant-compute/src/shred_variant.rs::method::VariantToShreddedVariantRowBuilder<'_>.finish	method	ported	src/parquet_variant_compute/shred_variant.cr	ShredVariant::RowBuilder class hierarchy (Rust enum dispatch absorbed by virtual methods)
+parquet-variant-compute/src/shred_variant.rs::method::VariantValue<'a>.from	method	skipped	spec/parquet_variant_compute/shred_variant_spec.cr	test-only recursive fixture enum replaced by JSON fixture helper and VariantArray.from_iter
 parquet-variant-compute/src/type_conversion.rs::const::KIND	const	intentional_divergence	src/parquet_variant_compute/type_conversion.cr	no `DecimalCastTarget` trait: the target kind is a compile-time type test in `decimal_to_num`
 parquet-variant-compute/src/type_conversion.rs::method::Decimal128Type.shred_variant	method	ported	src/parquet_variant_compute/type_conversion.cr	TypeConversion.shred_unscaled_decimal128
 parquet-variant-compute/src/type_conversion.rs::method::Decimal256Type.shred_variant	method	intentional_divergence	src/parquet_variant_compute/type_conversion.cr	Decimal256/I256 is not modelled in the port
@@ -244,9 +244,9 @@ parquet-variant-compute/src/variant_to_arrow.rs::method::EncodedVariantToArrowRo
 parquet-variant-compute/src/variant_to_arrow.rs::method::FakeNullBuilder.append_null	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	NullRowBuilder#append_null
 parquet-variant-compute/src/variant_to_arrow.rs::method::FakeNullBuilder.append_value	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	NullRowBuilder#append_value
 parquet-variant-compute/src/variant_to_arrow.rs::method::FakeNullBuilder.finish	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	NullRowBuilder#finish
-parquet-variant-compute/src/variant_to_arrow.rs::method::ListElementBuilder<'_>.append_null	method	intentional_divergence	src/parquet_variant_compute/variant_to_arrow.cr	only the typed mode is modelled (element builders are RowBuilders); the shredded mode comes with shred_variant
-parquet-variant-compute/src/variant_to_arrow.rs::method::ListElementBuilder<'_>.append_value	method	intentional_divergence	src/parquet_variant_compute/variant_to_arrow.cr	only the typed mode is modelled (element builders are RowBuilders); the shredded mode comes with shred_variant
-parquet-variant-compute/src/variant_to_arrow.rs::method::ListElementBuilder<'_>.finish	method	intentional_divergence	src/parquet_variant_compute/variant_to_arrow.cr	only the typed mode is modelled (element builders are RowBuilders); the shredded mode comes with shred_variant
+parquet-variant-compute/src/variant_to_arrow.rs::method::ListElementBuilder<'_>.append_null	method	ported	src/parquet_variant_compute/shred_variant.cr	ShredVariant::ElementBuilder adapter implements RowBuilder; list builders select typed or shredded elements
+parquet-variant-compute/src/variant_to_arrow.rs::method::ListElementBuilder<'_>.append_value	method	ported	src/parquet_variant_compute/shred_variant.cr	ShredVariant::ElementBuilder adapter implements RowBuilder; list builders select typed or shredded elements
+parquet-variant-compute/src/variant_to_arrow.rs::method::ListElementBuilder<'_>.finish	method	ported	src/parquet_variant_compute/shred_variant.cr	ShredVariant::ElementBuilder adapter implements RowBuilder; list builders select typed or shredded elements
 parquet-variant-compute/src/variant_to_arrow.rs::method::MapVariantToArrowRowBuilder<'a>.append_null	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	MapRowBuilder
 parquet-variant-compute/src/variant_to_arrow.rs::method::MapVariantToArrowRowBuilder<'a>.append_value	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	MapRowBuilder
 parquet-variant-compute/src/variant_to_arrow.rs::method::MapVariantToArrowRowBuilder<'a>.finish	method	ported	src/parquet_variant_compute/variant_to_arrow.cr	MapRowBuilder

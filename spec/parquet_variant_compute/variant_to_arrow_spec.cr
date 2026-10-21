@@ -4,10 +4,6 @@ require "../spec_helper"
 # 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b): the variant → Arrow row
 # builders, primitive slice.
 #
-# Deferred (documented in `plans/parity.md`): the list/struct/map/union,
-# dictionary/run-end-encoded, variant-path and binary-variant row builders
-# (upstream's `strict_cast_allows_variant_null_for_list_and_struct_builders`
-# test goes with them).
 private alias PVC = ParquetVariantCompute
 private alias V2A = ParquetVariantCompute::VariantToArrow
 private alias Variant = ParquetVariant::Variant

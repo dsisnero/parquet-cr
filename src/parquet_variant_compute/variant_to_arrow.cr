@@ -10,15 +10,9 @@ require "./type_conversion"
 # casting, and `shred_variant` uses the primitive builders for its
 # `typed_value` columns.
 #
-# Ported so far: the primitive builders (`PrimitiveVariantToArrowRowBuilder`),
-# i.e. every scalar Arrow type plus decimals and UUIDs.
-#
-# Deferred (see `plans/parity.md`): the array/list, struct, map, union,
-# dictionary/run-end-encoded, variant-path and binary-variant row builders
-# (`ArrayVariantToArrowRowBuilder`, `StructVariantToArrowRowBuilder`,
-# `MapVariantToArrowRowBuilder`, `UnionVariantToArrowRowBuilder`,
-# `EncodedVariantToArrowRowBuilder`, `VariantPathRowBuilder`,
-# `VariantToBinaryVariantArrowRowBuilder`), and `Decimal256`.
+# Covers primitive, list, struct, map, union, encoded, path and binary-variant
+# output. Decimal256 is deferred. Lists share their element builder with the
+# shredding kernels, wrapping shredded elements in (value, typed_value) pairs.
 #
 # Divergences: upstream's builder enums are a `RowBuilder` class hierarchy with
 # one generic `ValueRowBuilder` for the macro-generated builders; `usize`
@@ -966,6 +960,20 @@ module ParquetVariantCompute
       end
     end
 
+    # The shredded list element holds a (value, typed_value) pair.
+    def self.make_element_builder(
+      data_type : ::Arrow::DataType,
+      cast_options : ::Arrow::CastOptions,
+      capacity : Int32,
+      shred : Bool,
+    ) : RowBuilder
+      return make_typed_row_builder(data_type, cast_options, capacity, false) unless shred
+
+      ShredVariant::ElementBuilder.new(ShredVariant.make_row_builder(
+        data_type, cast_options, capacity, ShredVariant::NullValue::ArrayElement
+      ))
+    end
+
     # The element field of a list-like data type.
     private def self.element_field(data_type : ::Arrow::DataType) : ::Arrow::Field
       field = data_type.field
@@ -1011,9 +1019,7 @@ module ParquetVariantCompute
         @view : Bool,
       )
         @offsets = [O.zero]
-        @element_builder = VariantToArrow.make_typed_row_builder(
-          element_data_type, @cast_options, capacity, shred
-        )
+        @element_builder = VariantToArrow.make_element_builder(element_data_type, @cast_options, capacity, shred)
         @nulls = ::Arrow::NullBufferBuilder.new(capacity)
         @current_offset = O.zero
       end
@@ -1093,9 +1099,7 @@ module ParquetVariantCompute
         capacity : Int32,
         @shred : Bool,
       )
-        @element_builder = VariantToArrow.make_typed_row_builder(
-          element_data_type, @cast_options, capacity, @shred
-        )
+        @element_builder = VariantToArrow.make_element_builder(element_data_type, @cast_options, capacity, @shred)
         @nulls = ::Arrow::NullBufferBuilder.new(capacity)
       end
 
@@ -1243,3 +1247,5 @@ module ParquetVariantCompute
     end
   end
 end
+
+require "./shred_variant"

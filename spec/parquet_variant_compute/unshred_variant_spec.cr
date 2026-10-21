@@ -4,12 +4,7 @@ require "../spec_helper"
 # `VariantValueArrayBuilder` in `variant_array_builder.rs` (apache/arrow-rs
 # 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
 #
-# The upstream tests that round-trip through `shred_variant`
-# (`test_shred_unshred_round_trip_annotates_value_non_nullable`,
-# `test_unshred_with_nulls_annotates_value_non_nullable`,
-# `test_unshred_missing_row_for_decimal_timestamp_object_list`) are deferred
-# with the shredding schema (see `plans/parity.md`); the shredded inputs they
-# need are built directly below instead.
+# Shred/unshred integration roundtrips also live in shred_variant_spec.cr.
 private alias PVC = ParquetVariantCompute
 private alias Variant = ParquetVariant::Variant
 

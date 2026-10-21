@@ -10,12 +10,9 @@ require "../parquet_variant"
 # `Variant` values, together with the canonical `arrow.parquet.variant`
 # extension type and the shredding state of the array.
 #
-# Deferred (see `plans/parity.md`): shredded variants — `typed_value`
-# interpretation (`typed_value_to_variant`), `ShreddedVariantFieldArray`, the
-# shredding-schema canonicalization (`canonicalize_shredded_types`) and the
-# synthesized all-null `value` column for lenient reads. Reading a row whose
-# `typed_value` is set raises `NYIError`; reading an unshredded array is
-# unaffected.
+# Shredded arrays support primitive typed_value reads, schema canonicalization,
+# and lenient missing-value reads. Composite typed values require
+# unshred_variant before materializing Variant values, matching upstream.
 #
 # Divergences: `usize` counts are `Int32`; `arrow_schema::ArrowError` is
 # `Parquet::ArrowError`; upstream's panicking `value()` raises instead;
@@ -629,14 +626,11 @@ module ParquetVariantCompute
       nulls = array.nulls
       return nil if nulls && !nulls.valid?(index)
 
-      case array.data_type.kind
-      when .binary?
-        array.as(::Arrow::GenericBinaryArray(Int32)).value(index)
-      when .large_binary?
-        array.as(::Arrow::GenericBinaryArray(Int64)).value(index)
-      when .binary_view?
-        array.as(::Arrow::BinaryViewArray).value(index)
-      when .dictionary?
+      case array
+      when ::Arrow::GenericBinaryArray(Int32), ::Arrow::GenericBinaryArray(Int64), ::Arrow::BinaryViewArray
+        array.value(index)
+      when ::Arrow::DictionaryArray(Int8), ::Arrow::DictionaryArray(Int16),
+           ::Arrow::DictionaryArray(Int32), ::Arrow::DictionaryArray(Int64)
         dictionary_array_value(array, index)
       else
         nil
@@ -666,7 +660,7 @@ module ParquetVariantCompute
     # The decoded variant at `index` (upstream `try_value`).
     #
     # Raises when the index is out of bounds, when the row's `metadata`/`value`
-    # bytes are not valid, or when the row is shredded (deferred).
+    # bytes are not valid, or when a composite typed_value requires unshredding.
     def try_value(index : Int32) : ParquetVariant::Variant
       if len <= index
         raise Parquet::ArrowError.new(
@@ -870,7 +864,7 @@ module ParquetVariantCompute
   #
   # Divergence: `is_null`/`is_valid`/`is_empty?` keep the upstream names (see the
   # `ameba:disable` notes); reading a composite `typed_value` still needs the
-  # shredding kernels, so `VariantArray#try_value` raises for those.
+  # unshredding first, so `VariantArray#try_value` raises for those.
   class ShreddedVariantFieldArray
     @inner : ::Arrow::StructArray
     @shredding_state : ShreddingState

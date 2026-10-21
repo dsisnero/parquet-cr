@@ -29,6 +29,12 @@ describe ParquetVariantCompute::TypeConversion do
       TC.cast_with_options(Variant.from(5_i32), strict) { |v| TC.int32(v) }.should eq 5
     end
 
+    it "preserves false as a successful cast in safe and strict modes" do
+      [safe, strict].each do |options|
+        TC.cast_with_options(Variant.from(false), options) { |value| TC.variant_to_boolean(value) }.should be_false
+      end
+    end
+
     it "raises a CastError for a failed strict cast" do
       error = expect_raises(ParquetVariant::CastError) do
         TC.cast_with_options(Variant.from("not a number"), strict) { |v| TC.int32(v) }

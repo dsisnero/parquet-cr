@@ -40,9 +40,8 @@ module ParquetVariantCompute
       cast_options : ::Arrow::CastOptions,
       & : ParquetVariant::Variant -> T?
     ) : T? forall T
-      if value = yield variant
-        return value
-      end
+      value = yield variant
+      return value unless value.nil?
       return nil if variant.is_a?(ParquetVariant::Variant::Null) || cast_options.safe?
 
       raise ParquetVariant::CastError.new(
