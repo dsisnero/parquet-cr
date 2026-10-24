@@ -224,12 +224,17 @@ little-endian layout.
   scalar/decimal/temporal, byte, nested and encoded arrays, with safe/strict
   conversion policy and exact integer widths. The 51 tests were ported first;
   a calendar-boundary spec also fixed microsecond timestamp decoding overflow.
-  **Next up:** `column/page_store.rs`, the prerequisite for the arrow writer;
-  virtual columns remain blocked on arrow-cr canonical extension types.
+  Column page storage is complete too (`column/page_store.cr`): opaque UInt64
+  handles, the store/factory contracts, leaf-column context and the default
+  in-memory store with eager slot release and resident-byte accounting.
+  All five upstream tests and five contract characterizations pass after
+  recorded red-green cycles.
+  **Next up:** the Arrow writer, starting with `arrow/arrow_writer/levels.rs`,
+  then byte-array/page writers and the public writer API. Virtual columns
+  remain blocked on arrow-cr canonical extension types.
   Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
-  (the arrow-only CLIs,
-  `column/page_store.rs`, the arrow writer). Done so far:
+  (the arrow-only CLIs and the arrow writer). Done so far:
   - `parquet-variant` (`src/parquet_variant/`): `VariantPath`/
     `VariantPathElement` + dot/bracket parser (`path.cr`); `utils` helpers
     (`utils.cr`); `OffsetSizeBytes`/`map_bytes_to_offsets`, `VariantBasicType`/
@@ -827,12 +832,13 @@ little-endian layout.
       `src/parquet/file/reader.cr`.
   11. ~~Arrow interop: Arrow → Parquet schema + `ARROW:schema` metadata.~~
       **complete** — see the Phase 3.5 checklist; `arrow-cr` is a
-      `path: ../arrow-cr` dependency now. The next arrow feature is the
-      Parquet → Arrow schema direction (Phase 3.5, first unchecked item).
+      `path: ../arrow-cr` dependency now. Both schema directions, reader and
+      Variant compute are complete; next is the Arrow writer levels module.
   12. Deferred / blocked (recorded divergences and candidates):
-     - **Blocked on the separate `../arrow-cr` port**: `parquet/src/arrow/`, the
-       `column/page_store.rs` module (only consumed by the arrow writer) and the
-       `parquet-rewrite`/`parquet-fromcsv` CLIs.
+     - **Remaining Arrow work**: the writer (starting with
+       `arrow/arrow_writer/levels.rs`) and the `parquet-rewrite`/`parquet-fromcsv`
+       CLIs. `column/page_store.rs` is complete; canonical extension mappings
+       and virtual columns remain blocked on the separate `../arrow-cr` port.
      - **Blocked by design**: `async_reader`/`async_writer`/`object_store`
        suffix fetchers (Rust tokio/futures; the fiber mapping decision has to be
        recorded first).
@@ -1093,17 +1099,19 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: parquet-variant-compute arrow to variant`; gates green:
-  `make lint`, `make test` (1654 examples, 0 failures), no-codegen build and the
-  scoped parity inventory check. The 51 new specs used red-green cycles for
-  scalar, nested and encoded readers; the boundary spec fixed shared timestamp
-  decoding. Previous feature: `c33b6c7` (variant get).
-  Next feature: `column/page_store.rs`, then the arrow writer. Virtual columns
-  remain blocked on arrow-cr canonical extension types.
-  `make install` requires the sibling checkout `../arrow-cr`.
+- Last commit: `port: column page store`; gates green: `make lint`,
+  `make test` (1664 examples, 0 failures), no-codegen build and the scoped
+  parity inventory check. Ten new specs port all five upstream unit tests and
+  characterize key/factory/context/boundary contracts. Red-green cycles first
+  failed on missing InMemoryPageStore, then missing PageStore interfaces.
+  Previous feature: `eb91b13` (Arrow → Variant casts).
+  Next feature: Arrow writer definition/repetition levels
+  (`arrow/arrow_writer/levels.rs`), followed by writer byte-array/page plumbing
+  and the public ArrowWriter API. Virtual columns remain blocked on arrow-cr
+  canonical extension types. `make install` requires `../arrow-cr`.
   In this sandbox, tests use `CRYSTAL_CACHE_DIR=/private/tmp/parquet-cr-crystal-cache`.
-- Progress by counts (ledger): 2541 `ported`, 207 `intentional_divergence`,
-  17 skipped, 750 `missing` (of 3515 rows).
+- Progress by counts (ledger): 2552 `ported`, 207 `intentional_divergence`,
+  17 skipped, 739 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1142,9 +1150,9 @@ Chunk status by area:
 - Phase 2.2 column: `ColumnDescriptor`, column page types/interfaces, the
   level/value decoders, the writer value encoder, the byte-budget chunker, the
   truncation helpers, `ColumnReaderImpl`, `GenericColumnWriter`, and the
-  content-defined chunker (`src/parquet/column/chunker/`) done;
-  `column/mod.rs` glue pending and `page_store` deferred (only the arrow writer
-  consumes it).
+  content-defined chunker (`src/parquet/column/chunker/`) and page-store
+  interfaces/default in-memory backend (`column/page_store.cr`) done;
+  `column/mod.rs` glue pending. Page-store writer wiring follows with ArrowWriter.
 - Phase 2.4 record: `api` (`Field`/`Row`/`List`/`Map`), `triplet`
   (`TripletIter`), `reader` (`TreeBuilder`/`Reader`/`RowIter`), and the
   `RecordReader(T)`/`RecordWriter(T)` traits done; `get_row_iter` wired;
@@ -1360,6 +1368,16 @@ Chunk status by area:
   byte-array, dictionary, byte-stream-split, RLE value, ALP, registries).
 
 ### 2.2 Column
+
+- [x] Serialized page storage (`src/parquet/column/page_store.cr`): `PageKey`,
+  `PageStore`, `PageStoreArgs`, `PageStoreFactory`, `InMemoryPageStore` and its
+  default factory. Stores mint dense keys without recycling emptied slots;
+  `take` releases the resident bytes, repeated takes return empty, and invalid
+  keys raise the upstream General error. `page_store_spec.cr` ports all five
+  upstream tests plus five characterizations for UInt64 key traits, arbitrary
+  take order, empty blobs, factory isolation/context and oversized invalid keys.
+  Tests preceded implementations in two red-green cycles. This completes the
+  storage module; configuration and dictionary/data-page routing await ArrowWriter.
 
 - [x] `ColumnDescriptor` + `ColumnReader` done; column writer in progress.
 - [~] `ColumnWriterImpl` (`src/parquet/column/writer/writer.cr`):
@@ -1891,8 +1909,8 @@ Chunk status by area:
       extension-type mapping (`arrow/schema/extension.rs`; needs arrow-cr
       canonical extension types — optional, off in upstream's default build).
 - [ ] The arrow-only CLI tools (`parquet-rewrite`, `parquet-fromcsv`) once the
-      reader/writer exist, and `column/page_store.rs` (only consumed by the
-      arrow writer).
+      reader/writer exist. `column/page_store.rs` is complete; its Arrow writer
+      wiring follows with the writer feature.
 
 ### 3.6 Async / object_store (deferred)
 
@@ -2959,6 +2977,15 @@ Chunk status by area:
   `FileChunkReader#get_bytes` raise the upstream `EOF` messages
   ("Expected to read ... while file has length ..."); `FileChunkReader` reads
   through `File#read_at` blocks (Crystal's `read_at` yields an `IO`).
+- `column::page_store`: Rust traits become abstract `PageStore` and
+  `PageStoreFactory` classes; `PageKey` is a UInt64 value struct with comparison
+  and hashing, and `PageStoreArgs` retains its descriptor by reference.
+  Column indices/array slots are Int32, resident-byte counts are Int64, and
+  fallible methods raise `GeneralError`. The args constructor is public rather
+  than crate-only. `Bytes` slices transfer by convention (callers must not mutate
+  stored slices), since Crystal does not enforce Rust's ownership/immutable Bytes.
+  Stores are single-owner and unsynchronized; Rust Send/Sync bounds have no
+  direct Crystal equivalent. Factories must coordinate any shared state they add.
 - `column::writer` data holders: Rust's `LevelDataRef<'a>` enum (borrowed
   `&[i16]`) is a Crystal struct carrying a `Kind` with an owned `Array(Int16)`;
   `usize` sizes are `Int32`; `ColumnCloseResult::update_dictionary_location(mut

@@ -1784,17 +1784,17 @@ parquet/src/column/page_encryption.rs::method::PageEncryptor.increment_page	meth
 parquet/src/column/page_encryption_disabled.rs::method::PageEncryptor.encrypt_compressed_page	method	intentional_divergence	src/parquet/column/page_encryption.cr	no separate disabled stub; a nil PageEncryptor is used when the column is unencrypted
 parquet/src/column/page_encryption_disabled.rs::method::PageEncryptor.encrypt_page_header	method	intentional_divergence	src/parquet/column/page_encryption.cr	no separate disabled stub; a nil PageEncryptor is used when the column is unencrypted
 parquet/src/column/page_encryption_disabled.rs::method::PageEncryptor.increment_page	method	intentional_divergence	src/parquet/column/page_encryption.cr	no separate disabled stub; a nil PageEncryptor is used when the column is unencrypted
-parquet/src/column/page_store.rs::method::InMemoryPageStore.memory_size	method	missing	-	auto-generated
-parquet/src/column/page_store.rs::method::InMemoryPageStore.put	method	missing	-	auto-generated
-parquet/src/column/page_store.rs::method::InMemoryPageStore.take	method	missing	-	auto-generated
-parquet/src/column/page_store.rs::method::InMemoryPageStoreFactory.create	method	missing	-	auto-generated
-parquet/src/column/page_store.rs::method::OffHeap.put	method	missing	-	auto-generated
-parquet/src/column/page_store.rs::method::OffHeap.take	method	missing	-	auto-generated
-parquet/src/column/page_store.rs::method::PageKey.get	method	missing	-	auto-generated
-parquet/src/column/page_store.rs::method::PageKey.new	method	missing	-	auto-generated
-parquet/src/column/page_store.rs::method::PageStoreArgs<'_>.column_descriptor	method	missing	-	auto-generated
-parquet/src/column/page_store.rs::method::PageStoreArgs<'_>.column_index	method	missing	-	auto-generated
-parquet/src/column/page_store.rs::method::PageStoreArgs<'_>.new	method	missing	-	auto-generated
+parquet/src/column/page_store.rs::method::InMemoryPageStore.memory_size	method	ported	src/parquet/column/page_store.cr	PageStore abstract class; InMemoryPageStore preserves slots, dense UInt64 keys and Int64 resident byte count; errors raise GeneralError
+parquet/src/column/page_store.rs::method::InMemoryPageStore.put	method	ported	src/parquet/column/page_store.cr	PageStore abstract class; InMemoryPageStore preserves slots, dense UInt64 keys and Int64 resident byte count; errors raise GeneralError
+parquet/src/column/page_store.rs::method::InMemoryPageStore.take	method	ported	src/parquet/column/page_store.cr	PageStore abstract class; InMemoryPageStore preserves slots, dense UInt64 keys and Int64 resident byte count; errors raise GeneralError
+parquet/src/column/page_store.rs::method::InMemoryPageStoreFactory.create	method	ported	src/parquet/column/page_store.cr	InMemoryPageStoreFactory#create returns a fresh PageStore; abstract factory replaces Send+Sync trait
+parquet/src/column/page_store.rs::method::OffHeap.put	method	ported	spec/parquet/column/page_store_spec.cr	OffHeapPageStore test subclass verifies put/take and inherited zero memory_size; upstream test-only stub
+parquet/src/column/page_store.rs::method::OffHeap.take	method	ported	spec/parquet/column/page_store_spec.cr	OffHeapPageStore test subclass verifies put/take and inherited zero memory_size; upstream test-only stub
+parquet/src/column/page_store.rs::method::PageKey.get	method	ported	src/parquet/column/page_store.cr	PageKey UInt64 value struct; new/get plus equality, ordering and hashing
+parquet/src/column/page_store.rs::method::PageKey.new	method	ported	src/parquet/column/page_store.cr	PageKey UInt64 value struct; new/get plus equality, ordering and hashing
+parquet/src/column/page_store.rs::method::PageStoreArgs<'_>.column_descriptor	method	ported	src/parquet/column/page_store.cr	PageStoreArgs value struct; Int32 column_index and referenced ColumnDescriptor; constructor public for writer callers
+parquet/src/column/page_store.rs::method::PageStoreArgs<'_>.column_index	method	ported	src/parquet/column/page_store.cr	PageStoreArgs value struct; Int32 column_index and referenced ColumnDescriptor; constructor public for writer callers
+parquet/src/column/page_store.rs::method::PageStoreArgs<'_>.new	method	ported	src/parquet/column/page_store.cr	PageStoreArgs value struct; Int32 column_index and referenced ColumnDescriptor; constructor public for writer callers
 parquet/src/column/reader.rs::const::MAX_DEF_LEVEL	const	intentional_divergence	spec/parquet/column/reader_spec.cr	upstream test infra not ported
 parquet/src/column/reader.rs::const::MAX_REP_LEVEL	const	intentional_divergence	spec/parquet/column/reader_spec.cr	upstream test infra not ported
 parquet/src/column/reader.rs::const::NUM_LEVELS	const	intentional_divergence	spec/parquet/column/reader_spec.cr	upstream test infra not ported
