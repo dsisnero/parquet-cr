@@ -220,12 +220,15 @@ little-endian layout.
   output, and shredded Variant output remains NYI as upstream. Specs were
   ported first with recorded red-green cycles for the missing API, shredded
   paths, list traversal and extension validation.
-  **Next up:** the Arrow → Variant casts (`cast_to_variant`/`arrow_to_variant`),
-  then virtual columns (blocked on arrow-cr canonical extension types) and the
-  arrow writer (needs `column/page_store.rs`).
+  Arrow → Variant casts are complete (`cast_to_variant`/`arrow_to_variant`):
+  scalar/decimal/temporal, byte, nested and encoded arrays, with safe/strict
+  conversion policy and exact integer widths. The 51 tests were ported first;
+  a calendar-boundary spec also fixed microsecond timestamp decoding overflow.
+  **Next up:** `column/page_store.rs`, the prerequisite for the arrow writer;
+  virtual columns remain blocked on arrow-cr canonical extension types.
   Everything else
   on this roadmap is complete, blocked (async/object_store), or deferred
-  (`parquet-variant-compute`'s Arrow → Variant cast kernels, the arrow-only CLIs,
+  (the arrow-only CLIs,
   `column/page_store.rs`, the arrow writer). Done so far:
   - `parquet-variant` (`src/parquet_variant/`): `VariantPath`/
     `VariantPathElement` + dot/bracket parser (`path.cr`); `utils` helpers
@@ -1090,16 +1093,17 @@ little-endian layout.
     roundtrip module are deferred with the arrow layer, and the 8 `CDC_*`/
     `*_LENGTH` constants are test-only (in `arrow_tests`), hence `skipped` in the
     ledger. `CdcChunk` lives in `chunker.cr` (upstream `chunker/mod.rs`).
-- Last commit: `port: parquet-variant-compute variant get`; gates green:
-  `make lint`, `make test` (1603 examples, 0 failures), no-codegen build and the
-  scoped parity inventory check. The 63 new specs were ported tests-first with
-  red-green cycles. Previous feature: `be7fcc1` (shredding).
-  Next feature: the Arrow → Variant casts (`cast_to_variant`/`arrow_to_variant`),
-  then virtual columns (blocked on arrow-cr canonical extension types) and the
-  arrow writer. `make install` requires the sibling checkout `../arrow-cr`.
+- Last commit: `port: parquet-variant-compute arrow to variant`; gates green:
+  `make lint`, `make test` (1654 examples, 0 failures), no-codegen build and the
+  scoped parity inventory check. The 51 new specs used red-green cycles for
+  scalar, nested and encoded readers; the boundary spec fixed shared timestamp
+  decoding. Previous feature: `c33b6c7` (variant get).
+  Next feature: `column/page_store.rs`, then the arrow writer. Virtual columns
+  remain blocked on arrow-cr canonical extension types.
+  `make install` requires the sibling checkout `../arrow-cr`.
   In this sandbox, tests use `CRYSTAL_CACHE_DIR=/private/tmp/parquet-cr-crystal-cache`.
-- Progress by counts (ledger): 2527 `ported`, 206 `intentional_divergence`,
-  17 skipped, 765 `missing` (of 3515 rows).
+- Progress by counts (ledger): 2541 `ported`, 207 `intentional_divergence`,
+  17 skipped, 750 `missing` (of 3515 rows).
 
 Chunk status by area:
 
@@ -1615,9 +1619,9 @@ Chunk status by area:
   fallback for nulls and unrepresentable values, and dense offsets vs sparse
   alignment; the spec covers rank selection, the Null child, sparse mode, the
   safe/strict split and empty unions). Remaining: `Decimal256` union/primitive
-  children, `cast_to_variant`/`arrow_to_variant`, and
-  the `type_conversion` exponent-notation path. Composite `typed_value` reads
-  require `unshred_variant`, matching upstream.
+  children and the `type_conversion` exponent-notation path. The forward
+  Arrow → Variant cast supports Decimal256 through checked Int128 narrowing.
+  Composite `typed_value` reads require `unshred_variant`, matching upstream.
 - [x] `parquet-variant-compute` shredding — `shred_variant.cr` implements the
   public kernel and options path, primitive and list fallback builders, partial
   object shredding, `NullValue` mode handling and the path-based schema builder.
@@ -1640,6 +1644,18 @@ Chunk status by area:
   The kernel shares the row builders' existing Decimal256/decimal-exponent
   limitations; shredded Variant output remains NYI and fixed-size list indexing
   is absent from shredded traversal, matching the pinned source.
+- [x] `parquet-variant-compute` Arrow → Variant casts — `cast_to_variant.cr`
+  exposes strict and options kernels; `arrow_to_variant.cr` supplies recursive
+  row builders for all scalar widths, Float16, Decimal32/64/128/256, temporal,
+  string/binary, five list layouts, structs, maps, eight dictionary key types,
+  three run-end widths and sparse/dense unions. SQL nulls remain distinct from
+  safe conversion failures (Variant null); null object fields are omitted.
+  Empty/all-null inputs bypass unsupported-type validation, matching upstream.
+  `cast_to_variant_spec.cr` has 51 upstream-derived/characterization specs with
+  recorded red-green cycles (missing API, fallible scalars, nested arrays,
+  encoded arrays and invalid units). Calendar boundaries caught and fixed the
+  shared microsecond decoder's unnecessary Int64 nanosecond overflow.
+  Crystal Time's narrower calendar range is documented below.
 - [x] `parquet-variant-json` — both directions:
   `src/parquet_variant_json/variant_to_json.cr` + `formatting.cr`
   (`Variant#to_json`/`#to_json_string`/`#to_json_value`, `Formatting`'s
@@ -2929,7 +2945,16 @@ Chunk status by area:
   propagate. Invalid Variant extension tags are treated as concrete requests,
   bridging the custom extension's Parquet error hierarchy. The existing target
   limitations of `VariantToArrow` apply (Decimal256 and decimal exponent parsing).
-  Still deferred: `cast_to_variant` and `arrow_to_variant`.
+  Arrow → Variant uses a RowBuilder class hierarchy and scalar conversion
+  closures instead of Rust enums/macros. Dictionary keys are read directly;
+  run-end cursors use raw run ends as in the pinned source (including slices).
+  Fixed-size binary remains binary even at 16 bytes. Nanosecond timestamps
+  preserve precision, matching implementation rather than the stale upstream
+  truncation comment. Crystal Time supports years 1..9999, a narrower range
+  than chrono; out-of-range dates/timestamps produce Variant null in safe mode
+  and conversion errors in strict mode. Boundary tests cover representable
+  dates/timestamps and rejection of year zero. Microsecond decoding splits
+  seconds/remainder to avoid an intermediate Int64 nanosecond overflow.
 - `chunk_reader`: `BytesChunkReader#get_read`/`get_bytes` and
   `FileChunkReader#get_bytes` raise the upstream `EOF` messages
   ("Expected to read ... while file has length ..."); `FileChunkReader` reads

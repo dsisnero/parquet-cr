@@ -184,7 +184,8 @@ module ParquetVariant
     def self.decode_timestamp_micros(data : Bytes) : Time
       micros_since_epoch = decode_int64(data)
       begin
-        Time.unix_ns(micros_since_epoch * 1_000)
+        seconds, micros = micros_since_epoch.divmod(1_000_000)
+        Time.unix(seconds) + Time::Span.new(nanoseconds: micros * 1_000)
       rescue ArgumentError | OverflowError
         raise CastError.new("Could not cast `#{micros_since_epoch}` microseconds into a DateTime<Utc>")
       end

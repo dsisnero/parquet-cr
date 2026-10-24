@@ -63,21 +63,21 @@ parquet-variant-compute/benches/variant_kernels.rs::method::RandomJsonGenerator.
 parquet-variant-compute/benches/variant_kernels.rs::method::RandomJsonGenerator.default	method	missing	-	auto-generated
 parquet-variant-compute/benches/variant_kernels.rs::method::RandomJsonGenerator.next	method	missing	-	auto-generated
 parquet-variant-compute/benches/variant_kernels.rs::method::RandomJsonGenerator.next_object	method	missing	-	auto-generated
-parquet-variant-compute/src/arrow_to_variant.rs::method::ArrowToVariantRowBuilder<'_>.append_row	method	missing	-	auto-generated
-parquet-variant-compute/src/arrow_to_variant.rs::method::DictionaryArrowToVariantBuilder<'a>.append_row	method	missing	-	auto-generated
-parquet-variant-compute/src/arrow_to_variant.rs::method::DictionaryArrowToVariantBuilder<'a>.new	method	missing	-	auto-generated
-parquet-variant-compute/src/arrow_to_variant.rs::method::ListArrowToVariantBuilder<'a, L>.append_row	method	missing	-	auto-generated
-parquet-variant-compute/src/arrow_to_variant.rs::method::ListArrowToVariantBuilder<'a, L>.new	method	missing	-	auto-generated
-parquet-variant-compute/src/arrow_to_variant.rs::method::MapArrowToVariantBuilder<'a>.append_row	method	missing	-	auto-generated
-parquet-variant-compute/src/arrow_to_variant.rs::method::MapArrowToVariantBuilder<'a>.new	method	missing	-	auto-generated
-parquet-variant-compute/src/arrow_to_variant.rs::method::NullArrowToVariantBuilder.append_row	method	missing	-	auto-generated
-parquet-variant-compute/src/arrow_to_variant.rs::method::RunEndEncodedArrowToVariantBuilder<'a, R>.append_row	method	missing	-	auto-generated
-parquet-variant-compute/src/arrow_to_variant.rs::method::RunEndEncodedArrowToVariantBuilder<'a, R>.new	method	missing	-	auto-generated
-parquet-variant-compute/src/arrow_to_variant.rs::method::RunEndEncodedArrowToVariantBuilder<'a, R>.set_run_for_index	method	missing	-	auto-generated
-parquet-variant-compute/src/arrow_to_variant.rs::method::StructArrowToVariantBuilder<'a>.append_row	method	missing	-	auto-generated
-parquet-variant-compute/src/arrow_to_variant.rs::method::StructArrowToVariantBuilder<'a>.new	method	missing	-	auto-generated
-parquet-variant-compute/src/arrow_to_variant.rs::method::UnionArrowToVariantBuilder<'a>.append_row	method	missing	-	auto-generated
-parquet-variant-compute/src/arrow_to_variant.rs::method::UnionArrowToVariantBuilder<'a>.new	method	missing	-	auto-generated
+parquet-variant-compute/src/arrow_to_variant.rs::method::ArrowToVariantRowBuilder<'_>.append_row	method	intentional_divergence	src/parquet_variant_compute/arrow_to_variant.cr	RowBuilder/ScalarRowBuilder; Crystal Time supports years 1..9999 rather than chrono range; safe failures are VariantNull, strict errors raise
+parquet-variant-compute/src/arrow_to_variant.rs::method::DictionaryArrowToVariantBuilder<'a>.append_row	method	ported	src/parquet_variant_compute/arrow_to_variant.cr	RowBuilder hierarchy; recursive typed Arrow readers; raising APIs and Int32 indices
+parquet-variant-compute/src/arrow_to_variant.rs::method::DictionaryArrowToVariantBuilder<'a>.new	method	ported	src/parquet_variant_compute/arrow_to_variant.cr	RowBuilder hierarchy; recursive typed Arrow readers; raising APIs and Int32 indices
+parquet-variant-compute/src/arrow_to_variant.rs::method::ListArrowToVariantBuilder<'a, L>.append_row	method	ported	src/parquet_variant_compute/arrow_to_variant.cr	RowBuilder hierarchy; recursive typed Arrow readers; raising APIs and Int32 indices
+parquet-variant-compute/src/arrow_to_variant.rs::method::ListArrowToVariantBuilder<'a, L>.new	method	ported	src/parquet_variant_compute/arrow_to_variant.cr	RowBuilder hierarchy; recursive typed Arrow readers; raising APIs and Int32 indices
+parquet-variant-compute/src/arrow_to_variant.rs::method::MapArrowToVariantBuilder<'a>.append_row	method	ported	src/parquet_variant_compute/arrow_to_variant.cr	RowBuilder hierarchy; recursive typed Arrow readers; raising APIs and Int32 indices
+parquet-variant-compute/src/arrow_to_variant.rs::method::MapArrowToVariantBuilder<'a>.new	method	ported	src/parquet_variant_compute/arrow_to_variant.cr	RowBuilder hierarchy; recursive typed Arrow readers; raising APIs and Int32 indices
+parquet-variant-compute/src/arrow_to_variant.rs::method::NullArrowToVariantBuilder.append_row	method	ported	src/parquet_variant_compute/arrow_to_variant.cr	RowBuilder hierarchy; recursive typed Arrow readers; raising APIs and Int32 indices
+parquet-variant-compute/src/arrow_to_variant.rs::method::RunEndEncodedArrowToVariantBuilder<'a, R>.append_row	method	ported	src/parquet_variant_compute/arrow_to_variant.cr	RowBuilder hierarchy; recursive typed Arrow readers; raising APIs and Int32 indices
+parquet-variant-compute/src/arrow_to_variant.rs::method::RunEndEncodedArrowToVariantBuilder<'a, R>.new	method	ported	src/parquet_variant_compute/arrow_to_variant.cr	RowBuilder hierarchy; recursive typed Arrow readers; raising APIs and Int32 indices
+parquet-variant-compute/src/arrow_to_variant.rs::method::RunEndEncodedArrowToVariantBuilder<'a, R>.set_run_for_index	method	ported	src/parquet_variant_compute/arrow_to_variant.cr	RunRowBuilder#select_run_for_index; raw run-end cursor and binary search match pinned source
+parquet-variant-compute/src/arrow_to_variant.rs::method::StructArrowToVariantBuilder<'a>.append_row	method	ported	src/parquet_variant_compute/arrow_to_variant.cr	RowBuilder hierarchy; recursive typed Arrow readers; raising APIs and Int32 indices
+parquet-variant-compute/src/arrow_to_variant.rs::method::StructArrowToVariantBuilder<'a>.new	method	ported	src/parquet_variant_compute/arrow_to_variant.cr	RowBuilder hierarchy; recursive typed Arrow readers; raising APIs and Int32 indices
+parquet-variant-compute/src/arrow_to_variant.rs::method::UnionArrowToVariantBuilder<'a>.append_row	method	ported	src/parquet_variant_compute/arrow_to_variant.cr	RowBuilder hierarchy; recursive typed Arrow readers; raising APIs and Int32 indices
+parquet-variant-compute/src/arrow_to_variant.rs::method::UnionArrowToVariantBuilder<'a>.new	method	ported	src/parquet_variant_compute/arrow_to_variant.cr	RowBuilder hierarchy; recursive typed Arrow readers; raising APIs and Int32 indices
 parquet-variant-compute/src/shred_variant.rs::const::NULL_VALUES	const	skipped	spec/parquet_variant_compute/shred_variant_spec.cr	test-only constant; NullValue.each covers every mode
 parquet-variant-compute/src/shred_variant.rs::method::&DataType.into_shredding_field	method	ported	src/parquet_variant_compute/shred_variant.cr	ShreddingField.from overloads for DataType, tuple and Arrow::Field (owned values; no borrow traits)
 parquet-variant-compute/src/shred_variant.rs::method::(&DataType, bool).into_shredding_field	method	ported	src/parquet_variant_compute/shred_variant.cr	ShreddingField.from overloads for DataType, tuple and Arrow::Field (owned values; no borrow traits)

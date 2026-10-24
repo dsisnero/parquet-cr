@@ -9,7 +9,7 @@
 # `TypeConversion` layer that casts a single variant value to a typed Arrow
 # value, and the `VariantToArrow` row builders (every target shape, including
 # unions), `shred_variant` with `ShreddedSchemaBuilder`, and
-# `variant_get`/`GetOptions`. Deferred: `cast_to_variant`/`arrow_to_variant`.
+# `variant_get`/`GetOptions`, and `cast_to_variant`/`arrow_to_variant`.
 require "./parquet_variant_compute/type_conversion"
 require "./parquet_variant_compute/variant_to_arrow"
 require "./parquet_variant_compute/variant_array"
@@ -20,3 +20,4 @@ require "./parquet_variant_compute/from_json"
 require "./parquet_variant_compute/to_json"
 require "./parquet_variant_compute/shred_variant"
 require "./parquet_variant_compute/variant_get"
+require "./parquet_variant_compute/cast_to_variant"
