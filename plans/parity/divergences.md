@@ -4,7 +4,7 @@ Status: **maintained reference**; existing entries are recorded decisions, with
 remaining implementation gaps tracked in the [active plan](../parity.md) and
 [API ledger](../inventory/rust_port_inventory.tsv). Update this file when a
 feature changes a documented divergence; it is not a separate feature queue.
-The next work file is `plans/parity.md`, Phase 1 (Arrow writer).
+The next work file is `plans/parity.md`, Phase 2 (Variant numeric conversions).
 
 
 - Errors: Rust `Result<T, E>` is mapped to Crystal exceptions. Fallible
@@ -61,8 +61,8 @@ The next work file is `plans/parity.md`, Phase 1 (Arrow writer).
   const-generic `&[u8; N]` (same byte loop), `usize` offsets are `Int32`, the
   `FnMut(&mut Self, usize)` callback is a block receiving the chunker, chunk
   validation runs under `{% unless flag?(:release) %}` (upstream
-  `debug_assertions`), and assertions raise `GeneralError`. `get_arrow_chunks`
-  and the `arrow_tests` roundtrip module are deferred with the arrow layer; the
+  `debug_assertions`), and assertions raise `GeneralError`. `get_arrow_chunks` is implemented by `Parquet::Arrow.arrow_chunks` and
+  `arrow_value_bytes`; integrated Arrow writer round trips exercise CDC. The
   gear-hash table is transcribed verbatim from `cdc_generated.rs`.
 - Snappy codec: upstream depends on the `snap` crate (`SnappyCodec` holds a
   `snap::raw::{Encoder, Decoder}`); the port uses the `naqvis/snappy` shard
@@ -240,8 +240,10 @@ The next work file is `plans/parity.md`, Phase 1 (Arrow writer).
   `ColumnValueDecoderImpl(FixedLenByteArray)` and converts at `consume_batch`
   time, so decimals/intervals are `PrimitiveArray(T)` values carrying the
   matching decimal/interval data type (arrow-cr has no `Decimal*Array`/
-  `Interval*Array` classes); `Float16` raises `NYIError` (no Crystal `Float16`)
-  and `Interval(MonthDayNano)` is NYI as upstream.
+  `Interval*Array` classes); Float16 uses arrow-cr's half-float primitive array,
+  while Interval(MonthDayNano) is NYI as upstream. Narrow/unsigned primitive
+  targets and decimal/date targets now use their actual Arrow native storage
+  widths, including when their Parquet physical type differs.
 - Arrow interop, batch reader: the reader options live in the generic
   `ArrowReaderBuilder(Input)` (`src/parquet/arrow/arrow_reader.cr`), which the
   synchronous `ParquetRecordBatchReaderBuilder` (input
@@ -840,8 +842,10 @@ The next work file is `plans/parity.md`, Phase 1 (Arrow writer).
   `begin_appended_column`/`finish_appended_column` are ported (`ChunkReader`'s
   `Read` is an `IO`; `IO.copy` splices; the geospatial statistics branch is
   omitted). Encryption (`file_encryptor`, `set_column_crypto_metadata`, the page
-  encryptor), the `Debug` impl, the arrow-only `append_column_from_pages`, and
-  the `parquet_buf`/`HeapSize` helpers are not ported; `start_file` is public.
+  encryptor) are wired through the file writer. `append_column_from_pages`
+  streams one stored blob at a time and preserves column crypto metadata while
+  shifting offsets. Rust Debug formatting and the `parquet_buf`/`HeapSize`
+  helpers remain unmodelled; `start_file` is public.
   `SerializedRowGroupWriter#close` returns the same `RowGroupMetaData` instance
   recorded in the file (upstream returns a pre-bloom-filter clone), so
   `flushed_row_groups` and `close` alias.
@@ -1085,10 +1089,9 @@ The next work file is `plans/parity.md`, Phase 1 (Arrow writer).
 - `column::writer`: `GenericColumnWriter<'a, E>` becomes `GenericColumnWriter(T)`
   fixing `E = ColumnValueEncoderImpl(T)`; the `ColumnWriter` enum becomes an
   abstract class with the single generic `ColumnWriterImpl(T)` subclass; `usize`
-  becomes `Int32`; `encodings` is a `Set(Encoding)`; the writer's geospatial,
-  encryption, and arrow-only paths (`get_estimated_total_bytes`, `memory_size`,
-  `set_distinct_count_override`, `set_column_chunk_encryption_properties`) are
-  not ported. `Naming/AccessorMethodName`, `Lint/NotNil`,
+  becomes `Int32`; `encodings` is a `Set(Encoding)`. Arrow size/memory estimates
+  and distinct-count overrides are exposed. Encryption properties travel through
+  the file writer and page encryptor instead of a separate Arrow column setter. `Naming/AccessorMethodName`, `Lint/NotNil`,
   `Lint/ShadowingOuterLocalVar`, and `Metrics/CyclomaticComplexity` are excluded
   for `src/parquet/column/writer/writer.cr` in `.ameba.yml`.
 - `encodings::byte_stream_split`: `ByteStreamSplitEncoder(T)`/`Decoder(T)` and
@@ -1153,3 +1156,31 @@ The next work file is `plans/parity.md`, Phase 1 (Arrow writer).
   sidecars; the `Makefile` strips them before format/lint/test (a `._foo_spec.cr`
   matches crystal's `*_spec.cr` glob). If a git pack op prints
   `non-monotonic index .../._pack-*.idx`, delete the sidecars.
+
+## Synchronous Arrow writer implementation choices
+
+- `ArrowWriter` owns an IO-based `SerializedFileWriter`; mutable option builders
+  follow the port's conventions. It holds the row group's column encoders
+  directly rather than wrapping them in a separate ArrowRowGroupWriter class.
+  The row-group factory absorbs the private column factory. Low-level
+  compute_leaves/ArrowColumnWriter/ArrowColumnChunk splicing remains available.
+- `LevelInfoBuilder` uses recursive per-record traversal rather than Rust enum
+  variants with bulk/direct/scan fast paths. Private LevelData is represented
+  by optional materialized Int16 arrays; nil is Absent, uniform runs expand.
+  Exact nested definition/repetition levels and value indices are tested.
+- ByteArray gathers materialize native ByteArray values before using the
+  existing ColumnValueEncoderImpl(ByteArray). Its dictionary, fallback,
+  statistics, byte budgets and bloom filters are reused. The private Rust
+  view-aware zero-copy encoder/storage wrappers are not separate Crystal APIs.
+- ArrowPageWriter keeps opaque store keys without a shared mutex (synchronous
+  single-owner mutation). Plaintext headers/data use separate blobs; encrypted
+  pages use a single serialized blob. Both stream dictionary-first and reclaim
+  each blob as consumed. Store resident-byte reporting feeds writer estimates.
+- Distinct values use owned raw-byte String keys instead of a set of 64-bit
+  hashes. Dictionary keys are counted and byte-view arrays skipped, matching
+  the pinned source's selection. Memory allocation/performance differs; no
+  zero-copy or throughput equivalence is claimed. Writer counts are Int32,
+  byte estimates Int64, and errors raise Parquet error subclasses.
+- Decimal256 IPC required the independent arrow-cr commit 9a5612c. The original
+  default writer round-trip assertion stayed intact; this task did not edit the
+  shard. MonthDayNano interval writing remains NYI, as upstream.

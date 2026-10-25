@@ -161,11 +161,41 @@ module Parquet
       end
 
       private def build_array(values : Array(Int32), nulls : ::Arrow::NullBuffer?, data_type : ::Arrow::DataType) : ::Arrow::ArrayBase
-        ::Arrow::PrimitiveArray.new(::Arrow::ScalarBuffer(Int32).from(values), nulls, data_type)
+        case data_type.kind
+        when .int8?
+          ::Arrow::PrimitiveArray(Int8).new(::Arrow::ScalarBuffer(Int8).from(values.map(&.to_i8!)), nulls, data_type)
+        when .int16?
+          ::Arrow::PrimitiveArray(Int16).new(::Arrow::ScalarBuffer(Int16).from(values.map(&.to_i16!)), nulls, data_type)
+        when .u_int8?
+          ::Arrow::PrimitiveArray(UInt8).new(::Arrow::ScalarBuffer(UInt8).from(values.map(&.to_u8!)), nulls, data_type)
+        when .u_int16?
+          ::Arrow::PrimitiveArray(UInt16).new(::Arrow::ScalarBuffer(UInt16).from(values.map(&.to_u16!)), nulls, data_type)
+        when .u_int32?
+          ::Arrow::PrimitiveArray(UInt32).new(::Arrow::ScalarBuffer(UInt32).from(values.map(&.to_u32!)), nulls, data_type)
+        when .decimal64?
+          ::Arrow::PrimitiveArray(Int64).new(::Arrow::ScalarBuffer(Int64).from(values.map(&.to_i64)), nulls, data_type)
+        when .decimal128?
+          ::Arrow::PrimitiveArray(Int128).new(::Arrow::ScalarBuffer(Int128).from(values.map(&.to_i128)), nulls, data_type)
+        when .decimal256?
+          ::Arrow::PrimitiveArray(::Arrow::I256).new(::Arrow::ScalarBuffer(::Arrow::I256).from(values.map { |value| ::Arrow::I256.new(value) }), nulls, data_type)
+        when .date64?
+          ::Arrow::PrimitiveArray(Int64).new(::Arrow::ScalarBuffer(Int64).from(values.map { |value| value.to_i64 * 86_400_000 }), nulls, data_type)
+        else
+          ::Arrow::PrimitiveArray.new(::Arrow::ScalarBuffer(Int32).from(values), nulls, data_type)
+        end
       end
 
       private def build_array(values : Array(Int64), nulls : ::Arrow::NullBuffer?, data_type : ::Arrow::DataType) : ::Arrow::ArrayBase
-        ::Arrow::PrimitiveArray.new(::Arrow::ScalarBuffer(Int64).from(values), nulls, data_type)
+        case data_type.kind
+        when .u_int64?
+          ::Arrow::PrimitiveArray(UInt64).new(::Arrow::ScalarBuffer(UInt64).from(values.map(&.to_u64!)), nulls, data_type)
+        when .decimal128?
+          ::Arrow::PrimitiveArray(Int128).new(::Arrow::ScalarBuffer(Int128).from(values.map(&.to_i128)), nulls, data_type)
+        when .decimal256?
+          ::Arrow::PrimitiveArray(::Arrow::I256).new(::Arrow::ScalarBuffer(::Arrow::I256).from(values.map { |value| ::Arrow::I256.new(value) }), nulls, data_type)
+        else
+          ::Arrow::PrimitiveArray.new(::Arrow::ScalarBuffer(Int64).from(values), nulls, data_type)
+        end
       end
 
       private def build_array(values : Array(Float32), nulls : ::Arrow::NullBuffer?, data_type : ::Arrow::DataType) : ::Arrow::ArrayBase

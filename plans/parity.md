@@ -14,38 +14,40 @@
 
 ## Where we are
 
-- **Current focus:** finish Arrow interop with a usable synchronous
-  `ArrowWriter`. Core synchronous Parquet I/O, the Arrow batch reader, Variant
-  operations and page storage already exist. Writer levels are an internal step
-  within this feature, not the next standalone feature.
+- **Current focus:** synchronous Arrow RecordBatch writing is complete. The
+  public writer, nested levels, physical encoding, row-group splitting, CDC,
+  page-store routing, metadata/finalization and encrypted-page splicing have
+  integrated round-trip coverage. Next is Variant numeric conversion parity.
 - **Next up**, in order:
-  1. **Phase 1 — Arrow RecordBatch writing**, including nested levels, column
-     encoding, page-store integration and the public writer API.
-  2. **Phase 2 — Complete Variant numeric conversions**, closing the existing
-     Decimal256 output and decimal exponent-notation gaps.
-  3. **Phase 3 — Canonical extensions and virtual columns**, once arrow-cr
+  1. **Phase 2 — Complete Variant numeric conversions**, closing Decimal256
+     output and decimal exponent-notation gaps.
+  2. **Phase 3 — Canonical extensions and virtual columns**, once arrow-cr
      supplies the canonical extension types; advance to Phase 4 while blocked.
-  4. **Phase 4 — Parquet rewrite command**, using the complete reader/writer.
-  5. **Phase 5 — CSV import command**, using the complete writer.
-  6. **Phases 6–7 — Asynchronous storage reads and writes**, deferred until the
+  3. **Phase 4 — Parquet rewrite command**, using the complete reader/writer.
+  4. **Phase 5 — CSV import command**, using the complete writer.
+  5. **Phases 6–7 — Asynchronous storage reads and writes**, deferred until the
      Crystal concurrency and object-store mapping is decided.
-- **Last completed feature:** `b9eeca7`, `port: column page store`. Includes all
-  five upstream tests plus five contract characterizations, ported tests-first
-  through two red-green cycles. Page-store configuration and routing through
-  `ArrowWriter` belong to Phase 1.
-- **Last code gates:** `make lint` (179 files), `make test` (1664 examples,
+- **Last completed feature:** `port: arrow record batch writer`, on
+  `codex/arrow-record-batch-writer`. The 84 new specs were ported tests-first
+  through red-green cycles: missing levels/API, reader integer/decimal widths,
+  Float16 reads, Date64 coercion, distinct counts, intervals, encryption metadata
+  and the public estimate accessor. Previous code feature: `b9eeca7` (page store).
+- **Last code gates:** `make lint` (183 files), `make test` (1748 examples,
   zero failures/errors), `crystal build --no-codegen src/parquet-cr.cr`, and
-  scoped inventory validation (3515 tracked items), all passed for `b9eeca7`.
-  The roadmap regrouping changes documentation only; these are the recorded
-  code results, not a new implementation signoff.
-- **Ledger counts:** 2552 `ported`, 207 `intentional_divergence`, 17 `skipped`,
-  739 `missing` (3515 total). Regrouping does not change symbol status.
+  scoped inventory validation (3515 tracked items), all green. The focused
+  writer plus fixed-width reader suite passes 93 examples.
+- **Dependency requirement:** sibling arrow-cr includes `9a5612c` (Decimal256 IPC
+  schema support). That independent fix made the original default-options
+  Decimal256 round-trip test pass unchanged. No shard patch was made by this
+  task; see [resolved dependency note](../shards_info/arrow_cr.3.md).
+- **Ledger counts:** 2653 `ported`, 242 `intentional_divergence`, 28 `skipped`,
+  592 `missing` (3515 total).
 - **Plan layout:** this file is the active feature queue and completion record.
   [Implementation reference](parity/implementation-reference.md) is a complete
   archival snapshot of earlier module-level evidence, including stale historical
   checkboxes. [Divergences](parity/divergences.md) is a maintained reference for
   representation differences and verification notes. Neither is a separate
-  work queue. Work next in this file, Phase 1; update divergences as needed.
+  work queue. Work next in this file, Phase 2; update divergences as needed.
 
 ## Feature sizing and completion
 
@@ -76,19 +78,24 @@ and spec mappings remain in the implementation reference and ledger.
 
 | Capability | Delivered behavior | Remaining work |
 | --- | --- | --- |
-| Synchronous Parquet files | Schema/Thrift, encodings/compression, column and file readers/writers, metadata, page indexes, bloom filters, record API | Generic API compatibility decisions below; Arrow batch writing is Phase 1 |
+| Synchronous Parquet files | Schema/Thrift, encodings/compression, column and file readers/writers, metadata, page indexes, bloom filters, record API | Generic API compatibility decisions below |
 | Arrow batch reading | Schema conversion both ways, IPC schema metadata, primitive/composite readers, selection, filtering, pruning, metrics and push decoding | Canonical extension/virtual-column integration in Phase 3; individual coverage gaps remain in the ledger |
+| Arrow batch writing | Public writer/options, nested levels, physical encoding, row/byte limits, stored-page streaming, metadata, CDC and encrypted round trips | Recorded representation/performance differences; Decimal256 IPC needs arrow-cr 9a5612c |
 | Variant binary and JSON | Paths, values/builders, exact binary encoding, JSON in both directions | Recorded ownership and calendar-range divergences |
 | Variant Arrow operations | Arrays/builders, safe/strict casts, path extraction, shredding and unshredding, scalar/composite/encoded arrays | Numeric conversion completion in Phase 2 |
 | Geospatial | GeoParquet metadata, bounds, WKB support and core statistics integration | WkbType Arrow extension integration in Phase 3; ISO WKB limitation documented |
 | Derived records | Schema generation and typed record read/write round trips | Recorded Crystal macro/trait representation differences |
 | Modular encryption | Cipher/metadata/properties and synchronous encrypted file/page read/write paths | Recorded unsupported upstream modes and representation differences |
-| Serialized page storage | Opaque UInt64 keys, store/factory contracts, column context, in-memory backend and resident-byte accounting | Wire into ArrowWriter in Phase 1 |
+| Serialized page storage | Opaque UInt64 keys, store/factory contracts, column context, in-memory backend and resident-byte accounting | Integrated into ArrowWriter |
 | Existing command-line tools | Inspect/read/index/schema/rowcount/layout/bloom-filter and concatenate workflows | Rewrite and CSV import are Phases 4–5 |
 
 ## Phase 1 — Arrow RecordBatch writing
 
-- [ ] Write Arrow `RecordBatch`es through the public synchronous `ArrowWriter`
+Status: **complete**, with 84 new upstream-derived/characterization specs and
+all repository gates passing. This feature includes the full public writer,
+low-level column factory/chunk API and page-store integration in one commit.
+
+- [x] Write Arrow `RecordBatch`es through the public synchronous `ArrowWriter`
   API and read the resulting Parquet files back with equivalent values/schema.
 
 Scope includes definition/repetition levels for flat and nested arrays,
@@ -106,6 +113,19 @@ custom page-store output equivalence and dictionary-page routing. Exercise the
 supported writer configuration and error paths. Keep dependencies in this
 phase until the public writer and integration tests are green; completing
 `levels.rs` or a page writer alone is intermediate progress.
+
+Delivered in `src/parquet/arrow/arrow_writer.cr` and `arrow_writer/{levels,
+column,pages}.cr`, exported by `src/parquet.cr`. Existing column/file writers
+now expose estimates and distinct overrides and splice stored blobs with
+correct dictionary offsets and encryption metadata. Integration tests also
+fixed reader storage widths for narrow/unsigned integers, decimal targets and
+coerced Date64; Float16 reading is implemented and negative DayTime intervals
+preserve their packed bits. The old Float16-NYI characterization was replaced
+with exact bit/value assertions. Custom sparse-key stores produce byte-identical
+files, route dictionary bytes through the store and release every stored blob.
+Public tests cover nested/sliced collections, all dictionary key/run widths,
+Decimal32/64/128/256, temporal types, plain/dictionary fallback, V1/V2/codecs,
+row/byte limits, metadata options, CDC, bloom filters and encrypted round trips.
 
 ## Phase 2 — Complete Variant numeric conversions
 

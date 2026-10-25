@@ -8,9 +8,8 @@ require "../../spec_helper"
 # `ColumnValueDecoderImpl(FixedLenByteArray)` and converted to the target array at
 # `consume_batch` time; decimals/intervals are represented as `PrimitiveArray(T)`
 # with the matching decimal/interval data type (arrow-cr has no
-# `Decimal*Array`/`Interval*Array` classes); the `Float16` target raises
-# `NYIError` because Crystal has no `Float16`, and `Interval(MonthDayNano)` is
-# NYI like upstream.
+# `Decimal*Array`/`Interval*Array` classes); Float16 uses arrow-cr's half-float
+# primitive array, and Interval(MonthDayNano) remains NYI like upstream.
 private alias PArrow = Parquet::Arrow
 private alias PageUtil = ParquetTestPageUtil
 
@@ -137,10 +136,13 @@ describe Parquet::Arrow::FixedLenByteArrayReader do
     end
   end
 
-  it "rejects the Float16 target (Crystal has no half-float)" do
+  it "reads Float16 little-endian values with exact bit patterns" do
     message = "message test_schema { REQUIRED FIXED_LEN_BYTE_ARRAY (2) leaf; }"
-    expect_raises(Parquet::NYIError, /Float16/) do
-      flba_reader([Bytes.new(2)], message, Arrow::DataType.float16)
-    end
+    reader = flba_reader([Bytes[0x00, 0xBE], Bytes[0x80, 0x40]], message, Arrow::DataType.float16)
+    array = reader.next_batch(2).as(Arrow::PrimitiveArray(Arrow::Float16))
+    array.value(0).bits.should eq 0xBE00_u16
+    array.value(1).bits.should eq 0x4080_u16
+    array.value(0).to_f32.should eq(-1.5_f32)
+    array.value(1).to_f32.should eq(2.25_f32)
   end
 end

@@ -116,3 +116,6 @@ require "./parquet/arrow/statistics"
 module Parquet
   VERSION = "0.1.0"
 end
+
+require "./parquet/arrow/arrow_writer/levels"
+require "./parquet/arrow/arrow_writer"

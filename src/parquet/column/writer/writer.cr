@@ -14,7 +14,7 @@ require "../../encryption/encrypt"
 # Divergences: `GenericColumnWriter<'a, E>` becomes `GenericColumnWriter(T)`
 # fixing `E = ColumnValueEncoderImpl(T)`; the `ColumnWriter` enum becomes an
 # abstract class with the single generic `ColumnWriterImpl(T)` subclass;
-# `usize` becomes `Int32`; geospatial/encryption/arrow-only paths are dropped;
+# `usize` becomes `Int32`; Arrow metrics and distinct overrides are exposed;
 # `encodings` is a `Set(Encoding)`; truncation helpers are `Writer` module
 # methods.
 module Parquet
@@ -22,8 +22,21 @@ module Parquet
     module Writer
       # A column writer for a Parquet column chunk.
       abstract class ColumnWriter
+        property distinct_count_override : UInt64?
+
         # Finalizes writes and returns the column chunk metadata and indexes.
         abstract def close : ColumnCloseResult
+        abstract def memory_size : Int64
+        abstract def estimated_total_bytes : Int64
+        abstract def add_data_page : Nil
+
+        def get_estimated_total_bytes : UInt64
+          estimated_total_bytes.to_u64
+        end
+
+        def set_distinct_count_override(count : UInt64) : Nil
+          self.distinct_count_override = count
+        end
       end
 
       # Typed column writer for a primitive column.
@@ -116,6 +129,14 @@ module Parquet
           distinct_count : UInt64?,
         ) : Int32
           write_batch_internal(values, LevelDataRef.from(def_levels), LevelDataRef.from(rep_levels), min, max, distinct_count)
+        end
+
+        def memory_size : Int64
+          @encoder.estimated_memory_size.to_i64 + @data_pages.sum(0_i64, &.memory_usage.to_i64) + @page_writer.buffered_memory_size
+        end
+
+        def estimated_total_bytes : Int64
+          @data_pages.sum(0_i64, &.data.size.to_i64) + @column_metrics.total_bytes_written.to_i64 + @encoder.estimated_data_page_size + (@encoder.estimated_dict_page_size || 0)
         end
 
         def get_total_bytes_written : UInt64
@@ -456,7 +477,7 @@ module Parquet
           end
         end
 
-        private def add_data_page : Nil
+        def add_data_page : Nil
           values_data = @encoder.flush_data_page
           max_def_level = @descr.max_def_level
           max_rep_level = @descr.max_rep_level
@@ -599,7 +620,7 @@ module Parquet
             stats = ValueStatistics(T).new(
               @column_metrics.min_column_value,
               @column_metrics.max_column_value,
-              @column_metrics.column_distinct_count,
+              @distinct_count_override || @column_metrics.column_distinct_count,
               @column_metrics.num_column_nulls,
               false,
             ).with_nan_count(@column_metrics.num_column_nans).with_backwards_compatible_min_max(backwards_compatible_min_max)

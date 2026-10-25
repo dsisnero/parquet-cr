@@ -21,8 +21,8 @@ require "../encryption/encrypt"
 #
 # Divergences: `SerializedFileWriter<W: Write>` becomes a single
 # `SerializedFileWriter` over an `IO`; the `OnClose*` callbacks are Crystal
-# `Proc`s (closures capturing the owning writer); encryption and the
-# arrow-only `append_column*` splicing paths are not ported;
+# `Proc`s (closures capturing the owning writer); column chunks are spliced
+# from IO or streamed page-store blobs, preserving encryption metadata;
 # `SerializedRowGroupWriter::close` returns the same `RowGroupMetaData`
 # instance recorded in the file (upstream returns a pre-bloom-filter clone).
 module Parquet
@@ -355,6 +355,20 @@ module Parquet
         finish_appended_column(close, src_offset, write_offset)
       end
 
+      # Splice lazily, reclaiming a single stored page blob at a time.
+      def append_column_from_pages(pages, close : Column::Writer::ColumnCloseResult) : Nil
+        src_offset, src_length, write_offset = begin_appended_column(close)
+        written = 0_i64
+        pages.each do |bytes|
+          @buf.write(bytes)
+          written += bytes.size
+        end
+        if written != src_length
+          raise general_err!("Failed to splice column data, expected #{src_length} got #{written}")
+        end
+        finish_appended_column(close, src_offset, write_offset)
+      end
+
       # Validates the writer state and that `close` matches the next expected
       # column, returning `(src_offset, src_length, write_offset)`.
       private def begin_appended_column(
@@ -395,6 +409,8 @@ module Parquet
           .set_data_page_offset(map_offset.call(src_data_offset))
           .set_dictionary_page_offset(src_dictionary_offset.try { |off| map_offset.call(off) })
           .set_unencoded_byte_array_data_bytes(metadata.unencoded_byte_array_data_bytes)
+          .set_column_crypto_metadata(metadata.crypto_metadata)
+          .set_encrypted_column_metadata(metadata.encrypted_column_metadata)
 
         if rep_hist = metadata.repetition_level_histogram
           builder = builder.set_repetition_level_histogram(rep_hist.dup)

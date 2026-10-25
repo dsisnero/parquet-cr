@@ -17,8 +17,8 @@ require "../buffer/bit_util"
 # `ColumnValueDecoderImpl(FixedLenByteArray)` and represents decimals/intervals
 # as `PrimitiveArray(T)` (Int32/Int64/Int128/`I256`) with the matching
 # decimal/interval data type, because arrow-cr has no `Decimal*Array`/
-# `Interval*Array` classes. The `Float16` target raises `NYIError` (Crystal has
-# no `Float16`), and `Interval(MonthDayNano)` is NYI as upstream. Decimals are
+# `Interval*Array` classes. Float16 uses arrow-cr's half-float primitive array;
+# Interval(MonthDayNano) is NYI as upstream. Decimals are
 # big-endian and sign-extended with the ported `sign_extend_be`; intervals are
 # little-endian (the upstream conversions are matched exactly).
 module Parquet
@@ -69,9 +69,6 @@ module Parquet
         unless byte_length == 2
           raise general_err!("float 16 type must be 2 bytes, got #{byte_length}")
         end
-        raise NYIError.new(
-          "the Float16 target needs an arrow-cr half-float array (Crystal has no Float16)"
-        )
       else
         raise general_err!(
           "invalid data type for fixed length byte array reader - #{data_type}"
@@ -161,6 +158,9 @@ module Parquet
               ::Arrow::ScalarBuffer(::Arrow::I256).from(Array(::Arrow::I256).new(len) { |idx| be_i256(values[idx]) }),
               nulls, @data_type
             ).as(::Arrow::ArrayBase)
+          when .float16?
+            halves = Array(::Arrow::Float16).new(len) { |index| ::Arrow::Float16.from_bits(IO::ByteFormat::LittleEndian.decode(UInt16, values[index].as_bytes)) }
+            ::Arrow::PrimitiveArray(::Arrow::Float16).new(::Arrow::ScalarBuffer(::Arrow::Float16).from(halves), nulls, @data_type).as(::Arrow::ArrayBase)
           when .interval?
             build_interval(values, len, nulls)
           else
@@ -201,7 +201,7 @@ module Parquet
               Array(Int64).new(len) do |idx|
                 days = le_int32(values[idx], 4).to_i64
                 millis = le_int32(values[idx], 8).to_i64
-                days | (millis << 32)
+                ::Arrow.interval_day_time(days, millis)
               end
             ),
             nulls, @data_type
