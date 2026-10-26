@@ -35,3 +35,18 @@ directly into a Crystal spec.
 Binary fixtures needed for round-trip tests are generated with a small helper in
 spec support code so they remain reproducible. Do not commit opaque blobs that
 cannot be regenerated.
+
+## Canonical extensions and virtual columns
+
+`make test` keeps the pinned upstream default feature behavior. Run the full
+suite with optional canonical/geospatial/Variant schema mappings enabled using:
+
+```sh
+make test-extensions
+```
+
+This passes `-Darrow_canonical_extension_types -Dgeospatial
+-Dvariant_experimental` to Crystal, mirroring the upstream Cargo features.
+Virtual columns and the WKB extension contract are available in either build.
+The feature specs are `virtual_type_spec.cr`, `virtual_reader_spec.cr` and
+`extension_mapping_spec.cr` under `spec/parquet/arrow/`.

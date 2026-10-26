@@ -1,4 +1,5 @@
 require "../parquet/errors"
+require "arrow-cr"
 
 # `arrow-schema`'s `ArrowError` variants used by `parquet-geospatial`
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
@@ -8,7 +9,7 @@ require "../parquet/errors"
 # prefix.
 module ParquetGeospatial
   # `ArrowError::JsonError`.
-  class JsonError < ::Parquet::ParquetError
+  class JsonError < ::Arrow::ArrowError
     def initialize(message : String)
       super("Json error: #{message}")
     end

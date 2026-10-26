@@ -1,5 +1,7 @@
 require "base64"
 require "arrow-cr"
+require "./schema/virtual_type"
+require "./schema/extension"
 require "../basic"
 require "../errors"
 require "../file/metadata"
@@ -16,19 +18,17 @@ require "../schema/types"
 # `add_encoded_arrow_schema_to_metadata` (the `ARROW:schema` IPC round-trip uses
 # arrow-cr's `arrow-ipc` schema message).
 #
-# The other direction (`parquet_to_arrow_schema*`, `ParquetField`, `Visitor`,
-# `FieldLevels`, `parquet_to_arrow_field`) is the next arrow feature.
+# The reverse direction also supports field hints, extension reconstruction and
+# virtual columns (schema/complex.cr and schema/virtual_type.cr).
 #
 # Divergences: upstream's `ArrowSchemaConverter::with_*` builders consume `self`
 # and return a new converter; the port mutates the converter and returns `self`
 # (like the other ported builders). `arrow_to_parquet_type`, `field_id`,
 # `logical_type_for_*`, and `decimal_length_from_precision` are module methods
 # (upstream: private functions in `schema` / `schema::extension`, plus one `pub
-# fn`). Arrow *extension type* mapping (`ARROW:extension:name` → Variant/Uuid/
-# Json/Geometry/Geography logical types) is compiled out upstream unless
-# `arrow_canonical_extension_types`/`geospatial`/`variant_experimental` are
-# enabled, and arrow-cr does not model extension types yet, so the port follows
-# upstream's default build (only `Utf8` → `STRING`, no other logical types).
+# fn`). Arrow extension mapping uses the matching nondefault compile flags
+# `arrow_canonical_extension_types`, `geospatial` and `variant_experimental`,
+# preserving the pinned source's default behavior when absent.
 module Parquet
   # Arrow <-> Parquet interop (upstream `parquet::arrow`).
   module Arrow
@@ -173,36 +173,6 @@ module Parquet
     # Returns a copy of `field` with a new data type (see `renamed_field`).
     private def self.retyped_field(field : ::Arrow::Field, data_type : ::Arrow::DataType) : ::Arrow::Field
       ::Arrow::Field.new(field.name, data_type, field.nullable?, field.metadata)
-    end
-
-    # Upstream `logical_type_for_string` with `arrow_canonical_extension_types`
-    # disabled (the default build): always the `STRING` logical type.
-    def self.logical_type_for_string(_field : ::Arrow::Field) : LogicalType?
-      LogicalType::String.new
-    end
-
-    # Upstream `logical_type_for_binary` with the `geospatial` feature disabled
-    # (the default build): no logical type.
-    def self.logical_type_for_binary(_field : ::Arrow::Field) : LogicalType?
-      nil
-    end
-
-    # Upstream `logical_type_for_fixed_size_binary` with
-    # `arrow_canonical_extension_types` disabled (the default build).
-    def self.logical_type_for_fixed_size_binary(_field : ::Arrow::Field) : LogicalType?
-      nil
-    end
-
-    # Upstream `logical_type_for_binary_view` with the `geospatial` feature
-    # disabled (the default build).
-    def self.logical_type_for_binary_view(_field : ::Arrow::Field) : LogicalType?
-      nil
-    end
-
-    # Upstream `logical_type_for_struct` with `variant_experimental` disabled
-    # (the default build).
-    def self.logical_type_for_struct(_field : ::Arrow::Field) : LogicalType?
-      nil
     end
 
     # Maps an Arrow time unit to the Parquet one (seconds have no mapping).
@@ -516,6 +486,7 @@ module Parquet
       parquet_schema : Schema::SchemaDescriptor,
       mask : ProjectionMask,
       key_value_metadata : Array(File::Metadata::KeyValue)?,
+      virtual_columns : Array(::Arrow::Field) = [] of ::Arrow::Field,
     ) : Tuple(::Arrow::Schema, ParquetField?)
       metadata = parse_key_value_metadata(key_value_metadata) || {} of String => String
       maybe_schema = if value = metadata.delete(ARROW_SCHEMA_META_KEY)
@@ -530,7 +501,7 @@ module Parquet
       end
 
       hint = maybe_schema.try(&.fields)
-      field_levels = parquet_to_arrow_field_levels(parquet_schema, mask, hint)
+      field_levels = parquet_to_arrow_field_levels_with_virtual(parquet_schema, mask, hint, virtual_columns)
       schema = ::Arrow::Schema.new(field_levels.fields, ::Arrow::Metadata.from(metadata))
       {schema, field_levels.levels}
     end
@@ -545,11 +516,34 @@ module Parquet
       mask : ProjectionMask,
       hint : ::Arrow::Fields?,
     ) : FieldLevels
-      levels = convert_schema(schema, mask, hint)
-      return FieldLevels.new(::Arrow::Fields.empty, nil) unless levels
+      parquet_to_arrow_field_levels_with_virtual(schema, mask, hint, [] of ::Arrow::Field)
+    end
 
-      fields = levels.arrow_type.fields || ::Arrow::Fields.empty
-      FieldLevels.new(fields, levels)
+    # Appends virtual fields at the root independently of physical projection.
+    def self.parquet_to_arrow_field_levels_with_virtual(
+      schema : Schema::SchemaDescriptor,
+      mask : ProjectionMask,
+      hint : ::Arrow::Fields?,
+      virtual_columns : Array(::Arrow::Field),
+    ) : FieldLevels
+      virtual_columns.each do |field|
+        unless virtual_column?(field)
+          raise general_err!("Field '#{field.name}' is not a virtual column. Virtual columns must have extension type names starting with 'arrow.virtual.'")
+        end
+      end
+      levels = convert_schema(schema, mask, hint)
+      unless levels
+        return FieldLevels.new(::Arrow::Fields.empty, nil) if virtual_columns.empty?
+        levels = ParquetField.new(0_i16, 0_i16, false, ::Arrow::DataType.struct(::Arrow::Fields.empty), ParquetFieldType.group([] of ParquetField))
+      end
+      fields = (levels.arrow_type.fields || ::Arrow::Fields.empty).to_a
+      children = levels.children || raise general_err!("Root field must be a group")
+      virtual_columns.each do |field|
+        fields << field
+        children << convert_virtual_field(field, levels.rep_level, levels.def_level)
+      end
+      levels.arrow_type = ::Arrow::DataType.struct(::Arrow::Fields.from(fields))
+      FieldLevels.new(::Arrow::Fields.from(fields), levels)
     end
 
     # Converts a parquet column descriptor to an arrow `Field`

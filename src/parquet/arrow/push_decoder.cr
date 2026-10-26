@@ -765,6 +765,7 @@ module Parquet
 
           # If we have any cached results, connect them up.
           builder = ArrayReaderBuilder.new(row_group, @batch_size, @metrics)
+            .with_parquet_metadata(@metadata)
           array_reader =
             if cache_info = current_state.cache_info
               cache_options = cache_info.builder.consumer
@@ -849,6 +850,7 @@ module Parquet
         )
         cache_options = filter_info.cache_builder.producer
         array_reader = ArrayReaderBuilder.new(row_group, @batch_size, @metrics)
+          .with_parquet_metadata(@metadata)
           .with_cache_options(cache_options)
           .build_array_reader(@fields, predicate.projection)
 

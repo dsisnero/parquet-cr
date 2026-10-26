@@ -48,3 +48,31 @@ find .git -name '._*' -delete
 ```
 
 The warnings are non-fatal.
+
+## Virtual columns and canonical extension mappings
+
+Configure generated columns through `Parquet::Arrow::ArrowReaderOptions`:
+
+```crystal
+field = Arrow::Field.new("row_number", Arrow::DataType.int64, false)
+  .with_extension_type(Parquet::Arrow::RowNumber.new)
+options = Parquet::Arrow::ArrowReaderOptions.new.with_virtual_columns([field])
+reader = Parquet::Arrow::ParquetRecordBatchReaderBuilder
+  .try_new_with_options(file_reader, options).build
+```
+
+`RowNumber` emits file-global row positions; `RowGroupIndex` emits physical
+metadata indices. Selected/reordered row groups, row selection, predicates,
+offset/limit and the push decoder preserve those identities. Virtual fields are
+appended at the root and remain included when physical projection is empty.
+They use Int64 storage and required empty-string extension metadata. The pinned
+source recognizes `parquet.virtual.` while its validation error text mentions
+`arrow.virtual.`; the port preserves both behaviors.
+
+UUID/JSON, WKB Geometry/Geography and Variant logical schema mapping follow the
+upstream optional features, enabled with `-Darrow_canonical_extension_types`,
+`-Dgeospatial` and `-Dvariant_experimental`. These apply in both writer and reader
+schema conversion. Defaults remain unchanged. `ParquetGeospatial::WkbType`
+implements Arrow's extension contract for Binary/LargeBinary/BinaryView storage;
+metadata parse errors retain the `ParquetGeospatial::JsonError` name and inherit
+`Arrow::ArrowError` so `Field#has_valid_extension_type?` returns false on them.

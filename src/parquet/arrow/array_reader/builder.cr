@@ -4,6 +4,8 @@ require "../array_reader"
 require "../metrics"
 require "../schema/complex"
 require "./primitive_array"
+require "./row_number"
+require "./row_group_index"
 require "./byte_array"
 require "./byte_array_dictionary"
 require "./byte_view_array"
@@ -29,9 +31,8 @@ require "./cached_array_reader"
 # inserts them into) a shared `RowGroupCache`.
 #
 # Divergences:
-# - no virtual columns (`RowNumber`/`RowGroupIndex`), so `ParquetFieldType` only
-#   has primitive/group fields, and there is no `with_parquet_metadata` (it only
-#   feeds those virtual columns);
+# - virtual readers consume file metadata supplied by `with_parquet_metadata`;
+#   generated values use Int64 with Int32 batch/skip counts;
 # - not-yet-ported leaf readers raise `NYIError` instead of being built:
 #   INT96 (the numeric primitive reader does not model `Int96`);
 # - `usize` counts are `Int32`, and the per-field `ReaderArgs` struct is replaced
@@ -90,6 +91,14 @@ module Parquet
         @cache_options = nil
       end
 
+      @parquet_metadata : File::Metadata::ParquetMetaData?
+
+      # Supplies file-global metadata for virtual column generation.
+      def with_parquet_metadata(metadata : File::Metadata::ParquetMetaData) : self
+        @parquet_metadata = metadata
+        self
+      end
+
       # Sets the batch size hint used to pre-allocate internal buffers.
       def with_batch_size(batch_size : Int32) : self
         @batch_size = batch_size
@@ -132,6 +141,8 @@ module Parquet
           else
             reader
           end
+        when ParquetFieldType::Virtual
+          build_virtual_reader(field.field_type.as(ParquetFieldType::Virtual).virtual_type)
         else
           case field.arrow_type.kind
           when .map?
@@ -146,6 +157,20 @@ module Parquet
             raise NYIError.new("reading group type #{field.arrow_type} not implemented")
           end
         end
+      end
+
+      private def build_virtual_reader(kind : VirtualColumnType) : ArrayReader
+        kind.row_number? ? build_row_number_reader : build_row_group_index_reader
+      end
+
+      private def build_row_number_reader : RowNumberReader
+        metadata = @parquet_metadata || raise general_err!("ParquetMetaData is required to read virtual row number columns.")
+        RowNumberReader.try_new(metadata, @row_groups.row_groups)
+      end
+
+      private def build_row_group_index_reader : RowGroupIndexReader
+        metadata = @parquet_metadata || raise general_err!("ParquetMetaData is required to read virtual row group index columns.")
+        RowGroupIndexReader.try_new(metadata, @row_groups.row_groups)
       end
 
       # Builds the reader for a map field (`List<Struct<key, value>>`).

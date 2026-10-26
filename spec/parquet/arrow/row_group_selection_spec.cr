@@ -7,8 +7,8 @@ require "../../spec_helper"
 # the reader's row-group selection.
 #
 # Upstream's reader-level test (`test_read_row_numbers_row_group_order`) also
-# reads virtual row-number columns; those are deferred with the virtual-column
-# support, so the port checks the value order only. The fixtures are written
+# reads virtual row-number columns; virtual_reader_spec.cr now covers that
+# integrated path, while this file checks the value-order planning contract. The fixtures are written
 # with the ported `SerializedFileWriter` (two 50-row row groups holding
 # 5000..5100) instead of `ArrowWriter`.
 #

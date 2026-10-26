@@ -14,39 +14,37 @@
 
 ## Where we are
 
-- **Current focus:** Phase 2 — Variant numeric conversions is complete on
-  `codex/variant-numeric-conversions`. Decimal256 primitive/union/encoded output,
-  exponent parsing, float conversion and target validation pass integrated specs.
-  Next is Phase 3; verify its canonical-extension dependency before starting.
+- **Current focus:** Phase 3 — canonical extensions and virtual columns is
+  complete on `codex/canonical-extensions-virtual-columns`. Virtual columns work
+  in synchronous and push readers; optional canonical mappings round-trip files.
+  Next is Phase 4 — the Parquet rewrite command.
 - **Next up**, in order:
-  1. **Phase 3 — Canonical extensions and virtual columns**, once arrow-cr
-     supplies the canonical extension types; advance to Phase 4 while blocked.
-  2. **Phase 4 — Parquet rewrite command**, using the complete reader/writer.
-  3. **Phase 5 — CSV import command**, using the complete writer.
-  4. **Phases 6–7 — Asynchronous storage reads and writes**, deferred until the
+  1. **Phase 4 — Parquet rewrite command**, using the complete reader/writer.
+  2. **Phase 5 — CSV import command**, using the complete writer.
+  3. **Phases 6–7 — Asynchronous storage reads and writes**, deferred until the
      Crystal concurrency and object-store mapping is decided.
-- **Last completed feature:** `port: complete variant numeric conversions`, on
-  `codex/variant-numeric-conversions`. The 28 new specs were ported tests-first
-  through observed red-green cycles for Decimal256 output, decimal parsing,
-  float native ranges, union ranking and target validation. Previous completed
-  feature: `c0d54db` (Arrow RecordBatch writer).
-- **Last code gates:** `make lint` (183 files), `make test` (1776 examples,
-  zero failures/errors), `crystal build --no-codegen src/parquet-cr.cr`, scoped
-  inventory validation (3515 tracked items), and `git diff --check`, all green.
-  The focused numeric suite passes all 28 examples.
-- **Dependency requirements:** sibling arrow-cr includes `9a5612c` (Decimal256
-  IPC), `b05366a` (Decimal256 dictionary packing) and `49d07ce` (I256 comparator
-  for run-end output). Verified against `eec0b46`, which includes all three.
-  No shard patch was made; see [IPC note](../shards_info/arrow_cr.3.md) and
-  [encoded-output note](../shards_info/arrow_cr.4.md).
-- **Ledger counts:** 2654 `ported`, 241 `intentional_divergence`, 28 `skipped`,
-  592 `missing` (3515 total).
+- **Last completed feature:** `port: canonical extensions and virtual columns`,
+  on `codex/canonical-extensions-virtual-columns`. Three new spec files contain
+  38 upstream-derived/characterization examples with all extension flags (32 in
+  the default build). Observed red-green cycles cover extension/reader/mapping
+  APIs, malformed WKB metadata, edge conversions and virtual value equality.
+  Previous feature: `6692cca` (Variant numeric conversions).
+- **Last code gates:** `make lint` (187 files), `make test` (1808 examples),
+  `make test-extensions` (1814 examples), both default/extension-enabled
+  no-codegen library builds, scoped inventory validation (3515 items), and
+  `git diff --check`, all green with zero failures/errors/pending.
+- **Dependency requirements:** sibling arrow-cr supplies extension machinery
+  (`925255d`) and canonical Uuid/Json types. Existing Decimal256 prerequisites
+  remain `9a5612c`, `b05366a` and `49d07ce`; see the resolved dependency notes in
+  `shards_info/`. No shard patch or dependency edit was made.
+- **Ledger counts:** 2690 `ported`, 238 `intentional_divergence`, 28 `skipped`,
+  559 `missing` (3515 total).
 - **Plan layout:** this file is the active feature queue and completion record.
   [Implementation reference](parity/implementation-reference.md) is a complete
   archival snapshot of earlier module-level evidence, including stale historical
   checkboxes. [Divergences](parity/divergences.md) is a maintained reference for
   representation differences and verification notes. Neither is a separate
-  work queue. Work next in this file, Phase 3; update divergences as needed.
+  work queue. Work next in this file, Phase 4; update divergences as needed.
 
 ## Feature sizing and completion
 
@@ -78,11 +76,11 @@ and spec mappings remain in the implementation reference and ledger.
 | Capability | Delivered behavior | Remaining work |
 | --- | --- | --- |
 | Synchronous Parquet files | Schema/Thrift, encodings/compression, column and file readers/writers, metadata, page indexes, bloom filters, record API | Generic API compatibility decisions below |
-| Arrow batch reading | Schema conversion both ways, IPC schema metadata, primitive/composite readers, selection, filtering, pruning, metrics and push decoding | Canonical extension/virtual-column integration in Phase 3; individual coverage gaps remain in the ledger |
+| Arrow batch reading | Schema conversion both ways, IPC schema metadata, primitive/composite readers, selection, filtering, pruning, metrics and push decoding | Recorded representation differences; individual coverage gaps remain in the ledger |
 | Arrow batch writing | Public writer/options, nested levels, physical encoding, row/byte limits, stored-page streaming, metadata, CDC and encrypted round trips | Recorded representation/performance differences; Decimal256 IPC needs arrow-cr 9a5612c |
 | Variant binary and JSON | Paths, values/builders, exact binary encoding, JSON in both directions | Recorded ownership and calendar-range divergences |
 | Variant Arrow operations | Arrays/builders, safe/strict casts, path extraction, shredding and unshredding, scalar/composite/encoded arrays | Recorded representation differences; encoded Decimal256 requires the Arrow fixes above |
-| Geospatial | GeoParquet metadata, bounds, WKB support and core statistics integration | WkbType Arrow extension integration in Phase 3; ISO WKB limitation documented |
+| Geospatial | GeoParquet metadata, bounds, WKB support and core statistics integration | WKB extension and schema mapping delivered; ISO WKB limitation documented |
 | Derived records | Schema generation and typed record read/write round trips | Recorded Crystal macro/trait representation differences |
 | Modular encryption | Cipher/metadata/properties and synchronous encrypted file/page read/write paths | Recorded unsupported upstream modes and representation differences |
 | Serialized page storage | Opaque UInt64 keys, store/factory contracts, column context, in-memory backend and resident-byte accounting | Integrated into ArrowWriter |
@@ -161,11 +159,11 @@ No shard patch or helper-only commit was made. All required gates pass, includin
 
 ## Phase 3 — Canonical extensions and virtual columns
 
-- [ ] Read/project virtual columns and round-trip supported canonical extension
+- [x] Read/project virtual columns and round-trip supported canonical extension
   metadata through the Arrow/Parquet schema and array interfaces.
 
-Blocked on the required canonical extension APIs in `../arrow-cr`; consult
-`shards_info/arrow_cr.*.md` and verify the blocker before starting. Scope includes
+The canonical extension APIs are now available in `../arrow-cr`, including
+Uuid/Json and Field validation/registration. No shard patch is needed. Scope includes
 `arrow/schema/virtual_type.rs`, `arrow/schema/extension.rs`, virtual field/level
 conversion, the virtual array reader and public reader/projection wiring, plus
 `parquet-geospatial`'s `WkbType` Arrow extension implementation. Existing
@@ -175,6 +173,30 @@ Completion evidence: upstream extension validation/metadata tests and public
 reader tests for virtual-column values, projection and row selection, plus WKB
 extension/schema round trips. Do not mark complete when only the extension
 constant or schema type exists.
+
+Delivered in `schema/{virtual_type,extension}.cr` and
+`array_reader/{row_number,row_group_index}.cr`, with schema/level, builder,
+reader-option and sync/push decoder wiring. Virtual fields preserve global row
+positions and physical group indices under reordered groups, projection,
+selection, predicates, batching and offset/limit. Ordinal errors and buffered
+read/skip behavior match upstream. Virtual types preserve upstream value equality.
+
+Canonical Uuid/Json, WKB Geometry/Geography and Variant schema mapping uses
+matching compile flags (`arrow_canonical_extension_types`, `geospatial`,
+`variant_experimental`); defaults remain upstream-compatible. WKB field storage,
+metadata validation, CRS defaults/unset CRS and all five edge algorithms are
+covered. WKB JsonError keeps its port name and now inherits ArrowError so Arrow
+field validation catches it. Rust Any downcasting is Crystal `is_a?`/`as?`, and
+run-length group-index state replaces the flattened RepeatN iterator.
+
+Three new spec files cover 38 enabled examples (32 default), including public
+file round trips with/without IPC hints. The existing flat-primitives JSON
+expectation now uses upstream's feature-conditional `json_field` helper.
+Without IPC hints Variant binary leaves reconstruct as Binary; exact data/nulls
+and the expected storage types are asserted in both paths. `make test-extensions`
+provides the full enabled gate. See [development](../docs/development.md) and
+[testing](../docs/testing.md). All gates pass, with 1808 default and 1814 enabled
+full-suite examples, and the ledger closes 38 affected rows.
 
 ## Phase 4 — Parquet rewrite command
 

@@ -4,7 +4,7 @@ Status: **maintained reference**; existing entries are recorded decisions, with
 remaining implementation gaps tracked in the [active plan](../parity.md) and
 [API ledger](../inventory/rust_port_inventory.tsv). Update this file when a
 feature changes a documented divergence; it is not a separate feature queue.
-The next work file is `plans/parity.md`, Phase 2 (Variant numeric conversions).
+The next work file is `plans/parity.md`, Phase 4 (Parquet rewrite command).
 
 
 - Errors: Rust `Result<T, E>` is mapped to Crystal exceptions. Fallible
@@ -123,10 +123,10 @@ The next work file is `plans/parity.md`, Phase 2 (Variant numeric conversions).
   `arrow::schema`). `DataType` pattern matching is `case data_type.kind` plus the
   accessor getters. Union (`unimplemented!("See ARROW-8817.")`) raises
   `NYIError`; invalid time units raise `GeneralError` (upstream `panic!`).
-  Arrow *extension types* are not mapped (upstream compiles that out unless
-  `arrow_canonical_extension_types`/`geospatial`/`variant_experimental` are on,
-  and arrow-cr does not model them): only `Utf8` → `STRING` is set from the
-  `logical_type_for_*` helpers. arrow-cr's `Field#with_*` builders currently
+  Optional extension mapping uses Crystal compile flags matching upstream's
+  `arrow_canonical_extension_types`/`geospatial`/`variant_experimental` Cargo
+  features. UUID/JSON, WKB Geometry/Geography and Variant mapping works in both
+  directions; without flags it preserves the upstream default behavior. arrow-cr's `Field#with_*` builders currently
   mutate the receiver, so the converter builds copies via
   `renamed_field`/`retyped_field` (see `shards_info/arrow_cr.1.md`).
   `SchemaDescriptor` gained the upstream-derived `==` (`schema`/`leaves`/
@@ -199,12 +199,25 @@ The next work file is `plans/parity.md`, Phase 2 (Variant numeric conversions).
   fixed-size list over an empty child.
 - Arrow interop, array reader builder: `ArrayReaderBuilder` takes the reader
   metrics and optional cache options (`with_cache_options`, wrapping every leaf
-  selected by the cache projection in a `CachedArrayReader`), but drops virtual
-  columns (`ParquetFieldType` only models primitive/group fields in this port),
-  and the per-field `ReaderArgs` struct is replaced by explicit
+  selected by the cache projection in a `CachedArrayReader`). Virtual columns
+  use `ParquetFieldType::Virtual` and file-global metadata supplied through
+  `with_parquet_metadata` in both sync and push readers. The per-field
+  `ReaderArgs` struct is replaced by explicit
   `(field, mask, padding_threshold)` parameters. `INT96` (the only leaf reader
   not ported, because the numeric primitive reader does not model it) raises
   `NYIError`.
+- Virtual columns: `RowNumber`/`RowGroupIndex` are Arrow extension classes with
+  Int64 storage and empty-string metadata. Rust's Any downcast is Crystal
+  `is_a?`/`as?`; batch/skip counts remain Int32. Row numbers keep unmaterialized
+  Int64 ranges; group indices use a deque of `(index, count)` runs instead of a
+  flattened RepeatN iterator, with a map-free single-group path. Metadata is
+  interpreted in physical file order and selected groups retain caller order.
+  Extension-name recognition uses `parquet.virtual.` while the upstream error
+  text says `arrow.virtual.`; both are preserved. Supplied-schema metadata keeps
+  upstream's physical-only schema accessor while actual read batches include
+  virtual fields. `Field#with_*` mutation is contained by copying extension
+  metadata before attachment. Parquet without an IPC hint reconstructs Variant
+  BinaryView leaves as Binary; exact bytes/nulls are asserted for both paths.
 - Arrow interop, predicate cache (`array_reader/row_group_cache.rs` +
   `array_reader/cached_array_reader.rs`): `BatchID`/`CacheKey` are structs,
   `RowGroupCache` a class keyed by `(column_idx, batch_id)` with the upstream
@@ -257,9 +270,8 @@ The next work file is `plans/parity.md`, Phase 2 (Variant numeric conversions).
   `ChunkReader`); row selection, row-group selection, offset/limit plans,
   `RowFilter`, `StatisticsConverter` and reader metrics are ported, while
   bloom-filter lookups and page-index policies are not. `ArrowReaderOptions`
-  models only `skip_arrow_metadata` and the supplied arrow schema (no
-  page-index/encoding-statistics policies, decryption properties or virtual
-  columns), and the supplied-schema field-metadata mismatch message renders
+  models `skip_arrow_metadata`, the supplied arrow schema and virtual columns
+  (no page-index/encoding-statistics policies or decryption properties), and the supplied-schema field-metadata mismatch message renders
   Crystal's `Hash?` inspection where upstream uses Rust's `Debug` formatting.
   The reader's `schema` keeps the projected field metadata (upstream strips it
   from `RecordBatchReader::schema`). The upstream `arrow_reader` tests that
@@ -327,9 +339,9 @@ The next work file is `plans/parity.md`, Phase 2 (Variant numeric conversions).
   the read plan and sizes the offset/limit plan from the selected row groups'
   row count (the batch size still caps at the file row count, as upstream).
   Per-row-group selections are only reachable through the plan (the synchronous
-  builder never sets them). The upstream reader test that also checks virtual
-  row-number columns is ported values-only, since virtual columns remain
-  deferred.
+  builder never sets them). The public virtual-column specs now exercise both
+  values and file-global row numbers under reordered groups, selection,
+  predicates, offset/limit and push decoding.
 - Arrow interop, reader metrics (`metrics.rs`): `ArrowReaderMetrics`
   (`disabled`/`enabled`, `records_read_from_inner`/`records_read_from_cache`
   returning nil when disabled, `increment_*`) is a class holding an optional
@@ -950,8 +962,10 @@ The next work file is `plans/parity.md`, Phase 2 (Variant numeric conversions).
   `ArrowError::JsonError`/`InvalidArgumentError` are
   `ParquetGeospatial::JsonError`/`InvalidArgumentError` (`errors.cr`); `Edges`'s
   `#[serde(rename_all = "lowercase")]` is `json_key`/`from_json_key`; the
-  `arrow_schema::ExtensionType` impl (`NAME`, `supports_data_type`, `try_new`,
-  `Field` registration) is deferred to the Arrow interop chunk.
+  WKB implements `Arrow::Extension::ExtensionType(Metadata)` for binary storage.
+  `JsonError` now inherits `Arrow::ArrowError` so malformed WKB metadata returns
+  false from Arrow Field validation, retaining the port's error name/prefix.
+  Other geospatial error classes keep their existing Parquet hierarchy.
 - `parquet-geospatial::interval`: `IntervalTrait` is a marker module;
   `Interval`/`WraparoundInterval` are value structs with explicit `==` and
   `Debug`→`inspect`; `TryFrom<WraparoundInterval>` is `Interval.from_wraparound`

@@ -5,8 +5,8 @@ require "../spec_helper"
 #
 # Adaptations: `serde_json::Value` is `JSON::Any`; `Result`/`Option` map to
 # raises/`nil`; `ArrowError::JsonError` is `ParquetGeospatial::JsonError`. The
-# `ExtensionType` tests (`test_extension_type_*`) need `arrow-schema` and are
-# deferred to the Arrow interop chunk.
+# Arrow ExtensionType storage/registration tests are in
+# spec/parquet/arrow/virtual_type_spec.cr and extension_mapping_spec.cr.
 
 private alias Meta = ParquetGeospatial::Metadata
 private alias Hint = ParquetGeospatial::Hint

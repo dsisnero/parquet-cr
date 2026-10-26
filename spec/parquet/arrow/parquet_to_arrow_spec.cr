@@ -9,8 +9,8 @@ require "../../spec_helper"
 # ef1fa157977633f0ba21aa921f9ef3d5c669235b).
 #
 # `test_parquet_list_nullable` and `test_nested_schema_partial[_ordering]` are
-# scheduled with the remaining projection work; virtual columns
-# (`*_with_virtual`) are deferred (needs arrow-cr canonical extension types).
+# scheduled with the remaining projection work. Virtual-column schema and
+# reader coverage is in virtual_type_spec.cr and virtual_reader_spec.cr.
 private alias PArrow = Parquet::Arrow
 private alias PSchema = Parquet::Schema
 private alias PConv = Parquet::ConvertedType
@@ -24,6 +24,16 @@ private def arrow_schema_from_parquet(message_type : String,
                                       metadata : Array(Parquet::File::Metadata::KeyValue)? = nil) : Arrow::Schema
   descriptor = PSchemaDescriptor.new(PSchema.parse_message_type(message_type))
   PArrow.parquet_to_arrow_schema(descriptor, metadata)
+end
+
+# Upstream schema/mod.rs::json_field varies with the canonical feature.
+private def expected_json_field : Arrow::Field
+  field = AField.new("json", ADataType.utf8, true)
+  {% if flag?(:arrow_canonical_extension_types) %}
+    field.with_extension_type(Arrow::Extension::Canonical::Json.new)
+  {% else %}
+    field
+  {% end %}
 end
 
 describe "Parquet::Arrow parquet_to_arrow_schema" do
@@ -60,7 +70,7 @@ describe "Parquet::Arrow parquet_to_arrow_schema" do
       AField.new("float16", ADataType.float16, true),
       AField.new("string", ADataType.utf8, true),
       AField.new("string_2", ADataType.utf8, true),
-      AField.new("json", ADataType.utf8, true),
+      expected_json_field,
     ]))
   end
 

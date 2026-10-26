@@ -56,6 +56,8 @@ module Parquet
       # If provided, used as the schema hint when determining the arrow schema,
       # otherwise the schema hint is read from the `ARROW:schema` metadata.
       getter supplied_schema : ::Arrow::Schema?
+      # Root virtual fields, appended regardless of physical projection.
+      getter virtual_columns : Array(::Arrow::Field) = [] of ::Arrow::Field
 
       def initialize(
         @skip_arrow_metadata : Bool = false,
@@ -69,6 +71,17 @@ module Parquet
       # schema which is not compatible with the consumer.
       def with_skip_arrow_metadata(skip_arrow_metadata : Bool) : self
         @skip_arrow_metadata = skip_arrow_metadata
+        self
+      end
+
+      # Validates virtual extension-name prefixes before configuring the reader.
+      def with_virtual_columns(virtual_columns : Array(::Arrow::Field)) : self
+        virtual_columns.each do |field|
+          unless Parquet::Arrow.virtual_column?(field)
+            raise general_err!("Field '#{field.name}' is not a virtual column. Virtual columns must have extension type names starting with 'arrow.virtual.'")
+          end
+        end
+        @virtual_columns = virtual_columns
         self
       end
 
@@ -115,14 +128,14 @@ module Parquet
         options : ArrowReaderOptions = ArrowReaderOptions.new,
       ) : ArrowReaderMetadata
         if supplied = options.supplied_schema
-          return with_supplied_schema(metadata, supplied)
+          return with_supplied_schema(metadata, supplied, options.virtual_columns)
         end
 
         file_metadata = metadata.file_metadata
         key_value_metadata = options.skip_arrow_metadata? ? nil : file_metadata.key_value_metadata
 
         schema, fields = Parquet::Arrow.parquet_to_arrow_schema_and_fields(
-          file_metadata.schema_descr, Parquet::Arrow::ProjectionMask.all, key_value_metadata
+          file_metadata.schema_descr, Parquet::Arrow::ProjectionMask.all, key_value_metadata, options.virtual_columns
         )
 
         new(metadata, schema, fields)
@@ -134,14 +147,15 @@ module Parquet
       private def self.with_supplied_schema(
         metadata : File::Metadata::ParquetMetaData,
         supplied_schema : ::Arrow::Schema,
+        virtual_columns : Array(::Arrow::Field),
       ) : ArrowReaderMetadata
         parquet_schema = metadata.file_metadata.schema_descr
-        field_levels = Parquet::Arrow.parquet_to_arrow_field_levels(
-          parquet_schema, Parquet::Arrow::ProjectionMask.all, supplied_schema.fields
+        field_levels = Parquet::Arrow.parquet_to_arrow_field_levels_with_virtual(
+          parquet_schema, Parquet::Arrow::ProjectionMask.all, supplied_schema.fields, virtual_columns
         )
         fields = field_levels.fields
         inferred_len = fields.len
-        supplied_len = supplied_schema.fields.len
+        supplied_len = supplied_schema.fields.len + virtual_columns.size
 
         # `parquet_to_arrow_field_levels` reports a field-count mismatch too; the
         # check keeps the upstream guarantee explicit.
@@ -152,7 +166,7 @@ module Parquet
         end
 
         errors = [] of String
-        supplied_schema.fields.to_a.zip(fields.to_a) do |supplied, found|
+        supplied_schema.fields.to_a.zip(fields.to_a.first(supplied_schema.fields.len)) do |supplied, found|
           if supplied.data_type != found.data_type
             errors << "data type mismatch for field #{supplied.name}: " \
                       "requested #{supplied.data_type} but found #{found.data_type}"
@@ -536,12 +550,14 @@ module Parquet
             break unless plan_builder.selects_any?
 
             predicate_reader = ArrayReaderBuilder.new(row_groups, batch_size, @metrics)
+              .with_parquet_metadata(@metadata)
               .build_array_reader(@fields, predicate.projection)
             plan_builder = plan_builder.with_predicate(predicate_reader, predicate)
           end
         end
 
         array_reader = ArrayReaderBuilder.new(row_groups, batch_size, @metrics)
+          .with_parquet_metadata(@metadata)
           .build_array_reader(@fields, @projection)
 
         limited = plan_builder.limited(row_groups.num_rows.to_i32)

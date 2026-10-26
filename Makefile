@@ -1,4 +1,4 @@
-.PHONY: install update format lint test clean clean-appledouble
+.PHONY: install update format lint test test-extensions clean clean-appledouble
 
 # The checkout may live on an exFAT volume which emits macOS AppleDouble
 # sidecars. `._foo_spec.cr` matches crystal's `*_spec.cr` glob, so strip them
@@ -21,6 +21,10 @@ lint: clean-appledouble
 
 test: clean-appledouble
 	crystal spec
+
+# Nondefault upstream Cargo features are matching Crystal compile flags.
+test-extensions: clean-appledouble
+	crystal spec -Darrow_canonical_extension_types -Dgeospatial -Dvariant_experimental
 
 clean:
 	rm -rf ./temp/*

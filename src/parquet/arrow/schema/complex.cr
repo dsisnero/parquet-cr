@@ -4,6 +4,8 @@ require "../../errors"
 require "../../schema/types"
 require "../mod"
 require "./primitive"
+require "./virtual_type"
+require "./extension"
 
 # Ported from `parquet/src/arrow/schema/complex.rs` (apache/arrow-rs 60.0.0,
 # ef1fa157977633f0ba21aa921f9ef3d5c669235b).
@@ -13,14 +15,10 @@ require "./primitive"
 # `convert_field`, `convert_schema`, and `convert_type`.
 #
 # Divergences: the payload-carrying `ParquetFieldType` enum is a sealed class
-# hierarchy (`Primitive`/`Group`); `usize` column indices are `Int32`; the
-# `Visitor`/`VisitorContext` structs are small mutable classes (upstream uses
-# `&mut self`); arrow extension-type mapping (`try_add_extension_type`) is an
-# identity helper because arrow-cr has no extension types and upstream only
-# enables that mapping behind non-default features; virtual columns
-# (`ParquetFieldType::Virtual`, `convert_virtual_field`,
-# `parquet_to_arrow_field_levels_with_virtual`) are deferred until arrow-cr grows
-# canonical extension types.
+# hierarchy (`Primitive`/`Group`/`Virtual`); `usize` column indices are `Int32`;
+# the `Visitor`/`VisitorContext` structs are small mutable classes. Extension
+# mapping follows matching Crystal compile flags for upstream Cargo features;
+# virtual columns are always available.
 module Parquet
   module Arrow
     # Returns a type's repetition, defaulting to REQUIRED when unset (the root).
@@ -37,6 +35,14 @@ module Parquet
 
       def self.group(children : Array(ParquetField)) : ParquetFieldType
         Group.new(children)
+      end
+
+      # A generated column with no physical leaf index.
+      class Virtual < ParquetFieldType
+        getter virtual_type : VirtualColumnType
+
+        def initialize(@virtual_type : VirtualColumnType)
+        end
       end
 
       # A leaf column.
@@ -57,6 +63,12 @@ module Parquet
         def initialize(@children : Array(ParquetField))
         end
       end
+    end
+
+    # Generated column kinds (upstream VirtualColumnType).
+    enum VirtualColumnType
+      RowNumber
+      RowGroupIndex
     end
 
     # A parquet schema element expressed in arrow terms
@@ -600,8 +612,21 @@ module Parquet
           ::Arrow::Metadata.from({PARQUET_FIELD_ID_META_KEY => basic_info.id.to_s})
         )
       end
-      # Extension types are not mapped (see `logical_type_for_*`).
-      ret
+      try_add_extension_type(ret, parquet_type)
+    end
+
+    # Converts a root virtual field without consuming any physical column.
+    def self.convert_virtual_field(field : ::Arrow::Field, parent_rep_level : Int16,
+                                   parent_def_level : Int16) : ParquetField
+      name = field.extension_type_name || raise arrow_err!("virtual column field '#{field.name}' must have an extension type")
+      kind = case name
+             when RowNumber::NAME     then VirtualColumnType::RowNumber
+             when RowGroupIndex::NAME then VirtualColumnType::RowGroupIndex
+             else
+               raise arrow_err!("unsupported virtual column type '#{name}' for field '#{field.name}'")
+             end
+      ParquetField.new(parent_rep_level, (parent_def_level + (field.nullable? ? 1 : 0)).to_i16,
+        field.nullable?, field.data_type, ParquetFieldType::Virtual.new(kind))
     end
 
     # Computes the `ParquetField` for the given schema, projecting through

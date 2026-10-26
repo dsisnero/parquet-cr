@@ -1,15 +1,14 @@
 require "json"
+require "arrow-cr"
 require "./errors"
 
 # Ported from `parquet-geospatial/src/types.rs` (apache/arrow-rs 60.0.0,
 # ef1fa157977633f0ba21aa921f9ef3d5c669235b).
 #
-# Ports `Hint`, `Edges`, `Metadata`, and the metadata side of `WkbType`.
-# Divergences: `serde_json::Value` is `JSON::Any`; `Result`/`Option` map to
-# raises/`nil`; the `arrow_schema::ExtensionType` impl (`NAME`,
-# `supports_data_type`, `try_new`, `ExtensionType` registration on `Field`) is
-# deferred to the Arrow interop chunk; `ArrowError::JsonError` is
-# `ParquetGeospatial::JsonError`.
+# Ports `Hint`, `Edges`, `Metadata`, and the WKB Arrow extension contract.
+# Divergences: `serde_json::Value` is `JSON::Any`; Result/Option map to raises/nil.
+# `JsonError` retains its port name and is an ArrowError subclass so Arrow Field
+# validation handles malformed extension metadata as upstream does.
 module ParquetGeospatial
   # A hint at the likely Parquet geospatial logical type.
   enum Hint
@@ -125,7 +124,24 @@ module ParquetGeospatial
   end
 
   # Well-Known Binary (WKB) extension type for geospatial data.
-  class WkbType
+  class WkbType < ::Arrow::Extension::ExtensionType(Metadata)
+    NAME = "geoarrow.wkb"
+
+    def self.extension_name : String
+      NAME
+    end
+
+    def supports_data_type(data_type : ::Arrow::DataType) : Nil
+      return if data_type.kind.binary? || data_type.kind.large_binary? || data_type.kind.binary_view?
+      raise ::Arrow::ArrowError.new("Geometry data type mismatch, expected one of Binary, LargeBinary, BinaryView. Found #{data_type}")
+    end
+
+    def self.try_new(data_type : ::Arrow::DataType, metadata : Metadata) : self
+      extension = new(metadata)
+      extension.supports_data_type(data_type)
+      extension
+    end
+
     def initialize(metadata : Metadata? = nil)
       @metadata = metadata || Metadata.default
     end

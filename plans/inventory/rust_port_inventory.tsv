@@ -53,8 +53,8 @@ parquet-geospatial/src/types.rs::method::WkbType.deserialize_metadata	method	por
 parquet-geospatial/src/types.rs::method::WkbType.metadata	method	ported	src/parquet_geospatial/types.cr	WkbType#metadata
 parquet-geospatial/src/types.rs::method::WkbType.new	method	ported	src/parquet_geospatial/types.cr	WkbType#initialize
 parquet-geospatial/src/types.rs::method::WkbType.serialize_metadata	method	ported	src/parquet_geospatial/types.cr	WkbType#serialize_metadata
-parquet-geospatial/src/types.rs::method::WkbType.supports_data_type	method	intentional_divergence	src/parquet_geospatial/types.cr	needs arrow-schema DataType
-parquet-geospatial/src/types.rs::method::WkbType.try_new	method	intentional_divergence	src/parquet_geospatial/types.cr	needs arrow-schema DataType
+parquet-geospatial/src/types.rs::method::WkbType.supports_data_type	method	ported	src/parquet_geospatial/types.cr	Arrow ExtensionType(Metadata), binary storage validation and field registration; virtual_type_spec.cr
+parquet-geospatial/src/types.rs::method::WkbType.try_new	method	ported	src/parquet_geospatial/types.cr	Arrow ExtensionType(Metadata), binary storage validation and field registration; virtual_type_spec.cr
 parquet-variant-compute/benches/variant_kernels.rs::const::SHRED_VARIANT_OBJECT_ROWS	const	missing	-	auto-generated
 parquet-variant-compute/benches/variant_kernels.rs::const::VARIANT_ARRAY_BUILD_ROWS	const	missing	-	auto-generated
 parquet-variant-compute/benches/variant_kernels.rs::const::VARIANT_GET_UNSHREDDED_OBJECT_ROWS	const	missing	-	auto-generated
@@ -779,14 +779,14 @@ parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_
 parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_map_reader	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#build_map_reader (key/value readers, rebuilt map data type)
 parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_primitive_reader	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#build_primitive_reader (BOOL/INT32/INT64/FLOAT/DOUBLE/BYTE_ARRAY; NYI for INT96/FLBA/dictionary/Null)
 parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_reader	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#build_reader (primitive/struct/map/list/fixed-size dispatch)
-parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_row_group_index_reader	method	intentional_divergence	src/parquet/arrow/array_reader/builder.cr	virtual row-group-index columns are not modelled (no ParquetFieldType::Virtual)
-parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_row_number_reader	method	intentional_divergence	src/parquet/arrow/array_reader/builder.cr	virtual row-number columns are not modelled (no ParquetFieldType::Virtual)
+parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_row_group_index_reader	method	ported	src/parquet/arrow/array_reader/builder.cr	File-global metadata feeds virtual readers in sync and push paths; virtual_reader_spec.cr
+parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_row_number_reader	method	ported	src/parquet/arrow/array_reader/builder.cr	File-global metadata feeds virtual readers in sync and push paths; virtual_reader_spec.cr
 parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.build_struct_reader	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#build_struct_reader (projected children, rebuilt struct data type)
 parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.new	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#initialize(row_groups, batch_size)
 parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.num_rows	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#num_rows
 parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.with_batch_size	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#with_batch_size
 parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.with_cache_options	method	ported	src/parquet/arrow/array_reader/builder.cr	ArrayReaderBuilder#with_cache_options (wraps cached leaves in CachedArrayReader)
-parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.with_parquet_metadata	method	intentional_divergence	src/parquet/arrow/array_reader/builder.cr	metadata is not needed: only virtual columns use it, and they are not ported
+parquet/src/arrow/array_reader/builder.rs::method::ArrayReaderBuilder<'a>.with_parquet_metadata	method	ported	src/parquet/arrow/array_reader/builder.cr	File-global metadata feeds virtual readers in sync and push paths; virtual_reader_spec.cr
 parquet/src/arrow/array_reader/builder.rs::method::CacheOptionsBuilder<'a>.consumer	method	ported	src/parquet/arrow/array_reader/builder.cr	CacheOptionsBuilder#consumer
 parquet/src/arrow/array_reader/builder.rs::method::CacheOptionsBuilder<'a>.new	method	ported	src/parquet/arrow/array_reader/builder.cr	CacheOptionsBuilder#initialize(projection_mask, cache)
 parquet/src/arrow/array_reader/builder.rs::method::CacheOptionsBuilder<'a>.producer	method	ported	src/parquet/arrow/array_reader/builder.cr	CacheOptionsBuilder#producer
@@ -976,23 +976,23 @@ parquet/src/arrow/array_reader/row_group_cache.rs::method::RowGroupCache.get	met
 parquet/src/arrow/array_reader/row_group_cache.rs::method::RowGroupCache.insert	method	ported	src/parquet/arrow/array_reader/row_group_cache.cr	RowGroupCache#insert (returns false when over max_cache_bytes)
 parquet/src/arrow/array_reader/row_group_cache.rs::method::RowGroupCache.new	method	ported	src/parquet/arrow/array_reader/row_group_cache.cr	RowGroupCache#initialize(batch_size, max_cache_bytes)
 parquet/src/arrow/array_reader/row_group_cache.rs::method::RowGroupCache.remove	method	ported	src/parquet/arrow/array_reader/row_group_cache.cr	RowGroupCache#remove (returns whether an entry was evicted)
-parquet/src/arrow/array_reader/row_group_index.rs::method::RowGroupIndexReader.as_any	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/row_group_index.rs::method::RowGroupIndexReader.consume_batch	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/row_group_index.rs::method::RowGroupIndexReader.get_data_type	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/row_group_index.rs::method::RowGroupIndexReader.get_def_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/row_group_index.rs::method::RowGroupIndexReader.get_rep_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/row_group_index.rs::method::RowGroupIndexReader.read_records	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/row_group_index.rs::method::RowGroupIndexReader.skip_records	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/row_group_index.rs::method::RowGroupIndexReader.try_new	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.as_any	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.consume_batch	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.get_data_type	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.get_def_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.get_rep_levels	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.read_records	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.skip_records	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.take_range	method	missing	-	auto-generated
-parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.try_new	method	missing	-	auto-generated
+parquet/src/arrow/array_reader/row_group_index.rs::method::RowGroupIndexReader.as_any	method	intentional_divergence	src/parquet/arrow/array_reader/row_group_index.cr	Crystal is_a?/as? replaces Rust Any downcasting
+parquet/src/arrow/array_reader/row_group_index.rs::method::RowGroupIndexReader.consume_batch	method	ported	src/parquet/arrow/array_reader/row_group_index.cr	Lazy virtual reader; inherited nil def/rep levels; exact unit/public/push specs in virtual_reader_spec.cr
+parquet/src/arrow/array_reader/row_group_index.rs::method::RowGroupIndexReader.get_data_type	method	ported	src/parquet/arrow/array_reader/row_group_index.cr	Lazy virtual reader; inherited nil def/rep levels; exact unit/public/push specs in virtual_reader_spec.cr
+parquet/src/arrow/array_reader/row_group_index.rs::method::RowGroupIndexReader.get_def_levels	method	ported	src/parquet/arrow/array_reader/row_group_index.cr	Lazy virtual reader; inherited nil def/rep levels; exact unit/public/push specs in virtual_reader_spec.cr
+parquet/src/arrow/array_reader/row_group_index.rs::method::RowGroupIndexReader.get_rep_levels	method	ported	src/parquet/arrow/array_reader/row_group_index.cr	Lazy virtual reader; inherited nil def/rep levels; exact unit/public/push specs in virtual_reader_spec.cr
+parquet/src/arrow/array_reader/row_group_index.rs::method::RowGroupIndexReader.read_records	method	ported	src/parquet/arrow/array_reader/row_group_index.cr	Lazy virtual reader; inherited nil def/rep levels; exact unit/public/push specs in virtual_reader_spec.cr
+parquet/src/arrow/array_reader/row_group_index.rs::method::RowGroupIndexReader.skip_records	method	ported	src/parquet/arrow/array_reader/row_group_index.cr	Lazy virtual reader; inherited nil def/rep levels; exact unit/public/push specs in virtual_reader_spec.cr
+parquet/src/arrow/array_reader/row_group_index.rs::method::RowGroupIndexReader.try_new	method	ported	src/parquet/arrow/array_reader/row_group_index.cr	Lazy virtual reader; inherited nil def/rep levels; exact unit/public/push specs in virtual_reader_spec.cr
+parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.as_any	method	intentional_divergence	src/parquet/arrow/array_reader/row_number.cr	Crystal is_a?/as? replaces Rust Any downcasting
+parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.consume_batch	method	ported	src/parquet/arrow/array_reader/row_number.cr	Lazy virtual reader; inherited nil def/rep levels; exact unit/public/push specs in virtual_reader_spec.cr
+parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.get_data_type	method	ported	src/parquet/arrow/array_reader/row_number.cr	Lazy virtual reader; inherited nil def/rep levels; exact unit/public/push specs in virtual_reader_spec.cr
+parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.get_def_levels	method	ported	src/parquet/arrow/array_reader/row_number.cr	Lazy virtual reader; inherited nil def/rep levels; exact unit/public/push specs in virtual_reader_spec.cr
+parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.get_rep_levels	method	ported	src/parquet/arrow/array_reader/row_number.cr	Lazy virtual reader; inherited nil def/rep levels; exact unit/public/push specs in virtual_reader_spec.cr
+parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.read_records	method	ported	src/parquet/arrow/array_reader/row_number.cr	Lazy virtual reader; inherited nil def/rep levels; exact unit/public/push specs in virtual_reader_spec.cr
+parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.skip_records	method	ported	src/parquet/arrow/array_reader/row_number.cr	Lazy virtual reader; inherited nil def/rep levels; exact unit/public/push specs in virtual_reader_spec.cr
+parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.take_range	method	ported	src/parquet/arrow/array_reader/row_number.cr	Lazy virtual reader; inherited nil def/rep levels; exact unit/public/push specs in virtual_reader_spec.cr
+parquet/src/arrow/array_reader/row_number.rs::method::RowNumberReader.try_new	method	ported	src/parquet/arrow/array_reader/row_number.cr	Lazy virtual reader; inherited nil def/rep levels; exact unit/public/push specs in virtual_reader_spec.cr
 parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.as_any	method	intentional_divergence	src/parquet/arrow/array_reader/struct_array.cr	`as_any` not modelled (Crystal `is_a?`)
 parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.consume_batch	method	ported	src/parquet/arrow/array_reader/struct_array.cr	StructArrayReader#consume_batch (builds the StructArray + level-derived null bitmap)
 parquet/src/arrow/array_reader/struct_array.rs::method::StructArrayReader.get_data_type	method	ported	src/parquet/arrow/array_reader/struct_array.cr	StructArrayReader#data_type
@@ -1057,7 +1057,7 @@ parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.with_parquet_s
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.with_schema	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderOptions#with_schema (also skips embedded metadata)
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.with_size_stats_policy	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.with_skip_arrow_metadata	method	ported	src/parquet/arrow/arrow_reader.cr	ArrowReaderOptions#with_skip_arrow_metadata
-parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.with_virtual_columns	method	missing	-	auto-generated
+parquet/src/arrow/arrow_reader/mod.rs::method::ArrowReaderOptions.with_virtual_columns	method	ported	src/parquet/arrow/arrow_reader.cr	Validates prefix; inferred/supplied schemas, sync and push reader integration
 parquet/src/arrow/arrow_reader/mod.rs::method::FilterMaskAccumulator.append	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::method::FilterMaskAccumulator.finish	method	missing	-	auto-generated
 parquet/src/arrow/arrow_reader/mod.rs::method::ParquetMetaDataReader.with_arrow_reader_options	method	missing	-	auto-generated
@@ -1621,19 +1621,19 @@ parquet/src/arrow/schema/mod.rs::method::ArrowSchemaConverter<'a>.convert	method
 parquet/src/arrow/schema/mod.rs::method::ArrowSchemaConverter<'a>.new	method	ported	src/parquet/arrow/schema.cr	ArrowSchemaConverter#initialize
 parquet/src/arrow/schema/mod.rs::method::ArrowSchemaConverter<'a>.schema_root	method	ported	src/parquet/arrow/schema.cr	ArrowSchemaConverter#schema_root (mutates and returns self)
 parquet/src/arrow/schema/mod.rs::method::ArrowSchemaConverter<'a>.with_coerce_types	method	ported	src/parquet/arrow/schema.cr	ArrowSchemaConverter#with_coerce_types (mutates and returns self)
-parquet/src/arrow/schema/virtual_type.rs::const::NAME	const	missing	-	auto-generated
-parquet/src/arrow/schema/virtual_type.rs::method::RowGroupIndex.deserialize_metadata	method	missing	-	auto-generated
-parquet/src/arrow/schema/virtual_type.rs::method::RowGroupIndex.metadata	method	missing	-	auto-generated
-parquet/src/arrow/schema/virtual_type.rs::method::RowGroupIndex.serialize_metadata	method	missing	-	auto-generated
-parquet/src/arrow/schema/virtual_type.rs::method::RowGroupIndex.supports_data_type	method	missing	-	auto-generated
-parquet/src/arrow/schema/virtual_type.rs::method::RowGroupIndex.try_new	method	missing	-	auto-generated
-parquet/src/arrow/schema/virtual_type.rs::method::RowGroupIndex.validate	method	missing	-	auto-generated
-parquet/src/arrow/schema/virtual_type.rs::method::RowNumber.deserialize_metadata	method	missing	-	auto-generated
-parquet/src/arrow/schema/virtual_type.rs::method::RowNumber.metadata	method	missing	-	auto-generated
-parquet/src/arrow/schema/virtual_type.rs::method::RowNumber.serialize_metadata	method	missing	-	auto-generated
-parquet/src/arrow/schema/virtual_type.rs::method::RowNumber.supports_data_type	method	missing	-	auto-generated
-parquet/src/arrow/schema/virtual_type.rs::method::RowNumber.try_new	method	missing	-	auto-generated
-parquet/src/arrow/schema/virtual_type.rs::method::RowNumber.validate	method	missing	-	auto-generated
+parquet/src/arrow/schema/virtual_type.rs::const::NAME	const	ported	src/parquet/arrow/schema/virtual_type.cr	RowNumber/RowGroupIndex extension contracts; parquet.virtual prefix; virtual_type_spec.cr
+parquet/src/arrow/schema/virtual_type.rs::method::RowGroupIndex.deserialize_metadata	method	ported	src/parquet/arrow/schema/virtual_type.cr	RowNumber/RowGroupIndex extension contracts; parquet.virtual prefix; virtual_type_spec.cr
+parquet/src/arrow/schema/virtual_type.rs::method::RowGroupIndex.metadata	method	ported	src/parquet/arrow/schema/virtual_type.cr	RowNumber/RowGroupIndex extension contracts; parquet.virtual prefix; virtual_type_spec.cr
+parquet/src/arrow/schema/virtual_type.rs::method::RowGroupIndex.serialize_metadata	method	ported	src/parquet/arrow/schema/virtual_type.cr	RowNumber/RowGroupIndex extension contracts; parquet.virtual prefix; virtual_type_spec.cr
+parquet/src/arrow/schema/virtual_type.rs::method::RowGroupIndex.supports_data_type	method	ported	src/parquet/arrow/schema/virtual_type.cr	RowNumber/RowGroupIndex extension contracts; parquet.virtual prefix; virtual_type_spec.cr
+parquet/src/arrow/schema/virtual_type.rs::method::RowGroupIndex.try_new	method	ported	src/parquet/arrow/schema/virtual_type.cr	RowNumber/RowGroupIndex extension contracts; parquet.virtual prefix; virtual_type_spec.cr
+parquet/src/arrow/schema/virtual_type.rs::method::RowGroupIndex.validate	method	ported	src/parquet/arrow/schema/virtual_type.cr	RowNumber/RowGroupIndex extension contracts; parquet.virtual prefix; virtual_type_spec.cr
+parquet/src/arrow/schema/virtual_type.rs::method::RowNumber.deserialize_metadata	method	ported	src/parquet/arrow/schema/virtual_type.cr	RowNumber/RowGroupIndex extension contracts; parquet.virtual prefix; virtual_type_spec.cr
+parquet/src/arrow/schema/virtual_type.rs::method::RowNumber.metadata	method	ported	src/parquet/arrow/schema/virtual_type.cr	RowNumber/RowGroupIndex extension contracts; parquet.virtual prefix; virtual_type_spec.cr
+parquet/src/arrow/schema/virtual_type.rs::method::RowNumber.serialize_metadata	method	ported	src/parquet/arrow/schema/virtual_type.cr	RowNumber/RowGroupIndex extension contracts; parquet.virtual prefix; virtual_type_spec.cr
+parquet/src/arrow/schema/virtual_type.rs::method::RowNumber.supports_data_type	method	ported	src/parquet/arrow/schema/virtual_type.cr	RowNumber/RowGroupIndex extension contracts; parquet.virtual prefix; virtual_type_spec.cr
+parquet/src/arrow/schema/virtual_type.rs::method::RowNumber.try_new	method	ported	src/parquet/arrow/schema/virtual_type.cr	RowNumber/RowGroupIndex extension contracts; parquet.virtual prefix; virtual_type_spec.cr
+parquet/src/arrow/schema/virtual_type.rs::method::RowNumber.validate	method	ported	src/parquet/arrow/schema/virtual_type.cr	RowNumber/RowGroupIndex extension contracts; parquet.virtual prefix; virtual_type_spec.cr
 parquet/src/basic.rs::const::ALLOWED_MASK	const	ported	src/parquet/basic.cr	EncodingMask::ALLOWED_MASK
 parquet/src/basic.rs::const::ELEMENT_TYPE	const	missing	-	auto-generated
 parquet/src/basic.rs::const::MAX_ENCODING	const	ported	src/parquet/basic.cr	EncodingMask::MAX_ENCODING
@@ -1653,10 +1653,10 @@ parquet/src/basic.rs::method::CompressionCodec.from	method	ported	src/parquet/ba
 parquet/src/basic.rs::method::ConvertedType.from	method	ported	src/parquet/basic.cr	From<Option<LogicalType>>; reverse conversion intentionally omitted (type loss)
 parquet/src/basic.rs::method::ConvertedType.from_str	method	ported	src/parquet/basic.cr	Enum.parse?-based; member names are the accepted strings
 parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.fmt	method	ported	src/parquet/basic.cr	Display via EdgeInterpolationAlgorithm#to_s (value-wrapping struct)
-parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.from	method	missing	-	auto-generated
+parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.from	method	ported	src/parquet/arrow/schema/extension.cr	Geospatial edge-code conversion, all five algorithms and unknown-code rejection
 parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.from_str	method	ported	src/parquet/basic.cr	case-insensitive; wraps i32 code
 parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.read_thrift	method	ported	src/parquet/basic.cr	value-wrapping struct; unknown codes retained
-parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.try_as_edges	method	missing	-	auto-generated
+parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.try_as_edges	method	ported	src/parquet/arrow/schema/extension.cr	Geospatial edge-code conversion, all five algorithms and unknown-code rejection
 parquet/src/basic.rs::method::EdgeInterpolationAlgorithm.write_thrift	method	ported	src/parquet/basic.cr	writes i32 code
 parquet/src/basic.rs::method::Encoding.from_str	method	ported	src/parquet/basic.cr	Enum.parse? (exact) or upcased name; matches upstream upper/lower forms
 parquet/src/basic.rs::method::EncodingMask.all_set	method	ported	src/parquet/basic.cr	EncodingMask#all_set
