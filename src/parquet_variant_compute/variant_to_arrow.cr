@@ -218,6 +218,15 @@ module ParquetVariantCompute
             TypeConversion.unscaled_decimal128(variant, precision, scale)
           end
         end
+      when .decimal256?
+        return decimal(data_type, cast_options, capacity, shred,
+          ::Arrow::PrimitiveBuilder(::Arrow::I256), "Decimal256") do |variant, precision, scale, shredded|
+          if shredded
+            TypeConversion.shred_unscaled_decimal256(variant, precision, scale)
+          else
+            TypeConversion.unscaled_decimal256(variant, precision, scale)
+          end
+        end
       when .date32?
         return primitive_with_type(data_type, cast_options, capacity, shred,
           ::Arrow::PrimitiveBuilder(Int32), Int32) do |variant, shredded|
@@ -431,6 +440,13 @@ module ParquetVariantCompute
     ) : ValueRowBuilder(B, T) forall B, T
       precision = (data_type.precision || 0_u8).to_i32
       scale = (data_type.scale || 0_i8).to_i32
+      max_precision = case data_type.kind
+                      when .decimal32?  then 9
+                      when .decimal64?  then 18
+                      when .decimal128? then 38
+                      else                   76
+                      end
+      ::Arrow.validate_decimal_precision_and_scale(precision, scale, max_precision, max_precision)
       builder = builder_class.with_capacity(capacity).with_data_type(data_type)
       row_builder = ValueRowBuilder(B, T).new(
         builder, cast_options, shred, data_type.to_s
@@ -729,8 +745,9 @@ module ParquetVariantCompute
         !TypeConversion.unscaled_decimal64(value, precision, scale).nil?
       elsif kind.decimal128?
         !TypeConversion.unscaled_decimal128(value, precision, scale).nil?
+      elsif kind.decimal256?
+        !TypeConversion.unscaled_decimal256(value, precision, scale).nil?
       else
-        # `Decimal256`/`I256` is not modelled.
         false
       end
     end

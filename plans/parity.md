@@ -14,40 +14,39 @@
 
 ## Where we are
 
-- **Current focus:** synchronous Arrow RecordBatch writing is complete. The
-  public writer, nested levels, physical encoding, row-group splitting, CDC,
-  page-store routing, metadata/finalization and encrypted-page splicing have
-  integrated round-trip coverage. Next is Variant numeric conversion parity.
+- **Current focus:** Phase 2 — Variant numeric conversions is complete on
+  `codex/variant-numeric-conversions`. Decimal256 primitive/union/encoded output,
+  exponent parsing, float conversion and target validation pass integrated specs.
+  Next is Phase 3; verify its canonical-extension dependency before starting.
 - **Next up**, in order:
-  1. **Phase 2 — Complete Variant numeric conversions**, closing Decimal256
-     output and decimal exponent-notation gaps.
-  2. **Phase 3 — Canonical extensions and virtual columns**, once arrow-cr
+  1. **Phase 3 — Canonical extensions and virtual columns**, once arrow-cr
      supplies the canonical extension types; advance to Phase 4 while blocked.
-  3. **Phase 4 — Parquet rewrite command**, using the complete reader/writer.
-  4. **Phase 5 — CSV import command**, using the complete writer.
-  5. **Phases 6–7 — Asynchronous storage reads and writes**, deferred until the
+  2. **Phase 4 — Parquet rewrite command**, using the complete reader/writer.
+  3. **Phase 5 — CSV import command**, using the complete writer.
+  4. **Phases 6–7 — Asynchronous storage reads and writes**, deferred until the
      Crystal concurrency and object-store mapping is decided.
-- **Last completed feature:** `port: arrow record batch writer`, on
-  `codex/arrow-record-batch-writer`. The 84 new specs were ported tests-first
-  through red-green cycles: missing levels/API, reader integer/decimal widths,
-  Float16 reads, Date64 coercion, distinct counts, intervals, encryption metadata
-  and the public estimate accessor. Previous code feature: `b9eeca7` (page store).
-- **Last code gates:** `make lint` (183 files), `make test` (1748 examples,
-  zero failures/errors), `crystal build --no-codegen src/parquet-cr.cr`, and
-  scoped inventory validation (3515 tracked items), all green. The focused
-  writer plus fixed-width reader suite passes 93 examples.
-- **Dependency requirement:** sibling arrow-cr includes `9a5612c` (Decimal256 IPC
-  schema support). That independent fix made the original default-options
-  Decimal256 round-trip test pass unchanged. No shard patch was made by this
-  task; see [resolved dependency note](../shards_info/arrow_cr.3.md).
-- **Ledger counts:** 2653 `ported`, 242 `intentional_divergence`, 28 `skipped`,
+- **Last completed feature:** `port: complete variant numeric conversions`, on
+  `codex/variant-numeric-conversions`. The 28 new specs were ported tests-first
+  through observed red-green cycles for Decimal256 output, decimal parsing,
+  float native ranges, union ranking and target validation. Previous completed
+  feature: `c0d54db` (Arrow RecordBatch writer).
+- **Last code gates:** `make lint` (183 files), `make test` (1776 examples,
+  zero failures/errors), `crystal build --no-codegen src/parquet-cr.cr`, scoped
+  inventory validation (3515 tracked items), and `git diff --check`, all green.
+  The focused numeric suite passes all 28 examples.
+- **Dependency requirements:** sibling arrow-cr includes `9a5612c` (Decimal256
+  IPC), `b05366a` (Decimal256 dictionary packing) and `49d07ce` (I256 comparator
+  for run-end output). Verified against `eec0b46`, which includes all three.
+  No shard patch was made; see [IPC note](../shards_info/arrow_cr.3.md) and
+  [encoded-output note](../shards_info/arrow_cr.4.md).
+- **Ledger counts:** 2654 `ported`, 241 `intentional_divergence`, 28 `skipped`,
   592 `missing` (3515 total).
 - **Plan layout:** this file is the active feature queue and completion record.
   [Implementation reference](parity/implementation-reference.md) is a complete
   archival snapshot of earlier module-level evidence, including stale historical
   checkboxes. [Divergences](parity/divergences.md) is a maintained reference for
   representation differences and verification notes. Neither is a separate
-  work queue. Work next in this file, Phase 2; update divergences as needed.
+  work queue. Work next in this file, Phase 3; update divergences as needed.
 
 ## Feature sizing and completion
 
@@ -82,7 +81,7 @@ and spec mappings remain in the implementation reference and ledger.
 | Arrow batch reading | Schema conversion both ways, IPC schema metadata, primitive/composite readers, selection, filtering, pruning, metrics and push decoding | Canonical extension/virtual-column integration in Phase 3; individual coverage gaps remain in the ledger |
 | Arrow batch writing | Public writer/options, nested levels, physical encoding, row/byte limits, stored-page streaming, metadata, CDC and encrypted round trips | Recorded representation/performance differences; Decimal256 IPC needs arrow-cr 9a5612c |
 | Variant binary and JSON | Paths, values/builders, exact binary encoding, JSON in both directions | Recorded ownership and calendar-range divergences |
-| Variant Arrow operations | Arrays/builders, safe/strict casts, path extraction, shredding and unshredding, scalar/composite/encoded arrays | Numeric conversion completion in Phase 2 |
+| Variant Arrow operations | Arrays/builders, safe/strict casts, path extraction, shredding and unshredding, scalar/composite/encoded arrays | Recorded representation differences; encoded Decimal256 requires the Arrow fixes above |
 | Geospatial | GeoParquet metadata, bounds, WKB support and core statistics integration | WkbType Arrow extension integration in Phase 3; ISO WKB limitation documented |
 | Derived records | Schema generation and typed record read/write round trips | Recorded Crystal macro/trait representation differences |
 | Modular encryption | Cipher/metadata/properties and synchronous encrypted file/page read/write paths | Recorded unsupported upstream modes and representation differences |
@@ -129,7 +128,7 @@ row/byte limits, metadata options, CDC, bloom filters and encrypted round trips.
 
 ## Phase 2 — Complete Variant numeric conversions
 
-- [ ] Convert the remaining supported Variant numeric values to typed Arrow
+- [x] Convert the remaining supported Variant numeric values to typed Arrow
   output with upstream safe/strict semantics and decimal precision intact.
 
 Scope includes Decimal256 primitive and union output, decimal exponent notation,
@@ -141,6 +140,24 @@ Completion evidence: upstream-derived numeric boundary and overflow tests,
 exponent/scale/precision cases, union selection, SQL null versus Variant null,
 safe/strict errors, and public-kernel round trips. Decimal helpers alone do not
 complete this phase.
+
+Delivered in `src/parquet_variant_compute/type_conversion.cr` and
+`variant_to_arrow.cr`, with 28 tests-first upstream-derived/characterization specs
+in `numeric_conversion_spec.cr`. Decimal256 rescaling widens before multiplying;
+all decimal widths parse exponent notation, ASCII whitespace and long mantissas
+with upstream precision/rounding semantics. Float conversions use native ranges.
+Public tests cover dense/sparse union ranking, nested paths/lists, SQL/Variant
+nulls, safe/strict errors, dictionary/run-end output and reverse casts. Builders
+validate precision/scale. Decimal256 shredding rejection matches upstream and is
+correctly marked ported in the ledger.
+
+The existing `12.345` parser test now asserts upstream rounding to `1235` at
+scale 2. Independent Arrow fixes `b05366a` and `49d07ce` resolve the two encoded
+output blockers; [reproductions and resolution](../shards_info/arrow_cr.4.md).
+All original expected encoded values remain asserted; the added dictionary test
+compares nullable keys directly to correct a tuple/array container mismatch.
+No shard patch or helper-only commit was made. All required gates pass, including
+1776 full-suite examples with zero failures/errors.
 
 ## Phase 3 — Canonical extensions and virtual columns
 

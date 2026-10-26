@@ -11,11 +11,9 @@ require "../parquet_variant"
 #
 # Divergences: `usize`/`u8` parameters are `Int32`; Crystal raises instead of
 # returning `Result` (`cast_with_options` raises `ParquetVariant::CastError` in
-# strict mode); the cast error prints `Variant#debug_string`; `Decimal256`
-# targets are not ported (`I256` is not modelled), and the decimal helpers are
-# reimplemented on `Arrow.rescale_decimal`/`Arrow.num_cast` (`single_float_to_decimal`
-# rounds half away from zero and rejects magnitudes above 2^53, and
-# `parse_decimal` accepts plain decimal strings only — no exponent notation).
+# strict mode); the cast error prints `Variant#debug_string`. Numeric conversion
+# uses Arrow's native casts and rescaling, plus a decimal parser that preserves
+# upstream exponent syntax and rounding without overflowing intermediate values.
 module ParquetVariantCompute
   # Casting a single variant value to an Arrow value (upstream
   # `type_conversion.rs`).
@@ -24,10 +22,6 @@ module ParquetVariantCompute
     DECIMAL4_MAX_PRECISION  =  9
     DECIMAL8_MAX_PRECISION  = 18
     DECIMAL16_MAX_PRECISION = 38
-
-    # Largest magnitude a `Float64` represents exactly (upstream
-    # `MAX_FOR_F64`).
-    MAX_FOR_F64 = 2.0 ** 53
 
     # Casts one value with safe/strict semantics (upstream
     # `variant_cast_with_options`).
@@ -265,6 +259,15 @@ module ParquetVariantCompute
       unscaled_decimal(variant, precision, scale, Int128)
     end
 
+    def self.unscaled_decimal256(variant : ParquetVariant::Variant, precision : Int32, scale : Int32) : ::Arrow::I256?
+      unscaled_decimal(variant, precision, scale, ::Arrow::I256)
+    end
+
+    # The Variant encoding has no Decimal256 shredding representation.
+    def self.shred_unscaled_decimal256(variant : ParquetVariant::Variant, precision : Int32, scale : Int32) : ::Arrow::I256?
+      nil
+    end
+
     # --- Decimal unscaled conversions used when shredding (upstream
     # `shred_variant_to_unscaled_decimal`) ---
 
@@ -457,7 +460,7 @@ module ParquetVariantCompute
       end
     end
 
-    # Rescales with truncation, then narrows to `type`.
+    # Rescales with half-away-from-zero rounding, then narrows to `type`.
     private def self.rescale_decimal(
       value : Int128,
       input_precision : Int32,
@@ -466,10 +469,13 @@ module ParquetVariantCompute
       scale : Int32,
       type : T.class,
     ) : T? forall T
-      rescaled = ::Arrow.rescale_decimal(value, input_precision, input_scale, precision, scale)
-      return nil unless rescaled
-
-      ::Arrow.num_cast(rescaled, T)
+      {% if T == ::Arrow::I256 %}
+        ::Arrow.rescale_decimal(::Arrow::I256.new(value), input_precision, input_scale, precision, scale)
+      {% else %}
+        rescaled = ::Arrow.rescale_decimal(value, input_precision, input_scale, precision, scale)
+        return nil unless rescaled
+        ::Arrow.num_cast(rescaled, T)
+      {% end %}
     end
 
     # Rescales only when the conversion is lossless (upstream
@@ -492,70 +498,88 @@ module ParquetVariantCompute
       ::Arrow.num_cast(converted, T)
     end
 
-    # Rounds a float to the target scale, rejecting values a `Float64` cannot
-    # represent exactly (upstream `single_float_to_decimal`).
+    # Rust single_float_to_decimal rounds to the native integer range. It does
+    # not apply a separate declared-precision or exact-f64-magnitude cutoff.
     private def self.float_to_decimal(
       value : Float64,
       precision : Int32,
       scale : Int32,
       type : T.class,
     ) : T? forall T
-      return nil unless value.finite?
-
-      scaled = value.abs * (10.0 ** scale)
-      return nil if scaled > MAX_FOR_F64
-
-      rounded = scaled.round
-      signed = value < 0 ? -rounded : rounded
-      return nil unless within_precision?(signed.to_i128, precision)
-
-      ::Arrow.num_cast(signed, T)
+      rounded = (value * (10.0 ** scale)).round(:ties_away)
+      return nil unless rounded.finite?
+      {% if T == ::Arrow::I256 %}
+        ::Arrow::I256.from_f64(rounded)
+      {% else %}
+        ::Arrow.num_cast(rounded, T)
+      {% end %}
     end
 
-    # Parses a plain decimal string (upstream `parse_decimal`).
-    #
-    # Returns `nil` when the string is not a decimal number, drops non-zero
-    # fractional digits beyond `scale`, or does not fit `precision`.
-    # ameba:disable Metrics/CyclomaticComplexity
+    # Parse decimal syntax before narrowing: an oversized mantissa may become
+    # representable after an exponent shift. Only retained digits are converted
+    # to a native integer, bounding power-of-ten allocation by target precision.
     private def self.parse_decimal(
       value : String,
       precision : Int32,
       scale : Int32,
       type : T.class,
     ) : T? forall T
-      text = value.strip
-      return nil if text.empty?
-
-      negative = text.starts_with?('-')
-      text = text[1..] if negative || text.starts_with?('+')
-
-      int_part, _, frac_part = text.partition('.')
-      return nil if int_part.empty? && frac_part.empty?
-      return nil unless int_part.each_char.all?(&.ascii_number?)
-      return nil unless frac_part.each_char.all?(&.ascii_number?)
-
-      if frac_part.size > scale
-        # Only trailing zeros may be dropped.
-        return nil unless frac_part[scale..].each_char.all?('0')
-
-        frac_part = frac_part[0, scale]
+      max_precision = {% if T == ::Arrow::I256 %} 76 {% elsif T == Int128 %} 38 {% elsif T == Int64 %} 18 {% else %} 9 {% end %}
+      return nil unless 0 <= precision <= max_precision
+      text = value.strip { |char| char == ' ' || char == '\t' || char == '\n' || char == '\r' || char == '\v' || char == '\f' }
+      match = /\A([+-]?)([0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE]([+-]?[0-9]+))?\z/.match(text)
+      return nil unless match
+      negative = match[1] == "-"
+      integer, _, fraction = match[2].partition('.')
+      digits = (integer + fraction).lstrip('0')
+      return T.new(0) if digits.empty?
+      exponent = decimal_exponent(match[3]?, text.bytesize.to_i64 + 256)
+      power = scale.to_i64 + exponent - fraction.bytesize
+      rounding = false
+      if power >= 0
+        return nil if digits.bytesize.to_i64 + power > precision
+        digits += "0" * power.to_i32
+      else
+        keep = digits.bytesize.to_i64 + power
+        return T.new(0) if keep < 0
+        return nil if keep > precision
+        rounding = digits.byte_at(keep.to_i32) >= '5'.ord
+        digits = keep == 0 ? "0" : digits.byte_slice(0, keep.to_i32)
       end
-      frac_part = frac_part.ljust(scale, '0')
-
-      digits = "#{int_part}#{frac_part}"
-      scaled = digits.to_i128?
-      return nil unless scaled
-      scaled = -scaled if negative
-      return nil unless within_precision?(scaled, precision)
-
-      ::Arrow.num_cast(scaled, T)
+      # A carry can grow the digit count (9.5 -> 10); recheck the result below.
+      number = {% if T == ::Arrow::I256 %}
+                 ::Arrow::I256.from_string(digits)
+               {% else %}
+                 digits.to_i128?
+               {% end %}
+      return nil unless number
+      if rounding
+        {% if T == ::Arrow::I256 %}
+          number += ::Arrow::I256.new(1)
+        {% else %}
+          number += 1
+        {% end %}
+      end
+      return nil if number.to_s.bytesize > precision && !number.zero?
+      number = -number if negative
+      {% if T == ::Arrow::I256 %}
+        number
+      {% else %}
+        ::Arrow.num_cast(number, T)
+      {% end %}
     end
 
-    # Whether `value` fits a decimal of the given precision.
-    private def self.within_precision?(value : Int128, precision : Int32) : Bool
-      return false if precision <= 0 || precision > DECIMAL16_MAX_PRECISION
-
-      value.abs <= 10_i128 ** precision - 1
+    # Saturate only beyond all possible mantissa/scale influence. This handles
+    # arbitrarily long signed exponents without native integer overflow.
+    private def self.decimal_exponent(text : String?, bound : Int64) : Int64
+      return 0_i64 unless text
+      negative = text.starts_with?('-')
+      start = negative || text.starts_with?('+') ? 1 : 0
+      exponent = 0_i64
+      text.byte_slice(start).each_byte do |digit|
+        exponent = Math.min(bound, exponent * 10 + digit - '0'.ord)
+      end
+      negative ? -exponent : exponent
     end
   end
 end

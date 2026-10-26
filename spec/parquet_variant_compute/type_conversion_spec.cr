@@ -154,7 +154,7 @@ describe ParquetVariantCompute::TypeConversion do
       TC.unscaled_decimal32(Variant.from(1.5_f64), 9, 2).should eq 150
       TC.unscaled_decimal32(Variant.from("12.34"), 9, 2).should eq 1234
       TC.unscaled_decimal32(Variant.from("not a number"), 9, 2).should be_nil
-      TC.unscaled_decimal32(Variant.from("12.345"), 9, 2).should be_nil
+      TC.unscaled_decimal32(Variant.from("12.345"), 9, 2).should eq 1235
 
       decimal = Variant.from(ParquetVariant::VariantDecimal4.try_new(1234, 2))
       TC.unscaled_decimal32(decimal, 9, 2).should eq 1234

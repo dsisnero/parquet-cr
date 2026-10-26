@@ -1022,11 +1022,14 @@ The next work file is `plans/parity.md`, Phase 2 (Variant numeric conversions).
   per-arrow-type traits to one function per target type, keeps the errors as
   exceptions (`CastError` in strict mode, printing `Variant#debug_string`),
   derives the decimal target kind from the Crystal type instead of the
-  `DecimalCastTarget` trait, reimplements `single_float_to_decimal` (rounds half
-  away from zero, rejects magnitudes above 2^53) and `parse_decimal` (plain
-  decimal strings only, no exponent notation), and does not model `Decimal256`/
-  `I256` (its conversions are deferred). `VariantToArrow` collapses upstream's
-  builder enums into a `RowBuilder` hierarchy with one generic
+  `DecimalCastTarget` trait, reimplements `single_float_to_decimal` with upstream
+  half-away rounding and native-range checks, and parses decimal strings with bounded digit arithmetic
+  before narrowing. This supports exponent notation, ASCII whitespace, long
+  mantissas, precision overflow and all Decimal32/64/128/256 widths without
+  overflowing intermediate integers. Decimal256 rescaling widens to Arrow::I256
+  first. Decimal256 shredding returns nil and public shredding rejects that
+  target, matching the pinned upstream's explicit behavior. `VariantToArrow`
+  collapses upstream's builder enums into a `RowBuilder` hierarchy with one generic
   `ValueRowBuilder(B, T)` for the macro-generated builders, uses `Int32` for
   capacities, raises (`CastError`/`InvalidArgumentError`/`NYIError`) where
   upstream returns `Result`, and reuses the data type for decimal
@@ -1037,8 +1040,8 @@ The next work file is `plans/parity.md`, Phase 2 (Variant numeric conversions).
   extractor wraps any `RowBuilder` instead of nesting
   the builder enum, and the binary-variant output returns the `VariantArray`'s
   inner `StructArray` (`VariantArray` is not an `Arrow::ArrayBase` in the port).
-  `UnionRowBuilder` keeps the upstream ranking table but never selects a
-  `Decimal256` child (`I256` is not modelled). Shredding uses a `RowBuilder`
+  `UnionRowBuilder` keeps the upstream ranking table, including Decimal256
+  fit checks and natural decimal-width preferences. Shredding uses a `RowBuilder`
   hierarchy with shared primitive/list buffers and an ordered `Hash` of object
   children, creates residual binary objects lazily, and uses a sorted schema
   tree. `ShreddedSchemaBuilder#with_path` mutates and returns self; the
@@ -1052,8 +1055,10 @@ The next work file is `plans/parity.md`, Phase 2 (Variant numeric conversions).
   array identity when no parent mask is needed; masked matches rebuild only
   ArrayData nulls. Safe materialization errors map to nulls and strict ones
   propagate. Invalid Variant extension tags are treated as concrete requests,
-  bridging the custom extension's Parquet error hierarchy. The existing target
-  limitations of `VariantToArrow` apply (Decimal256 and decimal exponent parsing).
+  bridging the custom extension's Parquet error hierarchy. Decimal256 dictionary
+  output requires Arrow `b05366a`; run-end output requires the I256 comparator
+  from `49d07ce`. Both integration tests pass with these independent fixes;
+  see `shards_info/arrow_cr.4.md`.
   Arrow → Variant uses a RowBuilder class hierarchy and scalar conversion
   closures instead of Rust enums/macros. Dictionary keys are read directly;
   run-end cursors use raw run ends as in the pinned source (including slices).
