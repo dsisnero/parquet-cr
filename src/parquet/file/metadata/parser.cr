@@ -4,8 +4,9 @@
 # Ports `MetadataParser`, `parse_page_index`, and the column/offset index
 # helpers. Divergence: the encryption branch is not ported, so
 # `MetadataParser#decode_metadata` errors on an encrypted footer (as upstream
-# does when the `encryption` feature is disabled). `metadata_options` are
-# threaded through but statistics-skipping is not applied yet.
+# does when the `encryption` feature is disabled). Footer loaders route encrypted
+# metadata through the encryption decoder; schema/statistics options apply to
+# both encrypted and plaintext Thrift metadata.
 module Parquet
   module File
     module Metadata

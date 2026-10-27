@@ -54,3 +54,10 @@ protobuf-free metadata, crypto via OpenSSL) comes from the Crystal standard
 library or is implemented in-tree. Prefer a maintained, active shard over new
 in-tree code for third-party formats; record the decision in `plans/parity.md`
 when adding a runtime dependency.
+
+## Asynchronous storage reads
+
+The [execution/storage mapping](async-storage.md) records how yielding Crystal
+methods replace Rust futures, how the existing push decoder drives demand
+range reads, and how native memory/HTTP object stores and explicit execution
+contexts integrate without a mandatory cloud SDK dependency.

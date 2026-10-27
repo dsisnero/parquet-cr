@@ -102,3 +102,17 @@ headers, batch/group boundaries, bloom filters, TSV/default quoting, custom
 characters, concatenated Gzip/Zstd/LZ4 streams and per-codec empty-stream
 behavior. JSON and Parquet files remain
 in the supplied directory for inspection; no generated files enter the repo.
+
+## Asynchronous storage reads
+
+See [the execution/storage mapping and verification cases](async-storage.md).
+The four `spec/parquet/arrow/async_*_spec.cr` suites use pinned fixtures,
+deterministic generated files and an ephemeral loopback HTTP server. A sandbox
+must allow local socket binding for `make test` and `make test-extensions`;
+external services and credentials are not required. Focused command:
+
+```sh
+crystal spec spec/parquet/arrow/async_reader_spec.cr \
+  spec/parquet/arrow/async_metadata_spec.cr \
+  spec/parquet/arrow/async_store_spec.cr spec/parquet/arrow/async_spawn_spec.cr
+```

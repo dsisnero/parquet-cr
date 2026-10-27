@@ -38,10 +38,10 @@ require "../file/metadata"
 #   `pub(crate)` enum whose `set_*` methods reassign `self`), `with_row_groups`
 #   takes an `Enumerable(Int32)` and `RowGroupSelection#selection` is a nilable
 #   getter;
-# - the builder takes a `File::FileReader` (upstream takes any `ChunkReader`),
-#   `ArrowReaderOptions`/`ArrowReaderMetadata`, and no encryption properties;
-#   because the port's `RowGroups` implementation (`FileRowGroups`) needs a
-#   reader; `ReaderRowGroups`/`ReaderPageIterator` are therefore not needed yet;
+# - the synchronous builder takes a `File::FileReader` (upstream takes any
+#   `ChunkReader`) because FileRowGroups needs a reader. Its metadata/decryption
+#   is configured at file opening; async metadata loading consumes the full
+#   ArrowReaderOptions. ReaderRowGroups/ReaderPageIterator are unnecessary;
 # - `usize` counts are `Int32`; the reader's schema carries the projected field
 #   metadata (upstream strips it from `RecordBatchReader::schema`); the
 #   supplied-schema field-metadata mismatch message renders Crystal's
@@ -63,6 +63,51 @@ module Parquet
         @skip_arrow_metadata : Bool = false,
         @supplied_schema : ::Arrow::Schema? = nil,
       )
+      end
+
+      getter column_index_policy = File::Metadata::PageIndexPolicy::Skip
+      getter offset_index_policy = File::Metadata::PageIndexPolicy::Skip
+      getter metadata_options = File::Metadata::ParquetMetaDataOptions.new
+      getter file_decryption_properties : Encryption::FileDecryptionProperties? = nil
+
+      def with_page_index_policy(policy : File::Metadata::PageIndexPolicy) : self
+        @column_index_policy = policy
+        @offset_index_policy = policy
+        self
+      end
+
+      def with_column_index_policy(@column_index_policy : File::Metadata::PageIndexPolicy) : self
+        self
+      end
+
+      def with_offset_index_policy(@offset_index_policy : File::Metadata::PageIndexPolicy) : self
+        self
+      end
+
+      def with_metadata_options(options : File::Metadata::ParquetMetaDataOptions?) : self
+        @metadata_options = options || File::Metadata::ParquetMetaDataOptions.new
+        self
+      end
+
+      def with_parquet_schema(schema : Schema::SchemaDescriptor) : self
+        @metadata_options.with_schema(schema)
+        self
+      end
+
+      def with_encoding_stats_as_mask(value : Bool) : self
+        @metadata_options.with_encoding_stats_as_mask(value)
+        self
+      end
+
+      {% for name in ["encoding_stats", "column_stats", "size_stats"] %}
+        def with_{{name.id}}_policy(policy : File::Metadata::ParquetStatisticsPolicy) : self
+          @metadata_options.with_{{name.id}}_policy(policy)
+          self
+        end
+      {% end %}
+
+      def with_file_decryption_properties(@file_decryption_properties : Encryption::FileDecryptionProperties?) : self
+        self
       end
 
       # Skips decoding the embedded arrow metadata (defaults to `false`).

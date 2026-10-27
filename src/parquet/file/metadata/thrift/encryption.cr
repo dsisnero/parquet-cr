@@ -139,7 +139,6 @@ module Parquet
         decryptor : ::Parquet::Encryption::FileDecryptor?,
         options : ParquetMetaDataOptions?,
       ) : RowGroupMetaData
-        _ = options
         schema_descr = rg.schema_descr
         if schema_descr.num_columns != rg.columns.size
           raise general_err!(
@@ -207,7 +206,7 @@ module Parquet
 
             column.encrypted_column_metadata = nil
             column_prot = ::Parquet::Thrift::ThriftSliceInputProtocol.new(decrypted)
-            mask = read_column_metadata(column_prot, column, i)
+            mask = read_column_metadata(column_prot, column, i, options)
             validate_column_metadata(mask)
             columns << column
           else

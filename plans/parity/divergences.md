@@ -4,7 +4,7 @@ Status: **maintained reference**; existing entries are recorded decisions, with
 remaining implementation gaps tracked in the [active plan](../parity.md) and
 [API ledger](../inventory/rust_port_inventory.tsv). Update this file when a
 feature changes a documented divergence; it is not a separate feature queue.
-The next work file is `plans/parity.md`, Phase 6 (asynchronous storage reads; resolve its deferred mapping first).
+The next work file is `plans/parity.md`, Phase 7 (asynchronous storage writes).
 
 
 - Errors: Rust `Result<T, E>` is mapped to Crystal exceptions. Fallible
@@ -262,17 +262,22 @@ The next work file is `plans/parity.md`, Phase 6 (asynchronous storage reads; re
   synchronous `ParquetRecordBatchReaderBuilder` (input
   `SyncReader(File::FileReader)`, upstream `ArrowReaderBuilder<SyncReader<T>>`)
   and the push decoder's `ParquetPushDecoderBuilder` (input `PushDecoderInput`)
-  subclass; `with_batch_size` clamps to the file row count like upstream (porting
+  subclass; the async stream builder uses `AsyncFileReader` directly and the
+  same generic builder state. Rust's hidden AsyncReader newtype is unnecessary.
+  The shared `with_batch_size` clamps to the file row count like upstream (porting
   `test_batch_size_overallocate`), the shared `with_max_predicate_cache_size` is
-  accepted by both (only the push decoder uses it, as upstream), and each
-  subclass's `build` destructures the shared state as upstream's `impl` blocks
+  accepted by all builders (the push decoder, including async streams, uses it,
+  as upstream), and each subclass's `build` destructures the shared state as upstream's `impl` blocks
   do. `ParquetRecordBatchReaderBuilder` takes a `File::FileReader` (upstream any
   `ChunkReader`); row selection, row-group selection, offset/limit plans,
-  `RowFilter`, `StatisticsConverter` and reader metrics are ported, while
-  bloom-filter lookups and page-index policies are not. `ArrowReaderOptions`
-  models `skip_arrow_metadata`, the supplied arrow schema and virtual columns
-  (no page-index/encoding-statistics policies or decryption properties), and the supplied-schema field-metadata mismatch message renders
-  Crystal's `Hash?` inspection where upstream uses Rust's `Debug` formatting.
+  `RowFilter`, `StatisticsConverter` and reader metrics are ported. The async
+  stream builder also supports bloom lookups and index policies. Arrow options
+  now carry page-index, encoding/statistics policies, Parquet/Arrow schema hints,
+  virtual columns and decryption properties into async metadata loading. A
+  synchronous builder still receives an already-decoded FileReader; configure
+  its metadata/index/decryption behavior using File::ReadOptions at file opening.
+  The supplied-schema field-metadata mismatch message renders Crystal's `Hash?`
+  inspection where upstream uses Rust's `Debug` formatting.
   The reader's `schema` keeps the projected field metadata (upstream strips it
   from `RecordBatchReader::schema`). The upstream `arrow_reader` tests that
   build their fixture with `ArrowWriter` (`test_with_schema`, `test_skip_metadata`,
@@ -357,9 +362,9 @@ The next work file is `plans/parity.md`, Phase 6 (asynchronous storage reads; re
   upstream (arrow-rs#8000); the push decoder's cached leaves do report counts
   (`spec/parquet/arrow/push_decoder_spec.cr` asserts 400 inner / 149 cache reads
   for a cached filter column). Upstream's metric tests live in
-  `tests/arrow_reader/predicate_cache.rs` and need the async reader, so
-  `spec/parquet/arrow/metrics_spec.cr` characterizes the API, counter sharing
-  and wiring instead.
+  `tests/arrow_reader/predicate_cache.rs`; `metrics_spec.cr` characterizes the
+  API/counter sharing, while `async_reader_spec.cr` verifies enabled cache
+  counters and zero disabled-cache counters in sparse-page async reads.
 - Arrow interop, in-memory row groups (`in_memory_row_group.rs`):
   `InMemoryRowGroup` is a `RowGroups` source over caller-supplied bytes
   (row count, per-column `ColumnChunkData?` slots, the row group's
@@ -687,20 +692,38 @@ The next work file is `plans/parity.md`, Phase 6 (asynchronous storage reads; re
   `NeedMoreDataRangeError`.
 - `ParquetMetaDataPushDecoder`: `PageIndexPolicy` is an enum with
   `from(Bool)`; the `try_new_with_footer_tail`/`try_new_with_metadata`
-  constructors (upstream `pub(crate)`) are public; encryption
-  (`with_file_decryption_properties`) is not ported, and an encrypted footer
-  raises as upstream does without the feature. `MetadataParser` threads
-  `metadata_options` through but statistics-skipping/schema overrides are not
-  applied yet.
+  constructors (upstream `pub(crate)`) are public. Decryption properties route
+  encrypted footers and column metadata through the encryption decoder; without
+  properties the raw parser rejects encrypted footers. Metadata options now
+  apply supplied schemas and statistics skipping/full-mask encoding choices
+  during plaintext and encrypted Thrift decoding.
 - `ChunkReader`: Rust's `Length`/`ChunkReader` traits are one abstract class
   (`len`/`get_bytes`/`get_read`); the associated `T: Read` becomes `IO`, and
   `Bytes`/`File` are wrapped as `BytesChunkReader`/`FileChunkReader`.
-- `ParquetMetaDataReader`: the async `MetadataFetch`/`MetadataSuffixFetch`
-  loaders (`load_*`, `try_load*`, `with_prefetch_hint`, `get_prefetch_size`) and
-  the encryption `with_decryption_properties` are not ported; `has_metadata` →
-  `has_metadata?`, `parse_metadata` is public (upstream private), `metadata_size`
-  returns `Int32?`, and `decode_schema` is implemented via a full metadata
-  decode.
+- `ParquetMetaDataReader`: `MetadataFetch`/`MetadataSuffixFetch` loaders use
+  fiber-yielding methods and native closure adapters. Bounded/suffix requests,
+  prefetch hints, remainder/page-index reuse and decryption follow upstream.
+  Rust `with_decryption_properties` keeps the port's existing name
+  `with_file_decryption_properties`; `has_metadata` → `has_metadata?`,
+  `parse_metadata` is public, `metadata_size` returns `Int32?`, and `decode_schema`
+  uses a full metadata decode.
+- Asynchronous storage reads: Rust futures/Poll/Stream become yielding storage
+  calls and Iterator, with the request state on the scanning fiber stack. The
+  shared push decoder preserves lazy projection, page pruning, selection,
+  filters/cache, nested/virtual/encrypted data and row-group iteration. Errors
+  raise once and fuse the stream. Native inspection replaces Rust Debug.
+  SpawnedReader uses an explicit ExecutionContext and a mutex-protected shared
+  reader instead of Clone; buffered replies preserve exception identity without
+  blocking a completed worker. Crystal has no tokio runtime-shutdown API or
+  cancellation error/panic-payload distinction; those lifecycle tests have no
+  equivalent. No forced cancellation of active IO is promised.
+  Rust object_store maps to a native range/suffix/head interface with memory and
+  real HTTP(S) backends; cloud SDK signing/credential discovery is supplied by
+  application adapters. Keys are Strings, buffers/counts use Int32, and absolute
+  byte offsets use UInt64. HTTP requires validated 206/Content-Range/body lengths,
+  with no full-object fallback. The deprecated object reader's flags/context
+  options are retained. See [async storage](../../docs/async-storage.md) for the
+  dependency decision, ownership model, usage and tests. No new shard is needed.
 - `encodings::delta_byte_array`: `DeltaByteArrayEncoder(T)`/
   `DeltaByteArrayDecoder(T)` with `T.class` (BYTE_ARRAY/FIXED_LEN_BYTE_ARRAY);
   `DeltaByteArrayDecoder#prefix_lengths` is exposed for the negative-length

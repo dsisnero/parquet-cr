@@ -265,10 +265,8 @@ module Parquet
       # Decodes `ParquetMetaData` from the thrift-encoded footer (without the
       # trailing length + magic).
       #
-      # Divergence: `options` is accepted for parity but statistics-skipping /
-      # schema overrides are not applied yet.
       # ameba:disable Metrics/CyclomaticComplexity
-      def self.parquet_metadata_from_bytes(bytes : Bytes, _options : ParquetMetaDataOptions? = nil) : ParquetMetaData
+      def self.parquet_metadata_from_bytes(bytes : Bytes, options : ParquetMetaDataOptions? = nil) : ParquetMetaData
         prot = ::Parquet::Thrift::ThriftSliceInputProtocol.new(bytes)
 
         version = nil.as(Int32?)
@@ -290,8 +288,13 @@ module Parquet
           when 1
             version = prot.read_i32
           when 2
-            elements = ::Parquet::Thrift.read_thrift_vec(prot, Parquet::Schema::SchemaElement)
-            schema_descr = Parquet::Schema::SchemaDescriptor.new(Parquet::Schema.parquet_schema_from_array(elements))
+            if supplied = options.try(&.schema)
+              prot.skip(field_ident.field_type)
+              schema_descr = supplied
+            else
+              elements = ::Parquet::Thrift.read_thrift_vec(prot, Parquet::Schema::SchemaElement)
+              schema_descr = Parquet::Schema::SchemaDescriptor.new(Parquet::Schema.parquet_schema_from_array(elements))
+            end
           when 3
             num_rows = prot.read_i64
           when 4
@@ -302,7 +305,7 @@ module Parquet
             ::Parquet::Thrift.validate_list_type(::Parquet::Thrift::ElementType::Struct, list_ident)
             rgs = [] of RowGroupMetaData
             list_ident.size.times do
-              rgs << read_row_group(prot, descr)
+              rgs << read_row_group(prot, descr, options)
             end
             ensure_row_group_ordinals(rgs)
             row_groups = rgs

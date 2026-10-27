@@ -574,6 +574,7 @@ module Parquet
         prot : ::Parquet::Thrift::ThriftCompactInputProtocol,
         column : ColumnChunkMetaData,
         col_index : Int32,
+        options : ParquetMetaDataOptions? = nil,
       ) : UInt16
         seen_mask = 0_u16
         last_field_id = 0_i16
@@ -608,15 +609,30 @@ module Parquet
           when 11
             column.dictionary_page_offset = prot.read_i64
           when 12
-            page_stats = Format::PageStatistics.read_thrift(prot)
-            column.statistics = Statistics.from_thrift_page_stats(column.column_type, page_stats)
+            if options && options.skip_column_stats(col_index)
+              prot.skip(field_ident.field_type)
+            else
+              page_stats = Format::PageStatistics.read_thrift(prot)
+              column.statistics = Statistics.from_thrift_page_stats(column.column_type, page_stats)
+            end
           when 13
-            column.encoding_stats = ParquetPageEncodingStats.mask(read_encoding_stats_as_mask(prot))
+            if options && options.skip_encoding_stats(col_index)
+              prot.skip(field_ident.field_type)
+            elsif options && !options.encoding_stats_as_mask?
+              column.encoding_stats = ParquetPageEncodingStats.full(::Parquet::Thrift.read_thrift_vec(prot, PageEncodingStats))
+            else
+              column.encoding_stats = ParquetPageEncodingStats.mask(read_encoding_stats_as_mask(prot))
+            end
           when 14
             column.bloom_filter_offset = prot.read_i64
           when 15
             column.bloom_filter_length = prot.read_i32
           when 16
+            if options && options.skip_size_stats(col_index)
+              prot.skip(field_ident.field_type)
+              last_field_id = field_ident.id
+              next
+            end
             size_stats = SizeStatistics.read_thrift(prot)
             column.unencoded_byte_array_data_bytes = size_stats.unencoded_byte_array_data_bytes
             column.repetition_level_histogram =
@@ -638,6 +654,7 @@ module Parquet
         prot : ::Parquet::Thrift::ThriftCompactInputProtocol,
         column_descr : Parquet::Schema::ColumnDescriptor,
         col_index : Int32,
+        options : ParquetMetaDataOptions? = nil,
       ) : ColumnChunkMetaData
         column = ColumnChunkMetaData.new(column_descr)
         has_file_offset = false
@@ -655,7 +672,7 @@ module Parquet
             column.file_offset = prot.read_i64
             has_file_offset = true
           when 3
-            col_meta_mask = read_column_metadata(prot, column, col_index)
+            col_meta_mask = read_column_metadata(prot, column, col_index, options)
           when 4
             column.offset_index_offset = prot.read_i64
           when 5

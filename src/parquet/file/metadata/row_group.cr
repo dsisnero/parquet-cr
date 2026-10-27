@@ -184,6 +184,7 @@ module Parquet
       def self.read_row_group(
         prot : ::Parquet::Thrift::ThriftCompactInputProtocol,
         schema_descr : Parquet::Schema::SchemaDescriptor,
+        options : ParquetMetaDataOptions? = nil,
       ) : RowGroupMetaData
         row_group = RowGroupMetaDataBuilder.new(schema_descr).build_unchecked
 
@@ -208,7 +209,7 @@ module Parquet
               )
             end
             list_ident.size.times do |i|
-              row_group.columns << read_column_chunk(prot, schema_descr.column(i), i)
+              row_group.columns << read_column_chunk(prot, schema_descr.column(i), i, options)
             end
             mask |= rg_columns
           when 2

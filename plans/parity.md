@@ -14,40 +14,39 @@
 
 ## Where we are
 
-- **Current focus:** Phase 5 — CSV import command is complete on
-  `codex/parquet-fromcsv`. Phases 1–5 are delivered; Phases 6–7 remain deferred
-  pending the asynchronous storage/concurrency mapping below.
+- **Current focus:** Phase 6 — Asynchronous storage reads is complete on
+  `codex/async-storage-reads`. Phases 1–6 are delivered; resume with Phase 7.
+  The storage/concurrency decisions are recorded in
+  [async storage](../docs/async-storage.md); no new shard is required.
 - **Next up**, in order:
-  1. **Phase 6 — Asynchronous storage reads**, first record the Crystal
-     fibers/ExecutionContext mapping and object-store dependency, then port
-     end-to-end reader tests before implementation.
-  2. **Phase 7 — Asynchronous storage writes**, after Phase 6 and its storage
-     decisions; keep these as complete API features rather than helper phases.
-- **Last completed feature:** `port: CSV import command`, on
-  `codex/parquet-fromcsv`. Thirty tests-first upstream-derived/characterization
-  specs cover CLI options, reader/writer configuration, compressed input,
-  typed/null values, schema/root, groups, dialects, empty streams and errors.
-  Observed red-green cycles include missing APIs, decoder error context and
-  per-codec empty-stream behavior. Previous feature: `d6bc63a` (Parquet rewrite).
-- **Last code gates:** `make lint` (191 files), interop script lint (1 file),
-  `make test` (1862 examples), `make test-extensions` (1868 examples), library
-  and CLI no-codegen builds, standalone CLI build, scoped inventory validation
-  (3515 items), and `git diff --check`, all green with zero failures/errors/pending.
-  Exact pinned Rust-read records match the Rust CSV importer for six input/output
-  codecs, V1/V2, typed/null values, dialects, concatenated and empty streams.
+  1. **Phase 7 — Asynchronous storage writes**, use the recorded yielding-call,
+     execution-context and object-store mapping, and port end-to-end
+     writer/storage tests before implementation. Preserve this as one usable
+     write/flush/close capability rather than helper-sized phases.
+- **Last completed feature:** `port: asynchronous storage reads`, on
+  `codex/async-storage-reads`. Thirty-eight upstream-derived/characterization
+  specs cover lazy ranges, prefetch/indexes, selection/filter/cache/metrics,
+  nested/virtual/encrypted data, bloom, object stores and execution contexts.
+  Red-green cycles exposed missing APIs, virtual schema projection and ignored
+  footer metadata policies. Previous feature: `0b5972d` (CSV import command).
+- **Last code gates:** `make lint` (196 files), `make test` (1900 examples),
+  `make test-extensions` (1906 examples), no-codegen library build, scoped
+  inventory validation (3515 items), and `git diff --check`, all green with
+  zero failures/errors/pending. HTTP tests use an ephemeral loopback server;
+  no external service or cloud credentials are needed. The upstream 100-case
+  selection fuzz test runs with a reproducible seed.
 - **Dependency requirements:** sibling arrow-cr supplies extension machinery
   (`925255d`) and canonical Uuid/Json types. Existing Decimal256 prerequisites
   remain `9a5612c`, `b05366a` and `49d07ce`; see the resolved dependency notes in
   `shards_info/`. No shard patch or dependency edit was made.
-- **Ledger counts:** 2704 `ported`, 239 `intentional_divergence`, 28 `skipped`,
-  544 `missing` (3515 total).
+- **Ledger counts:** 2773 `ported`, 231 `intentional_divergence`, 28 `skipped`,
+  483 `missing` (3515 total).
 - **Plan layout:** this file is the active feature queue and completion record.
   [Implementation reference](parity/implementation-reference.md) is a complete
   archival snapshot of earlier module-level evidence, including stale historical
   checkboxes. [Divergences](parity/divergences.md) is a maintained reference for
   representation differences and verification notes. Neither is a separate
-  work queue. Work next in this file, Phase 6 (resolve its deferred decisions
-  first); update divergences as needed.
+  work queue. Work next in this file, Phase 7; update divergences as needed.
 
 ## Feature sizing and completion
 
@@ -79,7 +78,7 @@ and spec mappings remain in the implementation reference and ledger.
 | Capability | Delivered behavior | Remaining work |
 | --- | --- | --- |
 | Synchronous Parquet files | Schema/Thrift, encodings/compression, column and file readers/writers, metadata, page indexes, bloom filters, record API | Generic API compatibility decisions below |
-| Arrow batch reading | Schema conversion both ways, IPC schema metadata, primitive/composite readers, selection, filtering, pruning, metrics and push decoding | Recorded representation differences; individual coverage gaps remain in the ledger |
+| Arrow batch reading | Schema conversion both ways, IPC schema metadata, primitive/composite readers, selection, filtering, pruning, metrics, push decoding and async storage streams | Recorded representation differences; individual coverage gaps remain in the ledger |
 | Arrow batch writing | Public writer/options, nested levels, physical encoding, row/byte limits, stored-page streaming, metadata, CDC and encrypted round trips | Recorded representation/performance differences; Decimal256 IPC needs arrow-cr 9a5612c |
 | Variant binary and JSON | Paths, values/builders, exact binary encoding, JSON in both directions | Recorded ownership and calendar-range divergences |
 | Variant Arrow operations | Arrays/builders, safe/strict casts, path extraction, shredding and unshredding, scalar/composite/encoded arrays | Recorded representation differences; encoded Decimal256 requires the Arrow fixes above |
@@ -262,22 +261,45 @@ The optional upstream Rust unit run could not start offline because
 
 ## Phase 6 — Asynchronous storage reads
 
-- [ ] Read Parquet batches from an asynchronous/object-store source through a
+- [x] Read Parquet batches from an asynchronous/object-store source through a
   usable Crystal reader API with upstream selection and error semantics.
 
-Deferred until the Rust tokio/futures versus Crystal fibers/ExecutionContext
-mapping and object-store dependency are recorded. Include asynchronous range
+The mapping is now recorded in [async storage](../docs/async-storage.md):
+fiber-yielding methods/Iterator, explicit ExecutionContext dispatch, and a native
+range/suffix object-store contract with memory/HTTP backends. No new shard is
+required; cloud SDK integration remains pluggable. Include asynchronous range
 fetches, metadata, buffering and reader integration. Completion requires
 upstream-derived tests against a deterministic storage backend, including
 partial/ranged reads and propagated storage errors, not just an async adapter.
+
+Implemented in `arrow/async_reader{,/metadata,/store,/spawn}.cr` and
+`file/metadata/async_reader.cr`, exported by `src/parquet.cr`. Thirty-eight
+upstream-derived/characterization specs were ported before implementation;
+missing interfaces failed first. Later red-green cases corrected projected
+virtual fields and previously ignored footer statistics policies. The public
+stream uses the existing push decoder for lazy range requests, projection,
+row groups/local selections, predicate cache/metrics, page pruning and budgets.
+Coverage includes exact projected/nested/null arrays, the upstream 100-case
+selection fuzz test, virtual columns, encrypted footer/page reads, bloom filters,
+metadata reuse/prefetch counts, object-store flags and real execution contexts.
+
+A native storage contract with memory and real HTTP range backends resolves the
+Phase 6 dependency decision. Loopback integration verifies actual suffix/range
+IO and rejects missing objects, ignored/incorrect ranges and truncated bodies;
+storage errors fuse subsequent iteration. Rust boxed futures and runtime/Clone
+representations become yielding calls, explicit contexts and synchronized shared
+references; shutdown/cancellation differences and Int32 limits are documented in
+[async storage](../docs/async-storage.md) and [divergences](parity/divergences.md).
+No shard patch or dependency edit was made. All gates above pass. The ledger
+closes 71 rows, including 10 former async-loader divergences.
 
 ## Phase 7 — Asynchronous storage writes
 
 - [ ] Write and close Parquet data through a usable asynchronous/object-store
   writer API and read the result back without data loss.
 
-Requires Phase 1 and the storage/concurrency decisions from Phase 6. Include
-buffering, flushing, close/finalization and error propagation. Completion
+Requires Phase 1 and the recorded [Phase 6 storage/concurrency mapping](../docs/async-storage.md).
+Include buffering, flushing, close/finalization and error propagation. Completion
 requires upstream-derived end-to-end writer/storage tests and readable output,
 not just a sink interface.
 

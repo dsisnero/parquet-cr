@@ -4,9 +4,9 @@
 # Ports `PageIndexPolicy` and the synchronous, `ChunkReader`-driven
 # `ParquetMetaDataReader` (`parse_and_finish`/`try_parse`/`try_parse_sized`/
 # `read_page_indexes`/`read_page_indexes_sized`/`parse_metadata`/
-# `decode_footer_metadata`). Divergences: the async `MetadataFetch`/
-# `MetadataSuffixFetch` loaders (`load_*`/`try_load*`/`with_prefetch_hint`) are
-# not ported; `with_file_decryption_properties` routes the footer decode through
+# `decode_footer_metadata`). Fiber-yielding MetadataFetch/MetadataSuffixFetch
+# loaders live in async_reader.cr; `with_file_decryption_properties` routes
+# the footer decode through
 # `parquet_metadata_with_encryption`; `parse_metadata` is public (upstream
 # private) for tests.
 require "./thrift/encryption"
