@@ -127,3 +127,5 @@ require "./parquet/bin/parquet_fromcsv"
 require "./parquet/arrow/async_reader"
 
 require "./parquet/arrow/async_writer"
+
+require "./parquet/file/metadata/memory"

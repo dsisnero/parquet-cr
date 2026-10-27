@@ -17,7 +17,7 @@ end
 # Divergences: Rust's `ring` AEAD/RNG are replaced by a minimal AES-GCM with
 # AAD built directly on OpenSSL's EVP interface (`AesGcm`), because Crystal's
 # `OpenSSL::Cipher` exposes no AAD setter; errors raise `Parquet::GeneralError`;
-# upstream's `HeapSize` trait (`heap_size`) and `Send`/`Sync` bounds have no
+# native decryptor `HeapSize` lives in file/metadata/memory.cr; `Send`/`Sync` have no
 # Crystal analogue; the `ring`-prefixed names drop the prefix (`GcmBlockEncryptor`
 # / `GcmBlockDecryptor`).
 module Parquet

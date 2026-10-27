@@ -15,8 +15,8 @@ require "../file/column_crypto_metadata"
 # is the `BlockDecryptor` abstract class; `Arc<dyn KeyRetriever>` is the
 # `KeyRetriever` abstract class; `Result` errors raise `Parquet::GeneralError`;
 # `HashMap` is a `Hash`; `usize` ordinals are `Int32`; the payload-carrying
-# `DecryptionKeys` enum is a struct with a `Kind`; `HeapSize`/`Send`/`Sync` are
-# not ported.
+# `DecryptionKeys` enum is a struct with a `Kind`; `Send`/`Sync` bounds are omitted. Native `HeapSize` lives in
+# file/metadata/memory.cr.
 module Parquet
   module Encryption
     # Retrieves a decryption key using its metadata.

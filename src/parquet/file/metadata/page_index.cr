@@ -4,7 +4,7 @@
 # Ports `PageIndexProvider`, `RowGroupPageIndex`, `PageIndex`, and
 # `PageIndexBuilder`. Divergences: the trait's `as_any` downcast is not modelled
 # (no trait objects in Crystal) and predicate names are `?`-suffixed. The
-# `HeapSize` impl (`memory.rs`) is deferred.
+# native `HeapSize` implementation lives in memory.cr.
 module Parquet
   module File
     module Metadata

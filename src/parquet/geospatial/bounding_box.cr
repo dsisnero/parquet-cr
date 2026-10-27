@@ -7,7 +7,7 @@
 #
 # Divergences: the Rust `(f64, f64)` range tuples become scalar `min`/`max`
 # getters, the consuming builders (`with_xrange` etc.) mutate and return `self`
-# (Rust takes `mut self`), and the `HeapSize` impl is dropped (no analogue).
+# (Rust takes `mut self`), and native `HeapSize` lives in file/metadata/memory.cr.
 module Parquet
   module Geospatial
     # The bounding box of a geospatial column: X and Y ranges are always set,

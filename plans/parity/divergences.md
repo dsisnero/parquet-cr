@@ -51,8 +51,8 @@ The next work file is `plans/parity.md`, Phase 7 (asynchronous storage writes).
   raises `GeneralError` once set; not thread-safe). The accumulators are abstract
   classes, `update_wkb` catches `ParquetGeospatial::InvalidArgumentError`
   (upstream checks `Result::is_err`), `is_valid`/`is_z_valid`/`is_m_valid` keep
-  their upstream names, and the `HeapSize` impls are dropped. The domain types are
-  separate from the thrift structs, converted by
+  their upstream names, and native heap accounting lives in
+  `file/metadata/memory.cr`. The domain types are separate from the thrift structs, converted by
   `convert_geo_stats`/`convert_bounding_box` (read) and
   `geo_stats_to_thrift`/`bounding_box_to_thrift` (write) in place of the upstream
   `WriteThrift` impls on the domain types.
@@ -588,7 +588,7 @@ The next work file is `plans/parity.md`, Phase 7 (asynchronous storage writes).
   (re-binding `evp_aes_128_gcm`/`evp_aes_256_gcm` in `LibCrypto`, using
   `EVP_CipherUpdate` with a null output for AAD), and `Random::Secure` for the
   counter-nonce seed. Errors raise `Parquet::GeneralError`; `Send`/`Sync` and
-  `HeapSize` bounds are dropped; `RingGcmBlock{Encryptor,Decryptor}` are
+  native decryptor `HeapSize` replaces Rust layout accounting; `RingGcmBlock{Encryptor,Decryptor}` are
   `GcmBlock{Encryptor,Decryptor}` and `CounterNonce#get_bytes` is
   `CounterNonce#bytes`.
 - Thrift traits: `ReadThrift`, `WriteThrift`, and `WriteThriftField` are Rust
@@ -660,7 +660,7 @@ The next work file is `plans/parity.md`, Phase 7 (asynchronous storage writes).
 - `PageIndexProvider`: Rust trait with `as_any` downcasting is an abstract class;
   `as_any` is not modelled. Predicates use `?` (`has_column_indexes` →
   `column_indexes?`, `has_offset_indexes` → `offset_indexes?`, `is_complete` →
-  `complete?`). `PageIndex: HeapSize` (`memory.rs`) is deferred.
+  `complete?`). `PageIndex: HeapSize` uses the native accounting in `metadata/memory.cr`.
 - `PageIndexBuilder`: `empty_index`/`is_empty_index` are private instance methods
   (`empty_index`/`index_empty?`); the Rust `From<PageIndex>` impl maps to
   `PageIndexBuilder.new_from` (and `PageIndex#into_builder`). `ColumnIndexBuilder`
@@ -671,7 +671,7 @@ The next work file is `plans/parity.md`, Phase 7 (asynchronous storage writes).
   reference otherwise. `set_page_index` is public (upstream `pub(crate)`).
   `file_decryptor` is a plain `FileDecryptor?` (compared by value, as upstream)
   set via `with_file_decryptor`/`ParquetMetaDataBuilder#set_file_decryptor`;
-  `memory_size` (`HeapSize`) is deferred.
+  `memory_size` reports the native retained-byte estimate; see [metadata memory](../../docs/metadata-memory.md).
 - `ParquetMetaDataBuilder`: holds the fields directly rather than wrapping
   `ParquetMetaData`; the Rust `From<ParquetMetaData>` impl maps to
   `new_from_metadata`. `set_row_groups`/`set_page_index` keep upstream names under
@@ -1280,3 +1280,22 @@ The next work file is `plans/parity.md`, Phase 7 (asynchronous storage writes).
   Existing read-only ObjectStore subclasses retain their API through a default
   NYI put method. See [async storage](../../docs/async-storage.md) for lifecycle,
   failure semantics and tests. No dependency or installed shard was changed.
+
+## Metadata memory accounting
+
+`ParquetMetaData#memory_size` and recursive HeapSize support use Crystal layout,
+not Rust's Vec/Arc/hashbrown/enum sizes. MemorySize.retained counts native class
+storage, reserved array/hash buffers, String headers/text/terminators, and visible
+Slice bytes. Struct/scalar inline storage belongs to the containing object or
+array. There are no Arc reference-count allocations. Counts are Int64, not usize.
+Known row-group/schema and column/descriptor back-references are omitted;
+other shared references can be counted repeatedly. Custom page-index providers
+and application key retrievers remain opaque and excluded, as upstream.
+
+Native LogicalType classes and CRS text are allocated, unlike Rust enum data,
+and are included. Native index NaN-count buffers are also included; the pinned
+Rust memory.rs omits that buffer. These explicit differences make the estimate
+useful for the actual port's metadata caches. Read-only container layout queries
+follow Crystal 1.22; allocator overhead, GC bookkeeping and invisible backing
+capacity of Slice views are excluded. See [metadata memory](../../docs/metadata-memory.md)
+for exact accounting rules and tests. No installed shard was modified.

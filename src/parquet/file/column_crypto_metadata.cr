@@ -8,7 +8,7 @@ require "../thrift"
 # Ports `EncryptionWithColumnKey` and the `ColumnCryptoMetaData` union (column
 # chunk encryption metadata). Divergences: the payload-carrying Rust enum is a
 # `struct` with a `Kind` + payload (Crystal has no enums with payloads), matching
-# the `ColumnOrder`/`Compression` convention; `HeapSize` is not ported.
+# the `ColumnOrder`/`Compression` convention; native `HeapSize` lives in metadata/memory.cr.
 module Parquet
   module File
     # Encryption metadata for a column chunk encrypted with a column-specific key.

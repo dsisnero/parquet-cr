@@ -6,7 +6,7 @@ require "./bounding_box"
 # Ports `GeospatialStatistics`: the bounding box and geometry-type list attached
 # to a column chunk of a GEOMETRY or GEOGRAPHY column.
 #
-# Divergence: `HeapSize` has no analogue and is dropped.
+# Native `HeapSize` lives in file/metadata/memory.cr.
 module Parquet
   module Geospatial
     # Geospatial statistics for a Parquet column or dataset.

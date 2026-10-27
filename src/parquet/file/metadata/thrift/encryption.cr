@@ -14,7 +14,7 @@ require "../parquet_metadata"
 # Ports the encryption Thrift IDL: `AesGcmV1`, `AesGcmCtrV1`,
 # `EncryptionAlgorithm`, and `FileCryptoMetaData`. Divergences: the payload-
 # carrying `EncryptionAlgorithm` enum is a `struct` with a `Kind` + payload (see
-# `ColumnOrder`); `HeapSize` is not ported; the encrypted-footer reading helpers
+# `ColumnOrder`); native `HeapSize` lives in ../memory.cr; the encrypted-footer reading helpers
 # (`parquet_metadata_with_encryption`, `row_group_from_encrypted_thrift`,
 # `get_file_decryptor`) depend on the unported decryption-properties layer and
 # are deferred (see `plans/parity.md`).

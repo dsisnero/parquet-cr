@@ -145,3 +145,10 @@ output, matching upstream's error order. A later failure can leave a truncated
 or partial output. Native exceptions and contextual messages replace Rust error
 enums; argument errors return 2, runtime errors return 1. Help formatting and
 `--version` use the Crystal port's conventions and version.
+
+## Metadata cache budgets
+
+Use `ParquetMetaData#memory_size` to estimate the retained bytes of cached
+metadata, including loaded indexes and decryptor state. See
+[metadata memory estimates](metadata-memory.md) for native layout, ownership
+exclusions and verification rules.

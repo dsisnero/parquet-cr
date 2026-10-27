@@ -2043,7 +2043,7 @@ parquet/src/data_type.rs::method::super::ByteArray.as_mut_any	method	missing	-	a
 parquet/src/data_type.rs::method::super::ByteArray.decode	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::ByteArray.dict_encoding_size	method	ported	src/parquet/encodings/dict.cr	KeyStorage#dict_encoding_size
 parquet/src/data_type.rs::method::super::ByteArray.encode	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::super::ByteArray.heap_size	method	missing	-	auto-generated
+parquet/src/data_type.rs::method::super::ByteArray.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
 parquet/src/data_type.rs::method::super::ByteArray.set_data	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::ByteArray.set_from_bytes	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::ByteArray.skip	method	missing	-	auto-generated
@@ -2053,7 +2053,7 @@ parquet/src/data_type.rs::method::super::FixedLenByteArray.as_mut_any	method	mis
 parquet/src/data_type.rs::method::super::FixedLenByteArray.decode	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::FixedLenByteArray.dict_encoding_size	method	ported	src/parquet/encodings/dict.cr	KeyStorage#dict_encoding_size
 parquet/src/data_type.rs::method::super::FixedLenByteArray.encode	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::super::FixedLenByteArray.heap_size	method	missing	-	auto-generated
+parquet/src/data_type.rs::method::super::FixedLenByteArray.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
 parquet/src/data_type.rs::method::super::FixedLenByteArray.set_data	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::FixedLenByteArray.set_from_bytes	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::FixedLenByteArray.skip	method	missing	-	auto-generated
@@ -2061,7 +2061,7 @@ parquet/src/data_type.rs::method::super::Int96.as_any	method	missing	-	auto-gene
 parquet/src/data_type.rs::method::super::Int96.as_mut_any	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::Int96.decode	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::Int96.encode	method	missing	-	auto-generated
-parquet/src/data_type.rs::method::super::Int96.heap_size	method	missing	-	auto-generated
+parquet/src/data_type.rs::method::super::Int96.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
 parquet/src/data_type.rs::method::super::Int96.set_data	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::super::Int96.skip	method	missing	-	auto-generated
 parquet/src/encodings/alp.rs::const::ALP_COMPRESSION_MODE	const	ported	src/parquet/encodings/alp.cr	Alp::ALP_COMPRESSION_MODE
@@ -2358,7 +2358,7 @@ parquet/src/encryption/ciphers.rs::method::CounterNonce.get_bytes	method	ported	
 parquet/src/encryption/ciphers.rs::method::CounterNonce.new	method	ported	src/parquet/encryption/ciphers.cr	CounterNonce.new
 parquet/src/encryption/ciphers.rs::method::RingGcmBlockDecryptor.compute_plaintext_tag	method	ported	src/parquet/encryption/ciphers.cr	GcmBlockDecryptor#compute_plaintext_tag
 parquet/src/encryption/ciphers.rs::method::RingGcmBlockDecryptor.decrypt	method	ported	src/parquet/encryption/ciphers.cr	GcmBlockDecryptor#decrypt
-parquet/src/encryption/ciphers.rs::method::RingGcmBlockDecryptor.heap_size	method	intentional_divergence	src/parquet/encryption/ciphers.cr	no HeapSize trait in Crystal
+parquet/src/encryption/ciphers.rs::method::RingGcmBlockDecryptor.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
 parquet/src/encryption/ciphers.rs::method::RingGcmBlockDecryptor.new	method	ported	src/parquet/encryption/ciphers.cr	GcmBlockDecryptor.new
 parquet/src/encryption/ciphers.rs::method::RingGcmBlockEncryptor.encrypt	method	ported	src/parquet/encryption/ciphers.cr	GcmBlockEncryptor#encrypt
 parquet/src/encryption/ciphers.rs::method::RingGcmBlockEncryptor.new	method	ported	src/parquet/encryption/ciphers.cr	GcmBlockEncryptor.new
@@ -2373,7 +2373,7 @@ parquet/src/encryption/decrypt.rs::method::CryptoContext.for_dictionary_page	met
 parquet/src/encryption/decrypt.rs::method::CryptoContext.metadata_decryptor	method	ported	src/parquet/encryption/decrypt.cr	CryptoContext.metadata_decryptor
 parquet/src/encryption/decrypt.rs::method::CryptoContext.with_page_ordinal	method	ported	src/parquet/encryption/decrypt.cr	CryptoContext.with_page_ordinal
 parquet/src/encryption/decrypt.rs::method::DecryptionKeys.eq	method	ported	src/parquet/encryption/decrypt.cr	DecryptionKeys#== (ViaRetriever always equal)
-parquet/src/encryption/decrypt.rs::method::DecryptionKeys.heap_size	method	intentional_divergence	src/parquet/encryption/decrypt.cr	no HeapSize trait
+parquet/src/encryption/decrypt.rs::method::DecryptionKeys.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
 parquet/src/encryption/decrypt.rs::method::DecryptionPropertiesBuilder.build	method	ported	src/parquet/encryption/decrypt.cr	DecryptionPropertiesBuilder.build
 parquet/src/encryption/decrypt.rs::method::DecryptionPropertiesBuilder.disable_footer_signature_verification	method	ported	src/parquet/encryption/decrypt.cr	DecryptionPropertiesBuilder.disable_footer_signature_verification
 parquet/src/encryption/decrypt.rs::method::DecryptionPropertiesBuilder.new	method	ported	src/parquet/encryption/decrypt.cr	DecryptionPropertiesBuilder.new
@@ -2384,7 +2384,7 @@ parquet/src/encryption/decrypt.rs::method::DecryptionPropertiesBuilderWithRetrie
 parquet/src/encryption/decrypt.rs::method::DecryptionPropertiesBuilderWithRetriever.disable_footer_signature_verification	method	ported	src/parquet/encryption/decrypt.cr	DecryptionPropertiesBuilderWithRetriever.disable_footer_signature_verification
 parquet/src/encryption/decrypt.rs::method::DecryptionPropertiesBuilderWithRetriever.new	method	ported	src/parquet/encryption/decrypt.cr	DecryptionPropertiesBuilderWithRetriever.new
 parquet/src/encryption/decrypt.rs::method::DecryptionPropertiesBuilderWithRetriever.with_aad_prefix	method	ported	src/parquet/encryption/decrypt.cr	DecryptionPropertiesBuilderWithRetriever.with_aad_prefix
-parquet/src/encryption/decrypt.rs::method::ExplicitDecryptionKeys.heap_size	method	intentional_divergence	src/parquet/encryption/decrypt.cr	no HeapSize trait
+parquet/src/encryption/decrypt.rs::method::ExplicitDecryptionKeys.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
 parquet/src/encryption/decrypt.rs::method::FileDecryptionProperties.aad_prefix	method	ported	src/parquet/encryption/decrypt.cr	FileDecryptionProperties.aad_prefix
 parquet/src/encryption/decrypt.rs::method::FileDecryptionProperties.builder	method	ported	src/parquet/encryption/decrypt.cr	FileDecryptionProperties.builder
 parquet/src/encryption/decrypt.rs::method::FileDecryptionProperties.check_plaintext_footer_integrity	method	ported	src/parquet/encryption/decrypt.cr	FileDecryptionProperties.check_plaintext_footer_integrity
@@ -2392,7 +2392,7 @@ parquet/src/encryption/decrypt.rs::method::FileDecryptionProperties.column_key	m
 parquet/src/encryption/decrypt.rs::method::FileDecryptionProperties.column_keys	method	ported	src/parquet/encryption/decrypt.cr	FileDecryptionProperties.column_keys
 parquet/src/encryption/decrypt.rs::method::FileDecryptionProperties.fmt	method	ported	src/parquet/encryption/decrypt.cr	FileDecryptionProperties#to_s (hides keys)
 parquet/src/encryption/decrypt.rs::method::FileDecryptionProperties.footer_key	method	ported	src/parquet/encryption/decrypt.cr	FileDecryptionProperties.footer_key
-parquet/src/encryption/decrypt.rs::method::FileDecryptionProperties.heap_size	method	intentional_divergence	src/parquet/encryption/decrypt.cr	no HeapSize trait
+parquet/src/encryption/decrypt.rs::method::FileDecryptionProperties.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
 parquet/src/encryption/decrypt.rs::method::FileDecryptionProperties.uses_key_retriever	method	ported	src/parquet/encryption/decrypt.cr	FileDecryptionProperties#uses_key_retriever?
 parquet/src/encryption/decrypt.rs::method::FileDecryptionProperties.with_key_retriever	method	ported	src/parquet/encryption/decrypt.cr	FileDecryptionProperties.with_key_retriever
 parquet/src/encryption/decrypt.rs::method::FileDecryptor.eq	method	ported	src/parquet/encryption/decrypt.cr	FileDecryptor.eq
@@ -2400,7 +2400,7 @@ parquet/src/encryption/decrypt.rs::method::FileDecryptor.file_aad	method	ported	
 parquet/src/encryption/decrypt.rs::method::FileDecryptor.get_column_data_decryptor	method	ported	src/parquet/encryption/decrypt.cr	FileDecryptor.get_column_data_decryptor
 parquet/src/encryption/decrypt.rs::method::FileDecryptor.get_column_metadata_decryptor	method	ported	src/parquet/encryption/decrypt.cr	FileDecryptor.get_column_metadata_decryptor
 parquet/src/encryption/decrypt.rs::method::FileDecryptor.get_footer_decryptor	method	ported	src/parquet/encryption/decrypt.cr	FileDecryptor#footer_decryptor
-parquet/src/encryption/decrypt.rs::method::FileDecryptor.heap_size	method	intentional_divergence	src/parquet/encryption/decrypt.cr	no HeapSize trait
+parquet/src/encryption/decrypt.rs::method::FileDecryptor.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
 parquet/src/encryption/decrypt.rs::method::FileDecryptor.new	method	ported	src/parquet/encryption/decrypt.cr	FileDecryptor.new
 parquet/src/encryption/decrypt.rs::method::FileDecryptor.verify_plaintext_footer_signature	method	ported	src/parquet/encryption/decrypt.cr	FileDecryptor.verify_plaintext_footer_signature
 parquet/src/encryption/encrypt.rs::method::EncryptionKey.key	method	ported	src/parquet/encryption/encrypt.cr	EncryptionKey.key
@@ -2435,46 +2435,46 @@ parquet/src/errors.rs::method::ParquetError.fmt	method	ported	src/parquet/errors
 parquet/src/errors.rs::method::ParquetError.from	method	ported	src/parquet/errors.cr	ParquetError subclass hierarchy; upstream Display strings preserved; Result mapped to exceptions
 parquet/src/errors.rs::method::ParquetError.source	method	ported	src/parquet/errors.cr	ParquetError subclass hierarchy; upstream Display strings preserved; Result mapped to exceptions
 parquet/src/errors.rs::method::io::Error.from	method	ported	src/parquet/errors.cr	ParquetError subclass hierarchy; upstream Display strings preserved; Result mapped to exceptions
-parquet/src/file/column_crypto_metadata.rs::method::ColumnCryptoMetaData.heap_size	method	intentional_divergence	src/parquet/file/column_crypto_metadata.cr	no HeapSize trait; ColumnCryptoMetaData ported
-parquet/src/file/column_crypto_metadata.rs::method::EncryptionWithColumnKey.heap_size	method	intentional_divergence	src/parquet/file/column_crypto_metadata.cr	no HeapSize trait; EncryptionWithColumnKey ported
+parquet/src/file/column_crypto_metadata.rs::method::ColumnCryptoMetaData.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/column_crypto_metadata.rs::method::EncryptionWithColumnKey.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
 parquet/src/file/metadata/footer_tail.rs::method::FooterTail.is_encrypted_footer	method	ported	src/parquet/file/metadata/footer_tail.cr	renamed FooterTail#encrypted_footer?
 parquet/src/file/metadata/footer_tail.rs::method::FooterTail.metadata_length	method	ported	src/parquet/file/metadata/footer_tail.cr	FooterTail
 parquet/src/file/metadata/footer_tail.rs::method::FooterTail.try_from	method	ported	src/parquet/file/metadata/footer_tail.cr	FooterTail
 parquet/src/file/metadata/footer_tail.rs::method::FooterTail.try_new	method	ported	src/parquet/file/metadata/footer_tail.cr	FooterTail
-parquet/src/file/metadata/memory.rs::method::Arc<T>.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::Arc<dyn HeapSize>.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::BoundaryOrder.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::Box<T>.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::ByteArrayColumnIndex.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::ColumnChunkMetaData.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::ColumnIndex.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::ColumnIndexMetaData.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::ColumnOrder.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::CompressionCodec.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::Encoding.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::FileMetaData.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::HashMap<K, V>.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::KeyValue.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::OffsetIndexMetaData.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::Option<T>.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::PageEncodingStats.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::PageLocation.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::PageType.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::ParquetPageEncodingStats.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::PrimitiveColumnIndex<T>.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::RowGroupMetaData.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::SortingColumn.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::Statistics.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::String.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::ValueStatistics<T>.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::Vec<T>.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::bool.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::f32.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::f64.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::i32.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::i64.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::u8.heap_size	method	missing	-	auto-generated
-parquet/src/file/metadata/memory.rs::method::usize.heap_size	method	missing	-	auto-generated
+parquet/src/file/metadata/memory.rs::method::Arc<T>.heap_size	method	intentional_divergence	src/parquet/file/metadata/memory.cr	MemorySize.retained replaces Rust container/pointer trait impls with Crystal class/array/hash/String/slice layout; no Arc counters; optional union dispatch; Int64 estimates exclude allocator overhead. See docs/metadata-memory.md.
+parquet/src/file/metadata/memory.rs::method::Arc<dyn HeapSize>.heap_size	method	intentional_divergence	src/parquet/file/metadata/memory.cr	MemorySize.retained replaces Rust container/pointer trait impls with Crystal class/array/hash/String/slice layout; no Arc counters; optional union dispatch; Int64 estimates exclude allocator overhead. See docs/metadata-memory.md.
+parquet/src/file/metadata/memory.rs::method::BoundaryOrder.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::Box<T>.heap_size	method	intentional_divergence	src/parquet/file/metadata/memory.cr	MemorySize.retained replaces Rust container/pointer trait impls with Crystal class/array/hash/String/slice layout; no Arc counters; optional union dispatch; Int64 estimates exclude allocator overhead. See docs/metadata-memory.md.
+parquet/src/file/metadata/memory.rs::method::ByteArrayColumnIndex.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::ColumnChunkMetaData.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::ColumnIndex.heap_size	method	intentional_divergence	src/parquet/file/metadata/memory.cr	Native footprint includes retained NaN-count buffer in addition to null counts/histograms; pinned Rust memory.rs omits nan_counts. See docs/metadata-memory.md.
+parquet/src/file/metadata/memory.rs::method::ColumnIndexMetaData.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::ColumnOrder.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::CompressionCodec.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::Encoding.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::FileMetaData.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::HashMap<K, V>.heap_size	method	intentional_divergence	src/parquet/file/metadata/memory.cr	MemorySize.retained replaces Rust container/pointer trait impls with Crystal class/array/hash/String/slice layout; no Arc counters; optional union dispatch; Int64 estimates exclude allocator overhead. See docs/metadata-memory.md.
+parquet/src/file/metadata/memory.rs::method::KeyValue.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::OffsetIndexMetaData.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::Option<T>.heap_size	method	intentional_divergence	src/parquet/file/metadata/memory.cr	MemorySize.retained replaces Rust container/pointer trait impls with Crystal class/array/hash/String/slice layout; no Arc counters; optional union dispatch; Int64 estimates exclude allocator overhead. See docs/metadata-memory.md.
+parquet/src/file/metadata/memory.rs::method::PageEncodingStats.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::PageLocation.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::PageType.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::ParquetPageEncodingStats.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::PrimitiveColumnIndex<T>.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::RowGroupMetaData.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::SortingColumn.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::Statistics.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::String.heap_size	method	intentional_divergence	src/parquet/file/metadata/memory.cr	MemorySize.retained replaces Rust container/pointer trait impls with Crystal class/array/hash/String/slice layout; no Arc counters; optional union dispatch; Int64 estimates exclude allocator overhead. See docs/metadata-memory.md.
+parquet/src/file/metadata/memory.rs::method::ValueStatistics<T>.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::Vec<T>.heap_size	method	intentional_divergence	src/parquet/file/metadata/memory.cr	MemorySize.retained replaces Rust container/pointer trait impls with Crystal class/array/hash/String/slice layout; no Arc counters; optional union dispatch; Int64 estimates exclude allocator overhead. See docs/metadata-memory.md.
+parquet/src/file/metadata/memory.rs::method::bool.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::f32.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::f64.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::i32.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::i64.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::u8.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/memory.rs::method::usize.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.bloom_filter_length	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.bloom_filter_offset	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.builder	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
@@ -2567,7 +2567,7 @@ parquet/src/file/metadata/mod.rs::method::KeyValue.new	method	ported	src/parquet
 parquet/src/file/metadata/mod.rs::method::LevelHistogram.add	method	ported	src/parquet/file/metadata.cr	LevelHistogram
 parquet/src/file/metadata/mod.rs::method::LevelHistogram.from	method	ported	src/parquet/file/metadata.cr	LevelHistogram
 parquet/src/file/metadata/mod.rs::method::LevelHistogram.get	method	ported	src/parquet/file/metadata.cr	LevelHistogram
-parquet/src/file/metadata/mod.rs::method::LevelHistogram.heap_size	method	missing	-	auto-generated
+parquet/src/file/metadata/mod.rs::method::LevelHistogram.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
 parquet/src/file/metadata/mod.rs::method::LevelHistogram.increment_by	method	ported	src/parquet/file/metadata.cr	LevelHistogram
 parquet/src/file/metadata/mod.rs::method::LevelHistogram.into_inner	method	ported	src/parquet/file/metadata.cr	LevelHistogram
 parquet/src/file/metadata/mod.rs::method::LevelHistogram.is_empty	method	ported	src/parquet/file/metadata.cr	renamed LevelHistogram#empty?
@@ -2586,7 +2586,7 @@ parquet/src/file/metadata/mod.rs::method::ParquetMetaData.eq	method	ported	src/p
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.file_decryptor	method	ported	src/parquet/file/metadata/parquet_metadata.cr	getter (FileDecryptor?)
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.file_metadata	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.into_builder	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
-parquet/src/file/metadata/mod.rs::method::ParquetMetaData.memory_size	method	intentional_divergence	src/parquet/file/metadata/parquet_metadata.cr	HeapSize (memory.rs) not ported
+parquet/src/file/metadata/mod.rs::method::ParquetMetaData.memory_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.new	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.num_row_groups	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.page_index	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
@@ -2658,7 +2658,7 @@ parquet/src/file/metadata/page_index.rs::method::PageIndex.column_index	method	p
 parquet/src/file/metadata/page_index.rs::method::PageIndex.column_indexes_raw	method	ported	src/parquet/file/metadata/page_index.cr	PageIndex
 parquet/src/file/metadata/page_index.rs::method::PageIndex.has_column_indexes	method	ported	src/parquet/file/metadata/page_index.cr	renamed PageIndex#column_indexes?
 parquet/src/file/metadata/page_index.rs::method::PageIndex.has_offset_indexes	method	ported	src/parquet/file/metadata/page_index.cr	renamed PageIndex#offset_indexes?
-parquet/src/file/metadata/page_index.rs::method::PageIndex.heap_size	method	intentional_divergence	src/parquet/file/metadata/page_index.cr	HeapSize (memory.rs) not ported
+parquet/src/file/metadata/page_index.rs::method::PageIndex.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
 parquet/src/file/metadata/page_index.rs::method::PageIndex.into_builder	method	ported	src/parquet/file/metadata/page_index.cr	PageIndex
 parquet/src/file/metadata/page_index.rs::method::PageIndex.new	method	ported	src/parquet/file/metadata/page_index.cr	PageIndex
 parquet/src/file/metadata/page_index.rs::method::PageIndex.offset_index	method	ported	src/parquet/file/metadata/page_index.cr	PageIndex
@@ -2730,9 +2730,9 @@ parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_metadata
 parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_offset_index_policy	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
 parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_page_index_policy	method	ported	src/parquet/file/metadata/reader.cr	ParquetMetaDataReader
 parquet/src/file/metadata/reader.rs::method::ParquetMetaDataReader.with_prefetch_hint	method	ported	src/parquet/file/metadata/async_reader.cr,src/parquet/arrow/async_reader/metadata.cr	Yielding bounded/suffix metadata loads, closure adapters, min-eight-byte prefetch, exact request counts, remainder/index reuse and decryption; Int32 buffers replace usize.
-parquet/src/file/metadata/thrift/encryption.rs::method::AesGcmCtrV1.heap_size	method	intentional_divergence	src/parquet/file/metadata/thrift/encryption.cr	no HeapSize trait; AesGcmCtrV1 ported
-parquet/src/file/metadata/thrift/encryption.rs::method::AesGcmV1.heap_size	method	intentional_divergence	src/parquet/file/metadata/thrift/encryption.cr	no HeapSize trait; AesGcmV1 ported
-parquet/src/file/metadata/thrift/encryption.rs::method::EncryptionAlgorithm.heap_size	method	intentional_divergence	src/parquet/file/metadata/thrift/encryption.cr	no HeapSize trait; EncryptionAlgorithm ported
+parquet/src/file/metadata/thrift/encryption.rs::method::AesGcmCtrV1.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/thrift/encryption.rs::method::AesGcmV1.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
+parquet/src/file/metadata/thrift/encryption.rs::method::EncryptionAlgorithm.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
 parquet/src/file/metadata/thrift/mod.rs::const::COL_META_ALL_REQUIRED	const	missing	-	auto-generated
 parquet/src/file/metadata/thrift/mod.rs::const::COL_META_CODEC	const	missing	-	auto-generated
 parquet/src/file/metadata/thrift/mod.rs::const::COL_META_DATA_PAGE_OFFSET	const	missing	-	auto-generated
@@ -3135,7 +3135,7 @@ parquet/src/geospatial/bounding_box.rs::method::BoundingBox.get_ymax	method	port
 parquet/src/geospatial/bounding_box.rs::method::BoundingBox.get_ymin	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox#ymin
 parquet/src/geospatial/bounding_box.rs::method::BoundingBox.get_zmax	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox#zmax
 parquet/src/geospatial/bounding_box.rs::method::BoundingBox.get_zmin	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox#zmin
-parquet/src/geospatial/bounding_box.rs::method::BoundingBox.heap_size	method	intentional_divergence	src/parquet/geospatial/bounding_box.cr	HeapSize not ported
+parquet/src/geospatial/bounding_box.rs::method::BoundingBox.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
 parquet/src/geospatial/bounding_box.rs::method::BoundingBox.is_m_valid	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox#is_m_valid (upstream name)
 parquet/src/geospatial/bounding_box.rs::method::BoundingBox.is_z_valid	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox#is_z_valid (upstream name)
 parquet/src/geospatial/bounding_box.rs::method::BoundingBox.new	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox.new
@@ -3145,7 +3145,7 @@ parquet/src/geospatial/bounding_box.rs::method::BoundingBox.with_yrange	method	p
 parquet/src/geospatial/bounding_box.rs::method::BoundingBox.with_zrange	method	ported	src/parquet/geospatial/bounding_box.cr	BoundingBox#with_zrange (mutates, returns self)
 parquet/src/geospatial/statistics.rs::method::GeospatialStatistics.bounding_box	method	ported	src/parquet/geospatial/statistics.cr	GeospatialStatistics#bounding_box
 parquet/src/geospatial/statistics.rs::method::GeospatialStatistics.geospatial_types	method	ported	src/parquet/geospatial/statistics.cr	GeospatialStatistics#geospatial_types
-parquet/src/geospatial/statistics.rs::method::GeospatialStatistics.heap_size	method	intentional_divergence	src/parquet/geospatial/statistics.cr	HeapSize not ported
+parquet/src/geospatial/statistics.rs::method::GeospatialStatistics.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
 parquet/src/geospatial/statistics.rs::method::GeospatialStatistics.new	method	ported	src/parquet/geospatial/statistics.cr	GeospatialStatistics.new
 parquet/src/parquet_thrift.rs::const::DEFAULT_SKIP_DEPTH	const	ported	src/parquet/thrift.cr	inlined as 64 in ThriftCompactInputProtocol#skip
 parquet/src/parquet_thrift.rs::const::ELEMENT_TYPE	const	intentional_divergence	src/parquet/thrift.cr	Rust associated const ELEMENT_TYPE; replaced by Thrift.element_type_of
@@ -3308,7 +3308,7 @@ parquet/src/schema/types.rs::const::VALID_FIELDS	const	intentional_divergence	sr
 parquet/src/schema/types.rs::method::BasicTypeInfo.converted_type	method	ported	src/parquet/schema/types.cr	BasicTypeInfo ported
 parquet/src/schema/types.rs::method::BasicTypeInfo.has_id	method	ported	src/parquet/schema/types.cr	renamed BasicTypeInfo#has_id?
 parquet/src/schema/types.rs::method::BasicTypeInfo.has_repetition	method	ported	src/parquet/schema/types.cr	renamed BasicTypeInfo#has_repetition?
-parquet/src/schema/types.rs::method::BasicTypeInfo.heap_size	method	missing	-	auto-generated
+parquet/src/schema/types.rs::method::BasicTypeInfo.heap_size	method	intentional_divergence	src/parquet/file/metadata/memory.cr	Counts allocated native LogicalType classes and CRS text as well as field names; Rust logical-type enum data is inline and excluded from its heap_size. See docs/metadata-memory.md.
 parquet/src/schema/types.rs::method::BasicTypeInfo.id	method	ported	src/parquet/schema/types.cr	BasicTypeInfo ported
 parquet/src/schema/types.rs::method::BasicTypeInfo.logical_type_ref	method	ported	src/parquet/schema/types.cr	BasicTypeInfo ported
 parquet/src/schema/types.rs::method::BasicTypeInfo.name	method	ported	src/parquet/schema/types.cr	BasicTypeInfo ported
@@ -3316,7 +3316,7 @@ parquet/src/schema/types.rs::method::BasicTypeInfo.repetition	method	ported	src/
 parquet/src/schema/types.rs::method::BasicTypeInfo.sort_order	method	ported	src/parquet/schema/types.cr	BasicTypeInfo ported
 parquet/src/schema/types.rs::method::ColumnDescriptor.converted_type	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
 parquet/src/schema/types.rs::method::ColumnDescriptor.get_basic_info	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
-parquet/src/schema/types.rs::method::ColumnDescriptor.heap_size	method	missing	-	auto-generated
+parquet/src/schema/types.rs::method::ColumnDescriptor.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
 parquet/src/schema/types.rs::method::ColumnDescriptor.logical_type_ref	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
 parquet/src/schema/types.rs::method::ColumnDescriptor.max_def_level	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
 parquet/src/schema/types.rs::method::ColumnDescriptor.max_rep_level	method	ported	src/parquet/schema/types.cr	ColumnDescriptor ported
@@ -3336,7 +3336,7 @@ parquet/src/schema/types.rs::method::ColumnPath.append	method	ported	src/parquet
 parquet/src/schema/types.rs::method::ColumnPath.as_ref	method	ported	src/parquet/schema/types.cr	ColumnPath#parts ported
 parquet/src/schema/types.rs::method::ColumnPath.fmt	method	ported	src/parquet/schema/types.cr	ColumnPath ported
 parquet/src/schema/types.rs::method::ColumnPath.from	method	ported	src/parquet/schema/types.cr	ColumnPath ported
-parquet/src/schema/types.rs::method::ColumnPath.heap_size	method	missing	-	auto-generated
+parquet/src/schema/types.rs::method::ColumnPath.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
 parquet/src/schema/types.rs::method::ColumnPath.new	method	ported	src/parquet/schema/types.cr	ColumnPath ported
 parquet/src/schema/types.rs::method::ColumnPath.parts	method	ported	src/parquet/schema/types.cr	ColumnPath ported
 parquet/src/schema/types.rs::method::ColumnPath.string	method	ported	src/parquet/schema/types.cr	ColumnPath ported
@@ -3364,7 +3364,7 @@ parquet/src/schema/types.rs::method::SchemaDescriptor.fmt	method	ported	src/parq
 parquet/src/schema/types.rs::method::SchemaDescriptor.get_column_root	method	ported	src/parquet/schema/types.cr	SchemaDescriptor ported
 parquet/src/schema/types.rs::method::SchemaDescriptor.get_column_root_idx	method	ported	src/parquet/schema/types.cr	SchemaDescriptor ported
 parquet/src/schema/types.rs::method::SchemaDescriptor.get_column_root_ptr	method	ported	src/parquet/schema/types.cr	SchemaDescriptor ported
-parquet/src/schema/types.rs::method::SchemaDescriptor.heap_size	method	missing	-	auto-generated
+parquet/src/schema/types.rs::method::SchemaDescriptor.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
 parquet/src/schema/types.rs::method::SchemaDescriptor.name	method	ported	src/parquet/schema/types.cr	SchemaDescriptor ported
 parquet/src/schema/types.rs::method::SchemaDescriptor.new	method	ported	src/parquet/schema/types.cr	SchemaDescriptor ported
 parquet/src/schema/types.rs::method::SchemaDescriptor.num_columns	method	ported	src/parquet/schema/types.cr	SchemaDescriptor ported
@@ -3378,7 +3378,7 @@ parquet/src/schema/types.rs::method::Type.get_precision	method	ported	src/parque
 parquet/src/schema/types.rs::method::Type.get_scale	method	ported	src/parquet/schema/types.cr	Type ported
 parquet/src/schema/types.rs::method::Type.group_type_builder	method	ported	src/parquet/schema/types.cr	Type ported
 parquet/src/schema/types.rs::method::Type.has_single_repeated_child	method	missing	-	auto-generated
-parquet/src/schema/types.rs::method::Type.heap_size	method	missing	-	auto-generated
+parquet/src/schema/types.rs::method::Type.heap_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
 parquet/src/schema/types.rs::method::Type.is_group	method	ported	src/parquet/schema/types.cr	renamed Type#group?
 parquet/src/schema/types.rs::method::Type.is_list	method	missing	-	auto-generated
 parquet/src/schema/types.rs::method::Type.is_optional	method	ported	src/parquet/schema/types.cr	renamed Type#optional? (Type)

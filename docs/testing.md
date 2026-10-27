@@ -117,3 +117,11 @@ crystal spec spec/parquet/arrow/async_reader_spec.cr \
   spec/parquet/arrow/async_store_spec.cr spec/parquet/arrow/async_spawn_spec.cr \
   spec/parquet/arrow/async_writer_spec.cr spec/parquet/arrow/async_writer_store_spec.cr
 ```
+
+## Metadata memory accounting
+
+See [metadata memory estimates](metadata-memory.md) for native layout and
+ownership rules. `spec/parquet/file/metadata_memory_spec.cr` ports upstream
+memory/decryptor assertions with exact Crystal-layout sums and verifies parsed
+file/index integration, opaque providers, encryption/geospatial payloads and
+retained container capacity.

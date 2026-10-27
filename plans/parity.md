@@ -14,41 +14,41 @@
 
 ## Where we are
 
-- **Current focus:** Phase 7 — Asynchronous storage writes is complete on
-  `codex/async-storage-writes`. All seven planned capability phases are delivered.
-  The storage/concurrency decisions and writer lifecycle are recorded in
-  [async storage](../docs/async-storage.md); no new shard is required.
+- **Current focus:** Phase 8 — Metadata memory accounting is complete on
+  `codex/metadata-memory-accounting`. Resume with Phase 9. The first seven
+  capability phases remain delivered; exact remaining coverage lives in the
+  ledger. Native memory rules are in [metadata memory](../docs/metadata-memory.md).
 - **Next up**, in order:
-  1. Select the next complete capability from the **Deferred compatibility
-     decisions** and remaining ledger coverage below before implementation.
-     The seven-phase queue is complete; 459 `missing` symbols remain, so this is
-     not a claim of full upstream parity. Keep future phases feature-sized and
-     reconcile helper/test rows with their owning capability.
-- **Last completed feature:** `port: asynchronous storage writes`, on
-  `codex/async-storage-writes`. Eighteen upstream-derived/characterization specs
-  cover sync byte equivalence, file/memory/HTTP output, accounting, chunk
-  ownership, backpressure, options/metadata, flush/finish and error propagation.
-  Tests first failed on the missing sink API and later on read-only HTTP storage;
-  both red-green cycles are complete. Previous feature: `8cf8ce7` (async reads).
-- **Last code gates:** `make lint` (198 files), `make test` (1918 examples),
-  `make test-extensions` (1924 examples), no-codegen library build, scoped
+  1. **Phase 9 — Typed physical-column API compatibility**, bundle public
+     physical-type descriptors, native typed dispatch bridges and end-to-end
+     column read/write tests. Port tests first; marker/helper APIs alone are not
+     the feature.
+  2. Reconcile remaining tests/benchmarks/source-only rows with their owning
+     capability and select further complete features from the deferred decisions.
+     There are 416 `missing` symbols; this is not a claim of full upstream parity.
+- **Last completed feature:** `port: metadata memory accounting`, on
+  `codex/metadata-memory-accounting`. Twelve upstream-derived/characterization
+  specs assert exact native-layout totals, schema exclusions, container reserve,
+  statistics/index/encryption/geospatial payloads, opaque providers/retrievers
+  and real parsed metadata. Red-green tests exposed missing API, omitted class
+  storage and logical-type/CRS allocations. Previous feature: `f5c6c86` (async writes).
+- **Last code gates:** `make lint` (199 files), `make test` (1930 examples),
+  `make test-extensions` (1936 examples), no-codegen library build, scoped
   inventory validation (3515 items), and `git diff --check`, all green with
-  zero failures/errors/pending. HTTP tests use an ephemeral loopback server;
-  no external service or cloud credentials are needed. Output matches the
-  synchronous writer byte for byte on the upstream tiny-pages fixture.
+  zero failures/errors/pending. The full suites retain their loopback-only HTTP
+  integration; no external service or cloud credentials are needed.
 - **Dependency requirements:** sibling arrow-cr supplies extension machinery
   (`925255d`) and canonical Uuid/Json types. Existing Decimal256 prerequisites
   remain `9a5612c`, `b05366a` and `49d07ce`; see the resolved dependency notes in
   `shards_info/`. No shard patch or dependency edit was made.
-- **Ledger counts:** 2788 `ported`, 240 `intentional_divergence`, 28 `skipped`,
-  459 `missing` (3515 total).
+- **Ledger counts:** 2836 `ported`, 235 `intentional_divergence`, 28 `skipped`,
+  416 `missing` (3515 total).
 - **Plan layout:** this file is the active feature queue and completion record.
   [Implementation reference](parity/implementation-reference.md) is a complete
   archival snapshot of earlier module-level evidence, including stale historical
   checkboxes. [Divergences](parity/divergences.md) is a maintained reference for
   representation differences and verification notes. Neither is a separate
-  work queue. Define future feature phases in this file; update divergences as
-  needed.
+  work queue. Work next in this file, Phase 9; update divergences as needed.
 
 ## Feature sizing and completion
 
@@ -327,19 +327,57 @@ mapping are recorded in [async storage](../docs/async-storage.md) and
 The ledger closes all 24 async-writer rows, with nine explicit representation/
 storage divergences. All gates recorded above pass.
 
+## Phase 8 — Metadata memory accounting
+
+- [x] Report a usable retained-byte estimate for complete Parquet metadata,
+  including schemas, row groups, statistics, page indexes and decryption state.
+
+Selected from the remaining memory-size coverage as a public metadata-cache
+capability, rather than a standalone container helper. The source is
+`file/metadata/memory.rs`, `ParquetMetaData::memory_size`, and their schema,
+encryption and geospatial dependencies at the pinned upstream revision.
+
+Implemented in `src/parquet/file/metadata/memory.cr`, exported by
+`src/parquet.cr`. Twelve upstream-derived/characterization specs ported the
+upstream memory/decryptor tests before implementation and failed on the missing
+public API. Independent exact native-layout sums then caught omitted class
+storage; a later red-green logical-type test caught class/CRS allocations.
+Coverage includes parsed metadata with loaded indexes, shared-schema exclusions,
+reserved array/hash capacity, byte statistics/indexes, NaN counts/histograms,
+encryption/geospatial payloads and opaque providers/retrievers.
+
+Native HeapSize/MemorySize accounting includes class storage and container
+capacity without Rust Arc/hashbrown assumptions; numerical layouts differ.
+Logical-type allocations and native NaN-count buffers are included explicitly.
+See [metadata memory](../docs/metadata-memory.md) and
+[divergences](parity/divergences.md) for exact ownership/estimate rules and
+limitations. The ledger reconciles 57 rows, including 14 previous heap-size
+deferrals. All gates above pass. No shard patch or dependency change was made.
+
+## Phase 9 — Typed physical-column API compatibility
+
+- [ ] Write and read all eight Parquet physical value types through the public
+  typed descriptor/column API, with upstream type dispatch and mismatch errors.
+
+Bundle `data_type.rs`'s DataType/physical-type descriptors and make_type machinery
+with the existing typed column reader/writer dispatch and serialized-column
+entry points. Preserve a bridge to native `T.class` callers. Port upstream tests
+first and verify complete files, null/definition/repetition levels and rejected
+physical-type mismatches; descriptors or macro scaffolding alone do not complete
+this phase. This resolves the first generic-API compatibility decision rather
+than creating separate phases for every marker/helper.
+
 ## Deferred compatibility decisions
 
 These remain visible in the API ledger and divergence reference. They are not
 standalone helper phases or automatic next tasks:
 
-- Generic `DataType`/`make_type!` and `column/mod.rs` typed dispatch: the port
-  currently uses Crystal generic classes and `T.class` dispatch. If an upstream
-  compatibility feature is chosen, bundle its public typed reader/writer API,
-  dispatch, tests and any required macros into one capability.
+- Generic `DataType`/`make_type!` and typed dispatch are now selected as Phase 9
+  above; the existing native `T.class` API remains the compatibility bridge.
 - Generic mixed-union Thrift macros: concrete logical/column-order/encryption
   unions already have implementations. Introduce generic macro support only as
   a complete reusable API with generated read/write and round-trip tests.
-- Remaining tests, benches/examples, memory-size traits and source-only symbols:
+- Remaining tests, benches/examples and source-only symbols:
   reconcile with their owning feature or document a deliberate divergence;
   do not turn each missing row into a feature commit. The ledger retains all
   outstanding rows and remains the authority for exact symbol coverage.
