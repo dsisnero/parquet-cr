@@ -216,7 +216,8 @@ describe Parquet::Arrow::ParquetRecordBatchReader do
   it "reads primitive columns with a projection mask" do
     reader_file = serialized_reader("alltypes_plain.parquet")
     builder = PArrow::ParquetRecordBatchReaderBuilder.try_new(reader_file)
-    # Exclude the INT96 timestamp column (not ported).
+    # Keep this projection test focused on the first ten columns; rewrite specs
+    # also cover the legacy INT96 timestamp column.
     mask = PArrow::ProjectionMask.leaves(
       reader_file.metadata.file_metadata.schema_descr, (0...10).to_a
     )

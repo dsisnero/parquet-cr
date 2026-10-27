@@ -4,7 +4,7 @@ Status: **maintained reference**; existing entries are recorded decisions, with
 remaining implementation gaps tracked in the [active plan](../parity.md) and
 [API ledger](../inventory/rust_port_inventory.tsv). Update this file when a
 feature changes a documented divergence; it is not a separate feature queue.
-The next work file is `plans/parity.md`, Phase 4 (Parquet rewrite command).
+The next work file is `plans/parity.md`, Phase 5 (CSV import command).
 
 
 - Errors: Rust `Result<T, E>` is mapped to Crystal exceptions. Fallible
@@ -203,9 +203,9 @@ The next work file is `plans/parity.md`, Phase 4 (Parquet rewrite command).
   use `ParquetFieldType::Virtual` and file-global metadata supplied through
   `with_parquet_metadata` in both sync and push readers. The per-field
   `ReaderArgs` struct is replaced by explicit
-  `(field, mask, padding_threshold)` parameters. `INT96` (the only leaf reader
-  not ported, because the numeric primitive reader does not model it) raises
-  `NYIError`.
+  `(field, mask, padding_threshold)` parameters. INT96 now decodes to Int64
+  timestamps at the requested second/millisecond/microsecond/nanosecond resolution,
+  preserving null masks, timezone hints and the native wrapping conversions.
 - Virtual columns: `RowNumber`/`RowGroupIndex` are Arrow extension classes with
   Int64 storage and empty-string metadata. Rust's Any downcast is Crystal
   `is_a?`/`as?`; batch/skip counts remain Int32. Row numbers keep unmaterialized
@@ -905,7 +905,23 @@ The next work file is `plans/parity.md`, Phase 4 (Parquet rewrite command).
   `to_s`; `parquet-show-bloom-filter` raises on an invalid column path (upstream
   prints and exits); `parquet-schema` (`-v`/`--verbose`) and `parquet-concat`
   (`concat`/`run`, taking an output `IO` and `ChunkReader`s) write to an `IO`.
-  `parquet-rewrite`/`parquet-fromcsv` need `arrow` and are deferred.
+  `parquet-rewrite` now streams Arrow reader batches to ArrowWriter, with
+  characterization specs for every CLI option and public file behavior.
+  Clap's private value enums are folded into validated Args tables and property
+  mapping, preserving kebab spellings, booleans, bloom dependencies and page
+  statistics precedence. OptionParser renders diagnostics/help; argument errors
+  return 2, runtime errors 1, and version output uses the port package version.
+  Size options fit Int32 rather than usize; compression level retains u32 parsing
+  and the upstream Zstd wrapping cast. Source metadata arrays are copied and
+  ArrowWriter refreshes ARROW:schema. Input is opened once (upstream twice);
+  input/schema/property validation precedes destination creation, and handles
+  close on failure. Later errors may leave partial output, as upstream.
+  LZO remains unsupported by both pinned implementations. Legacy INT96 inputs
+  normalize to annotated INT64 timestamps, exactly as the pinned Rust rewrite;
+  its record JSON rendering differs from raw INT96. The interop script compares
+  exact records against Rust rewrite output and exercises seven codecs in both
+  directions, V1/V2, bloom/header statistics, omitted column paths and row groups.
+  `parquet-fromcsv` remains deferred to Phase 5.
 - `schema::printer`: the `print_*` free functions are `Parquet::Schema` module
   methods; `print_row_group_metadata`/`print_column_chunk_metadata` are public;
   `fmt::Write`/`io::Write` are `IO` (the `Printer` writes to a `String::Builder`

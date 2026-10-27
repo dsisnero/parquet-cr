@@ -76,3 +76,32 @@ schema conversion. Defaults remain unchanged. `ParquetGeospatial::WkbType`
 implements Arrow's extension contract for Binary/LargeBinary/BinaryView storage;
 metadata parse errors retain the `ParquetGeospatial::JsonError` name and inherit
 `Arrow::ArrowError` so `Field#has_valid_extension_type?` returns false on them.
+
+## Parquet rewrite command
+
+Build and run the standalone command:
+
+```sh
+crystal build bin/parquet-rewrite.cr -o bin/parquet-rewrite
+bin/parquet-rewrite -i input.parquet -o output.parquet \
+  --compression zstd --writer-version 2.0 --max-row-group-size 100000
+bin/parquet-rewrite --help
+```
+
+All options from pinned `parquet-rewrite.rs` are available. Boolean options
+require explicit `true` or `false`; enum values use lowercase kebab spelling.
+The command streams Arrow batches, copies source key/value metadata (including
+valueless/duplicate user entries), and refreshes the embedded Arrow schema.
+Writer defaults apply to unspecified settings, rather than copying input
+compression/encoding settings. Bloom FPP/NDV/position apply only with explicit
+`--bloom-filter-enabled true`; page-header statistics force page statistics even
+if `--statistics-enabled none` was also given. LZO remains unsupported by both
+pinned implementations. INT96 input converts to Arrow timestamps and is written
+back as annotated INT64, preserving its values.
+
+CLI diagnostics use Crystal formatting; argument errors return 2, operational
+errors return 1, and `--version` reports the port's package version. Unsigned
+sizes must fit the port's Int32 APIs; compression levels use u32 semantics,
+including upstream's wrapping cast to i32 for Zstd. Input/schema/property
+validation precedes opening the destination. Output writing itself is streaming
+and can leave partial output on a later failure, as in upstream.

@@ -12,11 +12,10 @@ require "../record_reader"
 #
 # Divergences: `T` is the Crystal value type (`Int32`, `Int64`, `Float32`,
 # `Float64`, `Int96`) rather than a parquet `DataType` marker; upstream's
-# `Vec<T::T>: IntoBuffer` view conversion is unnecessary because Crystal reads
-# the decoded values directly; `coerce_array` (temporal/decimal/dictionary
-# coercion against the embedded arrow schema) is deferred until the arrow cast
-# layer is wired in, so the produced array uses the physical type's arrow data
-# type unless `arrow_type` is a compatible primitive; `usize` counts are `Int32`.
+# `Vec<T::T>: IntoBuffer` view conversion reads native values directly;
+# INT96 converts to Int64 timestamps at the requested resolution. Temporal and
+# decimal coercion preserve compatible Arrow schema hints. Counts are
+# Int32 rather than usize.
 module Parquet
   module Arrow
     # Reads up to `batch_size` records from `pages` into `record_reader`,
@@ -150,6 +149,10 @@ module Parquet
         0.0_f64
       end
 
+      private def default_value_for(type : Int96.class) : Int96
+        Int96.new
+      end
+
       private def default_value : T
         default_value_for(T)
       end
@@ -196,6 +199,21 @@ module Parquet
         else
           ::Arrow::PrimitiveArray.new(::Arrow::ScalarBuffer(Int64).from(values), nulls, data_type)
         end
+      end
+
+      # Upstream Vec<Int96>::into_buffer preserves timestamp resolution and
+      # wraps native Int64 overflow through Int96's conversion helpers.
+      private def build_array(values : Array(Int96), nulls : ::Arrow::NullBuffer?, data_type : ::Arrow::DataType) : ::Arrow::ArrayBase
+        unit = data_type.time_unit || raise general_err!("Invalid target_type for Int96.")
+        converted = values.map do |value|
+          case unit
+          in .second?      then value.to_seconds
+          in .millisecond? then value.to_millis
+          in .microsecond? then value.to_micros
+          in .nanosecond?  then value.to_nanos
+          end
+        end
+        ::Arrow::PrimitiveArray(Int64).new(::Arrow::ScalarBuffer(Int64).from(converted), nulls, data_type)
       end
 
       private def build_array(values : Array(Float32), nulls : ::Arrow::NullBuffer?, data_type : ::Arrow::DataType) : ::Arrow::ArrayBase

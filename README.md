@@ -17,6 +17,19 @@ Upstream is vendored as a git submodule at `vendor/arrow-rs`, pinned to release
 - [Testing](docs/testing.md)
 - [PR Workflow](docs/pr-workflow.md)
 
+## Rewrite Parquet files
+
+```sh
+crystal build bin/parquet-rewrite.cr -o bin/parquet-rewrite
+bin/parquet-rewrite -i input.parquet -o output.parquet --compression zstd
+bin/parquet-rewrite --help
+```
+
+The command preserves values and user metadata while changing encoding,
+compression, row groups, pages, statistics and bloom settings. See
+[command behavior](docs/development.md#parquet-rewrite-command) and
+[pinned Rust interoperability checks](docs/testing.md#rewrite-interoperability-with-the-pinned-rust-tools).
+
 ## Upstream README Highlights
 
 The upstream `parquet` crate provides a Rust implementation of the Apache

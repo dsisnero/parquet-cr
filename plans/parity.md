@@ -14,37 +14,36 @@
 
 ## Where we are
 
-- **Current focus:** Phase 3 — canonical extensions and virtual columns is
-  complete on `codex/canonical-extensions-virtual-columns`. Virtual columns work
-  in synchronous and push readers; optional canonical mappings round-trip files.
-  Next is Phase 4 — the Parquet rewrite command.
+- **Current focus:** Phase 4 — Parquet rewrite command is complete on
+  `codex/parquet-rewrite`; resume with Phase 5 below.
 - **Next up**, in order:
-  1. **Phase 4 — Parquet rewrite command**, using the complete reader/writer.
-  2. **Phase 5 — CSV import command**, using the complete writer.
-  3. **Phases 6–7 — Asynchronous storage reads and writes**, deferred until the
+  1. **Phase 5 — CSV import command**, using the complete writer; first check
+     the required arrow-cr CSV facilities, then port tests before implementation.
+  2. **Phases 6–7 — Asynchronous storage reads and writes**, deferred until the
      Crystal concurrency and object-store mapping is decided.
-- **Last completed feature:** `port: canonical extensions and virtual columns`,
-  on `codex/canonical-extensions-virtual-columns`. Three new spec files contain
-  38 upstream-derived/characterization examples with all extension flags (32 in
-  the default build). Observed red-green cycles cover extension/reader/mapping
-  APIs, malformed WKB metadata, edge conversions and virtual value equality.
-  Previous feature: `6692cca` (Variant numeric conversions).
-- **Last code gates:** `make lint` (187 files), `make test` (1808 examples),
-  `make test-extensions` (1814 examples), both default/extension-enabled
-  no-codegen library builds, scoped inventory validation (3515 items), and
+- **Last completed feature:** `port: parquet rewrite command`, on
+  `codex/parquet-rewrite`. Tests-first characterization covers CLI options,
+  property precedence, streaming, metadata, errors and legacy INT96 input.
+  Twenty-four new examples include four INT96 reader resolution cases.
+  Previous feature: `b5fe76f` (canonical extensions and virtual columns).
+- **Last code gates:** `make lint` (189 files), `make test` (1832 examples),
+  `make test-extensions` (1838 examples), library and CLI no-codegen builds,
+  standalone CLI build, scoped inventory validation (3515 items), and
   `git diff --check`, all green with zero failures/errors/pending.
+  Pinned Rust interoperability passes for seven codecs, V1/V2, INT96 input and
+  Rust→Crystal rewrites; exact records match the pinned Rust rewrite oracle.
 - **Dependency requirements:** sibling arrow-cr supplies extension machinery
   (`925255d`) and canonical Uuid/Json types. Existing Decimal256 prerequisites
   remain `9a5612c`, `b05366a` and `49d07ce`; see the resolved dependency notes in
   `shards_info/`. No shard patch or dependency edit was made.
-- **Ledger counts:** 2690 `ported`, 238 `intentional_divergence`, 28 `skipped`,
-  559 `missing` (3515 total).
+- **Ledger counts:** 2697 `ported`, 238 `intentional_divergence`, 28 `skipped`,
+  552 `missing` (3515 total).
 - **Plan layout:** this file is the active feature queue and completion record.
   [Implementation reference](parity/implementation-reference.md) is a complete
   archival snapshot of earlier module-level evidence, including stale historical
   checkboxes. [Divergences](parity/divergences.md) is a maintained reference for
   representation differences and verification notes. Neither is a separate
-  work queue. Work next in this file, Phase 4; update divergences as needed.
+  work queue. Work next in this file, Phase 5; update divergences as needed.
 
 ## Feature sizing and completion
 
@@ -84,7 +83,7 @@ and spec mappings remain in the implementation reference and ledger.
 | Derived records | Schema generation and typed record read/write round trips | Recorded Crystal macro/trait representation differences |
 | Modular encryption | Cipher/metadata/properties and synchronous encrypted file/page read/write paths | Recorded unsupported upstream modes and representation differences |
 | Serialized page storage | Opaque UInt64 keys, store/factory contracts, column context, in-memory backend and resident-byte accounting | Integrated into ArrowWriter |
-| Existing command-line tools | Inspect/read/index/schema/rowcount/layout/bloom-filter and concatenate workflows | Rewrite and CSV import are Phases 4–5 |
+| Existing command-line tools | Inspect/read/index/schema/rowcount/layout/bloom-filter, concatenate and rewrite workflows | CSV import is Phase 5 |
 
 ## Phase 1 — Arrow RecordBatch writing
 
@@ -200,13 +199,29 @@ full-suite examples, and the ledger closes 38 affected rows.
 
 ## Phase 4 — Parquet rewrite command
 
-- [ ] Run `parquet-rewrite` end to end with upstream options and equivalent
+- [x] Run `parquet-rewrite` end to end with upstream options and equivalent
   data/schema in the output Parquet file.
 
 Requires Phase 1. Include command parsing, reader-to-writer streaming, supported
 rewrite options, errors and executable wiring. Port upstream CLI tests first;
 verify output with both the local reader and the pinned upstream reader where
 available. Parser helpers alone do not complete the command.
+
+Delivered in `src/parquet/bin/parquet_rewrite.cr` and `bin/parquet-rewrite.cr`.
+The pinned binary has no unit tests, so upstream-derived characterizations were
+written first, observed red, then implemented. Twenty command specs cover all
+option spellings, validation and dependent properties, batch streaming, nested
+and nullable values, metadata, row/page boundaries, codecs, empty files and
+failure paths. Four additional reader specs cover native INT96 conversion at
+all timestamp resolutions, including nulls and pre-epoch values; the public
+rewrite accepts the pinned legacy fixture and normalizes timestamps as Rust does.
+
+`scripts/verify_rewrite_interop.sh` compares exact records with the pinned Rust
+rewrite output for all seven supported codecs and both page versions, including
+Rust→Crystal rewrites. LZO remains unsupported by both implementations. Native
+OptionParser diagnostics, Int32 size limits, port version reporting and opening
+the input once are recorded in [divergences](parity/divergences.md). No shard
+patch or dependency edit was made. All gates above pass.
 
 ## Phase 5 — CSV import command
 

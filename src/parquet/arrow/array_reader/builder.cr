@@ -33,8 +33,6 @@ require "./cached_array_reader"
 # Divergences:
 # - virtual readers consume file metadata supplied by `with_parquet_metadata`;
 #   generated values use Int64 with Int32 batch/skip counts;
-# - not-yet-ported leaf readers raise `NYIError` instead of being built:
-#   INT96 (the numeric primitive reader does not model `Int96`);
 # - `usize` counts are `Int32`, and the per-field `ReaderArgs` struct is replaced
 #   by three method parameters (`field`, `mask`, `padding_threshold`).
 module Parquet
@@ -343,7 +341,9 @@ module Parquet
             page_iterator, column_desc, arrow_type, @batch_size, padding_threshold
           )
         when Parquet::Type::INT96
-          raise NYIError.new("INT96 array readers are not ported (no Int96 support)")
+          PrimitiveArrayReader(Int96).new(
+            page_iterator, column_desc, arrow_type, @batch_size, padding_threshold
+          )
         when Parquet::Type::BYTE_ARRAY
           case arrow_type.kind
           when .dictionary?

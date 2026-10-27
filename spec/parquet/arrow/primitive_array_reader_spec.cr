@@ -147,3 +147,22 @@ describe Parquet::Arrow::PrimitiveArrayReader do
     reader.consume_batch.as(Arrow::PrimitiveArray(Int32)).values.to_a.should eq([3, 4, 5])
   end
 end
+
+# Vec<Int96>::into_buffer: preserve the requested resolution, negative epochs,
+# and SQL nulls. Required by rewriting legacy Parquet files through Arrow.
+describe "INT96 timestamp array conversion" do
+  {% for config in [{"Second", [0_i64, -86400_i64]}, {"Millisecond", [1_i64, -86400000_i64]}, {"Microsecond", [1234_i64, -86400000000_i64]}, {"Nanosecond", [1234567_i64, -86400000000000_i64]}] %}
+    it "converts INT96 to {{config[0].id}} timestamps without losing nulls" do
+      descriptor = PageUtil.column_descriptor("message test_schema { OPTIONAL INT96 leaf; }")
+      page = PageUtil::DataPageBuilderImpl.new(descriptor, 3_u32, true)
+      page.add_def_levels(1_i16, [1_i16, 0_i16, 1_i16])
+      page.add_values(Parquet::Encoding::PLAIN, [Parquet::Int96.from([1234567_u32, 0_u32, 2440588_u32]), Parquet::Int96.from([0_u32, 0_u32, 2440587_u32])])
+      pages = PageUtil::InMemoryPageIterator.new([page_of([page.consume])])
+      type = Arrow::DataType.timestamp(Arrow::TimeUnit::{{config[0].id}}, "UTC")
+      reader = PArrow::PrimitiveArrayReader(Parquet::Int96).new(pages, descriptor, type, 1024, nil)
+      array = reader.next_batch(3).as(Arrow::PrimitiveArray(Int64))
+      array.data_type.should eq type
+      array.to_a.should eq [{{config[1][0]}}, nil, {{config[1][1]}}]
+    end
+  {% end %}
+end

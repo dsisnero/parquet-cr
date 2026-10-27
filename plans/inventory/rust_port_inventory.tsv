@@ -969,7 +969,7 @@ parquet/src/arrow/array_reader/primitive_array.rs::method::PrimitiveArrayReader<
 parquet/src/arrow/array_reader/primitive_array.rs::method::PrimitiveArrayReader<T>.new	method	ported	src/parquet/arrow/array_reader/primitive_array.cr	PrimitiveArrayReader#initialize(pages, desc, arrow_type, batch_size, padding_threshold)
 parquet/src/arrow/array_reader/primitive_array.rs::method::PrimitiveArrayReader<T>.read_records	method	ported	src/parquet/arrow/array_reader/primitive_array.cr	PrimitiveArrayReader#read_records (page-driven record reader)
 parquet/src/arrow/array_reader/primitive_array.rs::method::PrimitiveArrayReader<T>.skip_records	method	ported	src/parquet/arrow/array_reader/primitive_array.cr	PrimitiveArrayReader#skip_records
-parquet/src/arrow/array_reader/primitive_array.rs::method::Vec<Int96>.into_buffer	method	missing	-	INT96 view conversion; INT96 array reader deferred
+parquet/src/arrow/array_reader/primitive_array.rs::method::Vec<Int96>.into_buffer	method	ported	src/parquet/arrow/array_reader/primitive_array.cr	Int96 native buffer converts to Int64 timestamps at all four resolutions; null/negative-epoch specs and rewrite/Rust interop
 parquet/src/arrow/array_reader/primitive_array.rs::method::Vec<bool>.into_buffer	method	ported	src/parquet/arrow/array_reader/primitive_array.cr	build_array(Array(Bool)) -> BooleanArray via BooleanBuffer
 parquet/src/arrow/array_reader/row_group_cache.rs::method::RowGroupCache.batch_size	method	ported	src/parquet/arrow/array_reader/row_group_cache.cr	RowGroupCache#batch_size
 parquet/src/arrow/array_reader/row_group_cache.rs::method::RowGroupCache.get	method	ported	src/parquet/arrow/array_reader/row_group_cache.cr	RowGroupCache#get(column_idx, batch_id)
@@ -1695,12 +1695,12 @@ parquet/src/bin/parquet-fromcsv.rs::method::ParquetFromCsvError.with_context	met
 parquet/src/bin/parquet-index.rs::method::Args.run	method	ported	src/parquet/bin/parquet_index.cr	ParquetIndex.run_with_reader; clap entry in bin/parquet-index.cr
 parquet/src/bin/parquet-layout.rs::method::Args.run	method	ported	src/parquet/bin/parquet_layout.cr	ParquetLayout.run/writer (JSON.build)
 parquet/src/bin/parquet-layout.rs::method::DebugSerialize<T>.serialize	method	intentional_divergence	src/parquet/bin/parquet_layout.cr	serde Debug wrapper replaced by to_s
-parquet/src/bin/parquet-rewrite.rs::method::BloomFilterPosition.from	method	missing	-	auto-generated
-parquet/src/bin/parquet-rewrite.rs::method::EnabledStatistics.from	method	missing	-	auto-generated
-parquet/src/bin/parquet-rewrite.rs::method::Encoding.from	method	missing	-	auto-generated
-parquet/src/bin/parquet-rewrite.rs::method::WriterVersion.from	method	missing	-	auto-generated
-parquet/src/bin/parquet-rewrite.rs::method::WriterVersionArgs.to_possible_value	method	missing	-	auto-generated
-parquet/src/bin/parquet-rewrite.rs::method::WriterVersionArgs.value_variants	method	missing	-	auto-generated
+parquet/src/bin/parquet-rewrite.rs::method::BloomFilterPosition.from	method	ported	src/parquet/bin/parquet_rewrite.cr	Private clap enum conversions folded into Args tables/validation and writer_properties; exact kebab spellings and 1.0/2.0 versions; rewrite characterization specs
+parquet/src/bin/parquet-rewrite.rs::method::EnabledStatistics.from	method	ported	src/parquet/bin/parquet_rewrite.cr	Private clap enum conversions folded into Args tables/validation and writer_properties; exact kebab spellings and 1.0/2.0 versions; rewrite characterization specs
+parquet/src/bin/parquet-rewrite.rs::method::Encoding.from	method	ported	src/parquet/bin/parquet_rewrite.cr	Private clap enum conversions folded into Args tables/validation and writer_properties; exact kebab spellings and 1.0/2.0 versions; rewrite characterization specs
+parquet/src/bin/parquet-rewrite.rs::method::WriterVersion.from	method	ported	src/parquet/bin/parquet_rewrite.cr	Private clap enum conversions folded into Args tables/validation and writer_properties; exact kebab spellings and 1.0/2.0 versions; rewrite characterization specs
+parquet/src/bin/parquet-rewrite.rs::method::WriterVersionArgs.to_possible_value	method	ported	src/parquet/bin/parquet_rewrite.cr	Private clap enum conversions folded into Args tables/validation and writer_properties; exact kebab spellings and 1.0/2.0 versions; rewrite characterization specs
+parquet/src/bin/parquet-rewrite.rs::method::WriterVersionArgs.value_variants	method	ported	src/parquet/bin/parquet_rewrite.cr	Private clap enum conversions folded into Args tables/validation and writer_properties; exact kebab spellings and 1.0/2.0 versions; rewrite characterization specs
 parquet/src/bloom_filter/mod.rs::const::BITSET_MAX_LENGTH	const	ported	src/parquet/bloom_filter.cr	bloom filter
 parquet/src/bloom_filter/mod.rs::const::BITSET_MIN_LENGTH	const	ported	src/parquet/bloom_filter.cr	bloom filter
 parquet/src/bloom_filter/mod.rs::const::SALT	const	ported	src/parquet/bloom_filter.cr	bloom filter

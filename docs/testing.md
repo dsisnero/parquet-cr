@@ -50,3 +50,29 @@ This passes `-Darrow_canonical_extension_types -Dgeospatial
 Virtual columns and the WKB extension contract are available in either build.
 The feature specs are `virtual_type_spec.cr`, `virtual_reader_spec.cr` and
 `extension_mapping_spec.cr` under `spec/parquet/arrow/`.
+
+## Rewrite interoperability with the pinned Rust tools
+
+The rewrite binary has no dedicated upstream unit tests. Its characterization
+specs under `spec/parquet/bin/parquet_rewrite*` cover the pinned CLI/property
+mapping and streamed values/schema/metadata, with INT96 resolution tests in
+`primitive_array_reader_spec.cr`.
+
+Build the pinned Rust tools and compare exact JSON records in both directions:
+
+```sh
+cargo build --locked --offline --manifest-path vendor/arrow-rs/parquet/Cargo.toml \
+  --features cli --bin parquet-read --bin parquet-rewrite \
+  --target-dir /private/tmp/parquet-rewrite-rust-target
+crystal build bin/parquet-rewrite.cr -o /private/tmp/parquet-rewrite-cr
+scripts/verify_rewrite_interop.sh /private/tmp/parquet-rewrite-cr \
+  /private/tmp/parquet-rewrite-rust-target/debug/parquet-read \
+  /private/tmp/parquet-rewrite-rust-target/debug/parquet-rewrite
+```
+
+The script preserves comparison files in a temporary directory. Its exact JSON
+oracle is the pinned Rust rewrite output: both tools normalize INT96 to INT64
+nanoseconds, which Rust's record JSON API renders differently from raw INT96.
+It exercises
+seven supported codecs, V1/V2 output, dictionary on/off, page/header statistics,
+bloom options, omitted column paths, row-group splitting and INT96 input.
