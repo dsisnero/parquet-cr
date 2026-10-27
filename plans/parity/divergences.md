@@ -1262,3 +1262,21 @@ The next work file is `plans/parity.md`, Phase 7 (asynchronous storage writes).
 - Decimal256 IPC required the independent arrow-cr commit 9a5612c. The original
   default writer round-trip assertion stayed intact; this task did not edit the
   shard. MonthDayNano interval writing remains NYI, as upstream.
+
+## Asynchronous Arrow writers and object publication
+
+- Rust futures/AsyncWrite/boxed generic sinks map to yielding methods on
+  AsyncFileWriter plus an explicit AsyncIOWriter adapter. IO completion flushes
+  and closes unless configured as borrowed. Writers have one owning fiber;
+  into_inner returns a shared reference without finalizing, rather than
+  consuming the writer. No implicit finalizer, background queue or safe retry
+  of a failed AsyncArrowWriter is promised. Detached Bytes chunks copy the
+  internal IO::Memory buffer; offsets remain cumulative through TrackedWrite.
+- The deprecated ParquetObjectWriter wraps native BufferedObjectWriter rather
+  than Rust object_store::buffered::BufWriter. It buffers a whole object for a
+  single PUT, using Int32-sized buffers; multipart uploads/abort/retries and
+  SDK authentication remain application adapter responsibilities. Memory and
+  HTTP implementations support publication, and HTTP PUT accepts 200/201/204.
+  Existing read-only ObjectStore subclasses retain their API through a default
+  NYI put method. See [async storage](../../docs/async-storage.md) for lifecycle,
+  failure semantics and tests. No dependency or installed shard was changed.

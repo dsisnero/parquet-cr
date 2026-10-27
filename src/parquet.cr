@@ -125,3 +125,5 @@ require "./parquet/bin/parquet_rewrite"
 require "./parquet/bin/parquet_fromcsv"
 
 require "./parquet/arrow/async_reader"
+
+require "./parquet/arrow/async_writer"

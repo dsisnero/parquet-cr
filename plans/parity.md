@@ -14,39 +14,41 @@
 
 ## Where we are
 
-- **Current focus:** Phase 6 — Asynchronous storage reads is complete on
-  `codex/async-storage-reads`. Phases 1–6 are delivered; resume with Phase 7.
-  The storage/concurrency decisions are recorded in
+- **Current focus:** Phase 7 — Asynchronous storage writes is complete on
+  `codex/async-storage-writes`. All seven planned capability phases are delivered.
+  The storage/concurrency decisions and writer lifecycle are recorded in
   [async storage](../docs/async-storage.md); no new shard is required.
 - **Next up**, in order:
-  1. **Phase 7 — Asynchronous storage writes**, use the recorded yielding-call,
-     execution-context and object-store mapping, and port end-to-end
-     writer/storage tests before implementation. Preserve this as one usable
-     write/flush/close capability rather than helper-sized phases.
-- **Last completed feature:** `port: asynchronous storage reads`, on
-  `codex/async-storage-reads`. Thirty-eight upstream-derived/characterization
-  specs cover lazy ranges, prefetch/indexes, selection/filter/cache/metrics,
-  nested/virtual/encrypted data, bloom, object stores and execution contexts.
-  Red-green cycles exposed missing APIs, virtual schema projection and ignored
-  footer metadata policies. Previous feature: `0b5972d` (CSV import command).
-- **Last code gates:** `make lint` (196 files), `make test` (1900 examples),
-  `make test-extensions` (1906 examples), no-codegen library build, scoped
+  1. Select the next complete capability from the **Deferred compatibility
+     decisions** and remaining ledger coverage below before implementation.
+     The seven-phase queue is complete; 459 `missing` symbols remain, so this is
+     not a claim of full upstream parity. Keep future phases feature-sized and
+     reconcile helper/test rows with their owning capability.
+- **Last completed feature:** `port: asynchronous storage writes`, on
+  `codex/async-storage-writes`. Eighteen upstream-derived/characterization specs
+  cover sync byte equivalence, file/memory/HTTP output, accounting, chunk
+  ownership, backpressure, options/metadata, flush/finish and error propagation.
+  Tests first failed on the missing sink API and later on read-only HTTP storage;
+  both red-green cycles are complete. Previous feature: `8cf8ce7` (async reads).
+- **Last code gates:** `make lint` (198 files), `make test` (1918 examples),
+  `make test-extensions` (1924 examples), no-codegen library build, scoped
   inventory validation (3515 items), and `git diff --check`, all green with
   zero failures/errors/pending. HTTP tests use an ephemeral loopback server;
-  no external service or cloud credentials are needed. The upstream 100-case
-  selection fuzz test runs with a reproducible seed.
+  no external service or cloud credentials are needed. Output matches the
+  synchronous writer byte for byte on the upstream tiny-pages fixture.
 - **Dependency requirements:** sibling arrow-cr supplies extension machinery
   (`925255d`) and canonical Uuid/Json types. Existing Decimal256 prerequisites
   remain `9a5612c`, `b05366a` and `49d07ce`; see the resolved dependency notes in
   `shards_info/`. No shard patch or dependency edit was made.
-- **Ledger counts:** 2773 `ported`, 231 `intentional_divergence`, 28 `skipped`,
-  483 `missing` (3515 total).
+- **Ledger counts:** 2788 `ported`, 240 `intentional_divergence`, 28 `skipped`,
+  459 `missing` (3515 total).
 - **Plan layout:** this file is the active feature queue and completion record.
   [Implementation reference](parity/implementation-reference.md) is a complete
   archival snapshot of earlier module-level evidence, including stale historical
   checkboxes. [Divergences](parity/divergences.md) is a maintained reference for
   representation differences and verification notes. Neither is a separate
-  work queue. Work next in this file, Phase 7; update divergences as needed.
+  work queue. Define future feature phases in this file; update divergences as
+  needed.
 
 ## Feature sizing and completion
 
@@ -295,13 +297,35 @@ closes 71 rows, including 10 former async-loader divergences.
 
 ## Phase 7 — Asynchronous storage writes
 
-- [ ] Write and close Parquet data through a usable asynchronous/object-store
+- [x] Write and close Parquet data through a usable asynchronous/object-store
   writer API and read the result back without data loss.
 
 Requires Phase 1 and the recorded [Phase 6 storage/concurrency mapping](../docs/async-storage.md).
 Include buffering, flushing, close/finalization and error propagation. Completion
 requires upstream-derived end-to-end writer/storage tests and readable output,
 not just a sink interface.
+
+Implemented in `arrow/async_writer.cr` and `arrow/async_writer/store.cr`, with
+optional `ObjectStore#put`, HTTP PUT and library exports. Upstream writer and
+object-store tests were ported first: the missing sink API failed red, and later
+HTTP cases failed on the read-only backend before PUT implementation. Eighteen
+upstream-derived/characterization specs cover sync byte equivalence on the full
+tiny-pages fixture, real file output with large binary values, byte/memory/row
+accounting, automatic/explicit group flushes, options/metadata, empty files,
+chunk ownership, yielding backpressure, extraction and ordered error propagation.
+Memory and loopback HTTP stores support complete write → close → ranged read
+round trips, with auth/query/key preservation and rejected upload responses.
+
+`AsyncArrowWriter` reuses the synchronous encoder and waits for each sink call;
+finish delivers the footer before completing the sink. Native IO adapts through
+AsyncIOWriter with explicit borrowed-IO support. BufferedObjectWriter and the
+deprecated upstream facade buffer one complete object for a single PUT;
+provider multipart/abort/retry behavior remains an application sink concern.
+Shared-reference ownership, copied chunks, Int32 buffer sizes and native storage
+mapping are recorded in [async storage](../docs/async-storage.md) and
+[divergences](parity/divergences.md). No shard patch or dependency edit was made.
+The ledger closes all 24 async-writer rows, with nine explicit representation/
+storage divergences. All gates recorded above pass.
 
 ## Deferred compatibility decisions
 

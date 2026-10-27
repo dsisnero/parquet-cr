@@ -1,4 +1,4 @@
-# Asynchronous storage reads
+# Asynchronous storage reads and writes
 
 The pinned upstream is apache/arrow-rs 60.0.0, commit
 `ef1fa157977633f0ba21aa921f9ef3d5c669235b`. Phase 6 ports
@@ -53,7 +53,8 @@ the port's Int32 APIs.
 
 The upstream `object_store` crate is a provider-independent interface with
 separate cloud implementations. The Crystal port uses a native `ObjectStore`
-range/suffix/head contract and supplies `MemoryObjectStore` and `HttpObjectStore`.
+range/suffix/head contract with optional PUT and supplies `MemoryObjectStore` and
+`HttpObjectStore`.
 No shard installation is required; `shard.yml` and `shard.lock` are unchanged.
 Existing applications can implement the same contract around their chosen SDK.
 
@@ -120,3 +121,85 @@ metadata policies, missing/short/corrupt reads, fused errors and real execution
 contexts. HTTP integration uses an ephemeral **loopback-only** server; sandboxed
 runs need permission to bind a local socket. No cloud credentials or external
 service is needed. Run `make lint`, `make test`, and `make test-extensions`.
+
+## Asynchronous writes
+
+Phase 7 ports `arrow/async_writer/{mod,store}.rs` from the same pinned revision.
+`AsyncArrowWriter.try_new(sink, schema, properties)` and
+`try_new_with_options(sink, schema, options)` reuse the synchronous Arrow encoder.
+All writer options, appended key/value metadata and flushed-row-group/size/row
+accounting remain available. `bytes_written` counts absolute encoded bytes,
+including the header and, after successful finish, the metadata/footer.
+
+`AsyncFileWriter` has yielding `write(Bytes)` and `complete` methods. A sink may
+retain each owned chunk. `write(batch)` sends bytes when it completes at least
+one row group; rows below the configured limit remain buffered. `flush` finishes
+the current group and sends available bytes, including the header on an empty
+initial flush. It does not finalize the sink. Both `finish` and `close` write the
+remaining rows and footer, wait for all bytes to be accepted, then call
+`complete`. There is no background queue: a slow sink suspends the calling
+fiber and applies backpressure. Errors raise; a failed byte write prevents
+completion. Byte-write errors are wrapped in `ExternalError`, while completion
+errors propagate from the sink, exactly as in the pinned implementation.
+
+```crystal
+alias AsyncParquet = Parquet::Arrow
+store = AsyncParquet::MemoryObjectStore.new
+sink = AsyncParquet::BufferedObjectWriter.new(store, "events.parquet")
+writer = AsyncParquet::AsyncArrowWriter.try_new(sink, batch.schema)
+writer.write(batch)
+writer.flush # completes a row group; object is still unpublished
+metadata = writer.close
+stream = AsyncParquet::ParquetRecordBatchStreamBuilder.new(
+  AsyncParquet::ParquetObjectReader.new(store, "events.parquet")
+).build
+stream.each { |read_batch| puts read_batch.num_rows }
+```
+
+A writer has one owning fiber; overlapping write/flush/finish calls are not
+supported. HTTP writes yield through the stdlib client. For blocking IO, run the
+owning write loop on a caller-selected execution context, just as for reads;
+the library does not resize a global context or spawn an unbounded producer.
+Rust generic/boxed sinks become an abstract class with dynamic dispatch.
+`into_inner` returns the shared sink reference without flushing/finalizing;
+Crystal cannot enforce Rust's consuming ownership. Dropping a writer performs
+no implicit finalization. Do not reuse the writer after extracting the sink.
+A failed write can have consumed bytes, and a failed finish has finalized the
+encoder, so an AsyncArrowWriter cannot safely retry or resume after an error.
+
+Passing an IO directly wraps `AsyncIOWriter`, whose completion flushes and closes
+it. Wrap explicitly with `AsyncIOWriter.new(io, close_on_complete: false)` to
+retain a borrowed IO. The adapter maps native IO errors to ExternalError.
+The sink remains accessible through `into_inner`; an IO adapter exposes `inner`.
+
+`ObjectStore#put` is an optional capability: custom read-only stores continue to
+work and report NYI when asked to write. MemoryObjectStore publishes an owned
+snapshot. HttpObjectStore sends a full-body PUT to the same escaped key URI,
+retaining caller headers and base query parameters; 200/201/204 are successful,
+other responses raise an ObjectStoreError containing the key and status.
+Transport failures retain their cause. No redirect/retry policy is added.
+
+`BufferedObjectWriter` buffers the **entire object** in memory and performs one
+PUT only on `complete`. The previous object remains untouched during write/flush.
+A failed PUT retains this adapter's buffered bytes; a successful completion
+releases its buffer and rejects subsequent writes/completions. This explicitly
+differs from Rust object_store's multipart-capable BufWriter: native buffers
+have Int32 limits, and there is no multipart threshold, abort, retry or automatic
+cloud signing. Applications needing large/multipart uploads can implement
+AsyncFileWriter around their SDK. No shard patch or new dependency is required.
+`ParquetObjectWriter` is the upstream deprecated compatibility facade over this
+native buffer, with `new`, `from_buf_writer`, `from` and `into_inner` mappings;
+prefer passing BufferedObjectWriter directly.
+
+The two writer spec files port the five upstream writer cases and the object
+writer round trip, and characterize chunk ownership, automatic/explicit flush,
+backpressure, metadata/options, empty files, extraction, finalization, IO errors
+and storage failures. The large fixture output is byte-identical to ArrowWriter.
+Loopback HTTP tests write and read actual Parquet through PUT and ranged GET,
+check all three success statuses, escaped keys/auth/query preservation and
+403/500/307 rejection. Run the writer suites with:
+
+```sh
+crystal spec spec/parquet/arrow/async_writer_spec.cr \
+  spec/parquet/arrow/async_writer_store_spec.cr
+```

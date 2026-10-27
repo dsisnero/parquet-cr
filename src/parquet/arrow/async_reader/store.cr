@@ -4,7 +4,7 @@ require "sync/mutex"
 
 # parquet/src/arrow/async_reader/store.rs, apache/arrow-rs 60.0.0.
 # Rust object_store's storage-independent contract maps to a small native
-# interface. SDK-specific signing/listing/uploading is outside this read API.
+# interface. SDK-specific signing/listing/multipart uploads belong to application adapters.
 module Parquet::Arrow
   # Storage errors retain the object key and original transport cause.
   class ObjectStoreError < ParquetError
@@ -16,6 +16,12 @@ module Parquet::Arrow
     abstract def get_range(path : String, range : Range(UInt64, UInt64)) : Bytes
     abstract def get_suffix(path : String, length : Int32) : Bytes
     abstract def head(path : String) : UInt64
+
+    # Optional write capability: existing read-only stores remain valid.
+    # The implementation must finish consuming bytes before returning.
+    def put(path : String, bytes : Bytes) : Nil
+      raise NYIError.new("#{path}: object store is read-only")
+    end
 
     def get_ranges(path : String, ranges : Array(Range(UInt64, UInt64))) : Array(Bytes)
       ranges.map { |range| get_range(path, range) }
@@ -69,6 +75,19 @@ module Parquet::Arrow
         raise ArgumentError.new("Object endpoint must be an absolute HTTP(S) URL")
       end
       @headers = headers.dup
+    end
+
+    def put(path : String, bytes : Bytes) : Nil
+      headers = @headers.dup
+      headers["Content-Length"] = bytes.size.to_s
+      HTTP::Client.exec("PUT", object_uri(path), headers, body: bytes) do |response|
+        unless {200, 201, 204}.includes?(response.status_code)
+          raise ObjectStoreError.new("#{path}: HTTP #{response.status_code}")
+        end
+      end
+      nil
+    rescue error : IO::Error
+      raise ObjectStoreError.new("#{path}: #{error.message}", cause: error)
     end
 
     def head(path : String) : UInt64
