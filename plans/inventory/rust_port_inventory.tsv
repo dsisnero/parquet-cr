@@ -1684,14 +1684,14 @@ parquet/src/basic.rs::method::SortOrder.fmt	method	ported	src/parquet/basic.cr	D
 parquet/src/basic.rs::method::SortOrder.is_signed	method	ported	src/parquet/basic.cr	renamed SortOrder#signed?
 parquet/src/basic.rs::method::Type.from_str	method	ported	src/parquet/basic.cr	Enum.parse?-based; BINARY accepted as alias for BYTE_ARRAY
 parquet/src/bin/parquet-concat.rs::method::Args.run	method	ported	src/parquet/bin/parquet_concat.cr	ParquetConcat.run/concat (append_column splice)
-parquet/src/bin/parquet-fromcsv.rs::method::Args.get_delimiter	method	missing	-	auto-generated
-parquet/src/bin/parquet-fromcsv.rs::method::Args.get_escape	method	missing	-	auto-generated
-parquet/src/bin/parquet-fromcsv.rs::method::Args.get_quote	method	missing	-	auto-generated
-parquet/src/bin/parquet-fromcsv.rs::method::Args.get_terminator	method	missing	-	auto-generated
-parquet/src/bin/parquet-fromcsv.rs::method::Args.schema_path	method	missing	-	auto-generated
-parquet/src/bin/parquet-fromcsv.rs::method::ParquetFromCsvError.fmt	method	missing	-	auto-generated
-parquet/src/bin/parquet-fromcsv.rs::method::ParquetFromCsvError.from	method	missing	-	auto-generated
-parquet/src/bin/parquet-fromcsv.rs::method::ParquetFromCsvError.with_context	method	missing	-	auto-generated
+parquet/src/bin/parquet-fromcsv.rs::method::Args.get_delimiter	method	ported	src/parquet/bin/parquet_fromcsv.cr	Args#delimiter_byte: CSV/TSV defaults, overrides and truncating char-to-u8 cast.
+parquet/src/bin/parquet-fromcsv.rs::method::Args.get_escape	method	ported	src/parquet/bin/parquet_fromcsv.cr	Args#escape_byte: optional escape and truncating char-to-u8 cast.
+parquet/src/bin/parquet-fromcsv.rs::method::Args.get_quote	method	ported	src/parquet/bin/parquet_fromcsv.cr	Args#quote_byte: CSV default double quote; TSV returns nil, preserving ReaderBuilder default quoting.
+parquet/src/bin/parquet-fromcsv.rs::method::Args.get_terminator	method	ported	src/parquet/bin/parquet_fromcsv.cr	Args#terminator_byte: LF/CR/CRLF and dialect defaults.
+parquet/src/bin/parquet-fromcsv.rs::method::Args.schema_path	method	ported	src/parquet/bin/parquet_fromcsv.cr	Args#schema_path returns the schema pathname String rather than a borrowed Rust Path.
+parquet/src/bin/parquet-fromcsv.rs::method::ParquetFromCsvError.fmt	method	ported	src/parquet/bin/parquet_fromcsv.cr	Error contextual message and native Exception display replace Display; underlying message precedes context.
+parquet/src/bin/parquet-fromcsv.rs::method::ParquetFromCsvError.from	method	intentional_divergence	src/parquet/bin/parquet_fromcsv.cr	Native exceptions/cause replace Rust From conversions and error variants; contextual errors preserve original cause.
+parquet/src/bin/parquet-fromcsv.rs::method::ParquetFromCsvError.with_context	method	ported	src/parquet/bin/parquet_fromcsv.cr	Module with_context wraps the original exception as Error#cause and appends context.
 parquet/src/bin/parquet-index.rs::method::Args.run	method	ported	src/parquet/bin/parquet_index.cr	ParquetIndex.run_with_reader; clap entry in bin/parquet-index.cr
 parquet/src/bin/parquet-layout.rs::method::Args.run	method	ported	src/parquet/bin/parquet_layout.cr	ParquetLayout.run/writer (JSON.build)
 parquet/src/bin/parquet-layout.rs::method::DebugSerialize<T>.serialize	method	intentional_divergence	src/parquet/bin/parquet_layout.cr	serde Debug wrapper replaced by to_s

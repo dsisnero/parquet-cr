@@ -105,3 +105,43 @@ sizes must fit the port's Int32 APIs; compression levels use u32 semantics,
 including upstream's wrapping cast to i32 for Zstd. Input/schema/property
 validation precedes opening the destination. Output writing itself is streaming
 and can leave partial output on a later failure, as in upstream.
+
+## CSV import command
+
+```sh
+crystal build bin/parquet-fromcsv.cr -o bin/parquet-fromcsv
+bin/parquet-fromcsv -s schema.txt -i input.csv -o output.parquet -h \
+  --parquet-compression zstd --batch-size 1000 --max-row-group-size 100000
+```
+
+All options from pinned `parquet-fromcsv.rs` are available. The three paths are
+required named options. The schema file contains a Parquet message definition,
+for example `message events { required int32 id; optional binary name (STRING); }`.
+The root name is preserved. Arrow CSV applies the declared types and empty-field
+null semantics; nested/binary types unsupported by upstream Arrow CSV still fail.
+Input is converted in Arrow batches; batch size defaults to 1000, or
+`PARQUET_FROM_CSV_BATCHSIZE` when set, with explicit CLI values taking precedence.
+A zero batch size produces an empty output, matching the pinned tool.
+
+`-h` means `--has-header`; help uses `--help`. CSV defaults to comma and CR/LF
+terminators; TSV defaults to tab and LF. Both retain Arrow CSV's default double
+quote unless `--quote-char` overrides it: upstream's unset TSV quote does not
+actually disable quoting. The `--double-quote` option is parsed but unused,
+exactly as in the pinned source. Quote, delimiter and escape each accept one
+Unicode character and truncate its code point to u8 as upstream does.
+
+Input compression accepts UNCOMPRESSED, SNAPPY (framed), GZIP (multiple members),
+BROTLI, LZ4 (frames) and ZSTD (concatenated/skippable frames). Output uses the same
+codec names, defaulting to SNAPPY; names are case-insensitive. LZO parses but is
+unsupported by both tools. Writer versions are `1` and `2`; bloom settings take
+explicit `true`/`false`. Sizes must fit Int32. Brotli/LZ4/Zstd input uses existing
+buffer-based codecs, retaining compressed and decompressed bytes in memory;
+uncompressed/Snappy/Gzip CSV reads are incremental. Arrow batches are written as
+they arrive without collecting the table. Empty uncompressed/Snappy/LZ4 input
+produces an empty table; empty Gzip/Brotli/Zstd input fails, matching pinned Rust.
+
+Schema reading/parsing precedes output creation; the input is opened after the
+output, matching upstream's error order. A later failure can leave a truncated
+or partial output. Native exceptions and contextual messages replace Rust error
+enums; argument errors return 2, runtime errors return 1. Help formatting and
+`--version` use the Crystal port's conventions and version.

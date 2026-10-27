@@ -4,7 +4,7 @@ Status: **maintained reference**; existing entries are recorded decisions, with
 remaining implementation gaps tracked in the [active plan](../parity.md) and
 [API ledger](../inventory/rust_port_inventory.tsv). Update this file when a
 feature changes a documented divergence; it is not a separate feature queue.
-The next work file is `plans/parity.md`, Phase 5 (CSV import command).
+The next work file is `plans/parity.md`, Phase 6 (asynchronous storage reads; resolve its deferred mapping first).
 
 
 - Errors: Rust `Result<T, E>` is mapped to Crystal exceptions. Fallible
@@ -921,7 +921,27 @@ The next work file is `plans/parity.md`, Phase 5 (CSV import command).
   its record JSON rendering differs from raw INT96. The interop script compares
   exact records against Rust rewrite output and exercises seven codecs in both
   directions, V1/V2, bloom/header statistics, omitted column paths and row groups.
-  `parquet-fromcsv` remains deferred to Phase 5.
+  `parquet-fromcsv` ports schema-directed CSV/TSV conversion with source root
+  preservation, batch/group limits, compression and bloom settings. Native
+  exceptions/cause replace the error enum and From conversions; contextual
+  display retains the original message followed by context. Help option coverage
+  replaces Clap's exact formatted snapshot; diagnostics/status/version follow
+  the native CLI conventions above. Int32 sizes replace usize; single-character
+  options retain Rust's truncating u8 cast. PARQUET_FROM_CSV_BATCHSIZE provides the
+  batch default, overridden by the CLI. The parsed double-quote option is unused
+  in the pinned binary, and TSV's unset quote retains Arrow's default double
+  quote; both behaviors are preserved. Schema validation precedes output
+  creation, then input opening, as upstream; later failures can leave partial
+  output. Snappy uses framed streams, Gzip accepts multiple members, LZ4 accepts
+  frames and Zstd handles concatenated/skippable frames. Brotli/LZ4/Zstd use
+  existing buffer APIs (peak memory includes compressed/decompressed input),
+  while uncompressed/Snappy/Gzip reads and Arrow batch writing are incremental.
+  Lazy decoder creation puts malformed input under CSV read context. Buffered
+  EOF detection preserves upstream empty-stream acceptance for Snappy/LZ4 and
+  rejection for Gzip/Brotli/Zstd despite native codec defaults. LZO is
+  unsupported as upstream. Tests assert exact values, nulls, schema/root and
+  row groups; scripts/verify_fromcsv_interop.cr compares exact records with
+  pinned Rust for six input/output codecs, V1/V2, dialects and concatenated input.
 - `schema::printer`: the `print_*` free functions are `Parquet::Schema` module
   methods; `print_row_group_metadata`/`print_column_chunk_metadata` are public;
   `fmt::Write`/`io::Write` are `IO` (the `Printer` writes to a `String::Builder`

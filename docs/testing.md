@@ -76,3 +76,29 @@ nanoseconds, which Rust's record JSON API renders differently from raw INT96.
 It exercises
 seven supported codecs, V1/V2 output, dictionary on/off, page/header statistics,
 bloom options, omitted column paths, row-group splitting and INT96 input.
+
+## CSV import interoperability
+
+`spec/parquet/bin/parquet_fromcsv*` ports the pinned binary's parser, reader
+configuration and compressed-input conversion tests, with stronger end-to-end
+value/schema assertions and additional CLI, null, dialect and error cases.
+Native help option coverage replaces the Clap-formatted help snapshot.
+
+```sh
+cargo build --locked --offline --manifest-path vendor/arrow-rs/parquet/Cargo.toml \
+  --features cli --bin parquet-fromcsv --bin parquet-read \
+  --target-dir /private/tmp/parquet-rewrite-rust-target
+crystal build bin/parquet-fromcsv.cr -o /private/tmp/parquet-fromcsv-cr
+crystal run scripts/verify_fromcsv_interop.cr -- /private/tmp/parquet-fromcsv-cr \
+  /private/tmp/parquet-rewrite-rust-target/debug/parquet-fromcsv \
+  /private/tmp/parquet-rewrite-rust-target/debug/parquet-read \
+  /private/tmp/parquet-fromcsv-interop
+```
+
+The script generates compressed input fixtures, imports each with Crystal and
+pinned Rust, then compares exact records using the pinned Rust reader. It covers
+all six supported input/output codecs, V1/V2, schema-directed typed/null values,
+headers, batch/group boundaries, bloom filters, TSV/default quoting, custom
+characters, concatenated Gzip/Zstd/LZ4 streams and per-codec empty-stream
+behavior. JSON and Parquet files remain
+in the supplied directory for inspection; no generated files enter the repo.

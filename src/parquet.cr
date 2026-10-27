@@ -121,3 +121,5 @@ require "./parquet/arrow/arrow_writer/levels"
 require "./parquet/arrow/arrow_writer"
 
 require "./parquet/bin/parquet_rewrite"
+
+require "./parquet/bin/parquet_fromcsv"

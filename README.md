@@ -30,6 +30,19 @@ compression, row groups, pages, statistics and bloom settings. See
 [command behavior](docs/development.md#parquet-rewrite-command) and
 [pinned Rust interoperability checks](docs/testing.md#rewrite-interoperability-with-the-pinned-rust-tools).
 
+## Import CSV or TSV
+
+```sh
+crystal build bin/parquet-fromcsv.cr -o bin/parquet-fromcsv
+bin/parquet-fromcsv -s schema.txt -i input.csv -o output.parquet -h
+bin/parquet-fromcsv --help
+```
+
+Provide a Parquet message schema in `schema.txt`; `-h` skips the header row.
+Use `-f tsv` for tab-separated input. See
+[command behavior](docs/development.md#csv-import-command) and
+[pinned Rust checks](docs/testing.md#csv-import-interoperability).
+
 ## Upstream README Highlights
 
 The upstream `parquet` crate provides a Rust implementation of the Apache

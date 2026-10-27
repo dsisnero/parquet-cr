@@ -14,36 +14,40 @@
 
 ## Where we are
 
-- **Current focus:** Phase 4 — Parquet rewrite command is complete on
-  `codex/parquet-rewrite`; resume with Phase 5 below.
+- **Current focus:** Phase 5 — CSV import command is complete on
+  `codex/parquet-fromcsv`. Phases 1–5 are delivered; Phases 6–7 remain deferred
+  pending the asynchronous storage/concurrency mapping below.
 - **Next up**, in order:
-  1. **Phase 5 — CSV import command**, using the complete writer; first check
-     the required arrow-cr CSV facilities, then port tests before implementation.
-  2. **Phases 6–7 — Asynchronous storage reads and writes**, deferred until the
-     Crystal concurrency and object-store mapping is decided.
-- **Last completed feature:** `port: parquet rewrite command`, on
-  `codex/parquet-rewrite`. Tests-first characterization covers CLI options,
-  property precedence, streaming, metadata, errors and legacy INT96 input.
-  Twenty-four new examples include four INT96 reader resolution cases.
-  Previous feature: `b5fe76f` (canonical extensions and virtual columns).
-- **Last code gates:** `make lint` (189 files), `make test` (1832 examples),
-  `make test-extensions` (1838 examples), library and CLI no-codegen builds,
-  standalone CLI build, scoped inventory validation (3515 items), and
-  `git diff --check`, all green with zero failures/errors/pending.
-  Pinned Rust interoperability passes for seven codecs, V1/V2, INT96 input and
-  Rust→Crystal rewrites; exact records match the pinned Rust rewrite oracle.
+  1. **Phase 6 — Asynchronous storage reads**, first record the Crystal
+     fibers/ExecutionContext mapping and object-store dependency, then port
+     end-to-end reader tests before implementation.
+  2. **Phase 7 — Asynchronous storage writes**, after Phase 6 and its storage
+     decisions; keep these as complete API features rather than helper phases.
+- **Last completed feature:** `port: CSV import command`, on
+  `codex/parquet-fromcsv`. Thirty tests-first upstream-derived/characterization
+  specs cover CLI options, reader/writer configuration, compressed input,
+  typed/null values, schema/root, groups, dialects, empty streams and errors.
+  Observed red-green cycles include missing APIs, decoder error context and
+  per-codec empty-stream behavior. Previous feature: `d6bc63a` (Parquet rewrite).
+- **Last code gates:** `make lint` (191 files), interop script lint (1 file),
+  `make test` (1862 examples), `make test-extensions` (1868 examples), library
+  and CLI no-codegen builds, standalone CLI build, scoped inventory validation
+  (3515 items), and `git diff --check`, all green with zero failures/errors/pending.
+  Exact pinned Rust-read records match the Rust CSV importer for six input/output
+  codecs, V1/V2, typed/null values, dialects, concatenated and empty streams.
 - **Dependency requirements:** sibling arrow-cr supplies extension machinery
   (`925255d`) and canonical Uuid/Json types. Existing Decimal256 prerequisites
   remain `9a5612c`, `b05366a` and `49d07ce`; see the resolved dependency notes in
   `shards_info/`. No shard patch or dependency edit was made.
-- **Ledger counts:** 2697 `ported`, 238 `intentional_divergence`, 28 `skipped`,
-  552 `missing` (3515 total).
+- **Ledger counts:** 2704 `ported`, 239 `intentional_divergence`, 28 `skipped`,
+  544 `missing` (3515 total).
 - **Plan layout:** this file is the active feature queue and completion record.
   [Implementation reference](parity/implementation-reference.md) is a complete
   archival snapshot of earlier module-level evidence, including stale historical
   checkboxes. [Divergences](parity/divergences.md) is a maintained reference for
   representation differences and verification notes. Neither is a separate
-  work queue. Work next in this file, Phase 5; update divergences as needed.
+  work queue. Work next in this file, Phase 6 (resolve its deferred decisions
+  first); update divergences as needed.
 
 ## Feature sizing and completion
 
@@ -83,7 +87,7 @@ and spec mappings remain in the implementation reference and ledger.
 | Derived records | Schema generation and typed record read/write round trips | Recorded Crystal macro/trait representation differences |
 | Modular encryption | Cipher/metadata/properties and synchronous encrypted file/page read/write paths | Recorded unsupported upstream modes and representation differences |
 | Serialized page storage | Opaque UInt64 keys, store/factory contracts, column context, in-memory backend and resident-byte accounting | Integrated into ArrowWriter |
-| Existing command-line tools | Inspect/read/index/schema/rowcount/layout/bloom-filter, concatenate and rewrite workflows | CSV import is Phase 5 |
+| Existing command-line tools | Inspect/read/index/schema/rowcount/layout/bloom-filter, concatenate, rewrite and CSV/TSV import workflows | Recorded CLI representation differences |
 
 ## Phase 1 — Arrow RecordBatch writing
 
@@ -225,13 +229,36 @@ patch or dependency edit was made. All gates above pass.
 
 ## Phase 5 — CSV import command
 
-- [ ] Run `parquet-fromcsv` end to end to produce valid Parquet with upstream
+- [x] Run `parquet-fromcsv` end to end to produce valid Parquet with upstream
   schema/type/null handling and command behavior.
 
 Requires Phase 1 and any needed arrow-cr CSV facilities. Include executable
 wiring, parsing, supported import options and errors. Port upstream tests first;
 verify typed/null values and schema after reading the output file. Schema
 inference or argument parsing alone does not complete the command.
+
+Delivered implementation in `src/parquet/bin/parquet_fromcsv.cr`, exported by
+`src/parquet.cr`, with `bin/parquet-fromcsv.cr` executable wiring. Upstream
+argument/default, dialect, compression and reader configuration tests were
+ported before implementation and observed red. Public conversion tests followed
+with a missing conversion API failure, then green implementation; a later
+malformed-compression test exposed eager initialization losing read context,
+fixed by lazy decoder initialization. Empty-stream comparisons with pinned Rust
+exposed native codec differences; a separate red-green cycle corrected them
+in the command adapter. Thirty specs assert exact values, nulls, schema/root,
+row groups, all six compressed inputs, properties, empty and zero-batch files,
+per-codec empty streams, required-null rejection, CLI behavior and error ordering.
+Native help coverage replaces the Clap snapshot without dropping option checks.
+
+`scripts/verify_fromcsv_interop.cr` imports generated CSV through both Crystal
+and pinned Rust and compares exact records with the pinned Rust reader. It
+covers six input/output codecs, V1/V2, typed/null values, headers, batch/group
+limits, bloom, custom dialects, TSV quoting and concatenated streams. Existing
+Arrow CSV facilities suffice; no shard patch or dependency edit was made.
+Buffer-based Brotli/LZ4/Zstd input, native errors/help/version and Int32 sizes
+are recorded in [divergences](parity/divergences.md). All gates above pass.
+The optional upstream Rust unit run could not start offline because
+`async-trait 0.1.91` is not cached (the pinned binary build and interop do run).
 
 ## Phase 6 — Asynchronous storage reads
 
