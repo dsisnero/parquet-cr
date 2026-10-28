@@ -601,9 +601,10 @@ The next work file is `plans/parity.md`, Phase 7 (asynchronous storage writes).
 - Thrift IDL macros: upstream `parquet_macros.rs` parses raw Thrift IDL text at
   macro-expansion time. Crystal macros cannot consume IDL tokens, so
   `define_thrift_enum` / `define_thrift_union_all_empty` annotate a natively
-  declared Crystal `enum` and `define_thrift_struct` annotates a `struct` block,
-  synthesizing `read_thrift`, `write_thrift`, and `thrift_element_type` with
-  identical wire behavior. Upstream's generated `VARIANTS`/`MAX_DISCRIMINANT`
+  declared Crystal `enum`; declarative `define_thrift_struct` and mixed-union
+  blocks generate native types and `read_thrift`, `write_thrift` and
+  `thrift_element_type`. Mixed unions now drive production crypto metadata;
+  see [Thrift unions](../../docs/thrift-unions.md). Upstream's generated `VARIANTS`/`MAX_DISCRIMINANT`
   constants are not provided yet.
 - `from_str` conversions use `Enum.parse?`/`upcase`; for `Encoding` this accepts
   mixed-case spellings in addition to upstream's all-upper/all-lower forms.
@@ -1315,3 +1316,22 @@ Crystal references, without consumption or borrow/lifetime enforcement. Existing
 native T.class callers and descriptor callers receive the same reader/writer.
 See [typed columns](../../docs/typed-columns.md) for supported APIs, ownership,
 exact integration coverage and macro/free-function inventory limitations.
+
+## Generated mixed Thrift unions
+
+`define_thrift_union{,_with_unknown}` use a declarative unit/variant block to
+generate native Kind/optional-payload structs, constructors, getters and codecs.
+Rust raw-IDL parsing, borrowed payload lifetimes and trait associated constants
+map to native declarations, owned values and thrift_element_type. The production
+ColumnCryptoMetaData/EncryptionAlgorithm constructors, accessors, Kind ordinals,
+wire bytes and exact native memory layouts remain intact.
+
+Strict/forward unknown handling, empty/unit validation and single-field rules
+follow the pinned macros. Their multi-field diagnostic's literal `{}` is now
+preserved (the old manual codecs normalized it); a standalone Rust expansion of
+the pinned general_err/concat expression confirms the output. Direct Bool union
+payloads retain the pin's non-round-tripping read limitation; use a struct bool
+field or Array(Bool). Owned String dispatch now uses read_bytes_owned, correcting
+the previous borrowed-path mapping on IO input without changing borrowed APIs.
+See [Thrift unions](../../docs/thrift-unions.md) for API, coverage and the source
+discovery limitation for generated methods. No installed shard was modified.

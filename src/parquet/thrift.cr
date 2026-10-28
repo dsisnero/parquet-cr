@@ -839,7 +839,10 @@ module Parquet
     end
 
     def self.read_value(prot : ThriftCompactInputProtocol, type : String.class) : String
-      prot.read_string
+      # Rust String uses owned bytes; read_string is the borrowed &str path.
+      value = String.new(prot.read_bytes_owned)
+      raise general_err!("invalid utf8") unless value.valid_encoding?
+      value
     end
 
     def self.read_value(prot : ThriftCompactInputProtocol, type : Bytes.class) : Bytes

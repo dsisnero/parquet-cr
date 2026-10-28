@@ -158,3 +158,10 @@ exclusions and verification rules.
 [Typed columns](typed-columns.md) documents all eight DataType descriptors,
 optional/raising conversions, native T.class bridges and serialized-column
 read/write usage. Both entry styles reuse the existing native implementations.
+
+## Generated mixed Thrift unions
+
+[Thrift unions](thrift-unions.md) documents the strict and forward-compatible
+unit/payload DSL, native representation, pinned diagnostics/limitations and
+production crypto-metadata integration. Use generated codecs for new mixed
+unions and retain exact wire/API tests when replacing manual ones.

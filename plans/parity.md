@@ -14,26 +14,28 @@
 
 ## Where we are
 
-- **Current focus:** Phase 9 — Typed physical-column API compatibility is
-  complete on `codex/typed-physical-columns`. Resume with Phase 10. All nine
-  delivered capabilities remain covered by the full gates; exact remaining
-  source coverage lives in the ledger.
+- **Current focus:** Phase 10 — Mixed Thrift union serialization is complete on
+  `codex/mixed-thrift-unions`. All ten planned capabilities are delivered.
+  The generated API, production integration and pinned limitations are recorded
+  in [Thrift unions](../docs/thrift-unions.md).
 - **Next up**, in order:
-  1. **Phase 10 — Mixed Thrift union serialization**, bundle reusable mixed-unit/
-     payload union generation, unknown-variant behavior and real metadata
-     integration. Port upstream tests first; macro fixtures alone are not the
-     complete feature.
+  1. Audit remaining missing rows by owning capability, distinguish existing
+     behavior awaiting reconciliation from actual gaps, and select the next
+     complete user-visible feature before implementation. Record its scope here
+     and port its tests first; do not create helper-only phases.
   2. Reconcile remaining tests/benchmarks/source-only rows with their owning
-     capability and select further complete features from the deferred decisions.
-     There are 415 `missing` symbols; this is not a claim of full upstream parity.
-- **Last completed feature:** `port: typed physical-column API compatibility`,
-  on `codex/typed-physical-columns`. Twenty-nine tests-first specs cover all eight
-  descriptors/native aliases/sizes, nullable V1/V2 multiple-group round trips,
-  56 physical mismatch pairs, native/reference bridges, the pinned nested-list
-  example and four exact upstream level/value error cases. Missing BoolType
-  failed red before implementation. Previous feature: `65a44ac` (metadata memory).
-- **Last code gates:** `make lint` (200 files), `make test` (1959 examples),
-  `make test-extensions` (1965 examples), no-codegen library build, scoped
+     capability. There are 415 `missing` symbols; completion of the ten-phase
+     queue is not a claim of full upstream parity. Macro-expanded APIs and free
+     functions require explicit evidence beyond the current discovery manifest.
+- **Last completed feature:** `port: generated mixed Thrift unions`, on
+  `codex/mixed-thrift-unions`. Twenty tests-first specs cover exact wire bytes,
+  malformed/unknown variants, slice/IO protocols, nesting and encrypted files.
+  Production wire fixtures passed before replacing two manual codecs, and
+  independent memory-layout assertions stayed intact. Red-green cases fixed
+  owned String IO dispatch and matched the pin's literal-{} error text, verified
+  with Rust. Previous feature: `b6fc316` (typed physical-column compatibility).
+- **Last code gates:** `make lint` (200 files), `make test` (1979 examples),
+  `make test-extensions` (1985 examples), no-codegen library build, scoped
   inventory validation (3515 items), and `git diff --check`, all green with
   zero failures/errors/pending. Full suites retain loopback-only HTTP integration;
   no external service or cloud credentials are needed.
@@ -48,7 +50,8 @@
   archival snapshot of earlier module-level evidence, including stale historical
   checkboxes. [Divergences](parity/divergences.md) is a maintained reference for
   representation differences and verification notes. Neither is a separate
-  work queue. Work next in this file, Phase 10; update divergences as needed.
+  work queue. Select the next complete feature in this file after the remaining
+  coverage audit; update divergences as needed.
 
 ## Feature sizing and completion
 
@@ -392,7 +395,7 @@ All gates above pass. No shard patch or dependency change was made.
 
 ## Phase 10 — Mixed Thrift union serialization
 
-- [ ] Define mixed unit/payload Thrift unions through a reusable API, generate
+- [x] Define mixed unit/payload Thrift unions through a reusable API, generate
   their compact-protocol read/write behavior, and round-trip real metadata.
 
 Bundle the pinned `parquet_macros.rs` mixed-union and unknown-variant behavior,
@@ -403,6 +406,20 @@ Exercise at least one existing production metadata union through the generated
 path and retain existing constructors/accessors and wire bytes. A macro-only
 fixture without production metadata integration does not complete this phase.
 
+Delivered by `define_thrift_union` and `define_thrift_union_with_unknown` in
+`src/parquet/macros.cr`, with generated ColumnCryptoMetaData and
+EncryptionAlgorithm production codecs. Twenty tests-first specs cover exact
+wire bytes, strict/unknown/malformed input on both protocols, nested fields/lists,
+and complete encrypted files. Frozen production bytes passed before replacement;
+independent metadata-memory assertions remain unchanged. A red-green IO case
+corrected owned String dispatch to read_bytes_owned. A Rust check and red-green
+cycle preserved the pinned mixed-union error's literal `{}`. Direct Bool payloads
+retain the pinned limitation; native representation/ownership, API coverage and
+inventory discovery limits are recorded in [Thrift unions](../docs/thrift-unions.md)
+and [divergences](parity/divergences.md). Four ledger evidence rows are refreshed;
+counts remain unchanged because source discovery does not expand macro codecs.
+All gates above pass. No shard patch or dependency change was made.
+
 ## Deferred compatibility decisions
 
 These remain visible in the API ledger and divergence reference. They are not
@@ -410,8 +427,9 @@ standalone helper phases or automatic next tasks:
 
 - Generic DataType/typed dispatch compatibility is delivered in Phase 9, with
   the existing native T.class API retained as the bridge.
-- Generic mixed-union Thrift macros are selected as Phase 10 above; concrete
-  logical/column-order/encryption unions already have manual implementations.
+- Generic mixed-union Thrift macros are delivered in Phase 10, with generated
+  production crypto unions. Other manually implemented unions retain their
+  existing coverage and can adopt the generator within their owning feature.
 - Remaining tests, benches/examples and source-only symbols:
   reconcile with their owning feature or document a deliberate divergence;
   do not turn each missing row into a feature commit. The ledger retains all

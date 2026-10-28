@@ -132,3 +132,10 @@ retained container capacity.
 example and four level/value validation tests, then covers all eight descriptor
 identities/sizes, V1/V2 nullable round trips and the complete mismatch matrix.
 See [typed columns](typed-columns.md) for the native type/ownership mapping.
+
+## Generated mixed Thrift unions
+
+`mixed_union_spec.cr` and `file/mixed_union_integration_spec.cr` test generated
+codecs against exact wire fixtures, malformed/unknown variants on slice and IO
+protocols, and complete encrypted files. Run them with metadata_memory_spec.cr
+to retain independent layout checks. See [Thrift unions](thrift-unions.md).
