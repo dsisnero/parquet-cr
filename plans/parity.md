@@ -14,28 +14,30 @@
 
 ## Where we are
 
-- **Current focus:** Phase 10 — Mixed Thrift union serialization is complete on
-  `codex/mixed-thrift-unions`. All ten planned capabilities are delivered.
-  The generated API, production integration and pinned limitations are recorded
-  in [Thrift unions](../docs/thrift-unions.md).
+- **Current focus:** Phase 11 — Validated Arrow string decoding is complete on
+  `codex/validated-arrow-strings`. All eleven selected capabilities are delivered.
+  See [Arrow string decoding](../docs/arrow-string-validation.md) for the read,
+  dictionary, skip and schema-override contracts and native differences.
 - **Next up**, in order:
-  1. Audit remaining missing rows by owning capability, distinguish existing
-     behavior awaiting reconciliation from actual gaps, and select the next
-     complete user-visible feature before implementation. Record its scope here
-     and port its tests first; do not create helper-only phases.
-  2. Reconcile remaining tests/benchmarks/source-only rows with their owning
-     capability. There are 415 `missing` symbols; completion of the ten-phase
-     queue is not a claim of full upstream parity. Macro-expanded APIs and free
-     functions require explicit evidence beyond the current discovery manifest.
-- **Last completed feature:** `port: generated mixed Thrift unions`, on
-  `codex/mixed-thrift-unions`. Twenty tests-first specs cover exact wire bytes,
-  malformed/unknown variants, slice/IO protocols, nesting and encrypted files.
-  Production wire fixtures passed before replacing two manual codecs, and
-  independent memory-layout assertions stayed intact. Red-green cases fixed
-  owned String IO dispatch and matched the pin's literal-{} error text, verified
-  with Rust. Previous feature: `b6fc316` (typed physical-column compatibility).
-- **Last code gates:** `make lint` (200 files), `make test` (1979 examples),
-  `make test-extensions` (1985 examples), no-codegen library build, scoped
+  1. Audit the remaining byte-array/view/fixed-length decoder families against
+     upstream malformed-payload and EOF tests. Distinguish native buffer/API
+     differences from actual decoding gaps; scope the next complete reader
+     capability here before implementation and port its tests first. Do not
+     promote individual decoder helpers into feature phases.
+  2. Reconcile remaining tests/benchmarks/examples/source-only rows by owning
+     capability. There are 405 `missing` symbols; the delivered feature queue
+     is not a claim of full parity. Macro-expanded APIs and free functions need
+     explicit evidence beyond the current discovery manifest.
+- **Last completed feature:** `port: validated Arrow string decoding`, on
+  `codex/validated-arrow-strings`. Twenty-eight upstream-derived and
+  characterization specs cover six malformed cases, the original 237-byte
+  fixture, all string encodings, offset/view/dictionary targets, binary data,
+  dictionary-load/read/skip validation, schema overrides and batch boundaries.
+  Tests first: 18 specs exposed 12 failures; a second red cycle caught invalid
+  unannotated binary projected to dictionary strings. No assertions weakened.
+  Previous feature: `655d097` (generated mixed Thrift unions).
+- **Last code gates:** `make lint` (202 files), `make test` (2007 examples),
+  `make test-extensions` (2013 examples), no-codegen library build, scoped
   inventory validation (3515 items), and `git diff --check`, all green with
   zero failures/errors/pending. Full suites retain loopback-only HTTP integration;
   no external service or cloud credentials are needed.
@@ -43,8 +45,8 @@
   (`925255d`) and canonical Uuid/Json types. Existing Decimal256 prerequisites
   remain `9a5612c`, `b05366a` and `49d07ce`; see the resolved dependency notes in
   `shards_info/`. No shard patch or dependency edit was made.
-- **Ledger counts:** 2836 `ported`, 236 `intentional_divergence`, 28 `skipped`,
-  415 `missing` (3515 total).
+- **Ledger counts:** 2836 `ported`, 246 `intentional_divergence`, 28 `skipped`,
+  405 `missing` (3515 total).
 - **Plan layout:** this file is the active feature queue and completion record.
   [Implementation reference](parity/implementation-reference.md) is a complete
   archival snapshot of earlier module-level evidence, including stale historical
@@ -419,6 +421,38 @@ inventory discovery limits are recorded in [Thrift unions](../docs/thrift-unions
 and [divergences](parity/divergences.md). Four ledger evidence rows are refreshed;
 counts remain unchanged because source discovery does not expand macro codecs.
 All gates above pass. No shard patch or dependency change was made.
+
+## Phase 11 — Validated Arrow string decoding
+
+Status: **complete**, with 28 tests-first specs and all code gates passing.
+The audit identified missing annotation-driven UTF-8 validation in offset/view
+readers, incomplete dictionary-page validation and unchecked string schema
+projections. These are now covered as one integrated Arrow reader capability.
+
+- Shared `ByteArrayValueDecoder` checks annotated values during `read_records`
+  and every dictionary entry on load, including unused entries. This applies
+  to lower-level binary targets too; skipped non-dictionary values retain the
+  upstream no-validation behavior.
+- Offset/view array construction and dictionary packing/normalization validate
+  supplied string schemas for unannotated binary columns. Arbitrary binary data
+  is preserved when the target remains binary. Value boundaries are checked
+  independently, so split codepoints cannot become valid by concatenation.
+- `string_validation_spec.cr` ports all six `invalid_utf8.rs` cases for small/
+  large/view strings with dictionary/plain/both delta encodings, the exact
+  inline malformed-file bytes, and the binary-to-string schema-override test.
+  Characterizations cover legacy dictionary tags, lower-level binary targets,
+  unused dictionary entries, nulls, long/multibyte strings and batch boundaries.
+- Red-green evidence: 18 initial specs yielded 12 assertion failures; after the
+  first green, projecting unannotated binary to dictionary strings exposed one
+  further failure and was fixed. Existing focused reader specs stayed green.
+- Ten column-value adapter rows now record intentional shared-buffer divergence.
+  Encoding-specific decoder families remain missing; their malformed-payload/
+  EOF behavior is not claimed complete. `check_valid_utf8` is explicit evidence
+  outside the manifest's free-function discovery surface.
+- Native allocations, per-value validation, generic UTF-8 diagnostics and
+  Parquet errors for binary-to-string conversion are documented in
+  [Arrow string decoding](../docs/arrow-string-validation.md) and
+  [divergences](parity/divergences.md). No shard or dependency changes.
 
 ## Deferred compatibility decisions
 

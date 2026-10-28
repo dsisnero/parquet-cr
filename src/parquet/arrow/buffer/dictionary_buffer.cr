@@ -1,3 +1,4 @@
+require "../../util/utf8"
 require "arrow-cr"
 require "../../basic"
 require "../../errors"
@@ -218,12 +219,20 @@ module Parquet
           ::Arrow::DictionaryArray(K).new(data_type, dict_keys, values, false).as(::Arrow::ArrayBase)
         end
 
-        # Upstream reinterprets a binary dictionary as a `FixedSizeBinaryArray`
-        # when the target value type is fixed size.
+        # Validate string targets and reinterpret fixed-size binary targets
+        # before constructing the dictionary array.
         private def normalize_dictionary_values(
           values : ::Arrow::ArrayBase,
           value_type : ::Arrow::DataType,
         ) : ::Arrow::ArrayBase
+          if value_type.kind.utf8? || value_type.kind.large_utf8?
+            offsets, bytes = DictionaryBuffer.offsets_and_values(V, values)
+            (offsets.size - 1).times do |i|
+              Parquet::Util.check_valid_utf8(bytes[offsets[i].to_i32...offsets[i + 1].to_i32])
+            end
+            offset_buffer = ::Arrow::OffsetBuffer(V).new(::Arrow::ScalarBuffer(V).from(offsets), false)
+            return ::Arrow::GenericStringArray(V).new(offset_buffer, ::Arrow::Buffer.from_slice_ref(bytes), values.nulls)
+          end
           return values unless value_type.kind.fixed_size_binary?
 
           size = value_type.byte_width || raise general_err!("fixed size binary type without a size")
@@ -362,6 +371,9 @@ module Parquet
 
           case value_type.kind
           when .utf8?, .large_utf8?
+            (unique_offsets.size - 1).times do |i|
+              Parquet::Util.check_valid_utf8(data.as_slice[unique_offsets[i].to_i32...unique_offsets[i + 1].to_i32])
+            end
             ::Arrow::GenericStringArray(V).new(offsets, data, nil).as(::Arrow::ArrayBase)
           when .binary?, .large_binary?
             ::Arrow::GenericBinaryArray(V).new(offsets, data, nil).as(::Arrow::ArrayBase)

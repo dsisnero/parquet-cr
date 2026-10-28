@@ -2,6 +2,7 @@ require "arrow-cr"
 require "../../errors"
 require "../array_reader"
 require "../record_reader"
+require "./byte_array_value_decoder"
 
 # Ported from `parquet/src/arrow/array_reader/byte_view_array.rs`
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
@@ -12,9 +13,9 @@ require "../record_reader"
 # Divergence: upstream decodes with a dedicated
 # `ByteViewArrayColumnValueDecoder` that writes `ViewBuffer` views (and hence
 # needs a pluggable value decoder in the record reader); the port decodes through
-# the existing `ColumnValueDecoderImpl(ByteArray)` and converts the batch into a
+# the shared `ByteArrayValueDecoder` and converts the batch into a
 # byte-view array at `consume_batch` time, using arrow-cr's view builders to pick
-# the inline (`<= 12` byte) or block reference representation. Behaviour matches
+# the inline (`<= 12` byte) or block reference representation. Validation matches
 # upstream (values, null padding, dictionary/delta encodings); only the
 # batch-time allocation strategy differs.
 module Parquet
@@ -55,7 +56,7 @@ module Parquet
       # method calls need an explicit instance variable type).
       @record_reader : RecordReader::GenericRecordReader(
         RecordReader::ArrayValuesBuffer(Parquet::ByteArray),
-        Column::Reader::ColumnValueDecoderImpl(Parquet::ByteArray),
+        ByteArrayValueDecoder,
       )
 
       def initialize(
@@ -67,9 +68,9 @@ module Parquet
       )
         # Null slots are padded with an empty byte array (their values are
         # masked off by the null bitmap).
-        @record_reader = RecordReader.typed_record_reader(
-          column_desc, batch_size, Parquet::ByteArray.new(Bytes.empty)
-        )
+        @record_reader = RecordReader::GenericRecordReader(
+          RecordReader::ArrayValuesBuffer(Parquet::ByteArray), ByteArrayValueDecoder,
+        ).new(column_desc, batch_size, -> { RecordReader::ArrayValuesBuffer(Parquet::ByteArray).new(Parquet::ByteArray.new(Bytes.empty)) })
         if threshold = padding_threshold
           @record_reader.set_padding_threshold(threshold)
         end
@@ -136,9 +137,8 @@ module Parquet
 
       # Converts a UTF-8 column value (upstream `check_valid_utf8`).
       private def utf8_value(value : Parquet::ByteArray) : String
+        Parquet::Util.check_valid_utf8(value.data)
         String.new(value.data)
-      rescue ex : ArgumentError
-        raise general_err!("invalid utf-8 sequence: #{ex.message}")
       end
     end
   end

@@ -158,20 +158,18 @@ The next work file is `plans/parity.md`, Phase 7 (asynchronous storage writes).
   buffer with dedicated decoders (`ByteArrayColumnValueDecoder`,
   `ByteViewArrayColumnValueDecoder`, the `ByteArrayDecoder*`/
   `ByteViewArrayDecoder*` families and `ByteArrayDecoderPlain` in the
-  dictionary reader). The port's `GenericRecordReader(V, CV)`/
-  `ColumnReaderImpl(B, CV)` *are* generic over both the values buffer and the
-  value decoder (like upstream `GenericRecordReader<V, CV>`), so
-  `ByteArrayDictionaryReader` drives them with
-  `(DictionaryBuffer(K, V), DictionaryDecoder(K, V))`. What is still missing is
-  the byte-array value decoders themselves: `ByteArrayReader`,
-  `ByteViewArrayReader` and the dictionary reader's fallback path decode through
-  `ColumnValueDecoderImpl(ByteArray)` and convert at `consume_batch` time
-  (`ByteArrayReader` copies values into `OffsetBuffer(I)`/arrow byte arrays,
-  `ByteViewArrayReader` builds `Utf8View`/`BinaryView` through arrow-cr's view
-  builders, the dictionary fallback pushes into the record reader's
-  `OffsetBuffer`). Behaviour matches upstream (values, null padding,
-  dictionary/delta encodings); only batch-time allocation differs. The
-  byte-array/view value decoders therefore stay `missing` in the ledger, and
+  dictionary reader). The port's record/column readers are generic over the
+  values buffer and decoder. `ByteArrayDictionaryReader` uses
+  `(DictionaryBuffer(K, V), DictionaryDecoder(K, V))`. Offset/view readers now
+  use the shared `ByteArrayValueDecoder`, which validates annotated strings
+  during decoding and dictionaries on load, retaining
+  `ArrayValuesBuffer(ByteArray)` and batch-time Arrow construction. Dictionary
+  fallback uses the physical decoder plus checked `OffsetBuffer` appends. The
+  ten column-value decoder adapter rows record this representation divergence;
+  encoding-specific byte-array/view decoder families remain `missing` (including
+  unverified malformed-payload/EOF details). Per-value Crystal validation and
+  native diagnostics replace upstream batched/SIMD checks and byte offsets; see
+  [Arrow string decoding](../../docs/arrow-string-validation.md).
   `ViewBuffer` (`append_block`/`into_array`/`pad_nulls`) exists but is not yet
   driven by a decoder. Because `ColumnValueDecoderImpl`/`PlainDecoder` never
   reads past the values a page claims, an *empty* value payload is

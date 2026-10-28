@@ -1,3 +1,4 @@
+require "./byte_array_value_decoder"
 require "arrow-cr"
 require "../../basic"
 require "../../errors"
@@ -359,6 +360,7 @@ module Parquet
           values = [] of Parquet::ByteArray
           decoder.read(values, len)
           values.each { |value| buffer.try_push(value.data, @validate_utf8) }
+          buffer.check_valid_utf8(0) if @validate_utf8
         end
 
         @dict = buffer.into_array(nil, @value_type)

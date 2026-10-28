@@ -2,6 +2,7 @@ require "arrow-cr"
 require "../../errors"
 require "../array_reader"
 require "../record_reader"
+require "./byte_array_value_decoder"
 
 # Ported from `parquet/src/arrow/array_reader/byte_array.rs`
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
@@ -11,7 +12,7 @@ require "../record_reader"
 #
 # Divergence: upstream decodes with a dedicated `ByteArrayColumnValueDecoder`
 # writing straight into an `OffsetBuffer` (the arrow values buffer); the port
-# decodes through the existing `ColumnValueDecoderImpl(ByteArray)` and copies the
+# decodes through the shared `ByteArrayValueDecoder` and copies the
 # values into the arrow offset buffer at `consume_batch` time. Behaviour is the
 # same (one value per non-null slot, null padding handled by the record reader);
 # only batch-time allocation differs. The decimal targets (`Decimal128`/
@@ -47,7 +48,7 @@ module Parquet
       # method calls need an explicit instance variable type).
       @record_reader : RecordReader::GenericRecordReader(
         RecordReader::ArrayValuesBuffer(Parquet::ByteArray),
-        Column::Reader::ColumnValueDecoderImpl(Parquet::ByteArray),
+        ByteArrayValueDecoder,
       )
 
       def initialize(
@@ -59,9 +60,9 @@ module Parquet
       )
         # Null slots are padded with an empty byte array (their values are
         # masked off by the null bitmap).
-        @record_reader = RecordReader.typed_record_reader(
-          column_desc, batch_size, Parquet::ByteArray.new(Bytes.empty)
-        )
+        @record_reader = RecordReader::GenericRecordReader(
+          RecordReader::ArrayValuesBuffer(Parquet::ByteArray), ByteArrayValueDecoder,
+        ).new(column_desc, batch_size, -> { RecordReader::ArrayValuesBuffer(Parquet::ByteArray).new(Parquet::ByteArray.new(Bytes.empty)) })
         if threshold = padding_threshold
           @record_reader.set_padding_threshold(threshold)
         end
@@ -102,6 +103,7 @@ module Parquet
         array =
           case @data_type.kind
           when .utf8?, .large_utf8?
+            values.each { |value| Parquet::Util.check_valid_utf8(value.data) }
             ::Arrow::GenericStringArray(I).new(offset_buffer, buffer, nulls)
           else
             ::Arrow::GenericBinaryArray(I).new(offset_buffer, buffer, nulls)
