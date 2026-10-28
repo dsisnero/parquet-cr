@@ -3,8 +3,8 @@
 #
 # This file ports the Parquet value types (`Int96`, `ByteArray`,
 # `FixedLenByteArray`, `Decimal`) and the `AsBytes` conversion trait. The
-# `DataType` trait and its `make_type!` machinery depend on the column
-# reader/writer and are ported with the column feature (see `plans/parity.md`).
+# `DataType` descriptors, `make_type` machinery and public typed column
+# bridges live in typed_columns.cr (see `plans/parity.md`).
 module Parquet
   # Converts an instance of a data type to a slice of bytes.
   module AsBytes

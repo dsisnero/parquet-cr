@@ -125,3 +125,10 @@ ownership rules. `spec/parquet/file/metadata_memory_spec.cr` ports upstream
 memory/decryptor assertions with exact Crystal-layout sums and verifies parsed
 file/index integration, opaque providers, encryption/geospatial payloads and
 retained container capacity.
+
+## Typed physical columns
+
+`spec/parquet/column/typed_physical_spec.cr` ports the upstream nested-list
+example and four level/value validation tests, then covers all eight descriptor
+identities/sizes, V1/V2 nullable round trips and the complete mismatch matrix.
+See [typed columns](typed-columns.md) for the native type/ownership mapping.

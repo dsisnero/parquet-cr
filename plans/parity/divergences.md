@@ -772,8 +772,8 @@ The next work file is `plans/parity.md`, Phase 7 (asynchronous storage writes).
   unchanged, matching upstream. `estimated_memory_size` is count-based as above.
 - `data_type`: primitives now implement `AsBytes` (`as_bytes` for `Bool`,
   `Int32`, `Int64`, `Float32`, `Float64`, little-endian, matching upstream's
-  native-byte `gen_as_bytes!`); `DataType`/`SliceAsBytes` for primitives,
-  `str`, and `Vec<u8>` remain pending. `dict_encoding_size` /
+  native-byte `gen_as_bytes!`); `DataType` descriptors and typed bridges now live in `typed_columns.cr`.
+  Native slice/str/Vec byte views retain their independent inventory coverage. `dict_encoding_size` /
   `variable_length_bytes` are realized per-type inside
   `DictEncoder::KeyStorage<T>` rather than on a `ParquetValueType` trait.
 - `Compression`/levels: Rust's payload enum is a Crystal struct carrying a
@@ -1299,3 +1299,19 @@ useful for the actual port's metadata caches. Read-only container layout queries
 follow Crystal 1.22; allocator overhead, GC bookkeeping and invisible backing
 capacity of Slice views are excluded. See [metadata memory](../../docs/metadata-memory.md)
 for exact accounting rules and tests. No installed shard was modified.
+
+## Typed physical-column descriptors
+
+Rust DataType associated native types become per-descriptor `T` aliases on all
+eight public physical descriptors (BoolType through FixedLenByteArrayType).
+Native implementation generics stay specialized on raw value types; descriptor
+helpers select those implementations. `PHYSICAL_TYPE` lives on descriptors
+rather than builtin scalars; get_type_size returns Int32 native representation
+size instead of Rust usize/layout. Nullable conversions use checked casts;
+convenience conversion panics become GeneralError with upstream messages.
+
+Rust owned/ref/mut conversions and serialized mutable borrows become shared
+Crystal references, without consumption or borrow/lifetime enforcement. Existing
+native T.class callers and descriptor callers receive the same reader/writer.
+See [typed columns](../../docs/typed-columns.md) for supported APIs, ownership,
+exact integration coverage and macro/free-function inventory limitations.

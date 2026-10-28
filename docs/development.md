@@ -152,3 +152,9 @@ Use `ParquetMetaData#memory_size` to estimate the retained bytes of cached
 metadata, including loaded indexes and decryptor state. See
 [metadata memory estimates](metadata-memory.md) for native layout, ownership
 exclusions and verification rules.
+
+## Physical typed-column APIs
+
+[Typed columns](typed-columns.md) documents all eight DataType descriptors,
+optional/raising conversions, native T.class bridges and serialized-column
+read/write usage. Both entry styles reuse the existing native implementations.

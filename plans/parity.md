@@ -14,41 +14,41 @@
 
 ## Where we are
 
-- **Current focus:** Phase 8 — Metadata memory accounting is complete on
-  `codex/metadata-memory-accounting`. Resume with Phase 9. The first seven
-  capability phases remain delivered; exact remaining coverage lives in the
-  ledger. Native memory rules are in [metadata memory](../docs/metadata-memory.md).
+- **Current focus:** Phase 9 — Typed physical-column API compatibility is
+  complete on `codex/typed-physical-columns`. Resume with Phase 10. All nine
+  delivered capabilities remain covered by the full gates; exact remaining
+  source coverage lives in the ledger.
 - **Next up**, in order:
-  1. **Phase 9 — Typed physical-column API compatibility**, bundle public
-     physical-type descriptors, native typed dispatch bridges and end-to-end
-     column read/write tests. Port tests first; marker/helper APIs alone are not
-     the feature.
+  1. **Phase 10 — Mixed Thrift union serialization**, bundle reusable mixed-unit/
+     payload union generation, unknown-variant behavior and real metadata
+     integration. Port upstream tests first; macro fixtures alone are not the
+     complete feature.
   2. Reconcile remaining tests/benchmarks/source-only rows with their owning
      capability and select further complete features from the deferred decisions.
-     There are 416 `missing` symbols; this is not a claim of full upstream parity.
-- **Last completed feature:** `port: metadata memory accounting`, on
-  `codex/metadata-memory-accounting`. Twelve upstream-derived/characterization
-  specs assert exact native-layout totals, schema exclusions, container reserve,
-  statistics/index/encryption/geospatial payloads, opaque providers/retrievers
-  and real parsed metadata. Red-green tests exposed missing API, omitted class
-  storage and logical-type/CRS allocations. Previous feature: `f5c6c86` (async writes).
-- **Last code gates:** `make lint` (199 files), `make test` (1930 examples),
-  `make test-extensions` (1936 examples), no-codegen library build, scoped
+     There are 415 `missing` symbols; this is not a claim of full upstream parity.
+- **Last completed feature:** `port: typed physical-column API compatibility`,
+  on `codex/typed-physical-columns`. Twenty-nine tests-first specs cover all eight
+  descriptors/native aliases/sizes, nullable V1/V2 multiple-group round trips,
+  56 physical mismatch pairs, native/reference bridges, the pinned nested-list
+  example and four exact upstream level/value error cases. Missing BoolType
+  failed red before implementation. Previous feature: `65a44ac` (metadata memory).
+- **Last code gates:** `make lint` (200 files), `make test` (1959 examples),
+  `make test-extensions` (1965 examples), no-codegen library build, scoped
   inventory validation (3515 items), and `git diff --check`, all green with
-  zero failures/errors/pending. The full suites retain their loopback-only HTTP
-  integration; no external service or cloud credentials are needed.
+  zero failures/errors/pending. Full suites retain loopback-only HTTP integration;
+  no external service or cloud credentials are needed.
 - **Dependency requirements:** sibling arrow-cr supplies extension machinery
   (`925255d`) and canonical Uuid/Json types. Existing Decimal256 prerequisites
   remain `9a5612c`, `b05366a` and `49d07ce`; see the resolved dependency notes in
   `shards_info/`. No shard patch or dependency edit was made.
-- **Ledger counts:** 2836 `ported`, 235 `intentional_divergence`, 28 `skipped`,
-  416 `missing` (3515 total).
+- **Ledger counts:** 2836 `ported`, 236 `intentional_divergence`, 28 `skipped`,
+  415 `missing` (3515 total).
 - **Plan layout:** this file is the active feature queue and completion record.
   [Implementation reference](parity/implementation-reference.md) is a complete
   archival snapshot of earlier module-level evidence, including stale historical
   checkboxes. [Divergences](parity/divergences.md) is a maintained reference for
   representation differences and verification notes. Neither is a separate
-  work queue. Work next in this file, Phase 9; update divergences as needed.
+  work queue. Work next in this file, Phase 10; update divergences as needed.
 
 ## Feature sizing and completion
 
@@ -356,7 +356,7 @@ deferrals. All gates above pass. No shard patch or dependency change was made.
 
 ## Phase 9 — Typed physical-column API compatibility
 
-- [ ] Write and read all eight Parquet physical value types through the public
+- [x] Write and read all eight Parquet physical value types through the public
   typed descriptor/column API, with upstream type dispatch and mismatch errors.
 
 Bundle `data_type.rs`'s DataType/physical-type descriptors and make_type machinery
@@ -367,16 +367,51 @@ physical-type mismatches; descriptors or macro scaffolding alone do not complete
 this phase. This resolves the first generic-API compatibility decision rather
 than creating separate phases for every marker/helper.
 
+Delivered in `src/parquet/typed_columns.cr`, exported by `src/parquet.cr`.
+The eight public descriptors provide native T aliases, physical constants/type
+queries, representation sizes and nullable reader/writer/borrow conversions.
+Raising typed reader/writer/ref/mut and serialized-column bridges reuse the
+existing native implementations and preserve T.class callers. No new encoder
+or decoder path is introduced.
+
+Twenty-nine tests-first upstream-derived/characterization specs failed on the
+missing BoolType before implementation. Coverage includes all descriptor types,
+nullable values across two row groups and both page versions, reference identity,
+all 56 physical mismatch pairs and continued usability after failed conversion.
+The pinned nested-list example asserts exact records/values/definition/repetition
+levels; four upstream validation cases retain their exact error messages.
+
+Physical constants move from the private native-value trait to descriptors;
+representation sizes use Crystal sizeof/Int32 and Rust move/ref/mut lifetimes
+become shared references. See [typed columns](../docs/typed-columns.md) and
+[divergences](parity/divergences.md). The ledger updates PHYSICAL_TYPE, serialized
+`typed` and typed write_batch evidence; discovery does not expand make_type or
+inventory free functions/trait declarations, so the explicit API table/specs
+record that complete surface. Other private codec/buffer rows remain independent.
+All gates above pass. No shard patch or dependency change was made.
+
+## Phase 10 — Mixed Thrift union serialization
+
+- [ ] Define mixed unit/payload Thrift unions through a reusable API, generate
+  their compact-protocol read/write behavior, and round-trip real metadata.
+
+Bundle the pinned `parquet_macros.rs` mixed-union and unknown-variant behavior,
+native union representation/builders, generated codecs and production integration
+as one capability. Port upstream tests first: variant payloads, strict single-field
+validation and unknown-field policy must match the selected upstream macro.
+Exercise at least one existing production metadata union through the generated
+path and retain existing constructors/accessors and wire bytes. A macro-only
+fixture without production metadata integration does not complete this phase.
+
 ## Deferred compatibility decisions
 
 These remain visible in the API ledger and divergence reference. They are not
 standalone helper phases or automatic next tasks:
 
-- Generic `DataType`/`make_type!` and typed dispatch are now selected as Phase 9
-  above; the existing native `T.class` API remains the compatibility bridge.
-- Generic mixed-union Thrift macros: concrete logical/column-order/encryption
-  unions already have implementations. Introduce generic macro support only as
-  a complete reusable API with generated read/write and round-trip tests.
+- Generic DataType/typed dispatch compatibility is delivered in Phase 9, with
+  the existing native T.class API retained as the bridge.
+- Generic mixed-union Thrift macros are selected as Phase 10 above; concrete
+  logical/column-order/encryption unions already have manual implementations.
 - Remaining tests, benches/examples and source-only symbols:
   reconcile with their owning feature or document a deliberate divergence;
   do not turn each missing row into a feature commit. The ledger retains all

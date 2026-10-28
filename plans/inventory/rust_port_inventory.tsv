@@ -1912,7 +1912,7 @@ parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.truncate_st
 parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.update_column_offset_index	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
 parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.update_metrics_for_page	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
 parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.window_end_for_values	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
-parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_batch	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
+parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_batch	method	ported	src/parquet/column/writer/writer.cr	Native GenericColumnWriter retained; descriptor bridge integration ports inconsistent/missing def/rep level and short-value tests with exact upstream messages plus eight physical type round trips.
 parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_batch_internal	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
 parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_batch_with_statistics	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
 parquet/src/column/writer/mod.rs::method::GenericColumnWriter<'a, E>.write_data_page	method	ported	src/parquet/column/writer/writer.cr	GenericColumnWriter
@@ -1979,7 +1979,7 @@ parquet/src/data_type.rs::const::MILLISECONDS	const	ported	src/parquet/data_type
 parquet/src/data_type.rs::const::MILLISECONDS_IN_DAY	const	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
 parquet/src/data_type.rs::const::NANOSECONDS	const	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
 parquet/src/data_type.rs::const::NANOSECONDS_IN_DAY	const	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
-parquet/src/data_type.rs::const::PHYSICAL_TYPE	const	missing	-	auto-generated
+parquet/src/data_type.rs::const::PHYSICAL_TYPE	const	intentional_divergence	src/parquet/typed_columns.cr	Eight public DataType descriptors expose PHYSICAL_TYPE/get_physical_type, native T aliases and checked typed conversions; builtin native scalar associated constants map to descriptors. make_type macro/free functions are not expanded by discovery; see docs/typed-columns.md and 29 integration specs.
 parquet/src/data_type.rs::const::SECONDS_IN_DAY	const	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
 parquet/src/data_type.rs::method::&str.as_bytes	method	missing	-	auto-generated
 parquet/src/data_type.rs::method::ByteArray.as_bytes	method	ported	src/parquet/data_type.cr	value type ported (data_type.cr)
@@ -3064,7 +3064,7 @@ parquet/src/file/statistics.rs::method::ValueStatistics<T>.with_nan_count	method
 parquet/src/file/writer.rs::const::AES_128_FOOTER_KEY	const	missing	-	auto-generated
 parquet/src/file/writer.rs::method::SerializedColumnWriter<'a>.close	method	ported	src/parquet/file/writer.cr	SerializedColumnWriter
 parquet/src/file/writer.rs::method::SerializedColumnWriter<'a>.new	method	ported	src/parquet/file/writer.cr	SerializedColumnWriter
-parquet/src/file/writer.rs::method::SerializedColumnWriter<'a>.typed	method	ported	src/parquet/file/writer.cr	SerializedColumnWriter
+parquet/src/file/writer.rs::method::SerializedColumnWriter<'a>.typed	method	ported	src/parquet/file/writer.cr,src/parquet/typed_columns.cr	Native T.class and all eight DataType descriptor overloads share existing typed writers; nil descriptor conversions and raising typed helpers, both page versions, nullable/repeated levels and mismatch matrix verified.
 parquet/src/file/writer.rs::method::SerializedColumnWriter<'a>.untyped	method	ported	src/parquet/file/writer.cr	SerializedColumnWriter
 parquet/src/file/writer.rs::method::SerializedFileWriter<W>.append_key_value_metadata	method	ported	src/parquet/file/writer.cr	SerializedFileWriter
 parquet/src/file/writer.rs::method::SerializedFileWriter<W>.assert_previous_writer_closed	method	ported	src/parquet/file/writer.cr	SerializedFileWriter
