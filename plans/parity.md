@@ -14,28 +14,27 @@
 
 ## Where we are
 
-- **Current focus:** Phase 12 — Arrow variable-byte page decoding is complete
-  on `codex/arrow-byte-page-decoding`. All twelve selected capabilities are
-  delivered. [Byte-page decoding](../docs/arrow-byte-page-decoding.md) records
-  the page-count, dictionary, malformed-payload and native buffer contracts.
+- **Current focus:** Phase 13 — Arrow fixed-length byte decoding is complete
+  on `codex/arrow-fixed-byte-decoding`. All thirteen selected capabilities are
+  delivered. See [fixed-byte decoding](../docs/arrow-fixed-byte-decoding.md)
+  for encoding, width, buffer/padding and native representation contracts.
 - **Next up**, in order:
-  1. Audit fixed-length byte-array decoding against upstream width validation,
-     byte-stream-split and read/skip contracts. Select the next complete reader
-     capability here and port its tests first; do not create helper-only phases.
-  2. Reconcile the other 374 remaining `missing` rows by owning capability,
-     separating tests/benchmarks/examples and native representation differences
-     from actual behavior gaps. The delivered queue is not full upstream parity.
-     Macro APIs and free functions require evidence beyond discovery manifests.
-- **Last completed feature:** `port: Arrow variable-byte page decoding`, on
-  `codex/arrow-byte-page-decoding`. Twenty-five tests-first specs port read/skip/
-  null behavior and characterize page counts, empty/replaced dictionaries,
-  malformed lengths/indices and prefix casts. File acceptance covers nullable
-  V1/V2 pages, all-null row groups, batch boundaries and five Arrow targets.
-  Red: 19 specs exposed 15 failures/3 errors; a second red caught negative-prefix
-  range semantics, confirmed with a standalone Rust oracle. Focused suite:
-  72 passing specs. Previous feature: `25d52d8` (validated Arrow strings).
-- **Last code gates:** `make lint` (203 files), `make test` (2032 examples),
-  `make test-extensions` (2038 examples), no-codegen library build, scoped
+  1. Audit the remaining production schema/metadata/data-type/reader rows against
+     existing APIs and upstream tests. Reconcile behavior already present, then
+     select the next complete capability here before implementation; port tests
+     first and do not promote aliases or private helpers into feature phases.
+  2. Reconcile remaining test/benchmark/example rows by owning capability. There
+     are 365 `missing` symbols; the delivered feature queue is not full parity.
+     Macro APIs/free functions require evidence beyond discovery manifests.
+- **Last completed feature:** `port: Arrow fixed-length byte decoding`, on
+  `codex/arrow-fixed-byte-decoding`. Twenty-eight tests-first specs cover the
+  exact upstream reservation and Decimal256-list tests, width validation,
+  dictionary state/counts, byte-stream-split widths 1–32, null padding and V1/V2
+  files across pages, groups and batches. Initial reader red: 15 specs with
+  5 failures/2 errors; the reservation API was also missing. All 37 focused specs
+  pass. Previous feature: `8aef36c` (variable-byte page decoding).
+- **Last code gates:** `make lint` (204 files), `make test` (2060 examples),
+  `make test-extensions` (2066 examples), no-codegen library build, scoped
   inventory validation (3515 items), and `git diff --check`, all green with
   zero failures/errors/pending. Full suites retain loopback-only HTTP integration;
   no external service or cloud credentials are needed.
@@ -43,8 +42,8 @@
   (`925255d`) and canonical Uuid/Json types. Existing Decimal256 prerequisites
   remain `9a5612c`, `b05366a` and `49d07ce`; see the resolved dependency notes in
   `shards_info/`. No shard patch or dependency edit was made.
-- **Ledger counts:** 2836 `ported`, 277 `intentional_divergence`, 28 `skipped`,
-  374 `missing` (3515 total).
+- **Ledger counts:** 2844 `ported`, 278 `intentional_divergence`, 28 `skipped`,
+  365 `missing` (3515 total).
 - **Plan layout:** this file is the active feature queue and completion record.
   [Implementation reference](parity/implementation-reference.md) is a complete
   archival snapshot of earlier module-level evidence, including stale historical
@@ -486,8 +485,40 @@ with page-aware codecs across offset/view readers and dictionary fallback.
   [byte-page decoding](../docs/arrow-byte-page-decoding.md) and
   [divergences](parity/divergences.md). No shard/dependency changes.
 - Fixed-length decoding has a distinct width/byte-stream-split contract and
-  remains the next capability audit, rather than an unfinished part of this
-  variable-byte feature.
+  is delivered separately in Phase 13.
+
+## Phase 13 — Arrow fixed-length byte decoding
+
+Status: **complete**, with 28 new tests-first specs and all code gates green.
+A dedicated contiguous byte buffer and value decoder now drive the existing
+fixed-length Arrow reader and conversions, rather than physical-column codecs.
+
+- Plain and byte-stream-split reads/skips use complete payload values; split
+  reads reconstruct from the full payload stride across batches/skips. Incomplete
+  tails are ignored as pinned. Dictionary installation checks byte counts,
+  replacement is supported and index consumption respects page count bounds.
+- Delta reads reject wrong widths before conversion; delta skips preserve
+  prefix state without checking skipped widths. Empty dictionaries return zero
+  on read while dictionary skips still consume indices, matching the source.
+- FixedLenByteArrayBuffer preserves maximum pending reservation hints until the
+  first read establishes width, and performs reverse byte-level null padding
+  with prior-batch offsets and consistent-length checks. Its byte array feeds
+  the existing binary/decimal/Float16/interval conversion representations.
+- Upstream `test_pending_reservation_tracks_max_capacity` and `test_decimal_list`
+  are ported. The latter retains precision/scale 76/10, offsets
+  `[0,0,1,3,3,4,5,8]`, validity `0x57`, and batch equality for slices 3/3/1.
+  Characterizations cover widths 1/2/3/4/8/16/32, errors, count exhaustion,
+  null padding, V1/V2 files and all-null row groups. No assertions weakened.
+- Red evidence: 15 reader specs yielded 5 failures/2 errors before implementation;
+  the reservation API test could not compile because the buffer was absent.
+  All 28 new specs and 37 focused specs pass. A dictionary-read helper keeps the
+  final decoder within lint complexity limits; final gates include the refactor.
+- Eight buffer/decoder rows are ported; VEC_CUTOFF records an intentional native
+  scalar-copy divergence. Native reservation replaces Array storage as needed,
+  counts/capacities are Int32, and guards replace panic-only invalid states with
+  GeneralError. Allocation/SIMD equivalence is not claimed. See
+  [fixed-byte decoding](../docs/arrow-fixed-byte-decoding.md) and
+  [divergences](parity/divergences.md). No shard/dependency changes.
 
 ## Deferred compatibility decisions
 

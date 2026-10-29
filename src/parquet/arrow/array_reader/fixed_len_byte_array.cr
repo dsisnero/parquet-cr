@@ -3,6 +3,7 @@ require "../../errors"
 require "../array_reader"
 require "../record_reader"
 require "../buffer/bit_util"
+require "./fixed_len_byte_array_decoder"
 
 # Ported from `parquet/src/arrow/array_reader/fixed_len_byte_array.rs`
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b).
@@ -14,7 +15,7 @@ require "../buffer/bit_util"
 #
 # Divergences: upstream decodes straight into a `FixedLenByteArrayBuffer` and
 # builds specialized decimal/interval arrays; the port keeps
-# `ColumnValueDecoderImpl(FixedLenByteArray)` and represents decimals/intervals
+# a native contiguous byte buffer and represents decimals/intervals
 # as `PrimitiveArray(T)` (Int32/Int64/Int128/`I256`) with the matching
 # decimal/interval data type, because arrow-cr has no `Decimal*Array`/
 # `Interval*Array` classes. Float16 uses arrow-cr's half-float primitive array;
@@ -86,8 +87,7 @@ module Parquet
       # Crystal cannot infer this from the `typed_record_reader` call (generic
       # method calls need an explicit instance variable type).
       @record_reader : RecordReader::GenericRecordReader(
-        RecordReader::ArrayValuesBuffer(Parquet::FixedLenByteArray),
-        Column::Reader::ColumnValueDecoderImpl(Parquet::FixedLenByteArray),
+        FixedLenByteArrayBuffer, FixedLenByteArrayValueDecoder,
       )
 
       def initialize(
@@ -98,11 +98,9 @@ module Parquet
         batch_size : Int32,
         padding_threshold : Int16?,
       )
-        # Null slots are padded with an all-zero value of the column's length.
-        @record_reader = RecordReader.typed_record_reader(
-          column_desc, batch_size,
-          Parquet::FixedLenByteArray.new(Array(UInt8).new(@byte_length, 0_u8))
-        )
+        @record_reader = RecordReader::GenericRecordReader(
+          FixedLenByteArrayBuffer, FixedLenByteArrayValueDecoder,
+        ).new(column_desc, batch_size, -> { FixedLenByteArrayBuffer.with_capacity(0) })
         if threshold = padding_threshold
           @record_reader.set_padding_threshold(threshold)
         end

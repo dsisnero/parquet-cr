@@ -4,8 +4,8 @@ require "../../spec_helper"
 # (apache/arrow-rs 60.0.0, ef1fa157977633f0ba21aa921f9ef3d5c669235b):
 # `make_fixed_len_byte_array_reader` and `FixedLenByteArrayReader`.
 #
-# Divergences (documented in `plans/parity.md`): values are decoded through
-# `ColumnValueDecoderImpl(FixedLenByteArray)` and converted to the target array at
+# Divergences (documented in `plans/parity.md`): a contiguous native byte buffer
+# feeds the dedicated fixed-width decoder and converts to the target array at
 # `consume_batch` time; decimals/intervals are represented as `PrimitiveArray(T)`
 # with the matching decimal/interval data type (arrow-cr has no
 # `Decimal*Array`/`Interval*Array` classes); Float16 uses arrow-cr's half-float

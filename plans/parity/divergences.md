@@ -242,14 +242,20 @@ The next work file is `plans/parity.md`, Phase 7 (asynchronous storage writes).
   record reader to INT32 (a Null column carries no non-null values); skipping an
   all-null column is not supported because the shared skip path treats each
   skipped level as a value (see the skipping note above).
-- Arrow interop, fixed-length byte arrays: the reader decodes through
-  `ColumnValueDecoderImpl(FixedLenByteArray)` and converts at `consume_batch`
-  time, so decimals/intervals are `PrimitiveArray(T)` values carrying the
-  matching decimal/interval data type (arrow-cr has no `Decimal*Array`/
-  `Interval*Array` classes); Float16 uses arrow-cr's half-float primitive array,
-  while Interval(MonthDayNano) is NYI as upstream. Narrow/unsigned primitive
-  targets and decimal/date targets now use their actual Arrow native storage
-  widths, including when their Parquet physical type differs.
+- Arrow interop, fixed-length byte arrays: the reader now uses
+  `FixedLenByteArrayBuffer` and `FixedLenByteArrayValueDecoder`, with contiguous
+  native Array(UInt8) storage, pending capacity hints, reverse null padding and
+  plain/dictionary/delta/byte-stream-split page state. Reservation replaces the
+  native array when required; null moves use a scalar loop for all widths
+  rather than the VEC_CUTOFF optimization. Counts/capacities are Int32, with
+  checked arithmetic instead of Rust usize/saturating allocation behavior.
+  Native GeneralErrors replace panic-only width/dictionary/key states; explicit
+  returned errors and read/skip width-check distinctions match the pin.
+  Decimals/intervals use PrimitiveArray(T) (Int32/Int64/Int128/I256), Float16
+  uses the native half-float array, and MonthDayNano remains NYI as upstream.
+  Narrow/unsigned primitive targets and decimal/date targets use their actual
+  Arrow native storage widths, even when their Parquet physical type differs.
+  See [fixed-byte decoding](../../docs/arrow-fixed-byte-decoding.md).
 - Arrow interop, batch reader: the reader options live in the generic
   `ArrowReaderBuilder(Input)` (`src/parquet/arrow/arrow_reader.cr`), which the
   synchronous `ParquetRecordBatchReaderBuilder` (input
