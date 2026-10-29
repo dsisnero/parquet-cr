@@ -1218,6 +1218,15 @@ The next work file is `plans/parity.md`, Phase 7 (asynchronous storage writes).
   `encryption_algorithm=` replaces its consuming file-metadata helper. See
   [metadata snapshots](../../docs/metadata-snapshots.md) for tests and ownership.
   The Rust FileMeta/WriteThrift wrapper remains inlined in MetadataObjectWriter.
+- On-demand page indexes port the full custom_page_index example, promoted to
+  a reusable native provider and executable. Native `?` predicates/downcasting,
+  Int32 indices and stable borrowed metadata/file bytes replace Rust ownership
+  and usize; range violations raise GeneralError rather than slice panics.
+  Clones own metadata and decoded index buffers while sharing stable file bytes.
+  The sample uses memory IO rather than a temporary path. Sparse cache flags,
+  absent entries, retries and explicit fetch behavior match the pin; no automatic
+  page pruning, encrypted-index decryption or network IO reduction is claimed.
+  See [on-demand page indexes](../../docs/on-demand-page-index.md).
 
 ## Notes
 

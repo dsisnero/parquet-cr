@@ -133,3 +133,6 @@ require "./parquet/file/metadata/memory"
 require "./parquet/typed_columns"
 
 require "./parquet/file/metadata/snapshots"
+
+require "./parquet/file/metadata/on_demand_page_index"
+require "./parquet/examples/custom_page_index"

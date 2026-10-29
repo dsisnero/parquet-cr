@@ -5,12 +5,13 @@
 Run the full gates before closing a feature:
 
 ```bash
-crystal tool format --check src spec
-ameba src spec
+crystal tool format --check src spec bin examples
+ameba src spec bin examples
 crystal spec
 ```
 
-`make lint` and `make test` wrap these.
+`make lint` and `make test` wrap these. The runnable examples are included in
+format/lint; on-demand index acceptance is exercised by the spec suite.
 
 ## Porting tests early
 

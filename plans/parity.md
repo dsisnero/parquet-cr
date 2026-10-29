@@ -14,33 +14,31 @@
 
 ## Where we are
 
-- **Current focus:** Phase 14 — Reusable metadata snapshots, on
-  `codex/metadata-snapshots`, complete. Resume with the remaining production
-  coverage audit below; all code gates pass.
+- **Current focus:** Phase 15 — On-demand page indexes, on
+  `codex/on-demand-page-index`, complete. All code gates pass; resume with the
+  remaining production coverage audit below.
 - **Next up**, in order:
-  1. Continue the remaining production-row audit (schema, metadata, data types
-     and readers); reconcile verified native equivalents and select the next
-     independently usable capability, rather than alias/helper phases.
-  2. Port that capability's upstream tests first and complete its integrated API,
-     code gates and parity updates in one atomic feature commit.
-- **Last completed feature:** `port: Reusable metadata snapshots`, on
-  `codex/metadata-snapshots`. Owned metadata clones, clone+builder editing, repeatable
-  footer writes and plaintext metadata returned from encrypted file writes.
-  The clone API red was a missing method; three writer specs reproduced two
-  mutation failures and a missing plaintext-copy error. Eleven new specs and
-  all 29 focused metadata/encryption specs pass without weakened assertions.
-  Previous feature: `eb1daf5` (fixed-length byte decoding).
-- **Last code gates:** `make lint` (205 files), `make test` (2071 examples),
-  `make test-extensions` (2077 examples), no-codegen library build, scoped
-  inventory validation (3515 items), and `git diff --check`, all green with
-  zero failures/errors/pending. Full suites retain loopback-only HTTP integration;
-  no external service or cloud credentials are needed.
+  1. Continue the production coverage audit and reconcile verified native APIs;
+     most remaining core rows describe existing equivalents or test infrastructure.
+  2. Select the next independently usable capability, port upstream tests first,
+     and finish its API, integration, gates and parity evidence in one commit.
+- **Last completed feature:** `port: On-demand page indexes`, on
+  `codex/on-demand-page-index`. Explicit selective index loading, independent
+  cached-provider clones and the complete standard-versus-selective example
+  preserve the pinned six-column, 150-row sample. The initial API and separate
+  Clone API reds preceded implementation; all 10 new/34 focused specs pass.
+  Previous feature: `9a0195b` (reusable metadata snapshots).
+- **Last code gates:** `make lint` (208 files), `make test` (2081 examples),
+  `make test-extensions` (2087 examples), no-codegen library build, scoped
+  inventory validation (3515 items), standalone example run and `git diff --check`,
+  all green with zero failures/errors/pending. Full suites retain loopback-only
+  HTTP integration; no external service or cloud credentials are needed.
 - **Dependency requirements:** sibling arrow-cr supplies extension machinery
   (`925255d`) and canonical Uuid/Json types. Existing Decimal256 prerequisites
   remain `9a5612c`, `b05366a` and `49d07ce`; see the resolved dependency notes in
   `shards_info/`. No shard patch or dependency edit was made.
-- **Ledger counts:** 2845 `ported`, 281 `intentional_divergence`, 28 `skipped`,
-  361 `missing` (3515 total).
+- **Ledger counts:** 2849 `ported`, 285 `intentional_divergence`, 28 `skipped`,
+  353 `missing` (3515 total).
 - **Plan layout:** this file is the active feature queue and completion record.
   [Implementation reference](parity/implementation-reference.md) is a complete
   archival snapshot of earlier module-level evidence, including stale historical
@@ -547,6 +545,38 @@ metadata returned from encrypted file writes.
   evidence. Derived Clone is not separately discovered; see
   [metadata snapshots](../docs/metadata-snapshots.md) and
   [divergences](parity/divergences.md). No shard/dependency changes.
+
+## Phase 15 — On-demand page indexes
+
+Status: **complete**, with 10 new tests-first specs and all code gates green.
+The complete custom-page-index workflow is available as a reusable provider
+and runnable example. Make format/lint now includes examples.
+
+- Sparse nested caches load only explicitly requested column statistics and page
+  locations. Repeated fetches reuse decoded buffers; plain lookups never fetch.
+  Missing/corrupt indexes leave no cached value. Availability describes cache
+  initialization, even when the requested index is absent, matching the pin.
+- The runnable example preserves the six-column sample, three 50-row groups,
+  five ten-row batches per group, exact values, page statistics and writer
+  settings. Its selective workflow fetches (row group 0, column 0) statistics
+  and offset indexes for columns 0/1/4, then attaches the custom provider to
+  metadata. Standard and selective reports retain upstream's example behavior.
+- Provider Clone owns metadata, sparse maps and cached column/offset index
+  buffers directly, sharing stable file bytes. Metadata clones share providers,
+  as upstream's Arc does. Native borrowed inputs and mutable cache access retain
+  reference conventions; no synchronization or performance equivalence is claimed.
+- Ten tests-first characterizations cover selective and dense equivalence,
+  independent caches, absent/corrupt indexes, retry and range errors, complete
+  example reporting and every sample value through batch-reader file round trips.
+  The initial API red and a separate Clone API red preceded implementation;
+  all 34 focused page-index/metadata specs pass. The pin has no example tests.
+- Eight example rows are reconciled (four ported, four deliberate native API
+  mappings). Int32 indices, ? predicates/downcasting, range errors and memory IO
+  replace Rust-specific conventions. This demonstrates index selection rather
+  than automatic page-pruning queries; the full file remains in memory and
+  encrypted-index decryption is outside the pinned example. See
+  [on-demand page indexes](../docs/on-demand-page-index.md) and
+  [divergences](parity/divergences.md). No shard/dependency edits.
 
 ## Deferred compatibility decisions
 
