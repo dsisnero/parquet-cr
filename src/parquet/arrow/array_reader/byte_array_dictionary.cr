@@ -17,17 +17,11 @@ require "../record_reader"
 #
 # Divergences: upstream's `make_reader!` macro is a `case` over the key/value
 # `DataType::Kind`s; the `MaybeDictionaryDecoder` enum is an abstract class with
-# two subclasses (the variant never changes after construction); the fallback
-# (non-dictionary encoding) path decodes through the shared
-# `ColumnValueDecoderImpl(ByteArray)` into an `Array(ByteArray)` scratch and then
-# pushes the values into the record reader's `OffsetBuffer`, because the port
-# does not carry upstream's dedicated `ByteArrayDecoder`
-# (`ByteArrayDecoderPlain`/`Dictionary`/`DeltaLength`/`DeltaByteArray`); since
-# that decoder cannot stop at the end of the page buffer, an empty value payload
-# is short-circuited to zero values (and the empty dictionary page to an empty
-# dictionary), while a truncated non-empty payload still raises; the
-# `convert_values_to_view` key type is passed explicitly (arrow-cr has no
-# `AnyDictionaryArray`); `usize` counts are `Int32`.
+# two subclasses (the variant never changes after construction); fallback
+# pages use ByteArrayValueDecoder with native Array(ByteArray) scratch before
+# appending to OffsetBuffer. Page-aware codecs handle empty payloads without a
+# special-case bypass. convert_values_to_view takes an explicit key type;
+# usize counts are Int32.
 module Parquet
   module Arrow
     # Returns an `ArrayReader` that decodes the provided byte array column,
@@ -289,21 +283,9 @@ module Parquet
     # Any other encoding falls back to decoding the values and recomputing a
     # dictionary.
     class FallbackByteArrayDecoder < MaybeDictionaryDecoder
-      getter decoder : Column::Reader::ColumnValueDecoderImpl(Parquet::ByteArray)
-      # Whether the page carried no value data at all.
-      #
-      # Upstream's `ByteArrayDecoder` variants stop at the end of the page
-      # buffer, so a page with no value bytes decodes to no values. The shared
-      # `ColumnValueDecoderImpl`/`PlainDecoder` instead reports "not enough
-      # bytes" (it never reads past the values the page claims), so the empty
-      # case is short-circuited here. A *truncated* (non-empty) page still
-      # raises.
-      getter? empty_data : Bool
+      getter decoder : ByteArrayValueDecoder
 
-      def initialize(
-        @decoder : Column::Reader::ColumnValueDecoderImpl(Parquet::ByteArray),
-        @empty_data : Bool,
-      )
+      def initialize(@decoder : ByteArrayValueDecoder)
       end
     end
 
@@ -348,20 +330,10 @@ module Parquet
         len = num_values.to_i32
         buffer = Buffer::OffsetBuffer(V).new
 
-        # Upstream decodes the dictionary page with `ByteArrayDecoderPlain`,
-        # which stops at the end of the page buffer: an empty dictionary page
-        # (e.g. an all-null column) decodes to no values. The shared
-        # `ColumnValueDecoderImpl(ByteArray)` instead reports "not enough bytes",
-        # so the empty case is short-circuited (a truncated page still raises).
-        unless buf.empty?
-          decoder = Column::Reader::ColumnValueDecoderImpl(Parquet::ByteArray).new(@descr)
-          decoder.set_data(Encoding::PLAIN, buf, len, len)
-
-          values = [] of Parquet::ByteArray
-          decoder.read(values, len)
-          values.each { |value| buffer.try_push(value.data, @validate_utf8) }
-          buffer.check_valid_utf8(0) if @validate_utf8
-        end
+        values = [] of Parquet::ByteArray
+        ByteArrayDecoderPlain.new(buf, len, len, @validate_utf8).read(values, Int32::MAX)
+        values.each { |value| buffer.try_push(value.data, @validate_utf8) }
+        buffer.check_valid_utf8(0) if @validate_utf8
 
         @dict = buffer.into_array(nil, @value_type)
         _ = is_sorted
@@ -383,9 +355,9 @@ module Parquet
             index_decoder.set_data(data[1..])
             DictionaryIndexDecoder.new(index_decoder, num_values || num_levels).as(MaybeDictionaryDecoder)
           else
-            fallback = Column::Reader::ColumnValueDecoderImpl(Parquet::ByteArray).new(@descr)
+            fallback = ByteArrayValueDecoder.new(@descr)
             fallback.set_data(encoding, data, num_levels, num_values)
-            FallbackByteArrayDecoder.new(fallback, data.empty?).as(MaybeDictionaryDecoder)
+            FallbackByteArrayDecoder.new(fallback).as(MaybeDictionaryDecoder)
           end
 
         @decoder = decoder
@@ -397,8 +369,6 @@ module Parquet
 
         case decoder
         when FallbackByteArrayDecoder
-          return 0 if decoder.empty_data?
-
           values = out_buffer.spill_values
           initial = values.values.size
 
@@ -447,8 +417,6 @@ module Parquet
 
         case decoder
         when FallbackByteArrayDecoder
-          return 0 if decoder.empty_data?
-
           decoder.decoder.skip_values(num_values)
         when DictionaryIndexDecoder
           count = Math.min(num_values, decoder.max_remaining_values)

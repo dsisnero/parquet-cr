@@ -1,55 +1,53 @@
 require "../../column/reader/decoder"
-require "../../util/utf8"
+require "./byte_array_decoder"
 
 module Parquet::Arrow
-  # Shared Arrow byte-array decoding contract from byte_array.rs and
-  # byte_view_array.rs (arrow-rs 60.0.0). The physical decoder supplies values;
-  # STRING annotations require validation before they reach the record buffer.
-  # Unlike the physical column API, dictionary entries are validated on load,
-  # even when an entry is never referenced. Skipping data values deliberately
-  # delegates without inspecting UTF-8, matching upstream.
-  #
-  # Native allocation divergence: output remains ArrayValuesBuffer(ByteArray),
-  # not OffsetBuffer/ViewBuffer. Dictionary validation decodes a temporary
-  # plain buffer before installing the physical dictionary decoder.
+  # Native-buffer counterpart of ByteArrayColumnValueDecoder and
+  # ByteViewArrayColumnValueDecoder. Pages own their count/encoding state;
+  # dictionaries may be replaced independently of the active page.
   class ByteArrayValueDecoder < Parquet::Column::Reader::ColumnValueDecoder
     @validate_utf8 : Bool
+    @dict : Array(Parquet::ByteArray)?
+    @decoder : ByteArrayDecoder?
 
-    def initialize(@descr : Parquet::Schema::ColumnDescriptor)
-      @decoder = Parquet::Column::Reader::ColumnValueDecoderImpl(Parquet::ByteArray).new(@descr)
-      @validate_utf8 = @descr.converted_type == Parquet::ConvertedType::UTF8
+    def initialize(descr : Parquet::Schema::ColumnDescriptor, @view : Bool = false)
+      @validate_utf8 = descr.converted_type == Parquet::ConvertedType::UTF8
+      @dict = nil
+      @decoder = nil
     end
 
     def set_dict(buf : Bytes, num_values : UInt32, encoding : Parquet::Encoding, is_sorted : Bool) : Nil
       unless encoding == Parquet::Encoding::PLAIN || encoding == Parquet::Encoding::PLAIN_DICTIONARY || encoding == Parquet::Encoding::RLE_DICTIONARY
         raise nyi_err!("Invalid/Unsupported encoding type for dictionary: #{encoding}")
       end
-      if @validate_utf8
-        plain = Parquet::Encodings::PlainDecoder(Parquet::ByteArray).new(@descr.type_length)
-        plain.set_data(buf, num_values.to_i32)
-        values = Array(Parquet::ByteArray).new(num_values.to_i32) { Parquet::ByteArray.new }
-        count = plain.get(values)
-        count.times { |i| Parquet::Util.check_valid_utf8(values[i].data) }
-      end
-      @decoder.set_dict(buf, num_values, encoding, is_sorted)
+      dictionary = [] of Parquet::ByteArray
+      ByteArrayDecoderPlain.new(buf, num_values.to_i32, num_values.to_i32, @validate_utf8, @view)
+        .read(dictionary, Int32::MAX)
+      @dict = dictionary
+      _ = is_sorted
     end
 
     def set_data(encoding : Parquet::Encoding, data : Bytes, num_levels : Int32, num_values : Int32?) : Nil
-      @decoder.set_data(encoding, data, num_levels, num_values)
+      @decoder = ByteArrayDecoder.for_encoding(encoding, data, num_levels, num_values, @validate_utf8, @view)
     end
 
     def read(dest : Array(Parquet::ByteArray) | RecordReader::ArrayValuesBuffer(Parquet::ByteArray), num_values : Int32) : Int32
+      decoder = @decoder || raise general_err!("no decoder set")
       values = [] of Parquet::ByteArray
-      count = @decoder.read(values, num_values)
-      if @validate_utf8
-        values.each { |value| Parquet::Util.check_valid_utf8(value.data) }
-      end
+      count = decoder.read(values, num_values, @dict)
       dest.concat(values)
       count
     end
 
     def skip_values(num_values : Int32) : Int32
-      @decoder.skip_values(num_values)
+      decoder = @decoder || raise general_err!("no decoder set")
+      decoder.skip(num_values, @dict)
+    end
+  end
+
+  class ByteViewArrayValueDecoder < ByteArrayValueDecoder
+    def initialize(descr : Parquet::Schema::ColumnDescriptor)
+      super(descr, true)
     end
   end
 end

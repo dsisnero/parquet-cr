@@ -13,7 +13,7 @@ require "./byte_array_value_decoder"
 # Divergence: upstream decodes with a dedicated
 # `ByteViewArrayColumnValueDecoder` that writes `ViewBuffer` views (and hence
 # needs a pluggable value decoder in the record reader); the port decodes through
-# the shared `ByteArrayValueDecoder` and converts the batch into a
+# the shared `ByteViewArrayValueDecoder` and converts the batch into a
 # byte-view array at `consume_batch` time, using arrow-cr's view builders to pick
 # the inline (`<= 12` byte) or block reference representation. Validation matches
 # upstream (values, null padding, dictionary/delta encodings); only the
@@ -56,7 +56,7 @@ module Parquet
       # method calls need an explicit instance variable type).
       @record_reader : RecordReader::GenericRecordReader(
         RecordReader::ArrayValuesBuffer(Parquet::ByteArray),
-        ByteArrayValueDecoder,
+        ByteViewArrayValueDecoder,
       )
 
       def initialize(
@@ -69,7 +69,7 @@ module Parquet
         # Null slots are padded with an empty byte array (their values are
         # masked off by the null bitmap).
         @record_reader = RecordReader::GenericRecordReader(
-          RecordReader::ArrayValuesBuffer(Parquet::ByteArray), ByteArrayValueDecoder,
+          RecordReader::ArrayValuesBuffer(Parquet::ByteArray), ByteViewArrayValueDecoder,
         ).new(column_desc, batch_size, -> { RecordReader::ArrayValuesBuffer(Parquet::ByteArray).new(Parquet::ByteArray.new(Bytes.empty)) })
         if threshold = padding_threshold
           @record_reader.set_padding_threshold(threshold)

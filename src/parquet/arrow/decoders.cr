@@ -166,7 +166,12 @@ module Parquet
               raise eof_err!("eof decoding byte array")
             end
 
-            @last_value.truncate(0...prefix_length)
+            # Rust casts i32 to usize before Vec::truncate. Negative or
+            # oversized prefixes retain the previous value; Crystal negative
+            # range ends would instead remove bytes from it.
+            if prefix_length >= 0 && prefix_length < @last_value.size
+              @last_value.truncate(0...prefix_length)
+            end
             @data[@data_offset, suffix_length].each { |byte| @last_value << byte }
             yield Bytes.new(@last_value.size) { |i| @last_value[i] }
 
@@ -190,7 +195,12 @@ module Parquet
               raise eof_err!("eof decoding byte array")
             end
 
-            @last_value.truncate(0...prefix_length)
+            # Rust casts i32 to usize before Vec::truncate. Negative or
+            # oversized prefixes retain the previous value; Crystal negative
+            # range ends would instead remove bytes from it.
+            if prefix_length >= 0 && prefix_length < @last_value.size
+              @last_value.truncate(0...prefix_length)
+            end
             @data[@data_offset, suffix_length].each { |byte| @last_value << byte }
             @data_offset += suffix_length
           end

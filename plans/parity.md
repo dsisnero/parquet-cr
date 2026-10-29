@@ -14,30 +14,28 @@
 
 ## Where we are
 
-- **Current focus:** Phase 11 — Validated Arrow string decoding is complete on
-  `codex/validated-arrow-strings`. All eleven selected capabilities are delivered.
-  See [Arrow string decoding](../docs/arrow-string-validation.md) for the read,
-  dictionary, skip and schema-override contracts and native differences.
+- **Current focus:** Phase 12 — Arrow variable-byte page decoding is complete
+  on `codex/arrow-byte-page-decoding`. All twelve selected capabilities are
+  delivered. [Byte-page decoding](../docs/arrow-byte-page-decoding.md) records
+  the page-count, dictionary, malformed-payload and native buffer contracts.
 - **Next up**, in order:
-  1. Audit the remaining byte-array/view/fixed-length decoder families against
-     upstream malformed-payload and EOF tests. Distinguish native buffer/API
-     differences from actual decoding gaps; scope the next complete reader
-     capability here before implementation and port its tests first. Do not
-     promote individual decoder helpers into feature phases.
-  2. Reconcile remaining tests/benchmarks/examples/source-only rows by owning
-     capability. There are 405 `missing` symbols; the delivered feature queue
-     is not a claim of full parity. Macro-expanded APIs and free functions need
-     explicit evidence beyond the current discovery manifest.
-- **Last completed feature:** `port: validated Arrow string decoding`, on
-  `codex/validated-arrow-strings`. Twenty-eight upstream-derived and
-  characterization specs cover six malformed cases, the original 237-byte
-  fixture, all string encodings, offset/view/dictionary targets, binary data,
-  dictionary-load/read/skip validation, schema overrides and batch boundaries.
-  Tests first: 18 specs exposed 12 failures; a second red cycle caught invalid
-  unannotated binary projected to dictionary strings. No assertions weakened.
-  Previous feature: `655d097` (generated mixed Thrift unions).
-- **Last code gates:** `make lint` (202 files), `make test` (2007 examples),
-  `make test-extensions` (2013 examples), no-codegen library build, scoped
+  1. Audit fixed-length byte-array decoding against upstream width validation,
+     byte-stream-split and read/skip contracts. Select the next complete reader
+     capability here and port its tests first; do not create helper-only phases.
+  2. Reconcile the other 374 remaining `missing` rows by owning capability,
+     separating tests/benchmarks/examples and native representation differences
+     from actual behavior gaps. The delivered queue is not full upstream parity.
+     Macro APIs and free functions require evidence beyond discovery manifests.
+- **Last completed feature:** `port: Arrow variable-byte page decoding`, on
+  `codex/arrow-byte-page-decoding`. Twenty-five tests-first specs port read/skip/
+  null behavior and characterize page counts, empty/replaced dictionaries,
+  malformed lengths/indices and prefix casts. File acceptance covers nullable
+  V1/V2 pages, all-null row groups, batch boundaries and five Arrow targets.
+  Red: 19 specs exposed 15 failures/3 errors; a second red caught negative-prefix
+  range semantics, confirmed with a standalone Rust oracle. Focused suite:
+  72 passing specs. Previous feature: `25d52d8` (validated Arrow strings).
+- **Last code gates:** `make lint` (203 files), `make test` (2032 examples),
+  `make test-extensions` (2038 examples), no-codegen library build, scoped
   inventory validation (3515 items), and `git diff --check`, all green with
   zero failures/errors/pending. Full suites retain loopback-only HTTP integration;
   no external service or cloud credentials are needed.
@@ -45,8 +43,8 @@
   (`925255d`) and canonical Uuid/Json types. Existing Decimal256 prerequisites
   remain `9a5612c`, `b05366a` and `49d07ce`; see the resolved dependency notes in
   `shards_info/`. No shard patch or dependency edit was made.
-- **Ledger counts:** 2836 `ported`, 246 `intentional_divergence`, 28 `skipped`,
-  405 `missing` (3515 total).
+- **Ledger counts:** 2836 `ported`, 277 `intentional_divergence`, 28 `skipped`,
+  374 `missing` (3515 total).
 - **Plan layout:** this file is the active feature queue and completion record.
   [Implementation reference](parity/implementation-reference.md) is a complete
   archival snapshot of earlier module-level evidence, including stale historical
@@ -445,14 +443,51 @@ projections. These are now covered as one integrated Arrow reader capability.
 - Red-green evidence: 18 initial specs yielded 12 assertion failures; after the
   first green, projecting unannotated binary to dictionary strings exposed one
   further failure and was fixed. Existing focused reader specs stayed green.
-- Ten column-value adapter rows now record intentional shared-buffer divergence.
-  Encoding-specific decoder families remain missing; their malformed-payload/
-  EOF behavior is not claimed complete. `check_valid_utf8` is explicit evidence
-  outside the manifest's free-function discovery surface.
+- Ten column-value adapter rows record intentional shared-buffer divergence.
+  Phase 12 subsequently delivers the Arrow-specific encoding families with
+  explicit page/error coverage and native buffer/view differences.
+  `check_valid_utf8` remains explicit evidence outside free-function discovery.
 - Native allocations, per-value validation, generic UTF-8 diagnostics and
   Parquet errors for binary-to-string conversion are documented in
   [Arrow string decoding](../docs/arrow-string-validation.md) and
   [divergences](parity/divergences.md). No shard or dependency changes.
+
+## Phase 12 — Arrow variable-byte page decoding
+
+Status: **complete**, with 25 new tests-first specs and all code gates green.
+This feature replaces physical-column decoding in variable-byte Arrow readers
+with page-aware codecs across offset/view readers and dictionary fallback.
+
+- Plain, dictionary, delta-length and delta-byte-array codecs own page state.
+  Dictionary indices stop at the page bound even with padded RLE runs; empty
+  dictionaries yield no values and dictionaries can be replaced while changing
+  data-page encodings. Missing dictionaries fail when read/skip needs them.
+- Negative/insufficient delta lengths and inconsistent prefix/suffix counts
+  produce pinned constructor errors; plain truncation produces the pinned EOF
+  error. Phase 11 annotation-driven UTF-8 validation remains intact.
+- Views select strict plain reads and view-specific dictionary errors while
+  sharing native codecs. Dictionary fallback and dictionary-page decoding use
+  the same page-aware paths, eliminating the empty-payload workaround.
+- The port preserves source quirks: whole-page skips bypass validation, plain
+  skips trust payload lengths, offset plain reads can over-report on corrupt
+  count hints, and delta prefix casts clamp like Rust Vec::truncate. A failing
+  characterization exposed Crystal's negative Range-end behavior; read and skip
+  now match the pin, checked against a standalone Rust oracle.
+- `byte_page_decoding_spec.cr` ports read/skip/null contracts first (19 specs:
+  15 failures/3 errors), then adds source characterizations and V1/V2 file
+  acceptance through small/large strings, views and dictionary targets over
+  pages, row groups and batch boundaries. The second red yielded one prefix
+  failure; all 25 new specs and the 72-spec focused regression suite pass.
+- Thirty-one encoding-family rows now record native Array(ByteArray) output and
+  shared view-mode behavior instead of missing APIs; the ten adapter rows are
+  refreshed. Retained view blocks, SIMD/allocation equivalence and general Rust
+  panic behavior are not claimed. Native post-overskip offset reads return zero
+  rather than debug underflow; counts remain Int32. See
+  [byte-page decoding](../docs/arrow-byte-page-decoding.md) and
+  [divergences](parity/divergences.md). No shard/dependency changes.
+- Fixed-length decoding has a distinct width/byte-stream-split contract and
+  remains the next capability audit, rather than an unfinished part of this
+  variable-byte feature.
 
 ## Deferred compatibility decisions
 

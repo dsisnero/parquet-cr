@@ -31,13 +31,13 @@ dictionary entries.
 
 ## Representation differences
 
-The shared `ByteArrayValueDecoder` implements the annotated-value validation
-contract of both upstream column value decoders. It retains native
-`ArrayValuesBuffer(ByteArray)` output and the existing physical encoding
-decoders; offset and view arrays are constructed at batch consumption.
-Dictionary validation uses a temporary plain-decoded buffer before installation.
-Validation is per value using Crystal's `String#valid_encoding?`, rather than
-upstream's batched/SIMD validation. No throughput or zero-copy parity is claimed.
+The native column value decoders implement annotation-driven UTF-8 validation
+for offset and view readers. Page decoding now uses the Arrow-specific codecs
+recorded in [Arrow byte-page decoding](arrow-byte-page-decoding.md), retaining
+`ArrayValuesBuffer(ByteArray)` output and batch-time Arrow array construction.
+Dictionary entries are decoded once into a native array. Validation is per value
+using Crystal's `String#valid_encoding?`, rather than upstream's batched/SIMD
+validation. No throughput or zero-copy parity is claimed.
 
 Errors use `Parquet::GeneralError` and the prefix `encountered non UTF-8 data`.
 Crystal supplies a validity predicate rather than Rust's failing byte position
@@ -45,7 +45,8 @@ and error length; diagnostics use `invalid utf-8 sequence` without those details
 Unannotated binary-to-string conversion uses the same native Parquet error,
 where upstream may return an Arrow cast error.
 
-The underlying encoding-specific decoder families remain missing in the ledger:
-this feature does not claim complete malformed-payload/EOF or buffer-layout
-parity for those APIs. The ten column-value adapter rows explicitly record
-shared-buffer divergence. No dependency or shard code changes are required.
+The column-value adapters and encoding-specific families record native buffer
+and view representation differences in the ledger. Their page-state/error
+contract and remaining malformed-input limits are described in
+[Arrow byte-page decoding](arrow-byte-page-decoding.md). No dependency or shard
+code changes are required.

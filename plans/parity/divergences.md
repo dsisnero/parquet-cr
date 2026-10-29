@@ -154,27 +154,22 @@ The next work file is `plans/parity.md`, Phase 7 (asynchronous storage writes).
   `General`. `parquet_column` returns `Tuple(Int32, Arrow::Field)?` (upstream
   `Option<(usize, &FieldRef)>`).
 - Arrow interop, leaf array readers (`byte_array.rs`/`byte_view_array.rs`/
-  `byte_array_dictionary.rs`): upstream decodes straight into the arrow values
-  buffer with dedicated decoders (`ByteArrayColumnValueDecoder`,
-  `ByteViewArrayColumnValueDecoder`, the `ByteArrayDecoder*`/
-  `ByteViewArrayDecoder*` families and `ByteArrayDecoderPlain` in the
-  dictionary reader). The port's record/column readers are generic over the
-  values buffer and decoder. `ByteArrayDictionaryReader` uses
-  `(DictionaryBuffer(K, V), DictionaryDecoder(K, V))`. Offset/view readers now
-  use the shared `ByteArrayValueDecoder`, which validates annotated strings
-  during decoding and dictionaries on load, retaining
-  `ArrayValuesBuffer(ByteArray)` and batch-time Arrow construction. Dictionary
-  fallback uses the physical decoder plus checked `OffsetBuffer` appends. The
-  ten column-value decoder adapter rows record this representation divergence;
-  encoding-specific byte-array/view decoder families remain `missing` (including
-  unverified malformed-payload/EOF details). Per-value Crystal validation and
-  native diagnostics replace upstream batched/SIMD checks and byte offsets; see
-  [Arrow string decoding](../../docs/arrow-string-validation.md).
-  `ViewBuffer` (`append_block`/`into_array`/`pad_nulls`) exists but is not yet
-  driven by a decoder. Because `ColumnValueDecoderImpl`/`PlainDecoder` never
-  reads past the values a page claims, an *empty* value payload is
-  short-circuited to zero values (upstream's decoders simply stop at the end of
-  the page buffer); a truncated non-empty payload still raises. Null padding
+  `byte_array_dictionary.rs`): native `ByteArrayDecoder` plain/dictionary/delta
+  classes implement page-aware encoding state, bounded dictionary reads/skips,
+  dictionary replacement and explicit malformed-payload errors. Enum `new` maps
+  to `for_encoding`. Offset/view column adapters share native codecs with view
+  mode selecting strict plain reads and view dictionary errors; output stays
+  `ArrayValuesBuffer(ByteArray)` rather than `OffsetBuffer`/`ViewBuffer`.
+  Dictionary fallback now uses the same codecs, with no empty-payload bypass.
+  Encoding-family and adapter rows record this intentional representation
+  difference. Arrow arrays are built at batch consumption; retained view-block
+  reuse and batched/SIMD validation are not claimed. UTF-8 checks are per-value
+  with native diagnostics. Pinned offset PLAIN count over-reporting on corrupt
+  metadata, unchecked skipped payload ends, whole-page skip bypass and delta
+  prefix cast/truncation are characterized. Native post-overskip reads return
+  zero instead of Rust debug underflow. See
+  [byte-page decoding](../../docs/arrow-byte-page-decoding.md) and
+  [string validation](../../docs/arrow-string-validation.md). Null padding
   uses an empty `ByteArray` as the pad value (a nil payload cannot be read
   back). Dictionary hashing uses a deterministic FNV-1a instead of `ahash`
   (only equality of equal byte slices matters), and the `hash_scratch` buffer is
