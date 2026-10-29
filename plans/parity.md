@@ -14,22 +14,22 @@
 
 ## Where we are
 
-- **Current focus:** Phase 15 — On-demand page indexes, on
-  `codex/on-demand-page-index`, complete. All code gates pass; resume with the
-  remaining production coverage audit below.
+- **Current focus:** Phase 16 — Explicit row-group fetching, on
+  `codex/explicit-row-group-fetching`, complete. All code gates pass; resume
+  with the remaining production coverage audit below.
 - **Next up**, in order:
   1. Continue the production coverage audit and reconcile verified native APIs;
      most remaining core rows describe existing equivalents or test infrastructure.
   2. Select the next independently usable capability, port upstream tests first,
      and finish its API, integration, gates and parity evidence in one commit.
-- **Last completed feature:** `port: On-demand page indexes`, on
-  `codex/on-demand-page-index`. Explicit selective index loading, independent
-  cached-provider clones and the complete standard-versus-selective example
-  preserve the pinned six-column, 150-row sample. The initial API and separate
-  Clone API reds preceded implementation; all 10 new/34 focused specs pass.
-  Previous feature: `9a0195b` (reusable metadata snapshots).
-- **Last code gates:** `make lint` (208 files), `make test` (2081 examples),
-  `make test-extensions` (2087 examples), no-codegen library build, scoped
+- **Last completed feature:** `port: Explicit row-group fetching`, on
+  `codex/explicit-row-group-fetching`. Projected full-chunk fetches, independent
+  readers, decode-time selection, Clone and the complete read_with_rowgroup
+  example are delivered. Eight characterizations were written first and observed
+  red on the absent API; all eight now pass without weakened assertions.
+  Previous feature: `87ac6fa` (on-demand page indexes).
+- **Last code gates:** `make lint` (210 files), `make test` (2089 examples),
+  `make test-extensions` (2095 examples), no-codegen library build, scoped
   inventory validation (3515 items), standalone example run and `git diff --check`,
   all green with zero failures/errors/pending. Full suites retain loopback-only
   HTTP integration; no external service or cloud credentials are needed.
@@ -37,8 +37,8 @@
   (`925255d`) and canonical Uuid/Json types. Existing Decimal256 prerequisites
   remain `9a5612c`, `b05366a` and `49d07ce`; see the resolved dependency notes in
   `shards_info/`. No shard patch or dependency edit was made.
-- **Ledger counts:** 2849 `ported`, 285 `intentional_divergence`, 28 `skipped`,
-  353 `missing` (3515 total).
+- **Ledger counts:** 2857 `ported`, 290 `intentional_divergence`, 28 `skipped`,
+  340 `missing` (3515 total).
 - **Plan layout:** this file is the active feature queue and completion record.
   [Implementation reference](parity/implementation-reference.md) is a complete
   archival snapshot of earlier module-level evidence, including stale historical
@@ -577,6 +577,33 @@ and runnable example. Make format/lint now includes examples.
   encrypted-index decryption is outside the pinned example. See
   [on-demand page indexes](../docs/on-demand-page-index.md) and
   [divergences](parity/divergences.md). No shard/dependency edits.
+
+## Phase 16 — Explicit row-group fetching
+
+Status: **complete**, with eight new tests-first specs and all code gates green.
+The explicit-fetch row-group API and runnable example preserve the complete
+pinned workflow.
+
+- Load metadata once, create one row-group source, fetch projected whole column
+  chunks in leaf order, then construct independent batch readers over the fetched
+  bytes. Selection affects decoding and intentionally does not reduce fetch IO;
+  every explicit call refetches projected chunks, as upstream does.
+- The native source reuses existing dense ChunkReader and one-shot PageIterator
+  adapters rather than duplicating them. Clone owns metadata, projection and the
+  slot vector while sharing fetched chunk data like source Arc. Unfetched-column
+  errors, empty projection and the taken-slot state after failed IO match the pin.
+- Eight characterization specs were written before implementation and observed
+  red on the absent API. They cover the exact alltypes_plain fixture tables and
+  ranges, nullable multi-group values, projection/selection, independent readers
+  and iterators, Clone, repeated fetches, empty projection, IO errors and absolute
+  dense offsets. The pin has no example unit tests. No assertions were weakened.
+- Thirteen example rows are reconciled: eight row-group APIs are ported, and five
+  existing chunk/iterator adapters record deliberate reuse. Native fiber-suspending
+  IO, Int32 counts/offsets, UInt64 fetch ranges, guarded offsets and Arrow pretty
+  rendering replace source conventions. No page-pruning optimization or encrypted
+  example parity is claimed. See
+  [explicit row-group fetching](../docs/explicit-row-group-fetching.md) and
+  [divergences](parity/divergences.md). No shard/dependency changes.
 
 ## Deferred compatibility decisions
 

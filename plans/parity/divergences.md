@@ -1227,6 +1227,15 @@ The next work file is `plans/parity.md`, Phase 7 (asynchronous storage writes).
   absent entries, retries and explicit fetch behavior match the pin; no automatic
   page pruning, encrypted-index decryption or network IO reduction is claimed.
   See [on-demand page indexes](../../docs/on-demand-page-index.md).
+- Explicit row-group fetching ports the complete read_with_rowgroup example,
+  reusing native dense ChunkReader and one-shot PageIterator adapters. Native
+  fiber-suspending AsyncFileReader replaces futures/Tokio; Int32 counts/offsets
+  and guarded dense offsets replace usize and slice panics. The runnable example
+  uses the pinned default fixture and existing Arrow pretty tables (whose native
+  rendering differences remain). Selection affects decoding, not whole-chunk
+  fetching. Repeated fetches and the taken-slot state after IO failure match the
+  source. Clone owns metadata/projection/slots and shares chunk bytes. See
+  [explicit row-group fetching](../../docs/explicit-row-group-fetching.md).
 
 ## Notes
 
