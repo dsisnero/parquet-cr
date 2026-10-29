@@ -14,27 +14,24 @@
 
 ## Where we are
 
-- **Current focus:** Phase 13 — Arrow fixed-length byte decoding is complete
-  on `codex/arrow-fixed-byte-decoding`. All thirteen selected capabilities are
-  delivered. See [fixed-byte decoding](../docs/arrow-fixed-byte-decoding.md)
-  for encoding, width, buffer/padding and native representation contracts.
+- **Current focus:** Phase 14 — Reusable metadata snapshots, on
+  `codex/metadata-snapshots`, complete. Resume with the remaining production
+  coverage audit below; all code gates pass.
 - **Next up**, in order:
-  1. Audit the remaining production schema/metadata/data-type/reader rows against
-     existing APIs and upstream tests. Reconcile behavior already present, then
-     select the next complete capability here before implementation; port tests
-     first and do not promote aliases or private helpers into feature phases.
-  2. Reconcile remaining test/benchmark/example rows by owning capability. There
-     are 365 `missing` symbols; the delivered feature queue is not full parity.
-     Macro APIs/free functions require evidence beyond discovery manifests.
-- **Last completed feature:** `port: Arrow fixed-length byte decoding`, on
-  `codex/arrow-fixed-byte-decoding`. Twenty-eight tests-first specs cover the
-  exact upstream reservation and Decimal256-list tests, width validation,
-  dictionary state/counts, byte-stream-split widths 1–32, null padding and V1/V2
-  files across pages, groups and batches. Initial reader red: 15 specs with
-  5 failures/2 errors; the reservation API was also missing. All 37 focused specs
-  pass. Previous feature: `8aef36c` (variable-byte page decoding).
-- **Last code gates:** `make lint` (204 files), `make test` (2060 examples),
-  `make test-extensions` (2066 examples), no-codegen library build, scoped
+  1. Continue the remaining production-row audit (schema, metadata, data types
+     and readers); reconcile verified native equivalents and select the next
+     independently usable capability, rather than alias/helper phases.
+  2. Port that capability's upstream tests first and complete its integrated API,
+     code gates and parity updates in one atomic feature commit.
+- **Last completed feature:** `port: Reusable metadata snapshots`, on
+  `codex/metadata-snapshots`. Owned metadata clones, clone+builder editing, repeatable
+  footer writes and plaintext metadata returned from encrypted file writes.
+  The clone API red was a missing method; three writer specs reproduced two
+  mutation failures and a missing plaintext-copy error. Eleven new specs and
+  all 29 focused metadata/encryption specs pass without weakened assertions.
+  Previous feature: `eb1daf5` (fixed-length byte decoding).
+- **Last code gates:** `make lint` (205 files), `make test` (2071 examples),
+  `make test-extensions` (2077 examples), no-codegen library build, scoped
   inventory validation (3515 items), and `git diff --check`, all green with
   zero failures/errors/pending. Full suites retain loopback-only HTTP integration;
   no external service or cloud credentials are needed.
@@ -42,8 +39,8 @@
   (`925255d`) and canonical Uuid/Json types. Existing Decimal256 prerequisites
   remain `9a5612c`, `b05366a` and `49d07ce`; see the resolved dependency notes in
   `shards_info/`. No shard patch or dependency edit was made.
-- **Ledger counts:** 2844 `ported`, 278 `intentional_divergence`, 28 `skipped`,
-  365 `missing` (3515 total).
+- **Ledger counts:** 2845 `ported`, 281 `intentional_divergence`, 28 `skipped`,
+  361 `missing` (3515 total).
 - **Plan layout:** this file is the active feature queue and completion record.
   [Implementation reference](parity/implementation-reference.md) is a complete
   archival snapshot of earlier module-level evidence, including stale historical
@@ -518,6 +515,37 @@ fixed-length Arrow reader and conversions, rather than physical-column codecs.
   counts/capacities are Int32, and guards replace panic-only invalid states with
   GeneralError. Allocation/SIMD equivalence is not claimed. See
   [fixed-byte decoding](../docs/arrow-fixed-byte-decoding.md) and
+  [divergences](parity/divergences.md). No shard/dependency changes.
+
+## Phase 14 — Reusable metadata snapshots
+
+Status: **complete**, with 11 new tests-first specs and all code gates green.
+Reusable snapshots can be edited and serialized independently, including
+metadata returned from encrypted file writes.
+
+- Metadata Clone semantics own file/row-group/column metadata, binary statistics,
+  histograms, full encoding statistics, encryption/signing buffers and geospatial
+  type arrays. Schema/column descriptors and page-index providers remain shared;
+  file decryptors copy AAD while sharing key properties and block decryptors.
+- Clones preserve all eight physical statistics variants and flags directly,
+  including state not retained by a Thrift round trip. Clone+builder editing
+  is independent of the original; native builders retain reference semantics.
+  Compression configuration editing stores the codec, as upstream does.
+- The borrowed metadata writer clones row groups before back-filling index
+  offsets/encrypting. Lower-level encryption retains an independent plaintext
+  graph, and file close returns usable plaintext metadata, matching the pin.
+  The earlier source-mutation/missing-plaintext divergence is resolved.
+- Tests came first: clone was absent and three writer characterizations failed
+  (two mutations, one missing plaintext copy). Eleven new specs cover clone
+  ownership, full-stat compact round trips, repeated footer positions, encrypted
+  output and signed-plaintext output through actual file writes. All 29 focused
+  specs pass. The fixture derives from upstream full-encoding-stat metadata
+  conversion; writer characterizations follow the pinned writer implementation.
+- Four missing rows are reconciled: compression editing is ported; the native
+  compression_config, column_descr and encryption_algorithm property mappings
+  record deliberate API differences. Builder/writer ledger rows carry snapshot
+  evidence. Derived Clone is not separately discovered; see
+  [metadata snapshots](../docs/metadata-snapshots.md) and
   [divergences](parity/divergences.md). No shard/dependency changes.
 
 ## Deferred compatibility decisions

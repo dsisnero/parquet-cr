@@ -1203,14 +1203,21 @@ The next work file is `plans/parity.md`, Phase 7 (asynchronous storage writes).
   `DeltaBitPackEncoder<T>` for a non-integer `T`) raise `ParquetError` directly.
   `DeltaLengthByteArrayEncoder`/`Decoder` were made generic over `T` to match the
   upstream registry's cross-type encoder construction.
-- `ParquetMetaDataWriter`/`ThriftMetadataWriter`: the `MetadataObjectWriter`
-  encryption-dispatch layer is not modeled; the non-encryption write logic is
-  inlined (`write_thrift_object`, `Metadata.write_file_metadata`), and the
-  `TrackedWrite`/`file_magic` helpers live in `src/parquet/file/`. `TrackedWrite`
-  exposes only `bytes_written`/`write` (no `inner*`/`into_inner`/`flush`/
-  `write_vectored`; `write_all` comes from `IO`). Row groups are shallow-copied,
-  so writing sets index offsets on the source `ColumnChunkMetaData` objects;
-  magic is always `PAR1` (encrypted-footer magic is not produced).
+- Metadata snapshots now clone owned metadata arrays/bytes directly, preserving
+  statistics flags and full encoding statistics. Schema/column descriptors and
+  page-index providers remain shared; file decryptors copy AAD while sharing
+  properties/block decryptors, matching the source's Arc semantics. Native
+  binary statistics copy mutable slices rather than sharing immutable Rust Bytes.
+  Builders/lower-level writers retain reference ownership conventions; clone
+  before editing/reusing inputs. The high-level metadata writer clones borrowed
+  rows before index backfill/encryption, and encrypted file writers return a
+  plaintext metadata graph. The old shallow-copy/missing-plaintext divergence is
+  resolved. Compression configuration is named `compression_config` to retain
+  the native `compression` codec property; `set_compression` stores only the
+  codec. `column_descr` supplies the source's shared `column_descr_ptr`, and
+  `encryption_algorithm=` replaces its consuming file-metadata helper. See
+  [metadata snapshots](../../docs/metadata-snapshots.md) for tests and ownership.
+  The Rust FileMeta/WriteThrift wrapper remains inlined in MetadataObjectWriter.
 
 ## Notes
 

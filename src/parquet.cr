@@ -131,3 +131,5 @@ require "./parquet/arrow/async_writer"
 require "./parquet/file/metadata/memory"
 
 require "./parquet/typed_columns"
+
+require "./parquet/file/metadata/snapshots"

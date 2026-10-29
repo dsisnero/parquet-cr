@@ -2480,14 +2480,14 @@ parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.bloom_filter_offse
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.builder	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.byte_range	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData#byte_range
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.column_descr	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
-parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.column_descr_ptr	method	missing	-	auto-generated
+parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.column_descr_ptr	method	intentional_divergence	src/parquet/file/metadata/column_chunk.cr	Native column_descr getter returns the shared descriptor reference; clone identity covered in metadata_snapshot_spec.cr.
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.column_index_length	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.column_index_offset	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.column_index_range	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.column_path	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.column_type	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.compressed_size	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
-parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.compression	method	missing	-	auto-generated
+parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.compression	method	intentional_divergence	src/parquet/file/metadata/snapshots.cr	Native compression_config reconstructs default-level Compression; existing compression codec property retained. Snapshot editing spec covers codec-only storage.
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.compression_codec	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.crypto_metadata	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData#crypto_metadata (fields 8/9 wired)
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.data_page_offset	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
@@ -2499,7 +2499,7 @@ parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.file_offset	method
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.file_path	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.geo_statistics	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData#geo_statistics
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.index_page_offset	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
-parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.into_builder	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
+parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.into_builder	method	ported	src/parquet/file/metadata/column_chunk.cr;src/parquet/file/metadata/snapshots.cr;spec/parquet/file/metadata_snapshot_spec.cr;docs/metadata-snapshots.md	Native builder retains references; use clone.into_builder for independent edits. Derived metadata Clone owns nested mutable fields and shares schema/page-index references; explicit snapshot evidence supplements discovery.
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.num_values	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.offset_index_length	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaData.offset_index_offset	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaData
@@ -2520,7 +2520,7 @@ parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_bloom_f
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_column_crypto_metadata	method	ported	src/parquet/file/metadata/column_chunk.cr	set_column_crypto_metadata
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_column_index_length	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_column_index_offset	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
-parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_compression	method	missing	-	auto-generated
+parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_compression	method	ported	src/parquet/file/metadata/snapshots.cr	Stores Compression.codec as upstream; clone/edit acceptance in metadata_snapshot_spec.cr.
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_compression_codec	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_data_page_offset	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
 parquet/src/file/metadata/mod.rs::method::ColumnChunkMetaDataBuilder.set_definition_level_histogram	method	ported	src/parquet/file/metadata/column_chunk.cr	ColumnChunkMetaDataBuilder
@@ -2561,7 +2561,7 @@ parquet/src/file/metadata/mod.rs::method::FileMetaData.schema	method	ported	src/
 parquet/src/file/metadata/mod.rs::method::FileMetaData.schema_descr	method	ported	src/parquet/file/metadata/parquet_metadata.cr	FileMetaData
 parquet/src/file/metadata/mod.rs::method::FileMetaData.schema_descr_ptr	method	ported	src/parquet/file/metadata/parquet_metadata.cr	FileMetaData
 parquet/src/file/metadata/mod.rs::method::FileMetaData.version	method	ported	src/parquet/file/metadata/parquet_metadata.cr	FileMetaData
-parquet/src/file/metadata/mod.rs::method::FileMetaData.with_encryption_algorithm	method	missing	-	auto-generated
+parquet/src/file/metadata/mod.rs::method::FileMetaData.with_encryption_algorithm	method	intentional_divergence	src/parquet/file/metadata/parquet_metadata.cr	Native encryption_algorithm property replaces consuming source helper; clone before editing. Nested-buffer independence covered in metadata_snapshot_spec.cr.
 parquet/src/file/metadata/mod.rs::method::FileMetaData.with_footer_signing_key_metadata	method	ported	src/parquet/file/metadata/parquet_metadata.cr	FileMetaData#footer_signing_key_metadata property (fields 8/9 wiring)
 parquet/src/file/metadata/mod.rs::method::KeyValue.new	method	ported	src/parquet/file/metadata/column_chunk.cr	KeyValue.new (macro-generated)
 parquet/src/file/metadata/mod.rs::method::LevelHistogram.add	method	ported	src/parquet/file/metadata.cr	LevelHistogram
@@ -2585,7 +2585,7 @@ parquet/src/file/metadata/mod.rs::method::OffsetIndexBuilder.new	method	ported	s
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.eq	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.file_decryptor	method	ported	src/parquet/file/metadata/parquet_metadata.cr	getter (FileDecryptor?)
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.file_metadata	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
-parquet/src/file/metadata/mod.rs::method::ParquetMetaData.into_builder	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
+parquet/src/file/metadata/mod.rs::method::ParquetMetaData.into_builder	method	ported	src/parquet/file/metadata/parquet_metadata.cr;src/parquet/file/metadata/snapshots.cr;spec/parquet/file/metadata_snapshot_spec.cr;docs/metadata-snapshots.md	Native builder retains references; use clone.into_builder for independent edits. Derived metadata Clone owns nested mutable fields and shares schema/page-index references; explicit snapshot evidence supplements discovery.
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.memory_size	method	ported	src/parquet/file/metadata/memory.cr	Native recursive metadata footprint; class storage, container capacity, statistics/index/encryption payloads included; known schema back-references and opaque providers/retrievers excluded. Exact native-layout and parsed-file tests pass.
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.new	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
 parquet/src/file/metadata/mod.rs::method::ParquetMetaData.num_row_groups	method	ported	src/parquet/file/metadata/parquet_metadata.cr	ParquetMetaData
@@ -2614,7 +2614,7 @@ parquet/src/file/metadata/mod.rs::method::RowGroupMetaData.columns	method	ported
 parquet/src/file/metadata/mod.rs::method::RowGroupMetaData.columns_mut	method	ported	src/parquet/file/metadata/row_group.cr	RowGroupMetaData
 parquet/src/file/metadata/mod.rs::method::RowGroupMetaData.compressed_size	method	ported	src/parquet/file/metadata/row_group.cr	RowGroupMetaData
 parquet/src/file/metadata/mod.rs::method::RowGroupMetaData.file_offset	method	ported	src/parquet/file/metadata/row_group.cr	RowGroupMetaData
-parquet/src/file/metadata/mod.rs::method::RowGroupMetaData.into_builder	method	ported	src/parquet/file/metadata/row_group.cr	RowGroupMetaData
+parquet/src/file/metadata/mod.rs::method::RowGroupMetaData.into_builder	method	ported	src/parquet/file/metadata/row_group.cr;src/parquet/file/metadata/snapshots.cr;spec/parquet/file/metadata_snapshot_spec.cr;docs/metadata-snapshots.md	Native builder retains references; use clone.into_builder for independent edits. Derived metadata Clone owns nested mutable fields and shares schema/page-index references; explicit snapshot evidence supplements discovery.
 parquet/src/file/metadata/mod.rs::method::RowGroupMetaData.num_columns	method	ported	src/parquet/file/metadata/row_group.cr	RowGroupMetaData
 parquet/src/file/metadata/mod.rs::method::RowGroupMetaData.num_rows	method	ported	src/parquet/file/metadata/row_group.cr	RowGroupMetaData
 parquet/src/file/metadata/mod.rs::method::RowGroupMetaData.ordinal	method	ported	src/parquet/file/metadata/row_group.cr	RowGroupMetaData
@@ -2754,7 +2754,7 @@ parquet/src/file/metadata/thrift/mod.rs::method::PageHeader.read_thrift_without_
 parquet/src/file/metadata/thrift/mod.rs::method::RowGroupMetaData.write_thrift	method	missing	-	auto-generated
 parquet/src/file/metadata/thrift/mod.rs::method::crate::geospatial::bounding_box::BoundingBox.write_thrift	method	ported	src/parquet/file/metadata/column_chunk.cr	Metadata.bounding_box_to_thrift + thrift BoundingBox.write_thrift
 parquet/src/file/metadata/thrift/mod.rs::method::crate::geospatial::statistics::GeospatialStatistics.write_thrift	method	ported	src/parquet/file/metadata/column_chunk.cr	Metadata.geo_stats_to_thrift + thrift GeospatialStatistics.write_thrift
-parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.apply_row_group_encryption	method	ported	src/parquet/file/metadata/writer.cr	in-place; returns nil unencrypted copy (divergence)
+parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.apply_row_group_encryption	method	ported	src/parquet/file/metadata/writer.cr	Consumes rows by native convention and returns a separate plaintext clone when encryption is configured; tests-first mutation characterization.
 parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.encrypt_column_chunk	method	ported	src/parquet/file/metadata/writer.cr	MetadataObjectWriter.encrypt_column_chunk
 parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.encrypt_row_groups	method	ported	src/parquet/file/metadata/writer.cr	MetadataObjectWriter.encrypt_row_groups
 parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.encryption_algorithm_from_encryptor	method	ported	src/parquet/file/metadata/writer.cr	MetadataObjectWriter.encryption_algorithm_from_encryptor
@@ -2767,13 +2767,13 @@ parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.write_file_met
 parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.write_offset_index	method	ported	src/parquet/file/metadata/writer.cr	MetadataObjectWriter.write_offset_index
 parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.write_thrift_object	method	ported	src/parquet/file/metadata/writer.cr	MetadataObjectWriter.write_thrift_object
 parquet/src/file/metadata/writer.rs::method::MetadataObjectWriter.write_thrift_object_with_encryption	method	ported	src/parquet/file/metadata/writer.cr	MetadataObjectWriter.write_thrift_object_with_encryption
-parquet/src/file/metadata/writer.rs::method::ParquetMetaDataWriter<'a, W>.finish	method	ported	src/parquet/file/metadata/writer.cr	ParquetMetaDataWriter
+parquet/src/file/metadata/writer.rs::method::ParquetMetaDataWriter<'a, W>.finish	method	ported	src/parquet/file/metadata/writer.cr	Clones borrowed row groups before index backfill/encryption; repeated and encrypted/plain snapshot writes verified.
 parquet/src/file/metadata/writer.rs::method::ParquetMetaDataWriter<'a, W>.new	method	ported	src/parquet/file/metadata/writer.cr	ParquetMetaDataWriter
 parquet/src/file/metadata/writer.rs::method::ParquetMetaDataWriter<'a, W>.new_with_tracked	method	ported	src/parquet/file/metadata/writer.cr	ParquetMetaDataWriter
 parquet/src/file/metadata/writer.rs::method::ParquetMetaDataWriter<'a, W>.with_write_path_in_schema	method	ported	src/parquet/file/metadata/writer.cr	ParquetMetaDataWriter
 parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.finalize_column_indexes	method	ported	src/parquet/file/metadata/writer.cr	ThriftMetadataWriter (private)
 parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.finalize_offset_indexes	method	ported	src/parquet/file/metadata/writer.cr	ThriftMetadataWriter (private)
-parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.finish	method	ported	src/parquet/file/metadata/writer.cr	ThriftMetadataWriter
+parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.finish	method	ported	src/parquet/file/metadata/writer.cr	Serializes encrypted rows but returns plaintext rows; encrypted and signed-plaintext file close acceptance verified.
 parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.new	method	ported	src/parquet/file/metadata/writer.cr	ThriftMetadataWriter
 parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.with_column_indexes	method	ported	src/parquet/file/metadata/writer.cr	ThriftMetadataWriter
 parquet/src/file/metadata/writer.rs::method::ThriftMetadataWriter<'a, W>.with_file_encryptor	method	ported	src/parquet/file/metadata/writer.cr	ThriftMetadataWriter#with_file_encryptor

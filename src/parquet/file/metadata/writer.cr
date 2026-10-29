@@ -13,9 +13,8 @@ require "./thrift/encryption"
 #
 # Divergences: encryption is modelled with a `FileEncryptor?` (no `Arc`); the
 # Rust `FileMeta`/`WriteThrift` wrapper is inlined (the file metadata is
-# serialized to a buffer before encryption); `apply_row_group_encryption`
-# mutates the row groups in place and returns them (upstream returns a separate
-# deep copy of the unencrypted metadata); row groups are otherwise shallow.
+# serialized to a buffer before encryption). Borrowed metadata is cloned before
+# back-filling offsets or encrypting column metadata, as in upstream.
 module Parquet
   module File
     module Metadata
@@ -108,20 +107,21 @@ module Parquet
 
         # Encrypts row-group column metadata when a file encryptor is configured.
         #
-        # Returns the row groups to write (mutated in place) and, per the
-        # divergence, `nil` for the unencrypted copy.
+        # Consumes the supplied row groups for writing and retains an independent
+        # unencrypted copy for the caller, as in upstream.
         def apply_row_group_encryption(
           row_groups : Array(RowGroupMetaData),
         ) : Tuple(Array(RowGroupMetaData), Array(RowGroupMetaData)?)
           encryptor = @file_encryptor
           return {row_groups, nil} if encryptor.nil?
 
+          unencrypted = row_groups.clone
           row_groups.each_with_index do |row_group, rg_idx|
             row_group.columns.each_with_index do |column, col_idx|
               encrypt_column_chunk(column, encryptor, rg_idx, col_idx)
             end
           end
-          {row_groups, nil}
+          {row_groups, unencrypted}
         end
 
         # The magic bytes identifying the file type.
@@ -288,7 +288,7 @@ module Parquet
             ColumnOrder.column_order_for_type(col.logical_type_ref, col.converted_type, col.physical_type)
           end
 
-          encrypted_row_groups, _unencrypted = @object_writer.apply_row_group_encryption(@row_groups)
+          encrypted_row_groups, unencrypted = @object_writer.apply_row_group_encryption(@row_groups)
           encryption_algorithm, footer_signing_key_metadata = @object_writer.plaintext_footer_crypto_metadata
 
           file_metadata = FileMetaData.new(
@@ -305,7 +305,7 @@ module Parquet
           @buf.write(@object_writer.file_magic)
 
           page_index = PageIndex.new(column_indexes, offset_indexes)
-          ParquetMetaData.new(file_metadata, encrypted_row_groups, page_index)
+          ParquetMetaData.new(file_metadata, unencrypted || encrypted_row_groups, page_index)
         end
 
         private def finalize_column_indexes : Array(Array(ColumnIndexMetaData?))?
@@ -400,7 +400,7 @@ module Parquet
         def finish : Nil
           file_metadata = @metadata.file_metadata
           schema_descr = file_metadata.schema_descr
-          row_groups = @metadata.row_groups.dup
+          row_groups = @metadata.row_groups.clone
 
           encoder = ThriftMetadataWriter.new(
             @tracked, schema_descr, row_groups, file_metadata.created_by,
