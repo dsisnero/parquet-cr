@@ -2985,7 +2985,7 @@ parquet/src/file/reader.rs::method::Bytes.get_bytes	method	ported	src/parquet/fi
 parquet/src/file/reader.rs::method::Bytes.get_read	method	ported	src/parquet/file/chunk_reader.cr	BytesChunkReader#get_read
 parquet/src/file/reader.rs::method::Bytes.len	method	ported	src/parquet/file/chunk_reader.cr	BytesChunkReader#len
 parquet/src/file/reader.rs::method::File.get_bytes	method	ported	src/parquet/file/chunk_reader.cr	FileChunkReader#get_bytes
-parquet/src/file/reader.rs::method::File.get_read	method	ported	src/parquet/file/chunk_reader.cr	FileChunkReader#get_read
+parquet/src/file/reader.rs::method::File.get_read	method	ported	src/parquet/file/chunk_reader.cr;spec/parquet/file/chunk_reader_spec.cr;docs/file-chunk-reader.md	FileChunkReader#get_read; upstream cloned-handle buffered streaming and shared seek/EOF semantics; block ensure closes owned streams on success/error; sparse >2GiB and lifetime regressions
 parquet/src/file/reader.rs::method::File.len	method	ported	src/parquet/file/chunk_reader.cr	FileChunkReader#len
 parquet/src/file/reader.rs::method::FilePageIterator.new	method	ported	src/parquet/file/reader.cr	FilePageIterator.new
 parquet/src/file/reader.rs::method::FilePageIterator.next	method	ported	src/parquet/file/reader.cr	FilePageIterator#next
@@ -3011,15 +3011,15 @@ parquet/src/file/serialized_reader.rs::method::SerializedFileReader<R>.new_with_
 parquet/src/file/serialized_reader.rs::method::SerializedFileReader<R>.num_row_groups	method	ported	src/parquet/file/reader.cr	SerializedFileReader
 parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.add_crypto_context	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#add_crypto_context
 parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.at_record_boundary	method	ported	src/parquet/file/serialized_reader.cr	inherited PageReader default
-parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.get_next_page	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#get_next_page
+parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.get_next_page	method	ported	src/parquet/file/serialized_reader.cr;spec/parquet/file/chunk_reader_spec.cr;docs/file-chunk-reader.md	SerializedPageReader#get_next_page; upstream cloned-handle buffered streaming and shared seek/EOF semantics; block ensure closes owned streams on success/error; sparse >2GiB and lifetime regressions
 parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.new	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader.new_for_column
 parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.new_with_properties	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader.new_for_column
 parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.next	method	ported	src/parquet/file/serialized_reader.cr	Iterator(Column::Page); Iterator::Stop replaces Result<Page>, errors raise
-parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.peek_next_page	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#peek_next_page
-parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.peek_next_page_offset	method	intentional_divergence	src/parquet/file/serialized_reader.cr	test-only upstream (#[cfg(test)]); public here for the Pages state
+parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.peek_next_page	method	ported	src/parquet/file/serialized_reader.cr;spec/parquet/file/chunk_reader_spec.cr;docs/file-chunk-reader.md	SerializedPageReader#peek_next_page; upstream cloned-handle buffered streaming and shared seek/EOF semantics; block ensure closes owned streams on success/error; sparse >2GiB and lifetime regressions
+parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.peek_next_page_offset	method	intentional_divergence	src/parquet/file/serialized_reader.cr;spec/parquet/file/chunk_reader_spec.cr;docs/file-chunk-reader.md	test-only upstream (#[cfg(test)]); public here for the Pages state; upstream cloned-handle buffered streaming and shared seek/EOF semantics; block ensure closes owned streams on success/error; sparse >2GiB and lifetime regressions
 parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.read_page_header_len	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#read_page_header_len
 parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.read_page_header_len_from_bytes	method	ported	src/parquet/file/serialized_reader.cr	private instance method (IO::Memory position instead of Cursor)
-parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.skip_next_page	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#skip_next_page
+parquet/src/file/serialized_reader.rs::method::SerializedPageReader<R>.skip_next_page	method	ported	src/parquet/file/serialized_reader.cr;spec/parquet/file/chunk_reader_spec.cr;docs/file-chunk-reader.md	SerializedPageReader#skip_next_page; upstream cloned-handle buffered streaming and shared seek/EOF semantics; block ensure closes owned streams on success/error; sparse >2GiB and lifetime regressions
 parquet/src/file/serialized_reader.rs::method::SerializedPageReaderContext.decrypt_page_data	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#decrypt_page_data
 parquet/src/file/serialized_reader.rs::method::SerializedPageReaderContext.page_crypto_context	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#page_crypto_context
 parquet/src/file/serialized_reader.rs::method::SerializedPageReaderContext.read_page_header	method	ported	src/parquet/file/serialized_reader.cr	SerializedPageReader#read_page_header
@@ -3094,7 +3094,7 @@ parquet/src/file/writer.rs::method::SerializedPageWriter<'_, W>.with_page_encryp
 parquet/src/file/writer.rs::method::SerializedPageWriter<'_, W>.write_page	method	ported	src/parquet/file/serialized_writer.cr	SerializedPageWriter#write_page
 parquet/src/file/writer.rs::method::SerializedPageWriter<'a, W>.new	method	ported	src/parquet/file/serialized_writer.cr	SerializedPageWriter.new
 parquet/src/file/writer.rs::method::SerializedPageWriter<'a, W>.serialize_page_header	method	ported	src/parquet/file/serialized_writer.cr	SerializedPageWriter#serialize_page_header
-parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.append_column	method	ported	src/parquet/file/writer.cr	SerializedRowGroupWriter#append_column
+parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.append_column	method	ported	src/parquet/file/writer.cr;spec/parquet/file/chunk_reader_spec.cr;docs/file-chunk-reader.md	SerializedRowGroupWriter#append_column; upstream cloned-handle buffered streaming and shared seek/EOF semantics; block ensure closes owned streams on success/error; sparse >2GiB and lifetime regressions
 parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.append_column_from_pages	method	ported	src/parquet/file/writer.cr	Streaming append_column_from_pages splices store blobs and rewrites offsets; integrated writer specs and full gates pass
 parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.append_column_from_read	method	ported	src/parquet/file/writer.cr	SerializedRowGroupWriter#append_column_from_read
 parquet/src/file/writer.rs::method::SerializedRowGroupWriter<'a, W>.assert_previous_writer_closed	method	ported	src/parquet/file/writer.cr	SerializedRowGroupWriter

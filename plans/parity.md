@@ -14,25 +14,28 @@
 
 ## Where we are
 
-- **Current focus:** Phase 18 — Round-trip benchmark matrix, on
-  `codex/round-trip-benchmark`, complete. All code gates and release measurements
-  pass; resume with the remaining coverage audit below.
+- **Current focus:** Phase 19 — Streaming large local files, on
+  `codex/stream-large-file-reads`, complete. All code gates pass; resume with the
+  remaining coverage audit below.
 - **Next up**, in order:
   1. Continue the production coverage audit and reconcile verified native APIs;
      remaining rows are largely existing equivalents and test/benchmark infrastructure.
   2. Select the next complete capability or benchmark workflow, port its tests first,
      and finish API/integration, gates and parity evidence in one atomic commit.
-- **Last completed feature:** `port: Complete round-trip benchmark matrix`, on
-  `codex/round-trip-benchmark`. All 46 source cases, deterministic fixtures,
-  exact value checks, reusable-buffer writes and first/warm CSV CLI are delivered.
-  Seven specs were written first and observed red on the absent API; all pass.
-  Three full release smoke matrices and three default-size Int32 runs completed.
-  Previous feature: `22d3560` (object-store round-trip example).
-- **Last code gates:** `make lint` (214 files), `make test` (2102 examples),
-  `make test-extensions` (2108 examples), no-codegen library build, scoped
-  inventory validation (3515 items), release benchmark runs and `git diff --check`,
-  all green with zero failures/errors/pending. Full suites retain loopback-only
-  HTTP integration; no external service or cloud credentials are needed.
+- **Last completed feature:** `port: Stream large local file reads`, on
+  `codex/stream-large-file-reads`. `FileChunkReader#get_read` now duplicates the
+  open handle, seeks and streams through bounded buffering like upstream
+  `File::try_clone` + `seek` + `BufReader`, so it neither narrows the file tail
+  to Int32 nor allocates it. A block overload adds ensure-based cleanup and the
+  page reader and column splicer use it. Ten tests-first specs were observed red
+  before the change and pass after it. Previous feature: `951ce81` (documentation
+  and changelog refresh).
+- **Last code gates:** `make lint` (214 files), `make test` (2112 examples),
+  `make test-extensions` (2118 examples) and `git diff --check`, all green with
+  zero failures/errors/pending. Ledger structure validated (3515 rows, five
+  fields each, counts matching the ledger note below). Full suites retain
+  loopback-only HTTP integration; no external service or cloud credentials are
+  needed.
 - **Dependency requirements:** sibling arrow-cr supplies extension machinery
   (`925255d`) and canonical Uuid/Json types. Existing Decimal256 prerequisites
   remain `9a5612c`, `b05366a` and `49d07ce`; see the resolved dependency notes in
@@ -663,6 +666,29 @@ round-trip verification and a parameterized CSV CLI.
   public copyable structs and GeneralError assertions replace Rust conventions.
   See [round-trip benchmark](../docs/round-trip-benchmark.md) and
   [divergences](parity/divergences.md). No shard/dependency changes.
+
+## Phase 19 — Streaming large local files
+
+Status: **complete**, with ten tests-first specs, all code gates green and an
+independent large-file and real-file verification of the streaming reader.
+
+- `FileChunkReader#get_read` no longer computes the remaining file length as an
+  Int32, allocates it or reads the whole tail; it duplicates the open handle and
+  streams through bounded buffering.
+- Verified the reported Int32 tail-size overflow against pinned reader.rs
+  (reproduced independently: `.to_i32` of a 2 GiB + 1 sparse size raises
+  `OverflowError`; a 10,000-clone loop also confirmed one descriptor per reader
+  with no descriptor leak once readers are closed).
+- Upstream shared seek effects and seeks beyond EOF are preserved; the report's
+  independent-position read_at proposal and file bounds rejection are not used.
+  The block get_read overload closes returned IO in ensure; page-header and
+  column-splice consumers use it, including parsing/splicing errors.
+- Ten focused specs cover large sparse files, buffered reads, EOF, shared seek,
+  owned handles, unlinked files, block cleanup and integrated consumer cleanup.
+  Beyond the specs, a real fixture read through the file-backed reader produced
+  the same page/value/row counts as the in-memory reader. See
+  [file-reader behavior](../docs/file-chunk-reader.md). No shard or dependency
+  changes. External catalog-scan claims were not rerun in this repository.
 
 ## Deferred compatibility decisions
 

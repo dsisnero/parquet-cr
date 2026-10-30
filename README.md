@@ -31,6 +31,7 @@ progress: see the [current status](plans/parity.md) and
 | --- | --- |
 | Typed physical columns and generated metadata codecs | [Typed columns](docs/typed-columns.md), [Thrift unions](docs/thrift-unions.md) |
 | Arrow string and byte-page decoding | [UTF-8 validation](docs/arrow-string-validation.md), [variable bytes](docs/arrow-byte-page-decoding.md), [fixed bytes](docs/arrow-fixed-byte-decoding.md) |
+| Large local files and reader lifetimes | [Streaming file reads](docs/file-chunk-reader.md) |
 | Metadata caching and reuse | [Memory estimates](docs/metadata-memory.md), [snapshots](docs/metadata-snapshots.md) |
 | Explicit index and row-group loading | [On-demand indexes](docs/on-demand-page-index.md), [row-group fetching](docs/explicit-row-group-fetching.md) |
 | Object-store batch round trips | [Runnable example](docs/object-store-example.md) |

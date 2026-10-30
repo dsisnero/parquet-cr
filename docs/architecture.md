@@ -29,6 +29,14 @@ support lives in `src/parquet/derive.cr`. `bin/` contains command-line tools,
 `examples/` contains runnable integration workflows, and `bench/` contains the
 round-trip measurement harness. These entry points reuse the library APIs.
 
+## Local file streaming
+
+[File chunk readers](file-chunk-reader.md) duplicate the open handle, seek and
+return a buffered stream, matching upstream's file implementation. Reader
+creation does not allocate the file tail. Block-scoped reads close handles on
+success and exceptions; cloned file handles retain upstream shared-position
+semantics.
+
 ## Metadata ownership
 
 Metadata builders retain native references. Use

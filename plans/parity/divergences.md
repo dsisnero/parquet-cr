@@ -1142,10 +1142,16 @@ The next work file is `plans/parity.md`, Phase 7 (asynchronous storage writes).
   and conversion errors in strict mode. Boundary tests cover representable
   dates/timestamps and rejection of year zero. Microsecond decoding splits
   seconds/remainder to avoid an intermediate Int64 nanosecond overflow.
-- `chunk_reader`: `BytesChunkReader#get_read`/`get_bytes` and
-  `FileChunkReader#get_bytes` raise the upstream `EOF` messages
-  ("Expected to read ... while file has length ..."); `FileChunkReader` reads
-  through `File#read_at` blocks (Crystal's `read_at` yields an `IO`).
+- `chunk_reader`: `BytesChunkReader#get_read`/`get_bytes` retain upstream
+  bounds errors. File `get_read` duplicates the open handle with native
+  `File#reopen`, seeks and returns bounded buffered File IO, matching upstream
+  shared-position and beyond-EOF behavior. A public block overload adds ensure
+  cleanup in place of Rust Drop; page parsing and column splicing use it.
+  File `get_bytes` retains bounded `File#read_at`: native range errors precede
+  its short-read EOF check, and positional reads do not change the shared seek
+  position (the upstream trait permits side effects without requiring them).
+  Native file seeks use signed Int64 offsets; single Bytes sizes stay Int32.
+  See [file chunk readers](../../docs/file-chunk-reader.md).
 - `column::page_store`: Rust traits become abstract `PageStore` and
   `PageStoreFactory` classes; `PageKey` is a UInt64 value struct with comparison
   and hashing, and `PageStoreArgs` retains its descriptor by reference.

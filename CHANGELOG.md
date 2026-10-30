@@ -67,6 +67,11 @@ revision is recorded per entry.
 
 ### Fixed
 
+- `FileChunkReader#get_read` now duplicates the open handle, seeks and streams
+  through bounded buffering, following upstream instead of allocating the whole
+  file tail or overflowing above 2 GiB. File seeks beyond EOF and shared-position
+  behavior match Rust. Block-scoped reads close page/splice streams on success
+  and exceptions. See [file-reader behavior](docs/file-chunk-reader.md).
 - [UTF-8 validation](docs/arrow-string-validation.md) respects value boundaries,
   validates dictionary entries and rejects invalid binary-to-string projections.
 - [Variable-byte page decoding](docs/arrow-byte-page-decoding.md) and

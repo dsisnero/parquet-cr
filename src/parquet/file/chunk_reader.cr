@@ -16,8 +16,20 @@ module Parquet
       # Returns the bytes at `[start, start + length)`.
       abstract def get_bytes(start : UInt64, length : Int32) : Bytes
 
-      # Returns a reader positioned at `start`.
+      # Returns an owned reader positioned at `start`; close it after use.
+      # File-backed readers share the underlying seek position, so subsequent
+      # reads/seeks through other handles may affect readers not yet buffered.
       abstract def get_read(start : UInt64) : IO
+
+      # Yields a reader and closes it on both normal return and exceptions.
+      def get_read(start : UInt64, & : IO -> T) : T forall T
+        reader = get_read(start)
+        begin
+          yield reader
+        ensure
+          reader.close
+        end
+      end
     end
 
     # `ChunkReader` over an in-memory byte buffer.
@@ -72,12 +84,18 @@ module Parquet
       end
 
       def get_read(start : UInt64) : IO
-        remaining = (@file.size - start).to_i32
-        buffer = Bytes.new(remaining)
-        @file.read_at(start, remaining) do |io|
-          io.read_fully(buffer)
+        # Rust uses File::try_clone + seek + BufReader. Reopen duplicates the
+        # handle into an unused descriptor; File already provides bounded
+        # buffering. Clones share the OS seek position, as upstream documents.
+        reader = ::File.open(::File::NULL)
+        begin
+          reader.reopen(@file)
+          reader.seek(start)
+          reader
+        rescue exception
+          reader.close
+          raise exception
         end
-        IO::Memory.new(buffer)
       end
     end
   end

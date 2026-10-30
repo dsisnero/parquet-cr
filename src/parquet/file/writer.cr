@@ -337,8 +337,9 @@ module Parquet
       def append_column(reader : ChunkReader, close : Column::Writer::ColumnCloseResult) : Nil
         metadata = close.metadata
         src_offset = metadata.dictionary_page_offset || metadata.data_page_offset
-        read = reader.get_read(src_offset.to_u64)
-        append_column_from_read(read, close)
+        reader.get_read(src_offset.to_u64) do |read|
+          append_column_from_read(read, close)
+        end
       end
 
       # Splices an already-encoded column chunk into the row group, reading its

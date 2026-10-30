@@ -174,3 +174,14 @@ buffer reuse and full schema/value validation. They do not assert timing
 thresholds. For CLI smoke measurements, use the release build and repeated runs
 in the [benchmark guide](round-trip-benchmark.md); report first and warm samples
 separately. Timing validation complements the spec gates.
+
+## Large local files and reader lifetimes
+
+```sh
+crystal spec spec/parquet/file/chunk_reader_spec.cr
+```
+
+The [file-reader guide](file-chunk-reader.md) describes the sparse-file regression,
+upstream shared-position and EOF semantics, and deterministic stream cleanup.
+These tests use temporary files; sparse-file support avoids allocating physical
+storage for the full logical size beyond 2 GiB.

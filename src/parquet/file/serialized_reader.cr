@@ -258,13 +258,12 @@ module Parquet
           loop do
             return nil if state.remaining_bytes == 0
 
-            read = @reader.get_read(state.offset)
             header =
               if buffered = state.next_page_header
                 state.next_page_header = nil
                 buffered
               else
-                header_len, parsed = read_page_header_len(read, state.page_index, state.require_dictionary)
+                header_len, parsed = read_page_header_at(state.offset, state.page_index, state.require_dictionary)
                 verify_page_header_len(header_len, state.remaining_bytes)
                 state.offset += header_len.to_u64
                 state.remaining_bytes -= header_len.to_u64
@@ -334,8 +333,7 @@ module Parquet
               return Column::PageMetadata.from_thrift(buffered)
             end
 
-            read = @reader.get_read(state.offset)
-            header_len, header = read_page_header_len(read, state.page_index, state.require_dictionary)
+            header_len, header = read_page_header_at(state.offset, state.page_index, state.require_dictionary)
             verify_page_header_len(header_len, state.remaining_bytes)
             state.offset += header_len.to_u64
             state.remaining_bytes -= header_len.to_u64
@@ -376,8 +374,7 @@ module Parquet
             state.remaining_bytes -= data_page_size
             state.next_page_header = nil
           else
-            read = @reader.get_read(state.offset)
-            header_len, header = read_page_header_len(read, state.page_index, state.require_dictionary)
+            header_len, header = read_page_header_at(state.offset, state.page_index, state.require_dictionary)
             verify_page_header_len(header_len, state.remaining_bytes)
             verify_page_size(header.compressed_page_size, header.uncompressed_page_size, state.remaining_bytes)
             data_page_size = header.compressed_page_size.to_u64
@@ -431,8 +428,7 @@ module Parquet
               next
             end
 
-            read = @reader.get_read(state.offset)
-            header_len, header = read_page_header_len(read, state.page_index, state.require_dictionary)
+            header_len, header = read_page_header_at(state.offset, state.page_index, state.require_dictionary)
             state.offset += header_len.to_u64
             state.remaining_bytes -= header_len.to_u64
 
@@ -456,6 +452,16 @@ module Parquet
         Column::PageMetadata.from_thrift(header)
       rescue Parquet::ParquetError
         nil
+      end
+
+      private def read_page_header_at(
+        offset : UInt64,
+        page_index : Int32,
+        dictionary_page : Bool,
+      ) : Tuple(Int32, Format::PageHeader)
+        @reader.get_read(offset) do |input|
+          read_page_header_len(input, page_index, dictionary_page)
+        end
       end
 
       private def read_page_header_len(
