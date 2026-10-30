@@ -1236,6 +1236,16 @@ The next work file is `plans/parity.md`, Phase 7 (asynchronous storage writes).
   fetching. Repeated fetches and the taken-slot state after IO failure match the
   source. Clone owns metadata/projection/slots and shares chunk bytes. See
   [explicit row-group fetching](../../docs/explicit-row-group-fetching.md).
+- The complete object-store example uses native MemoryObjectStore,
+  BufferedObjectWriter and SpawnedReader, preserving both exact batch equality
+  checks and printed row counts. The minimal example reader uses suffix-based
+  metadata without HEAD and converts store exceptions to ExternalError with their
+  original cause. String paths, Int32 sizes and fiber-suspending IO replace Rust
+  types/futures; a one-worker Crystal context replaces Tokio and has runtime-managed
+  worker lifetime instead of shutdown_background. The writer uses one in-memory
+  buffered PUT rather than SDK multipart behavior. Mismatch guards raise GeneralError
+  instead of assertion panics; Debug formatting and speedup parity are not claimed.
+  See [object-store example](../../docs/object-store-example.md).
 
 ## Notes
 

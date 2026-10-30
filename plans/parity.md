@@ -14,22 +14,22 @@
 
 ## Where we are
 
-- **Current focus:** Phase 16 — Explicit row-group fetching, on
-  `codex/explicit-row-group-fetching`, complete. All code gates pass; resume
-  with the remaining production coverage audit below.
+- **Current focus:** Phase 17 — Object-store round-trip example, on
+  `codex/object-store-example`, complete. All code gates pass; resume with the
+  remaining production coverage audit below.
 - **Next up**, in order:
   1. Continue the production coverage audit and reconcile verified native APIs;
      most remaining core rows describe existing equivalents or test infrastructure.
   2. Select the next independently usable capability, port upstream tests first,
      and finish its API, integration, gates and parity evidence in one commit.
-- **Last completed feature:** `port: Explicit row-group fetching`, on
-  `codex/explicit-row-group-fetching`. Projected full-chunk fetches, independent
-  readers, decode-time selection, Clone and the complete read_with_rowgroup
-  example are delivered. Eight characterizations were written first and observed
-  red on the absent API; all eight now pass without weakened assertions.
-  Previous feature: `87ac6fa` (on-demand page indexes).
-- **Last code gates:** `make lint` (210 files), `make test` (2089 examples),
-  `make test-extensions` (2095 examples), no-codegen library build, scoped
+- **Last completed feature:** `port: Object-store round-trip example`, on
+  `codex/object-store-example`. Buffered publication, suffix-based reads and
+  dedicated-context IO preserve both exact upstream batch assertions and output.
+  Six specs were written first and observed red on the absent API; all six pass,
+  including actual context/thread separation and metadata/error characterizations.
+  Previous feature: `36e265e` (explicit row-group fetching).
+- **Last code gates:** `make lint` (212 files), `make test` (2095 examples),
+  `make test-extensions` (2101 examples), no-codegen library build, scoped
   inventory validation (3515 items), standalone example run and `git diff --check`,
   all green with zero failures/errors/pending. Full suites retain loopback-only
   HTTP integration; no external service or cloud credentials are needed.
@@ -37,8 +37,8 @@
   (`925255d`) and canonical Uuid/Json types. Existing Decimal256 prerequisites
   remain `9a5612c`, `b05366a` and `49d07ce`; see the resolved dependency notes in
   `shards_info/`. No shard patch or dependency edit was made.
-- **Ledger counts:** 2857 `ported`, 290 `intentional_divergence`, 28 `skipped`,
-  340 `missing` (3515 total).
+- **Ledger counts:** 2862 `ported`, 290 `intentional_divergence`, 28 `skipped`,
+  335 `missing` (3515 total).
 - **Plan layout:** this file is the active feature queue and completion record.
   [Implementation reference](parity/implementation-reference.md) is a complete
   archival snapshot of earlier module-level evidence, including stale historical
@@ -603,6 +603,31 @@ pinned workflow.
   rendering replace source conventions. No page-pruning optimization or encrypted
   example parity is claimed. See
   [explicit row-group fetching](../docs/explicit-row-group-fetching.md) and
+  [divergences](parity/divergences.md). No shard/dependency changes.
+
+## Phase 17 — Object-store round-trip example
+
+Status: **complete**, with six new tests-first specs and all code gates green.
+The complete object-store publication/read workflow includes dedicated-context
+IO and a reusable minimal suffix reader.
+
+- Preserve the source's non-null Int64 col=[1,2,3] batch, buffered publication,
+  two complete-batch equality checks and both output lines. Normal reads run on
+  the caller's context; SpawnedReader dispatches IO to a separate one-worker
+  Crystal context, confirmed by actual context/thread observations.
+- The reader delegates ordered ranges and suffixes, loads metadata without HEAD,
+  honors ArrowReaderOptions and wraps storage errors in ExternalError with the
+  original cause. Parser errors retain their metadata error type. Clone shares
+  the store reference and path; metadata is fetched anew on each call.
+- Six tests-first specs port both source assertions and characterize adapter
+  behavior, suffix/index options, error conversion, shared-store clones and
+  publication only at completion. Initial red was the missing example API;
+  all six specs pass. Existing buffered writer/store/spawn machinery is reused.
+- Five example rows are ported. Native storage interfaces/String paths, Int32
+  sizes, fiber-suspending calls, runtime-managed context lifetime and GeneralError
+  mismatch guards replace Rust-specific conventions. The writer uses one buffered
+  PUT; SDK multipart behavior, Debug formatting and speedup parity are not claimed.
+  See [object-store example](../docs/object-store-example.md) and
   [divergences](parity/divergences.md). No shard/dependency changes.
 
 ## Deferred compatibility decisions
