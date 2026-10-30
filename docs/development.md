@@ -116,7 +116,12 @@ bin/parquet-fromcsv -s schema.txt -i input.csv -o output.parquet -h \
 
 All options from pinned `parquet-fromcsv.rs` are available. The three paths are
 required named options. The schema file contains a Parquet message definition,
-for example `message events { required int32 id; optional binary name (STRING); }`.
+for example:
+
+```text
+message events { required int32 id; optional binary name (STRING); }
+```
+
 The root name is preserved. Arrow CSV applies the declared types and empty-field
 null semantics; nested/binary types unsupported by upstream Arrow CSV still fail.
 Input is converted in Arrow batches; batch size defaults to 1000, or
@@ -165,3 +170,28 @@ read/write usage. Both entry styles reuse the existing native implementations.
 unit/payload DSL, native representation, pinned diagnostics/limitations and
 production crypto-metadata integration. Use generated codecs for new mixed
 unions and retain exact wire/API tests when replacing manual ones.
+
+## Arrow decoding and metadata reuse
+
+The decoding guides cover [string validation](arrow-string-validation.md),
+[variable-byte pages](arrow-byte-page-decoding.md) and
+[fixed-byte pages](arrow-fixed-byte-decoding.md), including supported encodings,
+skip behavior and malformed-input diagnostics. Preserve their upstream
+assertions when extending reader behavior.
+
+Use [metadata snapshots](metadata-snapshots.md) when reusing metadata across
+builders or footer writes. [On-demand page indexes](on-demand-page-index.md)
+and [explicit row-group fetching](explicit-row-group-fetching.md) document
+explicit cache/fetch boundaries and runnable examples.
+
+## Object-store example and measurements
+
+Run `crystal run examples/object_store.cr` for a memory-store batch round trip
+with normal and dedicated-context reads. See the
+[object-store guide](object-store-example.md) for error and lifecycle behavior.
+
+Build and run the [round-trip benchmark](round-trip-benchmark.md) in release
+mode. Its smoke matrix checks all 46 cases; use repeated independent processes
+for measurements and report dimensions, sample counts and environment. Exact
+schema/value checks occur outside timing. The native CSV harness and RNG differ
+from upstream Criterion/StdRng, so they do not establish Rust performance parity.

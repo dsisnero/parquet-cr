@@ -29,7 +29,7 @@ atomically. If the tree is dirty, finish or stash before starting.
 ## 3. Confirm a clean baseline
 
 ```bash
-make lint   # crystal tool format --check src spec + ameba src spec
+make lint   # format --check + ameba: src spec bin examples bench
 make test   # crystal spec
 ```
 

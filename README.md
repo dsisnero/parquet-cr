@@ -1,7 +1,7 @@
 # parquet-cr
 
-A Crystal port of https://github.com/apache/arrow-rs — specifically the
-[`parquet`](https://github.com/apache/arrow-rs/tree/master/parquet) crate, the
+A Crystal port of [apache/arrow-rs](https://github.com/apache/arrow-rs) — specifically the
+[`parquet`](https://github.com/apache/arrow-rs/tree/60.0.0/parquet) crate, the
 Apache Parquet implementation from apache/arrow-rs.
 
 Upstream is vendored as a git submodule at `vendor/arrow-rs`, pinned to release
@@ -12,11 +12,46 @@ Upstream is vendored as a git submodule at `vendor/arrow-rs`, pinned to release
 
 - [Resuming work](docs/resuming.md) — start here in a new session
 - [Architecture](docs/architecture.md)
-- [Asynchronous storage reads](docs/async-storage.md)
+- [Asynchronous storage reads and writes](docs/async-storage.md)
 - [Development](docs/development.md)
 - [Coding Guidelines](docs/coding-guidelines.md)
 - [Testing](docs/testing.md)
 - [PR Workflow](docs/pr-workflow.md)
+- [Changelog](CHANGELOG.md)
+
+## Supported workflows
+
+The port includes synchronous file/column and Arrow RecordBatch readers and
+writers, nested data, compression, page indexes, bloom filters, modular
+encryption, Variant/JSON operations and GeoParquet support. Parity is still in
+progress: see the [current status](plans/parity.md) and
+[documented divergences](plans/parity/divergences.md) for scope and limitations.
+
+| Workflow | Guide |
+| --- | --- |
+| Typed physical columns and generated metadata codecs | [Typed columns](docs/typed-columns.md), [Thrift unions](docs/thrift-unions.md) |
+| Arrow string and byte-page decoding | [UTF-8 validation](docs/arrow-string-validation.md), [variable bytes](docs/arrow-byte-page-decoding.md), [fixed bytes](docs/arrow-fixed-byte-decoding.md) |
+| Metadata caching and reuse | [Memory estimates](docs/metadata-memory.md), [snapshots](docs/metadata-snapshots.md) |
+| Explicit index and row-group loading | [On-demand indexes](docs/on-demand-page-index.md), [row-group fetching](docs/explicit-row-group-fetching.md) |
+| Object-store batch round trips | [Runnable example](docs/object-store-example.md) |
+| Encoding read/write measurements | [Round-trip benchmark](docs/round-trip-benchmark.md) |
+
+## Runnable examples and benchmark
+
+From a configured repository checkout:
+
+```sh
+crystal run examples/custom_page_index.cr
+crystal run examples/read_with_rowgroup.cr
+crystal run examples/object_store.cr
+crystal build --release bench/parquet_round_trip.cr -o /private/tmp/parquet-round-trip
+/private/tmp/parquet-round-trip --smoke --samples=3
+```
+
+The object-store example uses memory storage and needs no cloud credentials.
+The benchmark validates values before timing all 46 source cases; its CSV
+reports first and warm samples. See its guide for dimensions, measurement
+boundaries and differences from upstream Criterion measurements.
 
 ## Rewrite Parquet files
 
@@ -55,6 +90,11 @@ description and feature matrix. Upstream tests in `parquet/tests` and inline
 
 ## Installation
 
+Requires Crystal **1.22.0 or newer**. The current dependency configuration uses
+`arrow-cr` from the sibling path `../arrow-cr`; prepare that checkout before
+installing. See [development setup](docs/development.md) and the
+[dependency requirements](plans/parity.md#where-we-are).
+
 1. Add the dependency to your `shard.yml`:
 
    ```yaml
@@ -63,7 +103,7 @@ description and feature matrix. Upstream tests in `parquet/tests` and inline
        github: dsisnero/parquet-cr
    ```
 
-2. Run `shards install`
+2. Run `shards install` with the sibling `arrow-cr` checkout available.
 
 ## Usage
 

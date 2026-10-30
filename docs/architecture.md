@@ -7,7 +7,7 @@ that files can be compared one-to-one.
 
 ## Module layout
 
-Upstream `parquet/src` maps to Crystal as follows:
+Upstream `parquet/src` and companion crates map to Crystal as follows:
 
 | Upstream (Rust)      | Crystal                     | Responsibility                          |
 | -------------------- | --------------------------- | --------------------------------------- |
@@ -23,6 +23,24 @@ Upstream `parquet/src` maps to Crystal as follows:
 | `parquet-geospatial/` (crate) | `src/parquet_geospatial/` | WKB reader, intervals, geometry bounder |
 | `arrow/`             | `src/parquet/arrow/`        | Arrow interoperability                  |
 | `parquet_thrift.rs`  | `src/parquet/format/`       | Thrift-encoded Parquet metadata structs |
+
+Companion Variant crates live under `src/parquet_variant*`; derived-record
+support lives in `src/parquet/derive.cr`. `bin/` contains command-line tools,
+`examples/` contains runnable integration workflows, and `bench/` contains the
+round-trip measurement harness. These entry points reuse the library APIs.
+
+## Metadata ownership
+
+Metadata builders retain native references. Use
+[`ParquetMetaData#clone`](metadata-snapshots.md) before editing a snapshot that
+must remain reusable. Clones copy mutable metadata buffers while sharing schema
+and page-index provider references. [Memory estimates](metadata-memory.md)
+describe native retained storage rather than Rust allocator sizes.
+
+[On-demand index providers](on-demand-page-index.md) explicitly populate sparse
+caches; looking up an index does not fetch it. The
+[row-group example](explicit-row-group-fetching.md) explicitly fetches projected
+column chunks before constructing independent readers.
 
 ## Layering
 
@@ -55,9 +73,12 @@ library or is implemented in-tree. Prefer a maintained, active shard over new
 in-tree code for third-party formats; record the decision in `plans/parity.md`
 when adding a runtime dependency.
 
-## Asynchronous storage reads
+## Asynchronous storage reads and writes
 
 The [execution/storage mapping](async-storage.md) records how yielding Crystal
 methods replace Rust futures, how the existing push decoder drives demand
 range reads, and how native memory/HTTP object stores and explicit execution
-contexts integrate without a mandatory cloud SDK dependency.
+contexts integrate without a mandatory cloud SDK dependency. It also covers
+buffered asynchronous writes and object publication. The
+[object-store example](object-store-example.md) exercises normal and dedicated
+execution-context reads after a batch write.

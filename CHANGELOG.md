@@ -12,6 +12,33 @@ revision is recorded per entry.
 
 ### Added
 
+- Arrow RecordBatch writing with nested/null/dictionary/temporal/decimal data,
+  row and byte limits, V1/V2 pages, content-defined chunking, pluggable serialized
+  page storage and encrypted round trips.
+- Variant numeric operations, including Decimal256, safe/strict Arrow casts,
+  union output, shredding and unshredding; canonical extension mappings and
+  virtual row-number/row-group columns. Optional mappings use the feature flags
+  documented in [testing](docs/testing.md#canonical-extensions-and-virtual-columns).
+- Streaming `parquet-rewrite` and CSV/TSV `parquet-fromcsv` commands, with
+  pinned Rust interoperability checks and compressed-input coverage.
+- [Asynchronous storage reads and writes](docs/async-storage.md), memory/HTTP
+  object stores, suffix footer fetching, explicit execution contexts and
+  buffered object publication. Native limitations are documented in the guide.
+- [Metadata memory estimates](docs/metadata-memory.md) and reusable
+  [metadata snapshots](docs/metadata-snapshots.md), including independent mutable
+  statistics, encryption buffers and row-group metadata.
+- [Typed physical-column APIs](docs/typed-columns.md) for all eight physical
+  types and [generated mixed Thrift unions](docs/thrift-unions.md), integrated
+  into crypto metadata.
+- [On-demand page-index caches](docs/on-demand-page-index.md),
+  [explicit row-group fetching](docs/explicit-row-group-fetching.md) and a
+  [memory object-store round-trip example](docs/object-store-example.md), each
+  with runnable examples and parity specs.
+- A release-mode [round-trip benchmark](docs/round-trip-benchmark.md) covering
+  all 46 pinned source cases, exact fixture validation, reusable write buffers,
+  first/warm CSV samples and configurable smoke runs. Native RNG and sampling
+  differences are documented; timings do not claim Rust performance equivalence.
+
 - Resumable parity workflow: a **Where we are** block at the top of
   `plans/parity.md` (current focus, ordered "Next up", per-area chunk status),
   `docs/resuming.md`, and a session-continuity / definition-of-done section in
@@ -28,7 +55,32 @@ revision is recorded per entry.
 - Rust parity ledger under `plans/inventory/` (3,515 API items, 2,059 tests) and
   the `plans/parity.md` porting roadmap.
 
+### Changed
+
+- Feature-sized parity phases and an ordered resume queue replace helper-sized
+  milestones. The API ledger retains per-symbol status and intentional
+  divergences; full upstream parity remains in progress.
+- Formatting and Ameba gates cover `src`, `spec`, `bin`, `examples` and `bench`.
+  `make test-extensions` checks optional canonical, geospatial and Variant mappings.
+- README navigation now links capability guides, runnable examples and benchmark
+  instructions, and states the current Crystal/sibling Arrow requirements.
+
+### Fixed
+
+- [UTF-8 validation](docs/arrow-string-validation.md) respects value boundaries,
+  validates dictionary entries and rejects invalid binary-to-string projections.
+- [Variable-byte page decoding](docs/arrow-byte-page-decoding.md) and
+  [fixed-byte decoding](docs/arrow-fixed-byte-decoding.md) preserve encoding and
+  skip state across page/batch boundaries, with explicit malformed-input errors.
+- Metadata footer writes preserve borrowed snapshots when filling index offsets
+  or encrypting columns; encrypted writers return separate plaintext metadata.
+
 ### Ported
+
+The entries below retain the earlier foundational port history. All Unreleased
+work targets apache/arrow-rs `60.0.0`
+(`ef1fa157977633f0ba21aa921f9ef3d5c669235b`); representation differences are tracked
+in the [parity reference](plans/parity/divergences.md).
 
 - `errors` — `ParquetError` variant set (`GeneralError`, `NYIError`, `EOFError`,
   `ArrowError`, `IndexOutOfBoundError`, `ExternalError`, `NeedMoreDataError`,

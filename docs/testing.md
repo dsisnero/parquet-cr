@@ -10,8 +10,10 @@ ameba src spec bin examples bench
 crystal spec
 ```
 
-`make lint` and `make test` wrap these. The runnable examples are included in
-format/lint; on-demand index acceptance is exercised by the spec suite.
+`make lint` and `make test` wrap these. Runnable examples and benchmarks are
+included in format/lint; their acceptance specs run in the default suite. See
+[the parity resume block](../plans/parity.md#where-we-are) for the latest recorded
+gate results.
 
 ## Porting tests early
 
@@ -62,7 +64,8 @@ mapping and streamed values/schema/metadata, with INT96 resolution tests in
 Build the pinned Rust tools and compare exact JSON records in both directions:
 
 ```sh
-cargo build --locked --offline --manifest-path vendor/arrow-rs/parquet/Cargo.toml \
+cargo build --locked --offline \
+  --manifest-path vendor/arrow-rs/parquet/Cargo.toml \
   --features cli --bin parquet-read --bin parquet-rewrite \
   --target-dir /private/tmp/parquet-rewrite-rust-target
 crystal build bin/parquet-rewrite.cr -o /private/tmp/parquet-rewrite-cr
@@ -86,11 +89,13 @@ value/schema assertions and additional CLI, null, dialect and error cases.
 Native help option coverage replaces the Clap-formatted help snapshot.
 
 ```sh
-cargo build --locked --offline --manifest-path vendor/arrow-rs/parquet/Cargo.toml \
+cargo build --locked --offline \
+  --manifest-path vendor/arrow-rs/parquet/Cargo.toml \
   --features cli --bin parquet-fromcsv --bin parquet-read \
   --target-dir /private/tmp/parquet-rewrite-rust-target
 crystal build bin/parquet-fromcsv.cr -o /private/tmp/parquet-fromcsv-cr
-crystal run scripts/verify_fromcsv_interop.cr -- /private/tmp/parquet-fromcsv-cr \
+crystal run scripts/verify_fromcsv_interop.cr -- \
+  /private/tmp/parquet-fromcsv-cr \
   /private/tmp/parquet-rewrite-rust-target/debug/parquet-fromcsv \
   /private/tmp/parquet-rewrite-rust-target/debug/parquet-read \
   /private/tmp/parquet-fromcsv-interop
@@ -115,8 +120,10 @@ external services and credentials are not required. Focused command:
 ```sh
 crystal spec spec/parquet/arrow/async_reader_spec.cr \
   spec/parquet/arrow/async_metadata_spec.cr \
-  spec/parquet/arrow/async_store_spec.cr spec/parquet/arrow/async_spawn_spec.cr \
-  spec/parquet/arrow/async_writer_spec.cr spec/parquet/arrow/async_writer_store_spec.cr
+  spec/parquet/arrow/async_store_spec.cr \
+  spec/parquet/arrow/async_spawn_spec.cr \
+  spec/parquet/arrow/async_writer_spec.cr \
+  spec/parquet/arrow/async_writer_store_spec.cr
 ```
 
 ## Metadata memory accounting
@@ -140,3 +147,30 @@ See [typed columns](typed-columns.md) for the native type/ownership mapping.
 codecs against exact wire fixtures, malformed/unknown variants on slice and IO
 protocols, and complete encrypted files. Run them with metadata_memory_spec.cr
 to retain independent layout checks. See [Thrift unions](thrift-unions.md).
+
+## Decoding, snapshots and runnable workflows
+
+Focused regression suites for the recent capabilities:
+
+```sh
+crystal spec spec/parquet/arrow/string_validation_spec.cr \
+  spec/parquet/arrow/byte_page_decoding_spec.cr \
+  spec/parquet/arrow/fixed_byte_decoding_spec.cr
+crystal spec spec/parquet/file/metadata_snapshot_spec.cr \
+  spec/parquet/file/metadata_snapshot_writer_spec.cr
+crystal spec spec/parquet/file/on_demand_page_index_spec.cr \
+  spec/parquet/arrow/explicit_row_group_spec.cr \
+  spec/parquet/arrow/object_store_example_spec.cr \
+  spec/parquet/arrow/round_trip_benchmark_spec.cr
+```
+
+The decoding specs preserve encoding, skip and malformed-input behavior across
+pages and batches. Snapshot specs check mutable-buffer independence and repeated
+plain/encrypted footer writes. Example specs verify explicit fetch/cache behavior,
+independent readers and exact object-store batch values.
+
+The benchmark specs check all source cases, deterministic fixtures, repeated
+buffer reuse and full schema/value validation. They do not assert timing
+thresholds. For CLI smoke measurements, use the release build and repeated runs
+in the [benchmark guide](round-trip-benchmark.md); report first and warm samples
+separately. Timing validation complements the spec gates.
