@@ -5,8 +5,8 @@
 Run the full gates before closing a feature:
 
 ```bash
-crystal tool format --check src spec bin examples
-ameba src spec bin examples
+crystal tool format --check src spec bin examples bench
+ameba src spec bin examples bench
 crystal spec
 ```
 

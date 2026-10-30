@@ -13,11 +13,11 @@ update:
 	shards update
 
 format: clean-appledouble
-	crystal tool format src spec bin examples
+	crystal tool format src spec bin examples bench
 
 lint: clean-appledouble
-	crystal tool format --check src spec bin examples
-	ameba src spec bin examples
+	crystal tool format --check src spec bin examples bench
+	ameba src spec bin examples bench
 
 test: clean-appledouble
 	crystal spec

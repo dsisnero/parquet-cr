@@ -1246,6 +1246,14 @@ The next work file is `plans/parity.md`, Phase 7 (asynchronous storage writes).
   buffered PUT rather than SDK multipart behavior. Mismatch guards raise GeneralError
   instead of assertion panics; Debug formatting and speedup parity are not claimed.
   See [object-store example](../../docs/object-store-example.md).
+- The full round-trip benchmark preserves 46 case names/order, dimensions,
+  encoding choices and seed derivation, while native RNG and first/warm CSV
+  sampling replace StdRng/Criterion. Random bytes/statistical timing equivalence
+  are not claimed. Exact values are validated outside timing; each timed write
+  resets its buffer instead of appending source benchmark files. Positive and
+  batch-divisible dimensions guard source loop failure cases. Native structs,
+  Int32 counts and GeneralError assertions replace Rust conventions. See
+  [round-trip benchmark](../../docs/round-trip-benchmark.md).
 
 ## Notes
 

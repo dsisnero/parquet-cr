@@ -14,31 +14,31 @@
 
 ## Where we are
 
-- **Current focus:** Phase 17 — Object-store round-trip example, on
-  `codex/object-store-example`, complete. All code gates pass; resume with the
-  remaining production coverage audit below.
+- **Current focus:** Phase 18 — Round-trip benchmark matrix, on
+  `codex/round-trip-benchmark`, complete. All code gates and release measurements
+  pass; resume with the remaining coverage audit below.
 - **Next up**, in order:
   1. Continue the production coverage audit and reconcile verified native APIs;
-     most remaining core rows describe existing equivalents or test infrastructure.
-  2. Select the next independently usable capability, port upstream tests first,
-     and finish its API, integration, gates and parity evidence in one commit.
-- **Last completed feature:** `port: Object-store round-trip example`, on
-  `codex/object-store-example`. Buffered publication, suffix-based reads and
-  dedicated-context IO preserve both exact upstream batch assertions and output.
-  Six specs were written first and observed red on the absent API; all six pass,
-  including actual context/thread separation and metadata/error characterizations.
-  Previous feature: `36e265e` (explicit row-group fetching).
-- **Last code gates:** `make lint` (212 files), `make test` (2095 examples),
-  `make test-extensions` (2101 examples), no-codegen library build, scoped
-  inventory validation (3515 items), standalone example run and `git diff --check`,
+     remaining rows are largely existing equivalents and test/benchmark infrastructure.
+  2. Select the next complete capability or benchmark workflow, port its tests first,
+     and finish API/integration, gates and parity evidence in one atomic commit.
+- **Last completed feature:** `port: Complete round-trip benchmark matrix`, on
+  `codex/round-trip-benchmark`. All 46 source cases, deterministic fixtures,
+  exact value checks, reusable-buffer writes and first/warm CSV CLI are delivered.
+  Seven specs were written first and observed red on the absent API; all pass.
+  Three full release smoke matrices and three default-size Int32 runs completed.
+  Previous feature: `22d3560` (object-store round-trip example).
+- **Last code gates:** `make lint` (214 files), `make test` (2102 examples),
+  `make test-extensions` (2108 examples), no-codegen library build, scoped
+  inventory validation (3515 items), release benchmark runs and `git diff --check`,
   all green with zero failures/errors/pending. Full suites retain loopback-only
   HTTP integration; no external service or cloud credentials are needed.
 - **Dependency requirements:** sibling arrow-cr supplies extension machinery
   (`925255d`) and canonical Uuid/Json types. Existing Decimal256 prerequisites
   remain `9a5612c`, `b05366a` and `49d07ce`; see the resolved dependency notes in
   `shards_info/`. No shard patch or dependency edit was made.
-- **Ledger counts:** 2862 `ported`, 290 `intentional_divergence`, 28 `skipped`,
-  335 `missing` (3515 total).
+- **Ledger counts:** 2874 `ported`, 290 `intentional_divergence`, 28 `skipped`,
+  323 `missing` (3515 total).
 - **Plan layout:** this file is the active feature queue and completion record.
   [Implementation reference](parity/implementation-reference.md) is a complete
   archival snapshot of earlier module-level evidence, including stale historical
@@ -628,6 +628,40 @@ IO and a reusable minimal suffix reader.
   mismatch guards replace Rust-specific conventions. The writer uses one buffered
   PUT; SDK multipart behavior, Debug formatting and speedup parity are not claimed.
   See [object-store example](../docs/object-store-example.md) and
+  [divergences](parity/divergences.md). No shard/dependency changes.
+
+## Phase 18 — Round-trip benchmark matrix
+
+Status: **complete**, with seven new tests-first specs, all code gates green,
+three release smoke matrices and three default-size Int32 comparison runs.
+The complete benchmark includes all 46 cases, deterministic generation, exact
+round-trip verification and a parameterized CSV CLI.
+
+- Preserve source case names/order, defaults, spec builder copy semantics, seed
+  derivation, null density and applicable dictionary/plain/delta/byte-stream-split
+  encodings for numeric, string/view, binary and fixed-byte columns.
+- File generation repeats one seed batch of up to 100 rows and retains exact
+  row/group assertions. Every case validates schema/values outside timing across
+  seed/reader batch boundaries. Writes clear a reused buffer each iteration;
+  reads iterate/discard batches and assert row count. Read snapshots are copied
+  outside timing. Appended write growth is intentionally replaced with fixed-size iteration output.
+- The runnable CLI supports smoke/default dimensions, case filtering and size/
+  sample overrides. CSV separates first measured (after setup, not cold-process)
+  time from warm means and reports rows/second/bytes. No parallel work is launched.
+- Seven tests-first characterizations were observed red on the missing API, then
+  passed, including all 46 file round trips, nullable/seeded generation, buffer
+  reuse, dimensions and sampling output. Three release smoke runs each produced
+  92 results with value checks. Three further sequential Int32 default-size runs
+  after the gates compare plain/dictionary/delta/byte-stream-split for 100,000 rows,
+  10 columns and 10 groups, with first/warm values recorded in the docs. Dictionary
+  trades slower writes for smaller output/lower read time on this repeated corpus;
+  no general encoding or engine-speedup claim is made. Make format/lint includes
+  bench executables.
+- Twelve ledger rows are ported. Native RNG and CSV sampling replace StdRng/
+  Criterion, without random-byte or timing equivalence claims. Positive/batch-
+  divisible dimensions guard source loop failure cases; native Int32 counts,
+  public copyable structs and GeneralError assertions replace Rust conventions.
+  See [round-trip benchmark](../docs/round-trip-benchmark.md) and
   [divergences](parity/divergences.md). No shard/dependency changes.
 
 ## Deferred compatibility decisions
