@@ -72,6 +72,12 @@ revision is recorded per entry.
   file tail or overflowing above 2 GiB. File seeks beyond EOF and shared-position
   behavior match Rust. Block-scoped reads close page/splice streams on success
   and exceptions. See [file-reader behavior](docs/file-chunk-reader.md).
+- `with_row_filter` (and any row selection) no longer mis-reads nullable
+  columns. `ColumnReaderImpl#skip_records` skipped physical values without
+  consuming the arrow definition-level stream, so a null in a skipped or
+  selected range shifted later values and could leak dictionary values from
+  outside the selection. Skipping now advances the definition levels and derives
+  the value count from them, matching upstream `GenericColumnReader`.
 - [UTF-8 validation](docs/arrow-string-validation.md) respects value boundaries,
   validates dictionary entries and rejects invalid binary-to-string projections.
 - [Variable-byte page decoding](docs/arrow-byte-page-decoding.md) and

@@ -236,6 +236,51 @@ describe Parquet::Arrow::RecordReader::GenericRecordReader do
     reader.consume_bitmap.should be_nil
   end
 
+  # Upstream `test_skip_optional_records`: skipping must consume definition
+  # levels as well as values, otherwise a null in the skipped range desyncs the
+  # value and level streams.
+  it "skips optional records" do
+    message_type = "message test_schema { OPTIONAL Group test_struct { OPTIONAL INT32 leaf; } }"
+    desc = ParquetTestPageUtil.column_descriptor(message_type)
+    reader = record_reader(message_type)
+
+    # First page: empty, non-empty, empty, non-empty, non-empty.
+    builder = page(desc, 5)
+    builder.add_def_levels(2_i16, [1_i16, 2_i16, 0_i16, 2_i16, 2_i16])
+    builder.add_values(Parquet::Encoding::PLAIN, [7, 6, 3])
+    reader.set_page_reader(ParquetTestPageUtil::InMemoryPageReader.new([builder.consume]))
+
+    reader.skip_records(2).should eq(2)
+    reader.num_records.should eq(0)
+    reader.num_values.should eq(0)
+    reader.read_records(3).should eq(3)
+    reader.num_records.should eq(3)
+    reader.num_values.should eq(3)
+
+    # Second page: empty, non-empty.
+    builder = page(desc, 2)
+    builder.add_def_levels(2_i16, [0_i16, 2_i16])
+    builder.add_values(Parquet::Encoding::PLAIN, [8])
+    reader.set_page_reader(ParquetTestPageUtil::InMemoryPageReader.new([builder.consume]))
+
+    reader.skip_records(10).should eq(2)
+    reader.num_records.should eq(3)
+    reader.num_values.should eq(3)
+    reader.read_records(10).should eq(0)
+
+    reader.consume_def_levels.should eq([0_i16, 2_i16, 2_i16])
+    reader.consume_bitmap.try { |bitmap| masks(bitmap, 3) }.should eq([false, true, true])
+
+    # Only the valid slots are compared; the null slot is padded.
+    values = reader.consume_record_data.values
+    values.size.should eq(3)
+    valid = [false, true, true]
+    expected = [0, 6, 3]
+    valid.each_with_index do |is_valid, idx|
+      values[idx].should eq(expected[idx]) if is_valid
+    end
+  end
+
   # Upstream `test_selective_padding_consumes_full_bitmap`.
   it "consumes the compact bitmap under selective padding" do
     message_type = "message test_schema { OPTIONAL GROUP my_list (LIST) { REPEATED GROUP list { OPTIONAL INT32 element; } } }"

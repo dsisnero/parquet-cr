@@ -22,20 +22,23 @@
      remaining rows are largely existing equivalents and test/benchmark infrastructure.
   2. Select the next complete capability or benchmark workflow, port its tests first,
      and finish API/integration, gates and parity evidence in one atomic commit.
-- **Last completed feature:** `port: Stream large local file reads`, on
-  `codex/stream-large-file-reads`. `FileChunkReader#get_read` now duplicates the
-  open handle, seeks and streams through bounded buffering like upstream
-  `File::try_clone` + `seek` + `BufReader`, so it neither narrows the file tail
-  to Int32 nor allocates it. A block overload adds ensure-based cleanup and the
-  page reader and column splicer use it. Ten tests-first specs were observed red
-  before the change and pass after it. Previous feature: `951ce81` (documentation
-  and changelog refresh).
-- **Last code gates:** `make lint` (214 files), `make test` (2112 examples),
-  `make test-extensions` (2118 examples) and `git diff --check`, all green with
-  zero failures/errors/pending. Ledger structure validated (3515 rows, five
-  fields each, counts matching the ledger note below). Full suites retain
-  loopback-only HTTP integration; no external service or cloud credentials are
-  needed.
+- **Last completed feature:** `port: Align row-filter skips with definition levels`
+  (bug fix, no upstream revision change). Ported upstream
+  `test_skip_optional_records` first and observed it red, then fixed
+  `ColumnReaderImpl#skip_records` to advance the arrow definition-level decoder
+  (upstream `GenericColumnReader<_, D, _>`'s `skip_def_levels`) instead of
+  assuming every skipped level carries a physical value. This was silently
+  corrupting `with_row_filter` output for any nullable column, including the
+  reported `Utf8`/`Float64` misreads. Added the record-reader spec plus four
+  `with_row_filter` regressions in `spec/parquet/arrow/row_filter_spec.cr`
+  (null inside the selection, null in the skipped prefix, selection ending on a
+  null and multi-batch reads). Previous feature: `c93814a` (stream large local
+  file reads).
+- **Last code gates:** `make lint` (214 files), `make test` (2117 examples) and
+  `make test-extensions` (2123 examples), all green with zero
+  failures/errors/pending. Ledger structure validated (3515 rows, five fields
+  each). Full suites retain loopback-only HTTP integration; no external service
+  or cloud credentials are needed.
 - **Dependency requirements:** sibling arrow-cr supplies extension machinery
   (`925255d`) and canonical Uuid/Json types. Existing Decimal256 prerequisites
   remain `9a5612c`, `b05366a` and `49d07ce`; see the resolved dependency notes in

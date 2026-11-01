@@ -227,7 +227,14 @@ module Parquet
           next if @num_buffered_values == @num_decoded_values
 
           values_read, def_levels_read =
-            if decoder = @def_level_decoder
+            if decoder = @arrow_def_level_decoder
+              # The arrow record reader's definition levels live in an
+              # `Arrow::RecordReader::DefinitionLevelBuffer` backed decoder
+              # (upstream's `D` type argument), so it must be advanced here too;
+              # otherwise the next read re-decodes levels already skipped over
+              # and skips the wrong number of physical values.
+              decoder.skip_def_levels(rep_levels_read)
+            elsif decoder = @def_level_decoder
               decoder.skip_def_levels(rep_levels_read)
             else
               {rep_levels_read, rep_levels_read}

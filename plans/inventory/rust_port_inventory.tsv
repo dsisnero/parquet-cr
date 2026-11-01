@@ -1812,7 +1812,7 @@ parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.read_dictiona
 parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.read_new_page	method	ported	src/parquet/column/reader.cr	ColumnReaderImpl
 parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.read_records	method	ported	src/parquet/column/reader.cr	ColumnReaderImpl
 parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.read_records_with_reservation	method	ported	src/parquet/column/reader.cr	read_records_with_reservation (block callback; read_records passes a no-op)
-parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.skip_records	method	ported	src/parquet/column/reader.cr	ColumnReaderImpl
+parquet/src/column/reader.rs::method::GenericColumnReader<R, D, V>.skip_records	method	ported	src/parquet/column/reader.cr	ColumnReaderImpl#skip_records (advances the arrow definition-level decoder so values and levels stay aligned; spec/parquet/arrow/record_reader_spec.cr, spec/parquet/arrow/row_filter_spec.cr)
 parquet/src/column/reader.rs::method::GenericColumnReader<RepetitionLevelDecoderImpl, DefinitionLevelDecoderImpl, V>.new	method	ported	src/parquet/column/reader.cr	ColumnReaderImpl
 parquet/src/column/reader/decoder.rs::const::ENCODING_SLOTS	const	ported	src/parquet/column/reader/decoder.cr	column reader decoder
 parquet/src/column/reader/decoder.rs::const::REPETITION_LEVELS_BATCH_SIZE	const	ported	src/parquet/column/reader/decoder.cr	column reader decoder

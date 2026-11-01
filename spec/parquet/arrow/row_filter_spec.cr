@@ -61,6 +61,93 @@ private def row_filter(*predicates : PArrow::ArrowPredicate) : PArrow::RowFilter
   PArrow::RowFilter.new(*predicates)
 end
 
+# A five-row frame for the null-alignment regressions:
+#   qty    = [1, 2, 3, 4, 5]                  (no nulls)
+#   flag   = [T, F, T, F, T]                  (no nulls)
+#   region = [north, south, east, nil, west]  (null at row 3)
+#   price  = [10, 20, 30, 40, nil]            (null at row 4)
+private def null_filter_bytes : Bytes
+  schema = Arrow::Schema.new(Arrow::Fields.from([
+    Arrow::Field.new("qty", Arrow::DataType.int64, false),
+    Arrow::Field.new("flag", Arrow::DataType.boolean, false),
+    Arrow::Field.new("region", Arrow::DataType.utf8, true),
+    Arrow::Field.new("price", Arrow::DataType.float64, true),
+  ]))
+  batch = Arrow::RecordBatch.try_new(schema, [
+    Arrow::PrimitiveArray(Int64).from_values([1_i64, 2_i64, 3_i64, 4_i64, 5_i64]).as(Arrow::ArrayBase),
+    Arrow::BooleanArray.from_values([true, false, true, false, true]).as(Arrow::ArrayBase),
+    Arrow::StringArray.from_nullable(["north", "south", "east", nil, "west"]).as(Arrow::ArrayBase),
+    Arrow::PrimitiveArray(Float64).from_nullable([10.0, 20.0, 30.0, 40.0, nil]).as(Arrow::ArrayBase),
+  ] of Arrow::ArrayBase)
+
+  sink = IO::Memory.new
+  writer = PArrow::ArrowWriter.try_new(sink, schema)
+  writer.write(batch)
+  writer.close
+  sink.to_slice.dup
+end
+
+# Reads the frame keeping rows where `lower <= qty <= upper`.
+private def null_filter_reader(
+  lower : Int64,
+  upper : Int64,
+  batch_size : Int32 = 1024,
+) : PArrow::ParquetRecordBatchReaderBuilder
+  reader_file = Parquet::File::SerializedFileReader.new(BytesCR.new(null_filter_bytes))
+  builder = PArrow::ParquetRecordBatchReaderBuilder.try_new(reader_file).with_batch_size(batch_size)
+  mask = PArrow::ProjectionMask.columns(builder.parquet_schema, ["qty"])
+
+  predicate = PArrow::ArrowPredicateFn.new(mask) do |batch|
+    column = batch.column(0).as(Arrow::PrimitiveArray(Int64))
+    Arrow.and_kleene(
+      Arrow.gt_eq(column, Arrow::PrimitiveArray(Int64).new_scalar(lower)),
+      Arrow.lt_eq(column, Arrow::PrimitiveArray(Int64).new_scalar(upper)),
+    )
+  end
+
+  builder.with_row_filter(row_filter(predicate))
+end
+
+# A two-column frame: `key` 1..5 and a nullable Int64 `payload`, used to vary
+# where the null sits relative to the selection.
+private def null_payload_bytes(payload : Array(Int64?)) : Bytes
+  schema = Arrow::Schema.new(Arrow::Fields.from([
+    Arrow::Field.new("key", Arrow::DataType.int64, false),
+    Arrow::Field.new("payload", Arrow::DataType.int64, true),
+  ]))
+  batch = Arrow::RecordBatch.try_new(schema, [
+    Arrow::PrimitiveArray(Int64).from_values([1_i64, 2_i64, 3_i64, 4_i64, 5_i64]).as(Arrow::ArrayBase),
+    Arrow::PrimitiveArray(Int64).from_nullable(payload).as(Arrow::ArrayBase),
+  ] of Arrow::ArrayBase)
+
+  sink = IO::Memory.new
+  writer = PArrow::ArrowWriter.try_new(sink, schema)
+  writer.write(batch)
+  writer.close
+  sink.to_slice.dup
+end
+
+# Reads `key` in `[lower, upper]` and returns the `payload` values.
+private def null_payload_selection(payload : Array(Int64?), lower : Int64, upper : Int64) : Array(Int64?)
+  reader_file = Parquet::File::SerializedFileReader.new(BytesCR.new(null_payload_bytes(payload)))
+  builder = PArrow::ParquetRecordBatchReaderBuilder.try_new(reader_file)
+  mask = PArrow::ProjectionMask.columns(builder.parquet_schema, ["key"])
+
+  predicate = PArrow::ArrowPredicateFn.new(mask) do |batch|
+    column = batch.column(0).as(Arrow::PrimitiveArray(Int64))
+    Arrow.and_kleene(
+      Arrow.gt_eq(column, Arrow::PrimitiveArray(Int64).new_scalar(lower)),
+      Arrow.lt_eq(column, Arrow::PrimitiveArray(Int64).new_scalar(upper)),
+    )
+  end
+
+  out = [] of Int64?
+  builder.with_row_filter(row_filter(predicate)).build.each do |batch|
+    out.concat(batch.column(1).as(Arrow::PrimitiveArray(Int64)).to_a)
+  end
+  out
+end
+
 private def ids(batches : Array(Arrow::RecordBatch)) : Array(Int32)
   batches.flat_map do |batch|
     column = batch.column(0).as(Arrow::PrimitiveArray(Int32))
@@ -187,6 +274,66 @@ describe "ParquetRecordBatchReader row filters" do
 
     # Row 1 (id 5) would match, but its predicate result is null.
     ids(id_reader.with_row_filter(row_filter(predicate)).build.to_a).should eq([6, 7])
+  end
+
+  # Regression (parquet-cr issue: `with_row_filter` mis-reads columns that
+  # contain nulls). A selection that skips past, starts after, or ends on a null
+  # must advance values and definition levels together.
+  it "keeps every column aligned when selected rows contain nulls" do
+    # Rows 0..4; the predicate `qty > 2` selects rows 2, 3, 4.
+    #   region has a null at row 3, price has a null at row 4.
+    batches = null_filter_reader(3_i64, 5_i64).build.to_a
+    batches.size.should eq(1)
+    batch = batches.first
+    batch.num_rows.should eq(3)
+
+    qty = batch.column(0).as(Arrow::PrimitiveArray(Int64))
+    qty.to_a.should eq([3_i64, 4_i64, 5_i64])
+
+    flag = batch.column(1).as(Arrow::BooleanArray)
+    flag.to_a.should eq([true, false, true])
+
+    region = batch.column(2).as(Arrow::StringArray)
+    region.to_a.should eq(["east", nil, "west"])
+
+    price = batch.column(3).as(Arrow::PrimitiveArray(Float64))
+    price.to_a.should eq([30.0, 40.0, nil])
+  end
+
+  it "skips a prefix that contains a null" do
+    # Selecting keys 4, 5 skips rows 0, 1, 2 while row 1's payload is null.
+    null_payload_selection([10_i64, nil, 30_i64, 40_i64, 50_i64], 4_i64, 5_i64)
+      .should eq([40_i64, 50_i64])
+  end
+
+  it "reads a selection whose last row is null" do
+    # Rows 3, 4; the selection ends on the null at row 4.
+    null_payload_selection([10_i64, 20_i64, 30_i64, 40_i64, nil], 4_i64, 5_i64)
+      .should eq([40_i64, nil])
+  end
+
+  it "reads a null inside the selected range" do
+    # The report's minimal case: keys 3, 4 are rows 2, 3, where row 2 is null.
+    null_payload_selection([10_i64, 20_i64, nil, 40_i64, 50_i64], 3_i64, 4_i64)
+      .should eq([nil, 40_i64])
+  end
+
+  it "reads a mixed-type frame whose selection ends on a null" do
+    batches = null_filter_reader(3_i64, 4_i64).build.to_a
+    batch = batches.first
+    batch.num_rows.should eq(2)
+
+    batch.column(0).as(Arrow::PrimitiveArray(Int64)).to_a.should eq([3_i64, 4_i64])
+    batch.column(2).as(Arrow::StringArray).to_a.should eq(["east", nil])
+    batch.column(3).as(Arrow::PrimitiveArray(Float64)).to_a.should eq([30.0, 40.0])
+  end
+
+  it "reads a nullable column over multiple batches" do
+    batches = null_filter_reader(3_i64, 5_i64, batch_size: 2).build.to_a
+    batches.map(&.num_rows).should eq([2, 1])
+
+    batches.flat_map { |b| b.column(2).as(Arrow::StringArray).to_a }.should eq(["east", nil, "west"])
+    batches.flat_map { |b| b.column(3).as(Arrow::PrimitiveArray(Float64)).to_a }.should eq([30.0, 40.0, nil])
   end
 
   it "rejects a predicate that returns the wrong number of rows" do
