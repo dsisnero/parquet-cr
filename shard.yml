@@ -22,7 +22,7 @@ dependencies:
     github: OrelSokolov/brotli.cr
     version: ~> 0.3.0
   arrow-cr:
-    path: ../arrow-cr
+    github: dsisnero/arrow-cr
 
 development_dependencies:
   ameba:
